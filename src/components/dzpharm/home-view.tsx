@@ -10,16 +10,20 @@ import {
   Brain,
   Bug,
   Building2,
+  Clock,
   CreditCard,
   Droplet,
   Ear,
   Eye,
   Factory,
   FlaskConical,
+  GitCompareArrows,
   Heart,
+  History,
   Layers,
   Leaf,
   Microscope,
+  Moon,
   Plane,
   Pill,
   ShieldAlert,
@@ -185,6 +189,7 @@ export function HomeView() {
   const setView = useDzPharm((s) => s.setView)
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
+  const recentlyViewed = useDzPharm((s) => s.recentlyViewed)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const { data: stats, isLoading } = useQuery({
@@ -325,6 +330,42 @@ export function HomeView() {
         )}
       </section>
 
+      {/* ------------------------ Récemment consultés -------------------- */}
+      {recentlyViewed.length > 0 ? (
+        <section
+          aria-labelledby="recent-title"
+          className="mx-auto max-w-7xl px-4 pb-8 sm:px-6"
+        >
+          <div className="mb-3.5 flex items-center justify-between gap-4">
+            <h2 id="recent-title" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+              <History className="size-4.5 text-primary" aria-hidden />
+              Consultés récemment
+            </h2>
+          </div>
+          <div className="scroll-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+            {recentlyViewed.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => openDrug(item.id)}
+                title={`Ouvrir la fiche ${item.brand}`}
+                className="group flex shrink-0 items-center gap-2.5 rounded-xl border border-border bg-card py-2 pr-3 pl-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <Clock className="size-4 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary" aria-hidden />
+                <span className="min-w-0 text-left">
+                  <span className="block max-w-44 truncate text-sm font-semibold text-foreground">
+                    {item.brand}
+                  </span>
+                  <span className="block max-w-44 truncate text-[11px] text-muted-foreground">
+                    {item.dci}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {/* --------------------------- Favoris ----------------------------- */}
       {favorites.length > 0 ? (
         <section
@@ -395,7 +436,7 @@ export function HomeView() {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               icon: Baby,
@@ -410,6 +451,20 @@ export function HomeView() {
               desc: 'Reste à charge CNAS / ALD 100 % : tarif de référence, ticket modérateur, taux par produit.',
               view: 'outils' as const,
               accent: 'chifa' as const,
+            },
+            {
+              icon: Moon,
+              title: 'Adaptateur Ramadan',
+              desc: 'Décalez les prises autour de l\u2019Iftar et du Suhoor — chronopharmacologie par wilaya.',
+              view: 'outils' as const,
+              accent: 'chifa' as const,
+            },
+            {
+              icon: GitCompareArrows,
+              title: 'Comparateur',
+              desc: 'Comparez 2-3 médicaments côte à côte : dosage, laboratoire, statut, équivalences.',
+              view: 'outils' as const,
+              accent: 'primary' as const,
             },
             {
               icon: ShieldAlert,

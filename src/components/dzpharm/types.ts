@@ -14,6 +14,8 @@ export interface Drug {
   id: number
   regNumber: string
   dci: string
+  /** Clé DCI normalisée (sans accents, majuscules) — comparaison d'équivalence. */
+  dciKey?: string
   brand: string
   form: string
   dosage: string
@@ -39,6 +41,8 @@ export interface DrugDetail extends Drug {
   withdrawDate: string | null
   withdrawReason: string | null
   classes: string[]
+  /** Compteur de consultations (globale, sessions DzPharm). */
+  views?: number
 }
 
 export interface Equivalent {

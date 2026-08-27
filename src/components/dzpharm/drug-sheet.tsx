@@ -1,18 +1,21 @@
 'use client'
 
 import { createPortal } from 'react-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Ban,
   Building2,
   CalendarClock,
   CalendarX2,
+  Eye,
   FlaskConical,
   Info,
   Package,
   Pill,
   Printer,
+  Share2,
   ShieldPlus,
   Star,
   Syringe,
@@ -31,7 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
-import { fetchDrugDetail } from './api'
+import { fetchDrugDetail, postDrugView } from './api'
 import type { DrugDetail } from './types'
 import {
   ListeBadge,
@@ -71,7 +74,16 @@ export function DrugSheet() {
   const setView = useDzPharm((s) => s.setView)
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
+  const pushRecent = useDzPharm((s) => s.pushRecent)
   const { toast } = useToast()
+  const queryClient = useQueryClient()
+
+  // Rafraîchit la fiche (compteur de consultations) à chaque ouverture
+  useEffect(() => {
+    if (sheetDrugId !== null) {
+      queryClient.invalidateQueries({ queryKey: ['drug', sheetDrugId] })
+    }
+  }, [sheetDrugId, queryClient])
 
   const { data, isLoading } = useQuery({
     queryKey: ['drug', sheetDrugId],
@@ -82,6 +94,17 @@ export function DrugSheet() {
   const drug = data?.drug
   const equivalents = data?.equivalents ?? []
   const isFav = drug ? favorites.some((f) => f.id === drug.id) : false
+
+  // Historique récent + compteur de consultations (une fois par ouverture)
+  const countedRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (!drug) return
+    pushRecent({ id: drug.id, brand: drug.brand, dci: drug.dci, status: drug.status })
+    if (countedRef.current !== drug.id) {
+      countedRef.current = drug.id
+      postDrugView(drug.id)
+    }
+  }, [drug, pushRecent])
 
   function handleToggleFavorite() {
     if (!drug) return
@@ -104,6 +127,64 @@ export function DrugSheet() {
 
   function handlePrint() {
     window.print()
+  }
+
+  async function handleShare() {
+    if (!drug) return
+    const text = [
+      `${drug.brand} — ${drug.dci}`,
+      `Statut : ${drug.status === 'ACTIF' ? 'Actif' : drug.status === 'RETRIE' ? 'Retiré du marché' : 'Non renouvelé'}`,
+      drug.form ? `Forme : ${drug.form}` : '',
+      drug.dosage ? `Dosage : ${drug.dosage}` : '',
+      drug.lab ? `Laboratoire : ${drug.lab}` : '',
+      drug.regNumber ? `AMM : ${drug.regNumber}` : '',
+      `Voir la fiche complète sur DzPharm.`,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    let shared = false
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${drug.brand} — DzPharm`, text })
+        shared = true
+      }
+    } catch {
+      /* partage natif annulé — repli presse-papier */
+    }
+    if (!shared) {
+      let copied = false
+      try {
+        await navigator.clipboard.writeText(text)
+        copied = true
+      } catch {
+        // Repli execCommand (contextes sans permission Clipboard API)
+        try {
+          const ta = document.createElement('textarea')
+          ta.value = text
+          ta.style.position = 'fixed'
+          ta.style.opacity = '0'
+          document.body.appendChild(ta)
+          ta.select()
+          copied = document.execCommand('copy')
+          document.body.removeChild(ta)
+        } catch {
+          copied = false
+        }
+      }
+      if (copied) {
+        toast({
+          title: 'Fiche copiée',
+          description: 'Le résumé du médicament est dans le presse-papier.',
+        })
+      } else {
+        toast({
+          title: 'Copie impossible',
+          description: 'Votre navigateur bloque le presse-papier.',
+          variant: 'destructive',
+        })
+      }
+    }
   }
 
   function handleAddToBasket() {
@@ -164,6 +245,15 @@ export function DrugSheet() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={handleShare}
+                    aria-label={`Partager la fiche de ${drug.brand}`}
+                    className="size-9 rounded-lg text-muted-foreground hover:text-primary"
+                  >
+                    <Share2 className="size-5" aria-hidden />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={handleToggleFavorite}
                     aria-label={isFav ? `Retirer ${drug.brand} des favoris` : `Ajouter ${drug.brand} aux favoris`}
                     aria-pressed={isFav}
@@ -211,6 +301,15 @@ export function DrugSheet() {
                 >
                   {isLocal(drug.country) ? 'Produit local' : 'Importé'}
                 </span>
+                {typeof drug.views === 'number' && drug.views > 0 ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums"
+                    title="Consultations de cette fiche sur DzPharm"
+                  >
+                    <Eye className="size-3" aria-hidden />
+                    {formatNumber(drug.views)}
+                  </span>
+                ) : null}
               </div>
             </SheetHeader>
 

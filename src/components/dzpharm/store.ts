@@ -43,10 +43,19 @@ export interface FavoriteItem {
   addedAt: number
 }
 
+export interface RecentItem {
+  id: number
+  brand: string
+  dci: string
+  status: string
+  viewedAt: number
+}
+
 export type AddResult = 'added' | 'duplicate' | 'full'
 
 export const MAX_BASKET = 10
 export const MAX_FAVORITES = 30
+export const MAX_RECENT = 8
 
 interface DzPharmStore {
   view: ViewId
@@ -72,6 +81,10 @@ interface DzPharmStore {
   isFavorite: (id: number) => boolean
   removeFromFavorites: (id: number) => void
   clearFavorites: () => void
+
+  recentlyViewed: RecentItem[]
+  pushRecent: (item: Omit<RecentItem, 'viewedAt'>) => void
+  clearRecent: () => void
 }
 
 export const useDzPharm = create<DzPharmStore>()(
@@ -120,11 +133,24 @@ export const useDzPharm = create<DzPharmStore>()(
       removeFromFavorites: (id) =>
         set((s) => ({ favorites: s.favorites.filter((f) => f.id !== id) })),
       clearFavorites: () => set({ favorites: [] }),
+
+      recentlyViewed: [],
+      pushRecent: (item) =>
+        set((s) => ({
+          recentlyViewed: [
+            { ...item, viewedAt: Date.now() },
+            ...s.recentlyViewed.filter((r) => r.id !== item.id),
+          ].slice(0, MAX_RECENT),
+        })),
+      clearRecent: () => set({ recentlyViewed: [] }),
     }),
     {
       name: 'dzpharm-store',
-      // Ne persiste que les favoris — l'état de navigation reste éphémère
-      partialize: (state) => ({ favorites: state.favorites }),
+      // Persiste favoris + historique récent — l'état de navigation reste éphémère
+      partialize: (state) => ({
+        favorites: state.favorites,
+        recentlyViewed: state.recentlyViewed,
+      }),
     }
   )
 )

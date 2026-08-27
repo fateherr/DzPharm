@@ -58,6 +58,13 @@ export function fetchDrugDetail(
   return getJson<DrugDetailResponse>(`/api/drugs/${id}`, signal)
 }
 
+/** Incrémente le compteur de consultations — fire-and-forget. */
+export function postDrugView(id: number): void {
+  fetch(`/api/drugs/${id}/view`, { method: 'POST' }).catch(() => {
+    /* silencieux */
+  })
+}
+
 export function fetchStats(signal?: AbortSignal): Promise<Stats> {
   return getJson<Stats>('/api/stats', signal)
 }

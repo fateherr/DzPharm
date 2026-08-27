@@ -36,6 +36,7 @@ model Drug {
   domains        String? // JSON array of therapeutic domains
   classes        String? // JSON array of pharmacological classes
   domain         String? // primary domain (denormalized for filtering)
+  views          Int      @default(0) // consultation counter (DzPharm sessions)
 
   @@index([dciKey])
   @@index([brandKey])

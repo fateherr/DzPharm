@@ -147,3 +147,37 @@ Stage Summary:
 3. PWA offline (service worker + cache des fiches consultées)
 4. Alerte pénuries : champs OBS contiennent parfois des infos de rupture — investiguer
 5. Lorsque le token X-Token sera de retour : ré-activer et re-tester les 2 endpoints IA (le code est prêt, rien à changer)
+
+---
+Task ID: 8
+Agent: main-orchestrator (session 2026-08-27, phase 3)
+Task: Analyse concurrentielle (pharmnet-dz.com + 2 previews), QA globale, et phase 3 — Adaptateur Ramadan, Comparateur de médicaments, historique récent, compteur de consultations, partage de fiche
+
+Work Log:
+- QA initiale : 6 vues OK, 0 erreur console, serveur dev stable
+- DIAGNOSTIC : le service z-ai est DE RETOUR (chat + interactions IA répondent — plus de 401 X-Token) ; testé DOLIPRANE+KARDEGIC 72 ans → MODERE avec mécanisme/conduite complets
+- Analyse concurrentielle pharmnet-dz.com (via agent-browser, 19 captures) : registre quasi identique (9 560 produits, même nomenclature), Supabase + Leaflet, VERDICT — nos différenciateurs (IA, pédiatrie, Chifa, interactions réelles) restent uniques ; patterns adoptés : compteur de consultations, badge fraîcheur données, favoris récents, callouts équivalence
+- Les 2 previews space-z.ai fournis sont des scaffolds vierges Z.ai (aucune fonctionnalité) — seul enseignement : langage design emerald/gradient (déjà couvert par notre thème cyan/chifa)
+- NOUVEAU : Adaptateur Ramadan (ramadan-adapter.tsx) — 12 wilayas avec horaires Iftar/Suhoor éditables, rythme 1-4 prises/jour, timeline 24h visualisée (segments jeûne/fenêtre alimentation + épingles doses), répartition équilibrée dans la fenêtre nocturne, 9 cartes de guidance chronopharmacologique par classe (antidiabétiques, antihypertenseurs, diurétiques, antibiotiques, anticoagulants, corticoïdes, IPP, levothyroxine, antiépileptiques) avec niveaux de risque, copie du plan, avertissement médical
+- NOUVEAU : Comparateur de médicaments (drug-comparator.tsx) — 2-3 produits via autocomplete, table 15 caractéristiques côte à côte, détection même DCI + alertes dosage/forme, alerte produits retirés, lignes critiques surlignées
+- NOUVEAU : Historique récent — store zustand persist (max 8), section « Consultés récemment » sur l'accueil, chips cliquables
+- NOUVEAU : Compteur de consultations global — colonne Drug.views (Prisma, db:push), POST /api/drugs/[id]/view fire-and-forget, badge œil dans la fiche, invalidation query à chaque ouverture
+- NOUVEAU : Partage de fiche — bouton Share2 (navigator.share → clipboard API → execCommand fallback → toast), dans l'en-tête de la fiche
+- Améliorations : Outils → 4 onglets scrollables ; Accueil → grille 6 cartes outils (grid-cols-3) ; footer → badge « Référentiel en ligne » + MAJ
+- FIX dev serveur : Prisma client périmé en mémoire après db:push (colonne views absente des SELECT) → redémarrage propre du serveur dev
+- FIX : clamp des épingles timeline Ramadan (3%-97%) contre le rognage aux bords
+- FIX : query cache TanStack — invalidateQueries(['drug', id]) à l'ouverture de la fiche pour rafraîchir le compteur
+- QA E2E agent-browser : Ramadan (Alger 2×/j → 19:45/04:45 ; Oran → 19:55/04:55 ; 3×/j → 19:55/00:25/04:55 réparties équitablement, 9 cartes de classes) ; Comparateur (DOLIPRANE 1000MG + EFFERALGAN → « Même DCI » + « Dosage/forme différents », table 15 lignes) ; compteur vues (badge « 2 » après réouverture) ; partage (toast + fallbacks) ; récents (chips sur accueil, persistance) ; mobile 390px : Ramadan + accueil sans overflow horizontal ; 6 vues OK desktop ; console 0 erreur ; lint 0 erreur ; tsc 0 erreur sur fichiers modifiés
+
+Stage Summary:
+- 5 nouvelles fonctionnalités livrées et vérifiées E2E : Adaptateur Ramadan (chronopharmacologie, 12 wilayas), Comparateur (15 caractéristiques, détection équivalences), historique récent persistant, compteur de consultations global (backend + UI), partage de fiche multi-fallbacks
+- IA 100 % opérationnelle à nouveau (copilote + interactions approfondies + moteur local en repli)
+- Analyse concurrentielle : position concurrentielle renforcée — DzPharm reste le seul avec IA + outils cliniques locaux ; patterns de confiance Pharm'Net adoptés (compteur, fraîcheur)
+- ÉTAT : STABLE — toutes vues, outils, IA et responsivité vérifiés
+
+=== Prochaine phase recommandée ===
+1. Explorateur des 17 livres docx (fiches DCI complètes par domaine — extraction + vue dédiée)
+2. PWA offline (service worker + cache des fiches consultées)
+3. Alerte pénuries : investiguer le champ OBS (ruptures mentionnées)
+4. Carte pharmacies de garde par wilaya (données à sourcer)
+5. « Les plus consultés » : endpoint top-views + section accueil (données now collectées)
