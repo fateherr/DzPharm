@@ -120,6 +120,79 @@ export interface InteractionsResponse {
   pairs: InteractionPair[]
   advice: string[]
   monitoring: string[]
+  /** Source de l'analyse : moteur local de règles ou IA. */
+  source?: 'local' | 'ai'
+}
+
+/* ------------------------------------------------------------------ */
+/* Outils cliniques — posologies pédiatriques                          */
+/* ------------------------------------------------------------------ */
+
+export interface PediatricForm {
+  label: string
+  /** Concentration en mg pour `perVolumeMl` mL (ex. 250 mg / 5 mL). */
+  mg: number
+  perVolumeMl: number
+  /** Exemples de marques locales. */
+  brands: string
+}
+
+export interface PediatricDosing {
+  dci: string
+  /** Jeton de recherche dans le registre (dciKey). */
+  dciKey: string
+  category: string
+  /** Dose par prise en mg/kg (null si posologie fixe par tranche d'âge). */
+  mgPerKgPerDose?: number | null
+  /** Intervalle minimal entre deux prises (heures). */
+  intervalH?: number | null
+  /** Nombre de prises par jour si posologie fixe. */
+  dosesPerDay?: number | null
+  /** Plafond par prise en mg (dose adulte). */
+  maxSingleMg?: number | null
+  /** Maximum par 24 h en mg/kg. */
+  maxDailyMgPerKg?: number | null
+  /** Plafond par 24 h en mg (dose adulte). */
+  maxDailyMg?: number | null
+  minAgeMonths?: number | null
+  minWeightKg?: number | null
+  /** Posologies fixes par tranche d'âge (cétirizine, vitamine D…). */
+  bands?: PediatricBand[] | null
+  forms: PediatricForm[]
+  warnings: string[]
+  note?: string
+}
+
+export interface PediatricBand {
+  /** Âge minimal en mois inclus. */
+  minMonths: number
+  /** Âge maximal en mois inclus (null = sans limite). */
+  maxMonths: number | null
+  doseMg: number
+  perDay: number
+  label: string
+}
+
+/* ------------------------------------------------------------------ */
+/* Simulateur Chifa                                                    */
+/* ------------------------------------------------------------------ */
+
+export type ChifaCardType = 'standard' | 'ald' | 'casnos' | 'aucune'
+
+export interface ChifaLine {
+  uid: string
+  brand: string
+  dci: string
+  price: number
+  /** Taux de remboursement applicable au produit (0, 40, 80, 100 %). */
+  rate: number
+}
+
+export interface ChifaTotals {
+  total: number
+  reimbursed: number
+  patientPays: number
+  effectiveRate: number
 }
 
 export interface DrugQueryParams {

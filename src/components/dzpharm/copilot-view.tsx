@@ -88,9 +88,18 @@ export function CopilotView() {
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response }])
     },
     onError: () => {
+      // Message persistant dans le fil + toast : l'utilisateur garde une trace
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            '**Service IA momentanément indisponible.**\n\nVotre question a bien été enregistrée — réessayez dans quelques instants.\n\nEn attendant, ces outils restent **entièrement fonctionnels hors IA** :\n- **Contrôle d\u2019interactions** — moteur local de règles instantané\n- **Posologies pédiatriques** — calculateur pondéral\n- **Simulateur Chifa** — reste à charge\n- **Répertoire** — recherche sur les 9 555 AMM',
+        },
+      ])
       toast({
         title: 'Le copilote est indisponible',
-        description: 'La requête a échoué. Reformulez votre question et réessayez.',
+        description: 'Le service IA est momentanément inaccessible. Consultez les outils locaux.',
         variant: 'destructive',
       })
     },

@@ -1,5 +1,6 @@
 'use client'
 
+import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -11,7 +12,9 @@ import {
   Info,
   Package,
   Pill,
+  Printer,
   ShieldPlus,
+  Star,
   Syringe,
   Timer,
   Type,
@@ -29,6 +32,7 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { fetchDrugDetail } from './api'
+import type { DrugDetail } from './types'
 import {
   ListeBadge,
   StatusBadge,
@@ -37,7 +41,7 @@ import {
   formatNumber,
   isLocal,
 } from './status-badge'
-import { useDzPharm } from './store'
+import { MAX_FAVORITES, useDzPharm } from './store'
 
 function Metric({
   label,
@@ -65,6 +69,8 @@ export function DrugSheet() {
   const openDrug = useDzPharm((s) => s.openDrug)
   const addToBasket = useDzPharm((s) => s.addToBasket)
   const setView = useDzPharm((s) => s.setView)
+  const favorites = useDzPharm((s) => s.favorites)
+  const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const { toast } = useToast()
 
   const { data, isLoading } = useQuery({
@@ -75,6 +81,30 @@ export function DrugSheet() {
 
   const drug = data?.drug
   const equivalents = data?.equivalents ?? []
+  const isFav = drug ? favorites.some((f) => f.id === drug.id) : false
+
+  function handleToggleFavorite() {
+    if (!drug) return
+    const res = toggleFavorite({ id: drug.id, brand: drug.brand, dci: drug.dci })
+    if (res === 'added') {
+      toast({
+        title: 'Ajouté aux favoris',
+        description: `${drug.brand} est accessible depuis l'accueil —Mes favoris.`,
+      })
+    } else if (res === 'removed') {
+      toast({ title: 'Retiré des favoris', description: `${drug.brand} n'est plus dans vos favoris.` })
+    } else {
+      toast({
+        title: 'Favoris complets',
+        description: `Limite de ${MAX_FAVORITES} favoris atteinte.`,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  function handlePrint() {
+    window.print()
+  }
 
   function handleAddToBasket() {
     if (!drug) return
@@ -121,13 +151,44 @@ export function DrugSheet() {
         ) : (
           <>
             <SheetHeader className="space-y-3 border-b border-border/70 bg-card/50 p-5">
-              <div>
-                <SheetTitle className="text-2xl leading-tight font-bold tracking-tight text-foreground">
-                  {drug.brand}
-                </SheetTitle>
-                <SheetDescription className="mt-1 text-sm font-medium text-muted-foreground">
-                  {drug.dci}
-                </SheetDescription>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <SheetTitle className="text-2xl leading-tight font-bold tracking-tight text-foreground">
+                    {drug.brand}
+                  </SheetTitle>
+                  <SheetDescription className="mt-1 text-sm font-medium text-muted-foreground">
+                    {drug.dci}
+                  </SheetDescription>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleFavorite}
+                    aria-label={isFav ? `Retirer ${drug.brand} des favoris` : `Ajouter ${drug.brand} aux favoris`}
+                    aria-pressed={isFav}
+                    className={cn(
+                      'size-9 rounded-lg transition-colors',
+                      isFav
+                        ? 'text-chifa hover:bg-chifa/10'
+                        : 'text-muted-foreground hover:text-chifa'
+                    )}
+                  >
+                    <Star
+                      className={cn('size-5', isFav && 'fill-chifa')}
+                      aria-hidden
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePrint}
+                    aria-label="Imprimer la fiche du médicament"
+                    className="size-9 rounded-lg text-muted-foreground hover:text-primary"
+                  >
+                    <Printer className="size-5" aria-hidden />
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <StatusBadge status={drug.status} />
@@ -293,6 +354,140 @@ export function DrugSheet() {
           </>
         )}
       </SheetContent>
+      {drug ? <PrintMonograph drug={drug} equivalents={equivalents.slice(0, 30)} /> : null}
     </Sheet>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Fiche imprimable — monographie A4 (uniquement à l'impression)        */
+/* ------------------------------------------------------------------ */
+
+function PrintMonograph({
+  drug,
+  equivalents,
+}: {
+  drug: DrugDetail
+  equivalents: Array<{ id: number; brand: string; lab: string; dosage: string | null; status: string }>
+}) {
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
+    <div className="print-monograph fixed inset-0 z-[999] hidden bg-white text-black print:block print:overflow-visible">
+      <div className="mx-auto max-w-[190mm] px-6 py-8">
+        {/* En-tête */}
+        <div className="flex items-start justify-between border-b-2 border-black pb-4">
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase">
+              Référentiel Pharmaceutique Algérien — DzPharm
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">{drug.brand}</h1>
+            <p className="mt-0.5 text-sm font-semibold">{drug.dci}</p>
+          </div>
+          <div className="text-right text-[11px]">
+            <p className="font-bold">Monographie</p>
+            <p>Édité le {new Date().toLocaleDateString('fr-FR')}</p>
+            <p>AMM : {drug.regNumber || '—'}</p>
+          </div>
+        </div>
+
+        {/* Statut */}
+        <p className="mt-3 text-[11px]">
+          <strong>Statut :</strong> {drug.status === 'ACTIF' ? 'Actif (AMM en cours de validité)' : drug.status === 'RETRIE' ? 'RETIRÉ du marché' : 'Enregistrement non renouvelé'}
+          {drug.liste ? (
+            <>
+              {' '}· <strong>Liste :</strong> {drug.liste}
+            </>
+          ) : null}
+          {drug.domains?.length ? (
+            <>
+              {' '}· <strong>Domaine :</strong> {drug.domains.join(', ')}
+            </>
+          ) : null}
+        </p>
+
+        {/* Caractéristiques */}
+        <h2 className="mt-5 border-b border-black/30 pb-1 text-[12px] font-bold tracking-widest uppercase">
+          Caractéristiques du produit
+        </h2>
+        <table className="mt-2 w-full text-[11px]">
+          <tbody>
+            {[
+              ['Forme', drug.form],
+              ['Dosage', drug.dosage],
+              ['Conditionnement', drug.packaging],
+              ['Laboratoire titulaire', drug.lab],
+              ['Pays', drug.country],
+              ['Type d\'enregistrement', drug.type],
+              ['Tarification P1 / P2', [drug.p1, drug.p2].filter(Boolean).join(' / ')],
+              ['Date d\'enregistrement initial', formatDate(drug.regDateInitial)],
+              ['Validité (date finale)', formatDate(drug.regDateFinal)],
+              ['Stabilité', drug.stability],
+            ]
+              .filter(([, v]) => v)
+              .map(([label, value]) => (
+                <tr key={label} className="align-top">
+                  <td className="w-56 py-1 pr-3 font-semibold">{label}</td>
+                  <td className="py-1">{value}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+
+        {drug.obs ? (
+          <p className="mt-3 text-[11px]">
+            <strong>Observations : </strong>
+            {drug.obs}
+          </p>
+        ) : null}
+
+        {(drug.status === 'RETRIE' || drug.status === 'NON_RENOUVELE') && (
+          <p className="mt-3 border-2 border-black p-2 text-[11px] font-bold">
+            ⚠ {drug.status === 'RETRIE' ? 'PRODUIT RETIRÉ DU MARCHÉ' : 'ENREGISTREMENT NON RENOUVELÉ'}
+            {drug.withdrawDate ? ` — retrait le ${formatDate(drug.withdrawDate)}` : ''}
+            {drug.withdrawReason ? ` (${drug.withdrawReason})` : ''}
+          </p>
+        )}
+
+        {/* Équivalents */}
+        {equivalents.length > 0 ? (
+          <>
+            <h2 className="mt-5 border-b border-black/30 pb-1 text-[12px] font-bold tracking-widest uppercase">
+              Équivalents — même DCI ({formatNumber(equivalents.length)}
+              {equivalents.length === 30 ? '+' : ''})
+            </h2>
+            <table className="mt-2 w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-black/40 text-left">
+                  <th className="py-1 pr-2">Marque</th>
+                  <th className="py-1 pr-2">Laboratoire</th>
+                  <th className="py-1 pr-2">Dosage</th>
+                  <th className="py-1">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {equivalents.map((eq) => (
+                  <tr key={eq.id} className="border-b border-black/10">
+                    <td className="py-1 pr-2 font-semibold">{eq.brand}</td>
+                    <td className="py-1 pr-2">{eq.lab}</td>
+                    <td className="py-1 pr-2">{eq.dosage || '—'}</td>
+                    <td className="py-1">
+                      {eq.status === 'ACTIF' ? 'Actif' : eq.status === 'RETRIE' ? 'Retiré' : 'Non renouvelé'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : null}
+
+        <p className="mt-6 border-t border-black/40 pt-2 text-[9px] text-black/70">
+          Source : Nomenclature nationale des produits pharmaceutiques (Ministère de l&apos;Industrie
+          Pharmaceutique, Algérie — Juin 2026). Document généré par DzPharm à titre informatif — ne
+          remplace pas l&apos;AMM officielle ni les référentiels en vigueur.
+        </p>
+      </div>
+    </div>,
+    document.body
   )
 }

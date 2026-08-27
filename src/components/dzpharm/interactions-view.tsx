@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
 import {
   Activity,
   AlertTriangle,
@@ -12,16 +11,18 @@ import {
   Plus,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   Trash2,
   X,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { postInteractions } from './api'
+import { postInteractions, postLocalInteractions } from './api'
 import type { InteractionPair, InteractionsResponse, InteractionSeverity } from './types'
 import { RISK_META, SeverityBadge, StatusBadge } from './status-badge'
 import { MAX_BASKET, useDzPharm } from './store'
@@ -81,27 +82,42 @@ export function InteractionsView() {
   const [patientContext, setPatientContext] = useState('')
   const [result, setResult] = useState<InteractionsResponse | null>(null)
   const [analyzedIds, setAnalyzedIds] = useState<string>('')
+  const [localPending, setLocalPending] = useState(false)
+  const [aiPending, setAiPending] = useState(false)
+  const [aiFailed, setAiFailed] = useState(false)
 
-  const mutation = useMutation({
-    mutationFn: () =>
-      postInteractions(
-        basket.map((b) => b.brand),
-        patientContext
-      ),
-    onSuccess: (data) => {
-      setResult(data)
+  const names = useMemo(() => basket.map((b) => b.brand), [basket])
+
+  async function analyze() {
+    if (names.length < 2) return
+    setAiFailed(false)
+
+    // 1. Moteur local — instantané, toujours disponible
+    setLocalPending(true)
+    try {
+      const local = await postLocalInteractions(names)
+      setResult(local)
       setAnalyzedIds(basket.map((b) => b.id).join(','))
-    },
-    onError: () => {
-      toast({
-        title: 'Analyse impossible',
-        description:
-          'Le service d\u2019analyse d\u2019interactions a rencontré une erreur. Réessayez dans un instant.',
-        variant: 'destructive',
-      })
-    },
-  })
+    } catch {
+      // le moteur local échoue rarement ; on tente quand même l'IA
+    } finally {
+      setLocalPending(false)
+    }
 
+    // 2. Analyse IA approfondie — remplace le résultat local si disponible
+    setAiPending(true)
+    try {
+      const ai = await postInteractions(names, patientContext)
+      setResult({ ...ai, source: 'ai' })
+      setAnalyzedIds(basket.map((b) => b.id).join(','))
+    } catch {
+      setAiFailed(true)
+    } finally {
+      setAiPending(false)
+    }
+  }
+
+  const pending = localPending || aiPending
   const stale =
     result !== null && analyzedIds !== basket.map((b) => b.id).join(',')
 
@@ -227,14 +243,14 @@ export function InteractionsView() {
 
               <div className="flex gap-2">
                 <Button
-                  onClick={() => mutation.mutate()}
-                  disabled={basket.length < 2 || mutation.isPending}
+                  onClick={analyze}
+                  disabled={basket.length < 2 || pending}
                   className="h-11 flex-1 text-sm font-semibold"
                 >
-                  {mutation.isPending ? (
+                  {pending ? (
                     <>
                       <Loader2 className="size-4 animate-spin" aria-hidden />
-                      Analyse en cours…
+                      {localPending ? 'Règles locales…' : 'Analyse IA…'}
                     </>
                   ) : (
                     <>
@@ -258,10 +274,12 @@ export function InteractionsView() {
                   </Button>
                 ) : null}
               </div>
-              {mutation.isPending ? (
+              {pending ? (
                 <p className="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
                   <Loader2 className="size-3 animate-spin" aria-hidden />
-                  L&apos;analyse IA peut prendre jusqu&apos;à une minute…
+                  {localPending
+                    ? 'Vérification instantanée par le moteur local de règles…'
+                    : 'L\u2019analyse IA approfondie peut prendre jusqu\u2019à une minute…'}
                 </p>
               ) : null}
             </CardContent>
@@ -270,7 +288,7 @@ export function InteractionsView() {
 
         {/* ------------------------ Résultats ------------------------ */}
         <div className="min-w-0">
-          {!result && !mutation.isPending ? (
+          {!result && !pending ? (
             <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-10 text-center">
               <ShieldCheck className="size-12 text-muted-foreground/40" aria-hidden />
               <p className="mt-4 text-base font-semibold text-foreground">
@@ -282,19 +300,60 @@ export function InteractionsView() {
                 surveiller et les conseils de dispensation.
               </p>
             </div>
-          ) : mutation.isPending && !result ? (
+          ) : pending && !result ? (
             <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-card p-10 text-center">
               <Loader2 className="size-10 animate-spin text-primary" aria-hidden />
               <p className="mt-4 text-base font-semibold text-foreground">
                 Analyse en cours…
               </p>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Le copilote passe en revue les {basket.length} médicaments de votre
-                panier et leurs associations.
+                Le moteur local de règles vérifie instantanément les {basket.length}{' '}
+                médicaments de votre panier, puis l&apos;IA approfondit l&apos;analyse.
               </p>
             </div>
           ) : result ? (
             <div className="space-y-4">
+              {/* Indicateur de source + état IA */}
+              <div
+                className={cn(
+                  'flex flex-wrap items-center gap-2 rounded-lg border px-4 py-2.5 text-sm',
+                  aiFailed
+                    ? 'border-state-warning/40 bg-state-warning/10 text-state-warning'
+                    : 'border-border bg-card text-muted-foreground'
+                )}
+                role="status"
+              >
+                {result.source === 'ai' ? (
+                  <>
+                    <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                    <span>
+                      Analyse IA approfondie — croisée avec la base de règles locale.
+                    </span>
+                  </>
+                ) : aiFailed ? (
+                  <>
+                    <AlertTriangle className="size-4 shrink-0" aria-hidden />
+                    <span>
+                      Analyse IA approfondie indisponible — résultats du{' '}
+                      <strong className="font-semibold">moteur local de règles</strong>{' '}
+                      ({result.pairs.length} association(s) vérifiée(s)).
+                    </span>
+                  </>
+                ) : aiPending ? (
+                  <>
+                    <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                    <span>Règles locales appliquées — analyse IA en cours…</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="size-4 shrink-0 text-primary" aria-hidden />
+                    <span>
+                      Moteur local de règles — réponse instantanée hors ligne.
+                    </span>
+                  </>
+                )}
+              </div>
+
               {stale ? (
                 <div
                   className="flex items-center gap-2 rounded-lg border border-state-warning/40 bg-state-warning/10 px-4 py-2.5 text-sm text-state-warning"
@@ -447,8 +506,9 @@ export function InteractionsView() {
 
               <p className="flex items-start gap-2 text-xs text-muted-foreground">
                 <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                L&apos;analyse est générée par IA à partir des données du référentiel — elle ne
-                remplace pas la validation pharmaceutique ni les référentiels officiels.
+                {result.source === 'ai'
+                  ? 'L\u2019analyse est générée par IA à partir des données du référentiel — elle ne remplace pas la validation pharmaceutique ni les référentiels officiels.'
+                  : 'Analyse générée par le moteur local de règles DzPharm (base des interactions majeures courantes en Algérie) — elle ne remplace ni l\u2019analyse IA approfondie ni la validation pharmaceutique.'}
               </p>
             </div>
           ) : null}

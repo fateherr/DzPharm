@@ -78,3 +78,10 @@ export function postInteractions(
     patientContext: patientContext?.trim() || undefined,
   })
 }
+
+/** Analyse locale instantanée (moteur de règles, sans IA). */
+export function postLocalInteractions(drugs: string[]): Promise<InteractionsResponse> {
+  return postJson<InteractionsResponse>('/api/interactions', {
+    drugs: drugs.map((name) => ({ name })),
+  })
+}

@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Sparkles,
   Sun,
+  Wrench,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ const NAV_ITEMS: { id: ViewId; label: string; icon: typeof Home }[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
   { id: 'repertoire', label: 'Répertoire', icon: BookOpen },
   { id: 'interactions', label: 'Interactions', icon: ShieldAlert },
+  { id: 'outils', label: 'Outils', icon: Wrench },
   { id: 'copilote', label: 'Copilote IA', icon: Sparkles },
   { id: 'stats', label: 'Statistiques', icon: BarChart3 },
 ]

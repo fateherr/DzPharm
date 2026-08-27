@@ -7,6 +7,7 @@ import { HomeView } from '@/components/dzpharm/home-view'
 import { DirectoryView } from '@/components/dzpharm/directory-view'
 import { InteractionsView } from '@/components/dzpharm/interactions-view'
 import { CopilotView } from '@/components/dzpharm/copilot-view'
+import { ToolsView } from '@/components/dzpharm/tools-view'
 import { StatsView } from '@/components/dzpharm/stats-view'
 import { DrugSheet } from '@/components/dzpharm/drug-sheet'
 import { useDzPharm } from '@/components/dzpharm/store'
@@ -29,6 +30,7 @@ export default function Page() {
             {view === 'accueil' ? <HomeView /> : null}
             {view === 'repertoire' ? <DirectoryView /> : null}
             {view === 'interactions' ? <InteractionsView /> : null}
+            {view === 'outils' ? <ToolsView /> : null}
             {view === 'copilote' ? <CopilotView /> : null}
             {view === 'stats' ? <StatsView /> : null}
           </motion.div>

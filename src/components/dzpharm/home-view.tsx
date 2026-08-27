@@ -10,6 +10,7 @@ import {
   Brain,
   Bug,
   Building2,
+  CreditCard,
   Droplet,
   Ear,
   Eye,
@@ -21,12 +22,16 @@ import {
   Microscope,
   Plane,
   Pill,
+  ShieldAlert,
   ShieldPlus,
   Soup,
+  Sparkles,
+  Star,
   Stethoscope,
   TrendingUp,
   Waves,
   Wind,
+  X,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -177,6 +182,9 @@ const QUICK_CHIPS = [
 export function HomeView() {
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
   const openDrug = useDzPharm((s) => s.openDrug)
+  const setView = useDzPharm((s) => s.setView)
+  const favorites = useDzPharm((s) => s.favorites)
+  const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const { data: stats, isLoading } = useQuery({
@@ -315,6 +323,151 @@ export function HomeView() {
             />
           </div>
         )}
+      </section>
+
+      {/* --------------------------- Favoris ----------------------------- */}
+      {favorites.length > 0 ? (
+        <section
+          aria-labelledby="favoris-title"
+          className="mx-auto max-w-7xl px-4 pb-8 pt-2 sm:px-6"
+        >
+          <div className="mb-3.5 flex items-center justify-between gap-4">
+            <h2 id="favoris-title" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+              <Star className="size-4.5 fill-chifa text-chifa" aria-hidden />
+              Mes favoris
+              <span className="rounded-full bg-chifa/10 px-2 py-0.5 text-xs font-semibold text-chifa tabular-nums">
+                {favorites.length}
+              </span>
+            </h2>
+            <button
+              type="button"
+              onClick={() => toggleFavorite(favorites[favorites.length - 1])}
+              className="text-xs text-muted-foreground transition-colors hover:text-state-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              Retirer le dernier
+            </button>
+          </div>
+          <div className="scroll-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+            {favorites.map((fav) => (
+              <div
+                key={fav.id}
+                className="group relative flex shrink-0 items-center gap-2.5 rounded-xl border border-chifa/25 bg-chifa/5 py-2 pr-8 pl-3 transition-colors hover:border-chifa/50"
+              >
+                <button
+                  type="button"
+                  onClick={() => openDrug(fav.id)}
+                  className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  title={`Ouvrir la fiche ${fav.brand}`}
+                >
+                  <span className="block max-w-44 truncate text-sm font-semibold text-foreground">
+                    {fav.brand}
+                  </span>
+                  <span className="block max-w-44 truncate text-[11px] text-muted-foreground">
+                    {fav.dci}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(fav)}
+                  aria-label={`Retirer ${fav.brand} des favoris`}
+                  className="absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:bg-state-danger/10 hover:text-state-danger focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* --------------------------- Outils ------------------------------ */}
+      <section
+        aria-labelledby="outils-title"
+        className="mx-auto max-w-7xl px-4 pb-10 sm:px-6"
+      >
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <h2 id="outils-title" className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              Outils cliniques
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Aides à la dispensation adaptées aux spécificités algériennes
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              icon: Baby,
+              title: 'Posologies pédiatriques',
+              desc: 'Calculateur pondéral (mg/kg → mL) avec les formes locales : sirops, sachets, suppositoires.',
+              view: 'outils' as const,
+              accent: 'primary' as const,
+            },
+            {
+              icon: CreditCard,
+              title: 'Simulateur Chifa',
+              desc: 'Reste à charge CNAS / ALD 100 % : tarif de référence, ticket modérateur, taux par produit.',
+              view: 'outils' as const,
+              accent: 'chifa' as const,
+            },
+            {
+              icon: ShieldAlert,
+              title: 'Contrôle d\u2019interactions',
+              desc: 'Moteur local instantané + analyse IA approfondie sur votre panier de médicaments.',
+              view: 'interactions' as const,
+              accent: 'danger' as const,
+            },
+            {
+              icon: Sparkles,
+              title: 'Copilote IA',
+              desc: 'Assistant clinique FR / arabe / darija, modes professionnel et patient.',
+              view: 'copilote' as const,
+              accent: 'primary' as const,
+            },
+          ].map((tool, i) => (
+            <motion.button
+              key={tool.title}
+              type="button"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 * i }}
+              onClick={() => setView(tool.view)}
+              className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <span
+                className={cn(
+                  'absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
+                  tool.accent === 'chifa'
+                    ? 'via-chifa/60'
+                    : tool.accent === 'danger'
+                      ? 'via-state-danger/60'
+                      : 'via-primary/60'
+                )}
+                aria-hidden
+              />
+              <span
+                className={cn(
+                  'flex size-10 items-center justify-center rounded-lg',
+                  tool.accent === 'chifa'
+                    ? 'bg-chifa/10 text-chifa'
+                    : tool.accent === 'danger'
+                      ? 'bg-state-danger/10 text-state-danger'
+                      : 'bg-primary/10 text-primary'
+                )}
+                aria-hidden
+              >
+                <tool.icon className="size-5" />
+              </span>
+              <span className="mt-3 block text-sm font-semibold text-foreground">
+                {tool.title}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                {tool.desc}
+              </span>
+            </motion.button>
+          ))}
+        </div>
       </section>
 
       {/* --------------------------- Domaines ----------------------------- */}

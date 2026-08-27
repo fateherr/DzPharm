@@ -211,3 +211,27 @@
 .typing-dot:nth-child(3) {
   animation-delay: 0.3s;
 }
+
+/* ------------------------------------------------------------------ */
+/* Impression — monographie médicament (A4, noir & blanc)              */
+/* ------------------------------------------------------------------ */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  body > *:not(.print-monograph) {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .print-monograph {
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+}

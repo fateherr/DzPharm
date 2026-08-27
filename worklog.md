@@ -114,3 +114,36 @@ Next-phase recommendations (for the cron agent):
 4. Carte des pharmacies de garde par wilaya
 5. PWA offline (IndexedDB cache des fiches)
 6. Alertes pénuries + explorateur des 17 livres techniques (fiches DCI des docx)
+
+---
+Task ID: 7
+Agent: main-orchestrator (cron review session 2026-08-27)
+Task: QA globale via agent-browser, correction de la panne IA (repli local), et développement des fonctionnalités phase 2 (calculateur pédiatrique, simulateur Chifa, favoris, fiche imprimable)
+
+Work Log:
+- QA initiale agent-browser : 5 vues OK, 0 erreur console, navigation/sheet/stats OK
+- DIAGNOSTIC CRITIQUE : le service z-ai API renvoie 401 {"error":"missing X-Token header"} sur TOUS les appels (chat, interactions, vision CLI). Config /etc/.z-ai-config n'a que baseUrl+apiKey, aucun token valide sur la machine. Panne EXTERNE — impossible à corriger localement. Confirmé aussi via CLI z-ai vision (même 401).
+- Créé src/lib/interaction-rules.ts : moteur local de ~48 règles d'interactions (classes IEC/ARA2/AINS/ISRS/macrolides/FQ/statines/azolés/benzos/thiazidiques/IPP/sulfamidés + jetons), match sur dciKey normalisé + éclatement DCI composées, globalRisk, paires par produits, sévérité CONTRE-INDIQUE..MINEURE
+- Créé POST /api/interactions (route locale, enrichit via registre puis applique les règles, <300ms). Testé : BRUFEN+LOPRIL → MAJEURE (AINS+IEC), BRUFEN+CAPTOPRIL+PROZAC → 2 majeures
+- Refonte interactions-view : analyse en 2 temps (moteur local instantané → puis IA approfondie qui remplace si dispo) ; bandeau de source (local/IA), bandeau orange si IA indisponible, texte de disclaimer adapté à la source
+- Créé src/lib/pediatric-dosing.ts : base de 15 molécules pédiatriques avec formulations RÉELLES du marché algérien vérifiées en DB (PARALGAN 120mg/5mL, ADVIFEN 100mg/5mL, AMOXICILLINE EG 125/250mg/5mL, AUGMENTIN 100/12.5mg/mL, ZOMAX 200mg/5mL, OROKAL, CLARIDAR, ARTIZ gouttes 10mg/mL, KOXMA, CORTIDAL 1mg/mL, GEOFER 50mg/5mL, TRIFER 100mg/5mL, VERTEN, VALOXIUM rectal) + computeDose (mg/kg→mg→mL, plafonds adulte, blockers âge/poids, bands fixes par tranche d'âge)
+- Créé pediatric-calculator.tsx : sliders poids (0.5-80kg) + âge (0-144 mois), sélecteur molécule/forme, carte dose principale avec volume mL, rythme/max 24h, détail de calcul, blockers rouges, points de vigilance, marques locales cliquables depuis le registre (TanStack Query)
+- Créé chifa-simulator.tsx : type de carte (CNAS 80%, ALD 100%, CASNOS 80%, sans couverture), lignes produits avec prix + taux (100/80/40/0), plafonnement taux carte, reste à charge animé, barre remboursé/patient, 3 cartes de totaux, section pédagogique Chifa
+- Créé tools-view.tsx : vue « Outils » à onglets (Tabs shadcn) + ajout onglet nav « Outils » (icône Wrench) dans header + page.tsx
+- Favoris : store zustand persist (localStorage dzpharm-store, partialize favorites, max 30), étoile Star dans drug-sheet (toggle + toast), section « Mes favoris » sur l'accueil (chips scrollables avec suppression), mention dans header mobile
+- Fiche imprimable : PrintMonograph porté via createPortal au body (A4, noir & blanc, en-tête DzPharm + AMM, table caractéristiques, alertes retrait, table équivalents 30 max, source légale) + bouton imprimante dans drug-sheet + CSS @media print dans globals.css (body > *:not(.print-monograph) masqué, @page A4)
+- BUG CORRIGÉ : bloc @media print initial disparaissait du CSS compilé (Tailwind/Lightning strippait @page imbriqué dans @media) → @page sorti du @media. Vérifié : PDF 1 page, monographie seule, zéro élément d'UI
+- Copilote : onError ajoute désormais un message persistant dans le fil (« Service IA momentanément indisponible » + liste des outils locaux restants) en plus du toast
+- QA finale agent-browser : 6 vues sans overflow ni desktop ni mobile 390px, calcul pédiatrique vérifié (12kg paracétamol → 180mg → 7.5mL), Chifa vérifié (305 DA total → 206 remboursé → 99 patient), favoris persistants après reload, impression PDF propre, moteur local E2E (BRUFEN+LOPRIL majeure), lint 0 erreur, tsc 0 erreur sur les fichiers modifiés
+
+Stage Summary:
+- NOUVELLES FONCTIONNALITÉS : Outils cliniques (calculateur posologies pédiatriques 15 molécules + simulateur Chifa), moteur local d'interactions (48 règles) toujours disponible, favoris persistants, fiche imprimable A4
+- Résilience : la panne externe du service IA n'affecte plus l'expérience — les interactions restent fonctionnelles via le moteur local, le copilote affiche une erreur propre avec redirection vers les outils
+- ÉTAT : STABLE — toutes les vues vérifiées, pas de régression (recherche, répertoire, fiche, stats, export CSV)
+
+=== Prochaine phase recommandée ===
+1. RAMADAN : adaptateur chronopharmacologie (décaler prises autour Iftar/Suhoor) — lib local purement calculatoire
+2. Explorateur des 17 livres docx (fiches DCI par domaine) — nécessite script d'extraction des monographies complètes
+3. PWA offline (service worker + cache des fiches consultées)
+4. Alerte pénuries : champs OBS contiennent parfois des infos de rupture — investiguer
+5. Lorsque le token X-Token sera de retour : ré-activer et re-tester les 2 endpoints IA (le code est prêt, rien à changer)
