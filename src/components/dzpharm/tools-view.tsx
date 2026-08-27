@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Baby, CreditCard, GitCompareArrows, Moon } from 'lucide-react'
+import { Baby, CreditCard, Droplets, GitCompareArrows, Moon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PediatricCalculator } from './pediatric-calculator'
 import { ChifaSimulator } from './chifa-simulator'
 import { RamadanAdapter } from './ramadan-adapter'
 import { DrugComparator } from './drug-comparator'
+import { RenalCalculator } from './renal-calculator'
 
 export function ToolsView() {
   const [tab, setTab] = useState('pediatrie')
@@ -20,8 +21,8 @@ export function ToolsView() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Calculateurs et aides à la dispensation adaptés aux spécificités algériennes —
-          posologies pédiatriques, remboursement Chifa, adaptation Ramadan et comparateur
-          de médicaments.
+          posologies pédiatriques, fonction rénale, remboursement Chifa, adaptation
+          Ramadan et comparateur de médicaments.
         </p>
       </div>
 
@@ -40,6 +41,13 @@ export function ToolsView() {
           >
             <CreditCard className="size-4" aria-hidden />
             Simulateur Chifa
+          </TabsTrigger>
+          <TabsTrigger
+            value="renal"
+            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm"
+          >
+            <Droplets className="size-4" aria-hidden />
+            Fonction rénale
           </TabsTrigger>
           <TabsTrigger
             value="ramadan"
@@ -74,6 +82,16 @@ export function ToolsView() {
             transition={{ duration: 0.25 }}
           >
             <ChifaSimulator />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="renal" className="mt-0">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <RenalCalculator />
           </motion.div>
         </TabsContent>
 

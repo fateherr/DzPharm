@@ -221,7 +221,7 @@
 }
 
 @media print {
-  body > *:not(.print-monograph) {
+  body > *:not(.print-monograph):not(.print-rcp) {
     display: none !important;
   }
 
@@ -229,7 +229,8 @@
     background: #fff !important;
   }
 
-  .print-monograph {
+  .print-monograph,
+  .print-rcp {
     position: static !important;
     display: block !important;
     overflow: visible !important;

@@ -181,3 +181,41 @@ Stage Summary:
 3. Alerte pénuries : investiguer le champ OBS (ruptures mentionnées)
 4. Carte pharmacies de garde par wilaya (données à sourcer)
 5. « Les plus consultés » : endpoint top-views + section accueil (données now collectées)
+
+---
+Task ID: 9
+Agent: main-orchestrator (session 2026-08-27, phase 4)
+Task: RCP (Résumé Caractéristiques du Produit) pour chaque médicament depuis la base des 17 livres — extraction complète, moteur de génération BOOK/AI/REGISTRY, viewer ANSM, + nouvelles fonctionnalités (fonction rénale, les plus consultés) + QA complète
+
+Work Log:
+- EXTRACTION COMPLÈTE DES LIVRES : scripts/extract_monographs.py — parseur multi-formats (A: «N. DCI : X» H2/H3 + sections Normal/bullets ; B: fiches numérotées «131.8.1. X» H3 + sections H4 ; C: sections inline «Label : item - item» Body Text des livres Antibiotiques/Antalgiques ; D: «152A.5 DCI : X» H2 Rhumatologie). Fixes successifs : regex préfixe numérique alphanumérique, apostrophes dans norm_label, ordre de détection Contre-indications avant Indications («contre-indications» contient «indication»), strip des tirets initiaux des items inline, headings H3/H4 internes ajoutés aux blocs de fiche, filtre des faux noms génériques (CATEGORIES/TABLEAU/SYNTHESE...)
+- RÉSULTAT : 764 monographies, 42 274 items de contenu, data/monographs.json, couverture 84,2 % des actifs (4 530/5 381) via matching multi-stratégies (exact, salt-stripped, EXPRIME EN, composantes d'associations +//ET, index de mots ≥6)
+- PRISMA : models Monograph (dciKey unique, content JSON) + Rcp (drugId unique, source, content JSON) ; scripts/seed-monographs.ts → 764 lignes
+- MOTEUR RCP src/lib/rcp.ts : index monographique en mémoire (TTL 10 min), matchMonograph (salt-strip/split combos/word index), buildBookRcp (21 sections au format ANSM numéroté 1→10 + annexes A/B/C : disponibles Algérie, conseils comptoir, règles d'or), buildAiRcp (validation LLM JSON + fusion sections registre 1-3/7-10 + tri numériques puis annexes), buildRegistryRcp (repli minimal)
+- API GET /api/drugs/[id]/rcp : stratégie cache DB > fiche livre (>8 sections) > génération IA (z-ai-web-dev-sdk, prompt RCP ANSM strict JSON, ~25 s, mise en cache) > registre (non caché pour permettre retry IA). ?refresh=1 pour forcer
+- API enrichies : /api/drugs (hasBookRcp par ligne), /api/drugs/[id] (rcpSource BOOK|AI|REGISTRY), /api/drugs/top-views (nouveau, classement par views), /api/stats (+monographs: 764)
+- FRONTEND RCP : rcp-view.tsx — bandeau en-tête ANSM (dénomination, AMM, forme, titulaire, liste), badge source (Livre technique/IA/Registre), alerte orange IA («vérifiez 4.3/4.5/4.6»), nav sticky par sections (chips rouges pour sections critiques), sections numérotées avec labels gras, boutons Régénérer/Imprimer, disclaimer, loading skeleton, état erreur + retry
+- FICHE MÉDICAMENT : Tabs «Fiche produit | RCP» (reset sur changement de médicament via ajustement au rendu — pattern React conforme lint), badge «Livre» sur l'onglet RCP si fiche livre, Sheet élargie md:max-w-xl
+- IMPRESSION RCP : PrintRcp portal (createPortal body, .print-rcp, A4 noir & blanc, sections complètes) + PrintMonograph conditionné à l'onglet Fiche (exclusivité des cibles print) + CSS print étendu ; PDF vérifié : 5 pages propres, zéro UI
+- NOUVELLE FONCTIONNALITÉ — Calculateur de fonction rénale (renal-calculator.tsx, 5e onglet Outils) : Cockcroft-Gault (adaptation posologique) + MDRD (stadification CKD G1-G5 colorée), sliders âge/poids, créatininémie µmol/L (+conversion mg/dL), sexe, et table dynamique de 10 classes critiques (metformine, AINS, aminosides, allopurinol, AOD, vancomycine, digoxine, HBPM, IEC/ARA2, spironolactone) avec statuts Dose standard/Prudence/À adapter/Contre-indiqué calculés au ClCr courant. Vérifié : homme 65a/70kg/90µmol → ClCr 72 (G2) ; femme 65a/70kg/250µmol → ClCr 22 (G4, 3 contre-indications)
+- NOUVELLE FONCTIONNALITÉ — «Les plus consultés» sur l'accueil : grille 2×4 cartes classées (rang dégradé, badge RCP livre, compteur consultations) via /api/drugs/top-views
+- AMÉLIORATIONS UI : hero + 3 badges (17 livres / 764 monographies / RCP ANSM), grille outils 8 cartes (+Fonction rénale, +Bibliothèque RCP), Statistiques + carte «Monographies RCP» (grille 5), badge RCP dans le répertoire (icône BookOpen + label), largeurs colonnes répertoire responsive (min-w-0 mobile)
+- QA E2E agent-browser : accueil (badges hero, Les plus consultés 8 cartes, 8 outils), fiche DOLIPRANE → onglet RCP «Livre» → 21 sections ANSM rendues (indications, posologie adulte/enfant, CI, interactions AVK/inducteurs, grossesse CRAT, surdosage NAC…), MEQUITAZ (sans fiche livre) → RCP «Généré par IA» 21 sections depuis cache, répertoire badge RCP, calculateur rénal G2/G4, impression PDF RCP 5 pages, Statistiques 764 monographies, Copilote/Interactions OK (BRUFEN+LOPRIL → ELEVE), mobile 390px zéro overflow, console 0 erreur
+- VLM : RCP viewer 8/10, home 8,5/10 (hiérarchie et alignements salués)
+- bun run lint : 0 erreur ; tsc --noEmit : 0 erreur sur les fichiers modifiés (erreurs préexistantes uniquement dans 3 routes API non modifiées ce jour)
+- Cron de revue 15 min recréé (job 340148, l'ancien 339874 désactivé par limites — supprimé) avec contexte RCP à jour
+- FIX infra : redémarrage du serveur dev après db:push (client Prisma périmé en mémoire — db.rcp undefined) ; serveur relancé en sous-shell (bun run dev &) pour survivre aux sessions bash
+
+Stage Summary:
+- FONCTIONNALITÉ PHARE : chaque médicament a désormais un RCP — 84 % des actifs couverts par les livres techniques (instantané, caché en base), les autres générés par IA à la demande puis cachés, repli registre toujours disponible. Format ANSM officiel numéroté, imprimable A4
+- NOUVELLES FEATURES : calculateur de fonction rénale (Cockcroft-Gault + MDRD + 10 règles d'adaptation), section «Les plus consultés», 5 cartes résumé statistiques
+- UI : onglets dans la fiche, badges RCP partout (répertoire, accueil, onglet), nav sticky RCP, impression exclusive fiche/RCP selon l'onglet actif
+- ÉTAT : STABLE — toutes vues vérifiées E2E desktop + mobile, IA opérationnelle, 0 erreur console/lint/tsc
+
+=== Prochaine phase recommandée ===
+1. Explorateur de monographies : navigateur par domaine/classe des 764 fiches DCI (les livres contiennent tableaux comparatifs et algorithmes non extraits)
+2. PWA offline (service worker + cache des fiches/RCP consultés)
+3. Alerte pénuries : investiguer le champ OBS (ruptures mentionnées)
+4. Carte pharmacies de garde par wilaya (données à sourcer)
+5. Grossesse/allaitement : outil de vérification rapide par DCI (données CRAT déjà dans les fiches 4.6)
+6. Pré-génération des RCP IA restants par lots (cron) pour couvrir 100 % du registre

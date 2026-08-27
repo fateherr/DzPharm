@@ -5,7 +5,9 @@ import type {
   DrugQueryParams,
   DrugsResponse,
   InteractionsResponse,
+  Rcp,
   Stats,
+  TopViewedDrug,
 } from './types'
 
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
@@ -63,6 +65,23 @@ export function postDrugView(id: number): void {
   fetch(`/api/drugs/${id}/view`, { method: 'POST' }).catch(() => {
     /* silencieux */
   })
+}
+
+/** RCP du produit (cache serveur > livre > IA > registre). */
+export function fetchRcp(
+  id: number,
+  signal?: AbortSignal,
+  refresh = false
+): Promise<Rcp> {
+  return getJson<Rcp>(`/api/drugs/${id}/rcp${refresh ? '?refresh=1' : ''}`, signal)
+}
+
+/** Médicaments les plus consultés. */
+export function fetchTopViewed(
+  limit = 8,
+  signal?: AbortSignal
+): Promise<{ top: TopViewedDrug[] }> {
+  return getJson<{ top: TopViewedDrug[] }>(`/api/drugs/top-views?limit=${limit}`, signal)
 }
 
 export function fetchStats(signal?: AbortSignal): Promise<Stats> {

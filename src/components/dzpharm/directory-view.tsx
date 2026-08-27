@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ArrowUp,
   ArrowUpDown,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -471,12 +472,12 @@ export function DirectoryView() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
-                  <SortHeader label="Marque" field="brand" sort={sort} onSort={handleSort} className="min-w-[160px]" />
+                  <SortHeader label="Marque" field="brand" sort={sort} onSort={handleSort} className="min-w-[130px] sm:min-w-[160px]" />
                   <SortHeader label="DCI" field="dci" sort={sort} onSort={handleSort} className="hidden min-w-[180px] sm:table-cell" />
-                  <StaticHeader label="Forme &amp; dosage" className="min-w-[150px]" />
+                  <StaticHeader label="Forme &amp; dosage" className="min-w-0 sm:min-w-[150px]" />
                   <SortHeader label="Laboratoire" field="lab" sort={sort} onSort={handleSort} className="hidden min-w-[180px] lg:table-cell" />
                   <StaticHeader label="Domaine" className="hidden md:table-cell" />
-                  <StaticHeader label="Statut" className="min-w-[120px]" />
+                  <StaticHeader label="Statut" className="min-w-0 sm:min-w-[120px]" />
                 </tr>
               </thead>
               <tbody>
@@ -492,7 +493,18 @@ export function DirectoryView() {
                     aria-label={`Ouvrir la fiche de ${drug.brand}`}
                   >
                     <td className="px-3 py-3">
-                      <span className="block font-semibold text-foreground">{drug.brand}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="block font-semibold text-foreground">{drug.brand}</span>
+                        {drug.hasBookRcp ? (
+                          <span
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary"
+                            title="RCP disponible — livre technique DzPharm"
+                          >
+                            <BookOpen className="size-2.5" aria-hidden />
+                            RCP
+                          </span>
+                        ) : null}
+                      </span>
                       <span className="block text-[11px] text-muted-foreground">
                         {drug.regNumber}
                         {drug.type ? ` · ${drug.type}` : ''}

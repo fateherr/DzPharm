@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import {
   Baby,
   Ban,
+  BookOpen,
   Bone,
   Brain,
   Bug,
@@ -13,10 +14,14 @@ import {
   Clock,
   CreditCard,
   Droplet,
+  Droplets,
   Ear,
   Eye,
   Factory,
+  FileCheck,
+  FileText,
   FlaskConical,
+  Flame,
   GitCompareArrows,
   Heart,
   History,
@@ -42,10 +47,79 @@ import {
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { fetchStats } from './api'
+import { fetchStats, fetchTopViewed } from './api'
 import { formatNumber } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
-import { useDzPharm } from './store'
+import { useDzPharm, type ViewId } from './store'
+
+/* ------------------------------------------------------------------ */
+/* Cartes outils                                                       */
+/* ------------------------------------------------------------------ */
+
+const TOOL_CARDS: Array<{
+  icon: LucideIcon
+  title: string
+  desc: string
+  view: ViewId
+  accent: 'primary' | 'chifa' | 'danger'
+}> = [
+  {
+    icon: Baby,
+    title: 'Posologies pédiatriques',
+    desc: 'Calculateur pondéral (mg/kg → mL) avec les formes locales : sirops, sachets, suppositoires.',
+    view: 'outils',
+    accent: 'primary',
+  },
+  {
+    icon: CreditCard,
+    title: 'Simulateur Chifa',
+    desc: 'Reste à charge CNAS / ALD 100 % : tarif de référence, ticket modérateur, taux par produit.',
+    view: 'outils',
+    accent: 'chifa',
+  },
+  {
+    icon: Moon,
+    title: 'Adaptateur Ramadan',
+    desc: 'Décalez les prises autour de l’Iftar et du Suhoor — chronopharmacologie par wilaya.',
+    view: 'outils',
+    accent: 'chifa',
+  },
+  {
+    icon: GitCompareArrows,
+    title: 'Comparateur',
+    desc: 'Comparez 2-3 médicaments côte à côte : dosage, laboratoire, statut, équivalences.',
+    view: 'outils',
+    accent: 'primary',
+  },
+  {
+    icon: ShieldAlert,
+    title: 'Contrôle d’interactions',
+    desc: 'Moteur local instantané + analyse IA approfondie sur votre panier de médicaments.',
+    view: 'interactions',
+    accent: 'danger',
+  },
+  {
+    icon: Sparkles,
+    title: 'Copilote IA',
+    desc: 'Assistant clinique FR / arabe / darija, modes professionnel et patient.',
+    view: 'copilote',
+    accent: 'primary',
+  },
+  {
+    icon: Droplets,
+    title: 'Fonction rénale',
+    desc: 'Cockcroft-Gault & MDRD : clairance, stade CKD et adaptation posologique de 10 classes critiques.',
+    view: 'outils',
+    accent: 'danger',
+  },
+  {
+    icon: FileText,
+    title: 'Bibliothèque RCP',
+    desc: 'Résumés Caractéristiques du Produit au format ANSM : 764 fiches issues des livres + génération IA.',
+    view: 'repertoire',
+    accent: 'primary',
+  },
+]
 
 /* ------------------------------------------------------------------ */
 /* Compteur animé                                                      */
@@ -198,6 +272,12 @@ export function HomeView() {
     staleTime: 30 * 60 * 1000,
   })
 
+  const { data: topViewed } = useQuery({
+    queryKey: ['top-viewed'],
+    queryFn: ({ signal }) => fetchTopViewed(8, signal),
+    staleTime: 60 * 1000,
+  })
+
   // Cmd/Ctrl + K pour focus la recherche
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -241,6 +321,20 @@ export function HomeView() {
               Le référentiel national des médicaments enrichi par l&apos;IA : recherche
               sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
             </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
+                <BookOpen className="size-3.5 text-primary" aria-hidden />
+                17 livres de pharmacologie clinique
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
+                <FileText className="size-3.5 text-primary" aria-hidden />
+                {stats?.monographs ? formatNumber(stats.monographs) : '764'} monographies DCI
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
+                <FileCheck className="size-3.5 text-primary" aria-hidden />
+                RCP au format ANSM pour chaque produit
+              </span>
+            </div>
           </motion.div>
 
           <motion.div
@@ -421,6 +515,56 @@ export function HomeView() {
         </section>
       ) : null}
 
+      {/* ------------------------ Les plus consultés --------------------- */}
+      {topViewed && topViewed.top.length > 0 ? (
+        <section
+          aria-labelledby="top-title"
+          className="mx-auto max-w-7xl px-4 pb-8 sm:px-6"
+        >
+          <div className="mb-3.5 flex items-center justify-between gap-4">
+            <h2 id="top-title" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+              <Flame className="size-4.5 text-chifa" aria-hidden />
+              Les plus consultés
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              Classement DzPharm — consultations cumulées
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {topViewed.top.slice(0, 8).map((item, i) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => openDrug(item.id)}
+                title={`Ouvrir la fiche ${item.brand} — ${formatNumber(item.views)} consultations`}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <span
+                  className="absolute -top-1 -left-1 flex size-7 items-center justify-center rounded-br-xl bg-gradient-to-br from-primary/20 to-chifa/20 text-xs font-bold text-primary tabular-nums"
+                  aria-hidden
+                >
+                  {i + 1}
+                </span>
+                {item.hasBookRcp ? (
+                  <BookOpen
+                    className="absolute top-2 right-2 size-3.5 text-primary/50 transition-colors group-hover:text-primary"
+                    aria-label="RCP livre disponible"
+                  />
+                ) : null}
+                <p className="mt-2 truncate pr-5 text-sm font-semibold text-foreground">
+                  {item.brand}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">{item.dci}</p>
+                <p className="mt-2 flex items-center gap-1 text-[11px] font-medium text-chifa tabular-nums">
+                  <Eye className="size-3" aria-hidden />
+                  {formatNumber(item.views)} consultations
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {/* --------------------------- Outils ------------------------------ */}
       <section
         aria-labelledby="outils-title"
@@ -437,50 +581,7 @@ export function HomeView() {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              icon: Baby,
-              title: 'Posologies pédiatriques',
-              desc: 'Calculateur pondéral (mg/kg → mL) avec les formes locales : sirops, sachets, suppositoires.',
-              view: 'outils' as const,
-              accent: 'primary' as const,
-            },
-            {
-              icon: CreditCard,
-              title: 'Simulateur Chifa',
-              desc: 'Reste à charge CNAS / ALD 100 % : tarif de référence, ticket modérateur, taux par produit.',
-              view: 'outils' as const,
-              accent: 'chifa' as const,
-            },
-            {
-              icon: Moon,
-              title: 'Adaptateur Ramadan',
-              desc: 'Décalez les prises autour de l\u2019Iftar et du Suhoor — chronopharmacologie par wilaya.',
-              view: 'outils' as const,
-              accent: 'chifa' as const,
-            },
-            {
-              icon: GitCompareArrows,
-              title: 'Comparateur',
-              desc: 'Comparez 2-3 médicaments côte à côte : dosage, laboratoire, statut, équivalences.',
-              view: 'outils' as const,
-              accent: 'primary' as const,
-            },
-            {
-              icon: ShieldAlert,
-              title: 'Contrôle d\u2019interactions',
-              desc: 'Moteur local instantané + analyse IA approfondie sur votre panier de médicaments.',
-              view: 'interactions' as const,
-              accent: 'danger' as const,
-            },
-            {
-              icon: Sparkles,
-              title: 'Copilote IA',
-              desc: 'Assistant clinique FR / arabe / darija, modes professionnel et patient.',
-              view: 'copilote' as const,
-              accent: 'primary' as const,
-            },
-          ].map((tool, i) => (
+          {TOOL_CARDS.map((tool, i) => (
             <motion.button
               key={tool.title}
               type="button"

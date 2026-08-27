@@ -17,6 +17,7 @@ import {
   Activity,
   Ban,
   BarChart3,
+  BookOpen,
   Building2,
   CircleDollarSign,
   Factory,
@@ -174,6 +175,14 @@ export function StatsView() {
       bg: 'bg-chifa/10',
     },
     {
+      icon: BookOpen,
+      label: 'Monographies RCP',
+      value: stats.monographs ? formatNumber(stats.monographs) : '—',
+      hint: 'Fiches DCI issues des 17 livres techniques',
+      text: 'text-primary',
+      bg: 'bg-primary/10',
+    },
+    {
       icon: Ban,
       label: 'Retirés du marché',
       value: formatNumber(stats.retires),
@@ -193,7 +202,7 @@ export function StatsView() {
       </div>
 
       {/* Cartes résumées */}
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {summaryCards.map((card) => (
           <Card key={card.label} className="transition-colors hover:border-primary/40">
             <CardContent className="flex items-center gap-3.5 p-4">

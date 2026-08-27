@@ -1,11 +1,12 @@
 'use client'
 
 import { createPortal } from 'react-dom'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Ban,
+  BookOpen,
   Building2,
   CalendarClock,
   CalendarX2,
@@ -30,12 +31,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { fetchDrugDetail, postDrugView } from './api'
 import type { DrugDetail } from './types'
+import { RcpViewer } from './rcp-view'
 import {
   ListeBadge,
   StatusBadge,
@@ -77,6 +80,14 @@ export function DrugSheet() {
   const pushRecent = useDzPharm((s) => s.pushRecent)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [sheetTab, setSheetTab] = useState<'fiche' | 'rcp'>('fiche')
+
+  // Repart sur l'onglet Fiche à chaque changement de médicament (ajustement au rendu)
+  const [prevDrugId, setPrevDrugId] = useState(sheetDrugId)
+  if (sheetDrugId !== prevDrugId) {
+    setPrevDrugId(sheetDrugId)
+    setSheetTab('fiche')
+  }
 
   // Rafraîchit la fiche (compteur de consultations) à chaque ouverture
   useEffect(() => {
@@ -213,7 +224,7 @@ export function DrugSheet() {
     <Sheet open={sheetDrugId !== null} onOpenChange={(o) => !o && closeDrug()}>
       <SheetContent
         side="right"
-        className="scroll-thin w-full gap-0 overflow-y-auto border-border bg-background p-0 sm:max-w-md md:max-w-lg"
+        className="scroll-thin w-full gap-0 overflow-y-auto border-border bg-background p-0 sm:max-w-md md:max-w-xl"
       >
         {isLoading || !drug ? (
           <div className="space-y-4 p-6">
@@ -313,6 +324,29 @@ export function DrugSheet() {
               </div>
             </SheetHeader>
 
+            <Tabs
+              value={sheetTab}
+              onValueChange={(v) => setSheetTab(v as 'fiche' | 'rcp')}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <TabsList className="mx-5 mt-4 grid h-10 grid-cols-2">
+                <TabsTrigger value="fiche" className="text-sm">
+                  Fiche produit
+                </TabsTrigger>
+                <TabsTrigger value="rcp" className="gap-1.5 text-sm">
+                  <BookOpen className="size-3.5" aria-hidden />
+                  RCP
+                  {drug.rcpSource === 'BOOK' && (
+                    <span
+                      className="rounded-full bg-primary/15 px-1.5 text-[10px] font-bold text-primary"
+                      title="RCP issu des livres techniques DzPharm"
+                    >
+                      Livre
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="fiche" className="mt-0 flex-1">
             <div className="space-y-6 p-5">
               {/* Alertes statut */}
               {drug.status === 'RETRIE' && (
@@ -450,10 +484,17 @@ export function DrugSheet() {
                 Ajouter au contrôle d&apos;interactions
               </Button>
             </div>
+              </TabsContent>
+              <TabsContent value="rcp" className="mt-0 flex-1">
+                <RcpViewer drugId={drug.id} brand={drug.brand} />
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </SheetContent>
-      {drug ? <PrintMonograph drug={drug} equivalents={equivalents.slice(0, 30)} /> : null}
+      {drug && sheetTab === 'fiche' ? (
+        <PrintMonograph drug={drug} equivalents={equivalents.slice(0, 30)} />
+      ) : null}
     </Sheet>
   )
 }

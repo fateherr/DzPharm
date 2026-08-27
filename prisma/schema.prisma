@@ -45,3 +45,26 @@ model Drug {
   @@index([lab])
   @@index([country])
 }
+
+// Full DCI monograph extracted from the 17 clinical pharmacology books
+model Monograph {
+  id      Int    @id @default(autoincrement())
+  dciKey  String @unique // primary normalized key (label)
+  dci     String // display label
+  domain  String
+  book    String // source docx filename
+  content String // JSON: { sections: { categories, available, mechanism, profile{indications,contraindications,adverse,other}, management, interactions, pregnancy, posology, galenic, advice, notes, pk }, context, alias, domainsExtra }
+}
+
+// Generated RCP (Résumé Caractéristiques du Produit) per product, cached
+model Rcp {
+  id        Int      @id @default(autoincrement())
+  drugId    Int      @unique
+  dciKey    String
+  source    String // BOOK | AI | REGISTRY
+  content   String // JSON RCP document
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dciKey])
+}

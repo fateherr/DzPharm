@@ -32,6 +32,8 @@ export interface Drug {
   domains: string[]
   regDateInitial: string | null
   regDateFinal: string | null
+  /** RCP issu des livres techniques disponible pour cette DCI. */
+  hasBookRcp?: boolean
 }
 
 export interface DrugDetail extends Drug {
@@ -43,6 +45,8 @@ export interface DrugDetail extends Drug {
   classes: string[]
   /** Compteur de consultations (globale, sessions DzPharm). */
   views?: number
+  /** BOOK | AI | REGISTRY si un RCP est déjà disponible (cache ou fiche livre). */
+  rcpSource?: 'BOOK' | 'AI' | 'REGISTRY' | null
 }
 
 export interface Equivalent {
@@ -82,6 +86,8 @@ export interface Stats {
   retires: number
   local: number
   imported: number
+  /** Monographies DCI issues des 17 livres techniques. */
+  monographs?: number
   topLabs: KeyCount[]
   topDci: KeyCount[]
   topForms: KeyCount[]
@@ -210,4 +216,55 @@ export interface DrugQueryParams {
   page?: number
   pageSize?: number
   sort?: 'relevance' | 'brand' | 'dci' | 'lab' | 'dateInitial' | 'dateFinal'
+}
+
+/* ------------------------------------------------------------------ */
+/* RCP — Résumé Caractéristiques du Produit                            */
+/* ------------------------------------------------------------------ */
+
+export type RcpSource = 'BOOK' | 'AI' | 'REGISTRY'
+
+export interface RcpItem {
+  label?: string
+  text: string
+}
+
+export interface RcpSection {
+  num: string
+  title: string
+  items: RcpItem[]
+}
+
+export interface Rcp {
+  source: RcpSource
+  sourceLabel: string
+  generatedAt: string
+  header: {
+    denomination: string
+    dci: string
+    forme: string
+    dosage: string
+    titulaire: string
+    amm: string
+    liste: string
+    status: string
+    domain: string
+    dateInitial: string
+    dateFinal: string
+  }
+  sections: RcpSection[]
+  disclaimer: string
+}
+
+export interface TopViewedDrug {
+  id: number
+  brand: string
+  dci: string
+  form: string
+  dosage: string
+  lab: string
+  status: DrugStatus
+  domain: string
+  views: number
+  hasBookRcp: boolean
 }

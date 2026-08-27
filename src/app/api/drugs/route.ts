@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
+import { getMonoIndex, matchMonograph } from "@/lib/rcp";
 
 /**
  * GET /api/drugs
@@ -86,6 +87,7 @@ export async function GET(req: NextRequest) {
         take: pageSize,
       }),
     ]);
+    const index = await getMonoIndex();
 
     const items = drugs.map((d) => ({
       id: d.id,
@@ -107,6 +109,8 @@ export async function GET(req: NextRequest) {
       domains: d.domains ? (JSON.parse(d.domains) as string[]) : [],
       regDateInitial: d.regDateInitial,
       regDateFinal: d.regDateFinal,
+      /** RCP issu des livres techniques disponible pour cette DCI. */
+      hasBookRcp: index ? matchMonograph(index, d.dciKey ?? d.dci) !== null : false,
     }));
 
     return NextResponse.json({
