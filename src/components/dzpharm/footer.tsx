@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { Database, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Coins, Database, RefreshCw, ShieldCheck } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -13,6 +13,10 @@ export function Footer() {
           </span>
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
+          <p className="hidden items-center gap-1.5 md:flex">
+            <Coins className="size-3.5 shrink-0 text-chifa" aria-hidden />
+            Prix PPA : liste officine (Août 2026)
+          </p>
           <p className="flex items-center gap-1.5">
             <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
             Usage professionnel — Vérifiez toujours les RCP officiels

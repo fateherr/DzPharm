@@ -37,6 +37,7 @@ import {
   Sparkles,
   Star,
   Stethoscope,
+  Store,
   TrendingUp,
   Waves,
   Wind,
@@ -90,6 +91,13 @@ const TOOL_CARDS: Array<{
     desc: 'Comparez 2-3 médicaments côte à côte : dosage, laboratoire, statut, équivalences.',
     view: 'outils',
     accent: 'primary',
+  },
+  {
+    icon: Store,
+    title: 'Catalogue & prix',
+    desc: '1 791 produits d’officine avec PPA en DA, remboursement CNAS et parapharmacie.',
+    view: 'catalogue',
+    accent: 'chifa',
   },
   {
     icon: ShieldAlert,
@@ -329,6 +337,13 @@ export function HomeView() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
                 <FileText className="size-3.5 text-primary" aria-hidden />
                 {stats?.monographs ? formatNumber(stats.monographs) : '764'} monographies DCI
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/5 px-3 py-1 text-chifa">
+                <Store className="size-3.5" aria-hidden />
+                {stats?.prices?.productsTotal
+                  ? formatNumber(stats.prices.productsTotal)
+                  : '1 791'}{' '}
+                prix d&apos;officine (PPA)
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
                 <FileCheck className="size-3.5 text-primary" aria-hidden />

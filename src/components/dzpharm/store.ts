@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 export type ViewId =
   | 'accueil'
   | 'repertoire'
+  | 'catalogue'
   | 'interactions'
   | 'copilote'
   | 'outils'

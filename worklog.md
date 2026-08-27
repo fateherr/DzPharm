@@ -219,3 +219,38 @@ Stage Summary:
 4. Carte pharmacies de garde par wilaya (données à sourcer)
 5. Grossesse/allaitement : outil de vérification rapide par DCI (données CRAT déjà dans les fiches 4.6)
 6. Pré-génération des RCP IA restants par lots (cron) pour couvrir 100 % du registre
+
+---
+Task ID: 10
+Agent: main-orchestrator (session 2026-08-27, phase 5)
+Task: Intégration de la base de prix officine uploadée (0530a7b5-...xls, 2 428 lignes) — prix PPA sur tous les médicaments, nouveau catalogue produits/parapharmacie, comparateur de prix par équivalents, stats prix, Chifa avec prix réels + QA complète
+
+Work Log:
+- EXTRACTION : scripts/match_prices.py — parse le .xls (Produit / Laboratoire / PPA / ID CNAS / Classe thérapeutique), dédoublonne (2 428 → 1 791 noms uniques, dernière occurrence retenue pour prix révisés)
+- MATCHING registre : 3 stratégies fusionnées (préfixe exact brandKey squashed, startsWith famille de marque, variantes orthographiques -1/-2 caractères) + scoring dosage(+4)/forme(+3)/conditionnement(+2)/actif(+1) ; garde de précision : score 1 accepté seulement si famille de marque unique → 1 116/1 791 liés (62,3 %), précision vérifiée 23/25 sur échantillon aléatoire
+- PRISMA : modèle PharmacyProduct (name, nameKey, lab, ppa, cnasId, class, drugId FK, matchScore) + relation Drug.pharmacyProducts ; scripts/seed-prices.ts avec correction critique du mapping id (table Drug re-seedée → ids offset de 9 555 ; mapping par position via findMany orderBy id) ; db:push + seed + redémarrage dev (client Prisma périmé)
+- BACKEND : GET /api/products (recherche q normalisée, filtres classe/catégorie drug|parapharma/remboursable/minPrice/maxPrice, tri nom|prix↑|prix↓, pagination, stats prix agrégées) ; GET /api/products/facets (27 classes + labs + compteurs, cache 5 min) ; /api/drugs inclut price+refundable (pharmacyProducts take 1 ppa asc) ; /api/drugs/[id] inclut pharmacy[] + prix sur les 60 équivalents ; /api/stats + prices{productsTotal, linked, parapharma, refundable, avg/min/max, 5 tranches, byClass top 8}
+- FRONTEND : types étendus (price/refundable sur Drug/Equivalent, PharmacyProductDetail, CatalogProduct/Response/Facets/PriceStats) ; api.ts fetchCatalog/fetchCatalogFacets ; formatPrice (fr-FR, DA) dans status-badge
+- NOUVELLE VUE « Catalogue & Prix » (catalog-view.tsx, 7e onglet nav « Prix » icône Store) : bandeau 4 indicateurs (prix moyen chifa / min safe / max / remboursables CNAS), toolbar recherche débouncée + catégorie + classe (27) + tri prix + switch remboursables, table (produit+badge CNAS+DCI, labo, PPA DA, classe, statut registre cliquable), pagination 20/50/100, export CSV (BOM ;) 100 max, note PPA/CNAS pédagogique
+- FICHE MÉDICAMENT : carte « Prix public — officine » en tête (grand prix DA, badge Remboursable CNAS/Non remboursé, classe, conditionnements multiples min→max) ; comparateur équivalents : bandeau « Équivalent le moins cher : X à Y DA (économisez Z DA vs marque) », colonne prix + badge Éco vert sur le min, mentions CNAS ; prix dans partage et monographie imprimable A4
+- RÉPERTOIRE : colonne PPA (prix + CNAS) + export CSV enrichi (PPA DA, Remboursable CNAS)
+- SIMULATEUR CHIFA : addLine récupère le prix réel via fetchDrugDetail (taux 80 % si remboursable, 0 % sinon, toast « Prix réel appliqué ») ; lignes démo mises à jour aux prix réels (GLUCOPHAGE 850 = 442,80 DA, PARALGAN = 96,19 DA)
+- STATISTIQUES : section « Catalogue & prix officine » (5 cartes indicateurs + 2 graphiques : répartition 5 tranches PPA barres chifa, prix moyen par classe top 8) — 7 graphiques au total
+- ACCUEIL : badge hero « 1 791 prix d'officine (PPA) » (accent chifa) ; 9e carte outil « Catalogue & prix » (grille 3×3) ; footer « Prix PPA : liste officine (Août 2026) »
+- QA E2E agent-browser : accueil badge prix ✓ ; catalogue (1 791 produits · 1 116 médicaments · 675 parapharmacie ; recherche doliprane → 6 produits avec prix ; tri prix desc → DECAPEPTYL 40 849 DA/OMRON 15 980 DA ; switch remboursables → 990) ✓ ; fiche DOLIPRANE 300MG → carte prix 141,16 DA + bandeau « PARALGAN 96,19 DA, économisez 44,97 DA » + badge Éco + 19 équivalents prix ✓ ; répertoire doliprane → 6/16 lignes avec prix ✓ ; stats → 5 cartes + 7 charts ✓ ; Chifa → EFFERALGAN 1G prix réel 151,48 DA appliqué (BRUFEN sirop hors liste → repli 100 DA, comportement attendu) ✓ ; interactions/copilote/outils sans régression ✓ ; mobile 390px zéro overflow page (table scrollable prévu) ✓ ; light mode ✓ ; console propre, 0 erreur
+- VLM : catalogue 8/10, stats 9/10, mobile 8/10 → fix carte prix mobile (text-base sm:text-lg, col-span-2 CNAS)
+- FIX préexistants : tsc 100 % propre maintenant (drugs/products AND spread typing, facets lab not:null+not:"" via AND, stats groupBy orderBy/_count casts, ai/chat role const) ; lint 0 erreur
+
+Stage Summary:
+- FONCTIONNALITÉ PHARE : les prix sont partout — 1 026 médicaments du registre affichent leur PPA (fiche, répertoire, export), 1 791 produits d'officine consultables dans le catalogue (dont 675 parapharmacie/accessoires hors nomenclature), 990 remboursables CNAS identifiables
+- COMPARATEUR D'ÉCONOMIES : par DCI, l'équivalent le moins cher est mis en avant avec le gain exact vs marque consultée (génériques)
+- Chifa simule désormais avec les prix réels du catalogue ; stats prix (tranches, moyennes par classe) ajoutées
+- ÉTAT : STABLE — 7 vues vérifiées E2E desktop + mobile, tsc + lint 100 % propres
+
+=== Prochaine phase recommandée ===
+1. Explorateur de monographies : navigateur par domaine/classe des 764 fiches DCI
+2. PWA offline (service worker + cache fiches/RCP/prix consultés)
+3. Panier d'achat/ordonnance persistant avec budget total (extension Chifa)
+4. Alerte pénuries : investiguer le champ OBS (ruptures mentionnées)
+5. Pré-génération des RCP IA restants par lots (cron) pour 100 % du registre
+6. Grossesse/allaitement : outil de vérification par DCI (données CRAT des fiches 4.6)

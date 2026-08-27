@@ -28,7 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { fetchDrugs, fetchStats } from './api'
 import type { Drug, DrugQueryParams } from './types'
-import { StatusBadge, countryCode, formatNumber } from './status-badge'
+import { StatusBadge, countryCode, formatNumber, formatPrice } from './status-badge'
 import { useDzPharm } from './store'
 
 type SortField = NonNullable<DrugQueryParams['sort']>
@@ -209,6 +209,8 @@ export function DirectoryView() {
         'Forme',
         'Dosage',
         'Conditionnement',
+        'PPA (DA)',
+        'Remboursable CNAS',
         'Laboratoire',
         'Pays',
         'Liste',
@@ -224,6 +226,8 @@ export function DirectoryView() {
         d.form,
         d.dosage,
         d.packaging,
+        d.price ?? '',
+        d.refundable ? 'Oui' : 'Non',
         d.lab,
         d.country,
         d.liste,
@@ -475,6 +479,7 @@ export function DirectoryView() {
                   <SortHeader label="Marque" field="brand" sort={sort} onSort={handleSort} className="min-w-[130px] sm:min-w-[160px]" />
                   <SortHeader label="DCI" field="dci" sort={sort} onSort={handleSort} className="hidden min-w-[180px] sm:table-cell" />
                   <StaticHeader label="Forme &amp; dosage" className="min-w-0 sm:min-w-[150px]" />
+                  <StaticHeader label="PPA" className="min-w-[92px] text-right" />
                   <SortHeader label="Laboratoire" field="lab" sort={sort} onSort={handleSort} className="hidden min-w-[180px] lg:table-cell" />
                   <StaticHeader label="Domaine" className="hidden md:table-cell" />
                   <StaticHeader label="Statut" className="min-w-0 sm:min-w-[120px]" />
@@ -521,6 +526,22 @@ export function DirectoryView() {
                         {drug.dosage || ''}
                         {drug.packaging ? ` · ${drug.packaging}` : ''}
                       </span>
+                    </td>
+                    <td className="px-3 py-3 text-right align-top">
+                      {drug.price != null ? (
+                        <span className="flex flex-col items-end">
+                          <span className="font-semibold text-foreground tabular-nums">
+                            {formatPrice(drug.price)}
+                          </span>
+                          {drug.refundable ? (
+                            <span className="text-[10px] font-medium text-state-safe">
+                              CNAS
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="hidden max-w-[220px] px-3 py-3 align-top lg:table-cell">
                       <span className="block truncate text-foreground/90" title={drug.lab}>

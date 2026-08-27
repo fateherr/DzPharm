@@ -62,7 +62,8 @@ export async function GET(req: NextRequest) {
       ors.push({ brand: { contains: q } });
       ors.push({ lab: { contains: q } });
       ors.push({ regNumber: { contains: q } });
-      where.AND = [...(where.AND ?? []), { OR: ors }];
+      const and = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+      where.AND = [...and, { OR: ors }];
     }
 
     const orderBy: Prisma.DrugOrderByWithRelationInput[] =
@@ -85,6 +86,13 @@ export async function GET(req: NextRequest) {
         orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
+        include: {
+          pharmacyProducts: {
+            orderBy: [{ ppa: "asc" }],
+            take: 1,
+            select: { ppa: true, cnasId: true },
+          },
+        },
       }),
     ]);
     const index = await getMonoIndex();
@@ -109,6 +117,10 @@ export async function GET(req: NextRequest) {
       domains: d.domains ? (JSON.parse(d.domains) as string[]) : [],
       regDateInitial: d.regDateInitial,
       regDateFinal: d.regDateFinal,
+      /** Prix public (PPA, DA) du produit d'officine correspondant — plus bas si plusieurs. */
+      price: d.pharmacyProducts[0]?.ppa ?? null,
+      /** Présent sur la liste CNAS => remboursable. */
+      refundable: d.pharmacyProducts[0]?.cnasId != null,
       /** RCP issu des livres techniques disponible pour cette DCI. */
       hasBookRcp: index ? matchMonograph(index, d.dciKey ?? d.dci) !== null : false,
     }));

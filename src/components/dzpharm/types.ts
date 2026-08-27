@@ -32,6 +32,10 @@ export interface Drug {
   domains: string[]
   regDateInitial: string | null
   regDateFinal: string | null
+  /** Prix public (PPA, DA) du produit d'officine correspondant. */
+  price?: number | null
+  /** Présent sur la liste CNAS => remboursable. */
+  refundable?: boolean
   /** RCP issu des livres techniques disponible pour cette DCI. */
   hasBookRcp?: boolean
 }
@@ -45,8 +49,21 @@ export interface DrugDetail extends Drug {
   classes: string[]
   /** Compteur de consultations (globale, sessions DzPharm). */
   views?: number
+  /** Produits d'officine (prix PPA) correspondant à ce médicament. */
+  pharmacy?: PharmacyProductDetail[]
   /** BOOK | AI | REGISTRY si un RCP est déjà disponible (cache ou fiche livre). */
   rcpSource?: 'BOOK' | 'AI' | 'REGISTRY' | null
+}
+
+/** Ligne de la liste de prix de l'officine, rattachée à un médicament du registre. */
+export interface PharmacyProductDetail {
+  id: number
+  name: string
+  ppa: number | null
+  cnasId: number | null
+  refundable: boolean
+  class: string | null
+  lab: string | null
 }
 
 export interface Equivalent {
@@ -59,6 +76,9 @@ export interface Equivalent {
   packaging: string
   status: DrugStatus
   type: string
+  /** Prix public (PPA, DA) si le produit figure sur la liste de prix. */
+  price?: number | null
+  refundable?: boolean
 }
 
 export interface DrugsResponse {
@@ -94,7 +114,77 @@ export interface Stats {
   domains: KeyCount[]
   countries: KeyCount[]
   listes: KeyCount[]
+  /** Statistiques du catalogue des prix (officine). */
+  prices?: PriceStats
   generatedAt: string
+}
+
+/* ------------------------------------------------------------------ */
+/* Catalogue & prix — liste officine                                   */
+/* ------------------------------------------------------------------ */
+
+export type CatalogSort = 'name' | 'priceAsc' | 'priceDesc'
+export type CatalogCategory = 'all' | 'drug' | 'parapharma'
+
+export interface CatalogProduct {
+  id: number
+  name: string
+  lab: string | null
+  ppa: number | null
+  cnasId: number | null
+  refundable: boolean
+  class: string | null
+  drug: {
+    id: number
+    dci: string | null
+    status: DrugStatus | null
+    domain: string | null
+    form: string | null
+    dosage: string | null
+  } | null
+}
+
+export interface CatalogResponse {
+  products: CatalogProduct[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  priceStats: { avg: number | null; min: number | null; max: number | null }
+}
+
+export interface CatalogFacets {
+  classes: KeyCount[]
+  labs: KeyCount[]
+  total: number
+  linked: number
+  parapharma: number
+  refundable: number
+}
+
+export interface CatalogQueryParams {
+  q?: string
+  class?: string
+  category?: CatalogCategory
+  refundable?: boolean
+  lab?: string
+  minPrice?: number
+  maxPrice?: number
+  sort?: CatalogSort
+  page?: number
+  pageSize?: number
+}
+
+export interface PriceStats {
+  productsTotal: number
+  linked: number
+  parapharma: number
+  refundable: number
+  avgPpa: number | null
+  minPpa: number | null
+  maxPpa: number | null
+  ranges: { label: string; count: number }[]
+  byClass: { key: string; count: number; avg: number | null }[]
 }
 
 export interface ChatMessage {

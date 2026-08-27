@@ -5,11 +5,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
+  BadgeCheck,
   Ban,
   BookOpen,
   Building2,
   CalendarClock,
   CalendarX2,
+  Coins,
   Eye,
   FlaskConical,
   Info,
@@ -21,6 +23,7 @@ import {
   Star,
   Syringe,
   Timer,
+  TrendingDown,
   Type,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -45,6 +48,7 @@ import {
   countryCode,
   formatDate,
   formatNumber,
+  formatPrice,
   isLocal,
 } from './status-badge'
 import { MAX_FAVORITES, useDzPharm } from './store'
@@ -106,6 +110,17 @@ export function DrugSheet() {
   const equivalents = data?.equivalents ?? []
   const isFav = drug ? favorites.some((f) => f.id === drug.id) : false
 
+  // Comparateur de prix sur les équivalents référencés en officine
+  const pricedEquivalents = equivalents.filter((e) => e.price != null)
+  const minEquivalentPrice =
+    pricedEquivalents.length > 0
+      ? Math.min(...pricedEquivalents.map((e) => e.price as number))
+      : null
+  const cheapestEquivalent =
+    pricedEquivalents.length > 0
+      ? pricedEquivalents.reduce((a, b) => ((a.price ?? Infinity) <= (b.price ?? Infinity) ? a : b))
+      : null
+
   // Historique récent + compteur de consultations (une fois par ouverture)
   const countedRef = useRef<number | null>(null)
   useEffect(() => {
@@ -142,6 +157,7 @@ export function DrugSheet() {
 
   async function handleShare() {
     if (!drug) return
+    const pharmacy = drug.pharmacy?.[0]
     const text = [
       `${drug.brand} — ${drug.dci}`,
       `Statut : ${drug.status === 'ACTIF' ? 'Actif' : drug.status === 'RETRIE' ? 'Retiré du marché' : 'Non renouvelé'}`,
@@ -149,6 +165,7 @@ export function DrugSheet() {
       drug.dosage ? `Dosage : ${drug.dosage}` : '',
       drug.lab ? `Laboratoire : ${drug.lab}` : '',
       drug.regNumber ? `AMM : ${drug.regNumber}` : '',
+      pharmacy?.ppa != null ? `Prix public : ${formatPrice(pharmacy.ppa)}` : '',
       `Voir la fiche complète sur DzPharm.`,
     ]
       .filter(Boolean)
@@ -348,6 +365,64 @@ export function DrugSheet() {
               </TabsList>
               <TabsContent value="fiche" className="mt-0 flex-1">
             <div className="space-y-6 p-5">
+              {/* Prix officine (PPA) */}
+              {drug.pharmacy && drug.pharmacy.length > 0 ? (
+                <section
+                  aria-label="Prix public en officine"
+                  className="rounded-xl border border-chifa/30 bg-gradient-to-br from-chifa/10 via-chifa/5 to-transparent p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-chifa uppercase">
+                        <Coins className="size-3.5" aria-hidden />
+                        Prix public — officine
+                      </p>
+                      <p className="mt-1.5 text-3xl font-bold tracking-tight text-foreground tabular-nums">
+                        {formatPrice(drug.pharmacy[0].ppa)}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {drug.pharmacy[0].name}
+                        {drug.pharmacy[0].lab ? ` · ${drug.pharmacy[0].lab}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                      {drug.pharmacy[0].refundable ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border border-state-safe/30 bg-state-safe/10 px-2.5 py-1 text-xs font-semibold text-state-safe"
+                          title={`ID CNAS : ${drug.pharmacy[0].cnasId}`}
+                        >
+                          <BadgeCheck className="size-3.5" aria-hidden />
+                          Remboursable CNAS
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          Non remboursé
+                        </span>
+                      )}
+                      {drug.pharmacy[0].class ? (
+                        <span className="max-w-[200px] truncate rounded-md border border-border bg-card/70 px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
+                          {drug.pharmacy[0].class}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  {drug.pharmacy.length > 1 ? (
+                    <p className="mt-2.5 border-t border-chifa/15 pt-2 text-xs text-muted-foreground">
+                      {drug.pharmacy.length - 1} autre{drug.pharmacy.length > 2 ? 's' : ''} conditionnement
+                      {drug.pharmacy.length > 2 ? 's' : ''} référencé
+                      {drug.pharmacy.length > 2 ? 's' : ''} — de{' '}
+                      <span className="font-semibold text-foreground tabular-nums">
+                        {formatPrice(drug.pharmacy[drug.pharmacy.length - 1].ppa)}
+                      </span>{' '}
+                      à{' '}
+                      <span className="font-semibold text-foreground tabular-nums">
+                        {formatPrice(drug.pharmacy[0].ppa)}
+                      </span>
+                    </p>
+                  ) : null}
+                </section>
+              ) : null}
+
               {/* Alertes statut */}
               {drug.status === 'RETRIE' && (
                 <div className="rounded-lg border border-state-danger/40 bg-state-danger/10 p-4" role="alert">
@@ -446,6 +521,36 @@ export function DrugSheet() {
                       {formatNumber(equivalents.length)}
                     </span>
                   </h3>
+                  {cheapestEquivalent ? (
+                    <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-state-safe/25 bg-state-safe/5 px-3 py-2 text-xs text-foreground">
+                      <TrendingDown className="size-4 shrink-0 text-state-safe" aria-hidden />
+                      <span>
+                        Équivalent le moins cher :{' '}
+                        <span className="font-semibold text-state-safe">
+                          {cheapestEquivalent.brand}
+                        </span>{' '}
+                        à{' '}
+                        <span className="font-bold text-state-safe tabular-nums">
+                          {formatPrice(cheapestEquivalent.price ?? null)}
+                        </span>
+                        {drug.pharmacy?.[0]?.ppa != null &&
+                        (cheapestEquivalent.price ?? Infinity) < drug.pharmacy[0].ppa ? (
+                          <span className="text-muted-foreground">
+                            {' '}
+                            (économisez{' '}
+                            <span className="font-semibold tabular-nums">
+                              {formatPrice(
+                                Math.round(
+                                  (drug.pharmacy[0].ppa - (cheapestEquivalent.price ?? 0)) * 100
+                                ) / 100
+                              )}
+                            </span>{' '}
+                            vs {drug.brand})
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
+                  ) : null}
                   <div className="scroll-thin max-h-72 overflow-y-auto rounded-lg border border-border/70">
                     <table className="w-full text-sm">
                       <tbody>
@@ -456,11 +561,39 @@ export function DrugSheet() {
                             onClick={() => openDrug(eq.id)}
                           >
                             <td className="px-3 py-2.5">
-                              <span className="block font-semibold text-foreground">{eq.brand}</span>
+                              <span className="flex items-center gap-1.5">
+                                <span className="block font-semibold text-foreground">{eq.brand}</span>
+                                {eq.price != null && eq.price === minEquivalentPrice ? (
+                                  <span
+                                    className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-state-safe/30 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
+                                    title="Prix le plus bas parmi les équivalents"
+                                  >
+                                    <TrendingDown className="size-2.5" aria-hidden />
+                                    Éco
+                                  </span>
+                                ) : null}
+                              </span>
                               <span className="block truncate text-xs text-muted-foreground">
                                 {eq.lab}
                                 {eq.dosage ? ` · ${eq.dosage}` : ''}
                               </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-right align-top">
+                              {eq.price != null ? (
+                                <span
+                                  className={cn(
+                                    'block font-semibold tabular-nums',
+                                    eq.price === minEquivalentPrice ? 'text-state-safe' : 'text-foreground'
+                                  )}
+                                >
+                                  {formatPrice(eq.price)}
+                                </span>
+                              ) : null}
+                              {eq.refundable ? (
+                                <span className="text-[10px] font-medium text-state-safe">
+                                  CNAS
+                                </span>
+                              ) : null}
                             </td>
                             <td className="px-3 py-2.5 text-right">
                               <StatusBadge status={eq.status} />
@@ -556,6 +689,8 @@ function PrintMonograph({
               ['Forme', drug.form],
               ['Dosage', drug.dosage],
               ['Conditionnement', drug.packaging],
+              ['Prix public (PPA)', drug.pharmacy?.[0]?.ppa != null ? formatPrice(drug.pharmacy[0].ppa) : ''],
+              ['Remboursement CNAS', drug.pharmacy?.[0]?.refundable ? 'Remboursable' : ''],
               ['Laboratoire titulaire', drug.lab],
               ['Pays', drug.country],
               ['Type d\'enregistrement', drug.type],

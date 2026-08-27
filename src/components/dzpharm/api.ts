@@ -1,4 +1,7 @@
 import type {
+  CatalogFacets,
+  CatalogQueryParams,
+  CatalogResponse,
   ChatMessage,
   ChatResponse,
   DrugDetailResponse,
@@ -86,6 +89,33 @@ export function fetchTopViewed(
 
 export function fetchStats(signal?: AbortSignal): Promise<Stats> {
   return getJson<Stats>('/api/stats', signal)
+}
+
+/** Catalogue officine — recherche produits & prix PPA. */
+export function fetchCatalog(
+  params: CatalogQueryParams,
+  signal?: AbortSignal
+): Promise<CatalogResponse> {
+  const search = new URLSearchParams()
+  if (params.q?.trim()) search.set('q', params.q.trim())
+  if (params.class) search.set('class', params.class)
+  if (params.category && params.category !== 'all') search.set('category', params.category)
+  if (params.refundable) search.set('refundable', '1')
+  if (params.lab) search.set('lab', params.lab)
+  if (typeof params.minPrice === 'number' && !Number.isNaN(params.minPrice))
+    search.set('minPrice', String(params.minPrice))
+  if (typeof params.maxPrice === 'number' && !Number.isNaN(params.maxPrice))
+    search.set('maxPrice', String(params.maxPrice))
+  if (params.sort) search.set('sort', params.sort)
+  if (params.page) search.set('page', String(params.page))
+  if (params.pageSize) search.set('pageSize', String(params.pageSize))
+  const qs = search.toString()
+  return getJson<CatalogResponse>(`/api/products${qs ? `?${qs}` : ''}`, signal)
+}
+
+/** Facettes du catalogue (classes, laboratoires, compteurs). */
+export function fetchCatalogFacets(signal?: AbortSignal): Promise<CatalogFacets> {
+  return getJson<CatalogFacets>('/api/products/facets', signal)
 }
 
 export function postChat(

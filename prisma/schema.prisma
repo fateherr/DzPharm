@@ -38,12 +38,34 @@ model Drug {
   domain         String? // primary domain (denormalized for filtering)
   views          Int      @default(0) // consultation counter (DzPharm sessions)
 
+  pharmacyProducts PharmacyProduct[]
+
   @@index([dciKey])
   @@index([brandKey])
   @@index([status])
   @@index([domain])
   @@index([lab])
   @@index([country])
+}
+
+// Product from the pharmacy price list (PPA — Prix Public Algérien).
+// Includes parapharmacy / accessories not present in the drug registry.
+model PharmacyProduct {
+  id         Int     @id @default(autoincrement())
+  name       String // full presentation label as printed on the list
+  nameKey    String // uppercase, accents stripped — search key
+  lab        String?
+  ppa        Float? // price in DA
+  cnasId     Int? // CNAS reimbursement ID — non-null => remboursable
+  class      String? // therapeutic class from the list
+  drugId     Int? // linked registry drug (brand+dosage+form matched)
+  matchScore Int     @default(0) // matching confidence score
+  drug       Drug?   @relation(fields: [drugId], references: [id])
+
+  @@index([nameKey])
+  @@index([class])
+  @@index([drugId])
+  @@index([cnasId])
 }
 
 // Full DCI monograph extracted from the 17 clinical pharmacology books

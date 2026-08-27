@@ -85,9 +85,9 @@ RÈGLES:
     const zai = await ZAI.create();
     const completion = await zai.chat.completions.create({
       messages: [
-        { role: "assistant", content: systemPrompt },
+        { role: "assistant" as const, content: systemPrompt },
         ...history.map((m) => ({
-          role: m.role === "assistant" ? "assistant" : "user",
+          role: (m.role === "assistant" ? "assistant" : "user") as "assistant" | "user",
           content: String(m.content).slice(0, 8000),
         })),
       ],

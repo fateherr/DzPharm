@@ -30,6 +30,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import type { ChifaCardType } from './types'
 import { SearchAutocomplete } from './search-autocomplete'
+import { fetchDrugDetail } from './api'
+import { formatPrice } from './status-badge'
 import { useToast } from '@/hooks/use-toast'
 
 interface Line {
@@ -86,8 +88,8 @@ export function ChifaSimulator() {
   const { toast } = useToast()
   const [cardType, setCardType] = useState<ChifaCardType>('standard')
   const [lines, setLines] = useState<Line[]>([
-    { uid: 'demo-1', brand: 'GLUCOPHAGE 850 mg', dci: 'METFORMINE', price: 210, rate: 80 },
-    { uid: 'demo-2', brand: 'PARALGAN 500 mg (boîte de 20)', dci: 'PARACETAMOL', price: 95, rate: 40 },
+    { uid: 'demo-1', brand: 'GLUCOPHAGE 850 mg', dci: 'METFORMINE', price: 442.8, rate: 80 },
+    { uid: 'demo-2', brand: 'PARALGAN 500 mg (boîte de 20)', dci: 'PARACETAMOL', price: 96.19, rate: 80 },
   ])
 
   /** Taux de la carte plafonne le taux du produit : min(taux produit, taux carte). */
@@ -107,23 +109,40 @@ export function ChifaSimulator() {
     }
   }, [lines, cardRate])
 
-  function addLine(drug: { id: number; brand: string; dci: string }) {
+  async function addLine(drug: { id: number; brand: string; dci: string }) {
+    const uid = `${drug.id}-${Date.now()}`
+    let added = false
     setLines((prev) => {
       if (prev.some((l) => l.brand === drug.brand)) {
         toast({ title: 'Déjà présent', description: `${drug.brand} figure déjà dans l'ordonnance.` })
         return prev
       }
-      return [
-        ...prev,
-        {
-          uid: `${drug.id}-${Date.now()}`,
-          brand: drug.brand,
-          dci: drug.dci,
-          price: 100,
-          rate: 80,
-        },
-      ]
+      added = true
+      return [...prev, { uid, brand: drug.brand, dci: drug.dci, price: 100, rate: 80 }]
     })
+    if (!added) return
+    // Récupère le prix public réel (liste officine) pour ce médicament
+    try {
+      const res = await fetchDrugDetail(drug.id)
+      const ph = res.drug.pharmacy?.[0]
+      if (ph && ph.ppa != null) {
+        const realPrice = Math.round(ph.ppa * 100) / 100
+        const rate = ph.refundable ? 80 : 0
+        setLines((prev) =>
+          prev.map((l) =>
+            l.uid === uid ? { ...l, price: realPrice, rate } : l
+          )
+        )
+        toast({
+          title: 'Prix réel appliqué',
+          description: `${drug.brand} : ${formatPrice(realPrice)}${
+            ph.refundable ? ' — remboursable CNAS (80 %)' : ' — non remboursé (0 %)'
+          }`,
+        })
+      }
+    } catch {
+      /* prix indicatif par défaut */
+    }
   }
 
   function updateLine(uid: string, patch: Partial<Line>) {
@@ -197,7 +216,7 @@ export function ChifaSimulator() {
               placeholder="Ajouter un médicament du référentiel…"
               ariaLabel="Ajouter un médicament à l'ordonnance Chifa"
               onSelect={(drug) =>
-                addLine({ id: drug.id, brand: drug.brand, dci: drug.dci })
+                void addLine({ id: drug.id, brand: drug.brand, dci: drug.dci })
               }
               rightHint={<Plus className="size-4 shrink-0 text-muted-foreground/50" aria-hidden />}
             />

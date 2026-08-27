@@ -166,6 +166,17 @@ export function formatDate(iso: string | null | undefined): string {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+/** Prix en dinars algériens : « 1 234,56 DA » (décimales masquées si entières). */
+const frPrice = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
+export function formatPrice(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—'
+  return `${frPrice.format(n)} DA`
+}
+
 /** Code pays ISO sur 2 lettres (affiché en texte, sans emoji). */
 export function countryCode(country: string | null | undefined): string {
   if (!country) return ''

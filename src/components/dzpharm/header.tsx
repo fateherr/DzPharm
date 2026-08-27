@@ -10,6 +10,7 @@ import {
   Pill,
   ShieldAlert,
   Sparkles,
+  Store,
   Sun,
   Wrench,
 } from 'lucide-react'
@@ -24,6 +25,7 @@ import { useDzPharm, type ViewId } from './store'
 const NAV_ITEMS: { id: ViewId; label: string; icon: typeof Home }[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
   { id: 'repertoire', label: 'Répertoire', icon: BookOpen },
+  { id: 'catalogue', label: 'Prix', icon: Store },
   { id: 'interactions', label: 'Interactions', icon: ShieldAlert },
   { id: 'outils', label: 'Outils', icon: Wrench },
   { id: 'copilote', label: 'Copilote IA', icon: Sparkles },
