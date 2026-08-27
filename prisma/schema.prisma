@@ -1,0 +1,46 @@
+// DzPharm — Prisma schema for the Algerian drug registry
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Drug {
+  id             Int      @id @default(autoincrement())
+  regNumber      String? // N° d'enregistrement (AMM)
+  code           String?
+  dci            String?
+  dciKey         String? // uppercase, no accents — for accent-insensitive search
+  brand          String?
+  brandKey       String?
+  form           String?
+  dosage         String?
+  packaging      String?
+  liste          String? // Liste I / II / Tableau A/B/C...
+  p1             String? // HOP / OFF
+  p2             String?
+  obs            String?
+  lab            String? // laboratoire détenteur
+  country        String?
+  regDateInitial String?
+  regDateFinal   String?
+  type           String? // GE / RE ...
+  statut         String? // F / I ...
+  stability      String?
+  withdrawDate   String?
+  withdrawReason String?
+  status         String // ACTIF | NON_RENOUVELE | RETRIE
+  domains        String? // JSON array of therapeutic domains
+  classes        String? // JSON array of pharmacological classes
+  domain         String? // primary domain (denormalized for filtering)
+
+  @@index([dciKey])
+  @@index([brandKey])
+  @@index([status])
+  @@index([domain])
+  @@index([lab])
+  @@index([country])
+}
