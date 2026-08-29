@@ -10,6 +10,7 @@ export type ViewId =
   | 'copilote'
   | 'outils'
   | 'stats'
+  | 'apropos'
 
 export interface DirectoryFilters {
   q: string

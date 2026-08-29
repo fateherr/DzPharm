@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2, Search, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchDrugs } from './api'
 import type { Drug } from './types'
 import { StatusBadge } from './status-badge'
+import { useDzPharm } from './store'
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -15,6 +16,96 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => clearTimeout(t)
   }, [value, delay])
   return debounced
+}
+
+/* ------------------------------------------------------------------ */
+/* Recherche en langage naturel — contrats locaux                      */
+/* ------------------------------------------------------------------ */
+
+interface NlInterpreted {
+  q?: string
+  domain?: string
+  form?: string
+  status?: string
+  liste?: string
+  refundableOnly?: boolean
+  p1?: string
+  pediatric?: boolean
+}
+
+interface NlSearchResponse {
+  interpreted: NlInterpreted
+  drugs: Drug[]
+  total: number
+}
+
+async function fetchNlSearch(q: string, signal?: AbortSignal): Promise<NlSearchResponse> {
+  const res = await fetch(`/api/search/nl?q=${encodeURIComponent(q)}`, { signal })
+  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+  return (await res.json()) as NlSearchResponse
+}
+
+/** Mots d'amorce typiques du langage naturel (« médicament pour… », « je cherche… »). */
+const NL_STARTERS = new Set([
+  'pour', 'un', 'une', 'des', 'medicament', 'traitement', 'remede', 'produit',
+  'je', 'cherche', 'comment', 'quel', 'quelle', 'quels', 'quelles', 'avez',
+  'faut', 'besoin', 'voudrais', 'donner', 'donnez',
+])
+
+function normFr(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/œ/g, 'oe')
+    .toLowerCase()
+    .trim()
+}
+
+/** Candidate NL : ≥3 caractères ET (multi-mots OU mot d'amorce en tête). */
+function isNlCandidate(trimmed: string): boolean {
+  if (trimmed.length < 3) return false
+  if (/\s/.test(trimmed)) return true
+  const first = normFr(trimmed).split(/\s+/)[0] ?? ''
+  return NL_STARTERS.has(first)
+}
+
+function hasNlSignals(interp: NlInterpreted | undefined): boolean {
+  if (!interp) return false
+  return Boolean(
+    interp.domain || interp.form || interp.status || interp.liste || interp.refundableOnly || interp.p1 || interp.pediatric
+  )
+}
+
+const FORM_LABELS: Record<string, string> = {
+  SIROP: 'Sirop',
+  BUVABLE: 'Buvable',
+  GOUTTE: 'Gouttes',
+  COMP: 'Comprimé',
+  GELULE: 'Gélule',
+  INJ: 'Injectable',
+  POMMADE: 'Pommade',
+  CREME: 'Crème',
+  COLLYRE: 'Collyre',
+  SUPPO: 'Suppositoire',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIF: 'Actifs',
+  NON_RENOUVELE: 'Non renouvelés',
+  RETRIE: 'Retirés',
+}
+
+/** Libellés courts des filtres interprétés (aperçu dans la ligne intelligente). */
+function interpretedChips(interp: NlInterpreted): string[] {
+  const chips: string[] = []
+  if (interp.domain) chips.push(interp.domain)
+  if (interp.form) chips.push(FORM_LABELS[interp.form] ?? interp.form)
+  if (interp.status) chips.push(STATUS_LABELS[interp.status] ?? interp.status)
+  if (interp.pediatric) chips.push('Pédiatrique')
+  if (interp.refundableOnly) chips.push('Remboursable CNAS')
+  if (interp.p1) chips.push('P1 hôpital')
+  if (interp.q) chips.push(`« ${interp.q} »`)
+  return chips
 }
 
 interface SearchAutocompleteProps {
@@ -46,6 +137,7 @@ export function SearchAutocomplete({
   ariaLabel = 'Rechercher un médicament',
   rightHint,
 }: SearchAutocompleteProps) {
+  const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -62,7 +154,20 @@ export function SearchAutocomplete({
     placeholderData: keepPreviousData,
   })
 
-  const results = useMemo(() => data?.drugs ?? [], [data])
+  // Recherche intelligente (langage naturel) — seulement si la saisie y ressemble
+  const nlCandidate = useMemo(() => isNlCandidate(trimmed), [trimmed])
+  const { data: nlData } = useQuery({
+    queryKey: ['nl-search', trimmed],
+    queryFn: ({ signal }) => fetchNlSearch(trimmed, signal),
+    enabled: nlCandidate,
+    staleTime: 60 * 1000,
+  })
+  const nlActive = nlCandidate && hasNlSignals(nlData?.interpreted)
+
+  const results = useMemo(() => {
+    if (nlActive) return nlData?.drugs ?? []
+    return data?.drugs ?? []
+  }, [nlActive, nlData, data])
 
   // Fermeture au clic extérieur
   useEffect(() => {
@@ -76,6 +181,8 @@ export function SearchAutocomplete({
   }, [])
 
   const isOpen = open && trimmed.length >= 2
+  // Nombre de lignes navigables (la ligne intelligente compte pour une)
+  const rowCount = results.length + (nlActive ? 1 : 0)
 
   function select(drug: Drug) {
     onSelect(drug)
@@ -84,18 +191,43 @@ export function SearchAutocomplete({
     internalRef.current?.blur()
   }
 
+  /** Applique les filtres interprétés et ouvre le Répertoire. */
+  function runSmartSearch() {
+    const interp = nlData?.interpreted
+    if (!interp) return
+    gotoDirectory({
+      q: interp.q ?? '',
+      domain: interp.domain ?? '',
+      form: interp.form ?? '',
+      status: interp.status ?? '',
+      liste: interp.liste ?? '',
+      country: '',
+      lab: '',
+    })
+    setValue('')
+    setOpen(false)
+    internalRef.current?.blur()
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'ArrowDown' && results.length > 0) {
+    if (e.key === 'ArrowDown' && rowCount > 0) {
       e.preventDefault()
       setOpen(true)
-      setActiveIndex((i) => (i + 1) % results.length)
-    } else if (e.key === 'ArrowUp' && results.length > 0) {
+      setActiveIndex((i) => (i + 1) % rowCount)
+    } else if (e.key === 'ArrowUp' && rowCount > 0) {
       e.preventDefault()
-      setActiveIndex((i) => (i <= 0 ? results.length - 1 : i - 1))
+      setActiveIndex((i) => (i <= 0 ? rowCount - 1 : i - 1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (isOpen && activeIndex >= 0 && results[activeIndex]) {
-        select(results[activeIndex])
+      if (isOpen && activeIndex >= 0) {
+        if (nlActive && activeIndex === 0) {
+          runSmartSearch()
+        } else {
+          const row = nlActive ? activeIndex - 1 : activeIndex
+          if (results[row]) select(results[row])
+        }
+      } else if (nlActive) {
+        runSmartSearch()
       } else if (onSubmitQuery && value.trim()) {
         onSubmitQuery(value.trim())
         setOpen(false)
@@ -106,6 +238,7 @@ export function SearchAutocomplete({
   }
 
   const hero = size === 'hero'
+  const chips = nlActive ? interpretedChips(nlData!.interpreted) : []
 
   return (
     <div ref={wrapperRef} className={cn('relative', className)}>
@@ -158,37 +291,83 @@ export function SearchAutocomplete({
           role="listbox"
           className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[22rem] overflow-y-auto rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
         >
-          {results.length === 0 && !isFetching ? (
+          {nlActive ? (
+            <button
+              type="button"
+              role="option"
+              aria-selected={activeIndex === 0}
+              onClick={runSmartSearch}
+              onMouseEnter={() => setActiveIndex(0)}
+              className={cn(
+                'flex w-full items-start gap-3 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5 text-left transition-colors',
+                activeIndex === 0 ? 'bg-primary/15' : 'hover:bg-primary/10'
+              )}
+            >
+              <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-foreground">
+                  Recherche intelligente&nbsp;: «&nbsp;{trimmed}&nbsp;»
+                </span>
+                {chips.length > 0 ? (
+                  <span className="mt-1 flex flex-wrap gap-1">
+                    {chips.map((c) => (
+                      <span
+                        key={c}
+                        className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
+                <span className="mt-1 block text-[11px] text-muted-foreground">
+                  Ouvrir le Répertoire avec ces filtres
+                  {nlData?.total != null ? ` · ${nlData.total.toLocaleString('fr-FR')} médicaments` : ''}
+                </span>
+              </span>
+            </button>
+          ) : null}
+
+          {results.length === 0 && !isFetching && !nlActive ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               Aucun médicament trouvé pour «&nbsp;{trimmed}&nbsp;»
             </p>
           ) : (
-            results.map((drug, i) => (
-              <button
-                key={drug.id}
-                type="button"
-                role="option"
-                aria-selected={i === activeIndex}
-                onClick={() => select(drug)}
-                onMouseEnter={() => setActiveIndex(i)}
-                className={cn(
-                  'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                  i === activeIndex ? 'bg-primary/10' : 'hover:bg-accent'
-                )}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-foreground">
-                    {drug.brand}
+            results.map((drug, i) => {
+              const row = nlActive ? i + 1 : i
+              return (
+                <button
+                  key={drug.id}
+                  type="button"
+                  role="option"
+                  aria-selected={row === activeIndex}
+                  onClick={() => select(drug)}
+                  onMouseEnter={() => setActiveIndex(row)}
+                  className={cn(
+                    'mt-0.5 flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                    row === activeIndex ? 'bg-primary/10' : 'hover:bg-accent'
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-foreground">
+                      {drug.brand}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {drug.dci}
+                      {drug.dosage ? ` · ${drug.dosage}` : ''}
+                    </span>
                   </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {drug.dci}
-                    {drug.dosage ? ` · ${drug.dosage}` : ''}
-                  </span>
-                </span>
-                <StatusBadge status={drug.status} className="shrink-0" />
-              </button>
-            ))
+                  <StatusBadge status={drug.status} className="shrink-0" />
+                </button>
+              )
+            })
           )}
+
+          {nlActive && results.length === 0 ? (
+            <p className="px-3 py-4 text-center text-xs text-muted-foreground">
+              Aucun médicament ne correspond — ajustez les filtres dans le Répertoire.
+            </p>
+          ) : null}
         </div>
       )}
     </div>

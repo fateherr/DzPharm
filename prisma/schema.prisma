@@ -78,6 +78,22 @@ model Monograph {
   content String // JSON: { sections: { categories, available, mechanism, profile{indications,contraindications,adverse,other}, management, interactions, pregnancy, posology, galenic, advice, notes, pk }, context, alias, domainsExtra }
 }
 
+// Community shortage report ("pénurie") — indicative, unverified signals
+model ShortageReport {
+  id        Int      @id @default(autoincrement())
+  drugId    Int?
+  brand     String
+  dci       String?
+  wilaya    String?
+  note      String?
+  status    String   @default("SIGNALEE") // SIGNALEE | RESOLUE
+  createdAt DateTime @default(now())
+
+  @@index([brand])
+  @@index([drugId])
+  @@index([createdAt])
+}
+
 // Generated RCP (Résumé Caractéristiques du Produit) per product, cached
 model Rcp {
   id        Int      @id @default(autoincrement())

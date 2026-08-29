@@ -50,10 +50,41 @@ import {
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { fetchStats, fetchTopViewed } from './api'
+import { fetchStats } from './api'
+import type { TopViewedDrug } from './types'
 import { formatNumber } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
 import { useDzPharm, type ViewId } from './store'
+
+/* ------------------------------------------------------------------ */
+/* Tendances DCI — types locaux + fetcher (réponse /top-views étendue)  */
+/* ------------------------------------------------------------------ */
+
+interface TopDciEntry {
+  dci: string
+  dciKey: string
+  totalViews: number
+  brands: string[]
+}
+
+interface TopViewedResponse {
+  top: TopViewedDrug[]
+  topDci?: TopDciEntry[]
+}
+
+async function fetchTopViewedFull(
+  limit: number,
+  signal?: AbortSignal
+): Promise<TopViewedResponse> {
+  const res = await fetch(`/api/drugs/top-views?limit=${limit}`, { signal })
+  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+  return (await res.json()) as TopViewedResponse
+}
+
+/** Nettoie l'affichage d'une DCI brute du registre (supprime les «**»). */
+function cleanDciLabel(dci: string): string {
+  return dci.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim()
+}
 
 /* ------------------------------------------------------------------ */
 /* Cartes outils                                                       */
@@ -298,7 +329,7 @@ export function HomeView() {
 
   const { data: topViewed } = useQuery({
     queryKey: ['top-viewed'],
-    queryFn: ({ signal }) => fetchTopViewed(8, signal),
+    queryFn: ({ signal }) => fetchTopViewedFull(8, signal),
     staleTime: 60 * 1000,
   })
 
@@ -594,6 +625,66 @@ export function HomeView() {
                   <Eye className="size-3" aria-hidden />
                   {formatNumber(item.views)} consultations
                 </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* ------------------- DCI les plus recherchées -------------------- */}
+      {topViewed?.topDci && topViewed.topDci.length > 0 ? (
+        <section
+          aria-labelledby="top-dci-title"
+          className="mx-auto max-w-7xl px-4 pb-8 sm:px-6"
+        >
+          <div className="mb-3.5 flex items-center justify-between gap-4">
+            <h2
+              id="top-dci-title"
+              className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground"
+            >
+              <TrendingUp className="size-4.5 text-primary" aria-hidden />
+              DCI les plus recherchées
+            </h2>
+            <span className="hidden text-xs text-muted-foreground sm:block">
+              Classement par principe actif — consultations cumulées
+            </span>
+          </div>
+          {/* Défilement horizontal sur mobile, grille sur desktop */}
+          <div className="no-scrollbar -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
+            {topViewed.topDci.map((entry, i) => (
+              <button
+                key={entry.dciKey}
+                type="button"
+                onClick={() => gotoDirectory({ q: entry.dci })}
+                title={`Rechercher ${cleanDciLabel(entry.dci)} dans le répertoire`}
+                className="group flex shrink-0 items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:w-auto"
+              >
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-chifa/20 text-xs font-bold text-primary tabular-nums"
+                  aria-hidden
+                >
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block max-w-56 truncate text-sm font-semibold text-foreground">
+                    {cleanDciLabel(entry.dci)}
+                  </span>
+                  {entry.brands.length > 0 ? (
+                    <span className="block max-w-56 truncate text-[11px] text-muted-foreground">
+                      {entry.brands.join(' · ')}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-0.5">
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-chifa tabular-nums">
+                    <Eye className="size-3" aria-hidden />
+                    {formatNumber(entry.totalViews)}
+                  </span>
+                  <TrendingUp
+                    className="size-3.5 text-state-safe transition-transform group-hover:scale-110"
+                    aria-hidden
+                  />
+                </span>
               </button>
             ))}
           </div>

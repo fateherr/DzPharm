@@ -12,6 +12,7 @@ import { InteractionsView } from '@/components/dzpharm/interactions-view'
 import { CopilotView } from '@/components/dzpharm/copilot-view'
 import { ToolsView } from '@/components/dzpharm/tools-view'
 import { StatsView } from '@/components/dzpharm/stats-view'
+import { AboutView } from '@/components/dzpharm/about-view'
 import { DrugSheet } from '@/components/dzpharm/drug-sheet'
 import { useDzPharm } from '@/components/dzpharm/store'
 
@@ -39,6 +40,7 @@ export default function Page() {
             {view === 'outils' ? <ToolsView /> : null}
             {view === 'copilote' ? <CopilotView /> : null}
             {view === 'stats' ? <StatsView /> : null}
+            {view === 'apropos' ? <AboutView /> : null}
           </motion.div>
         </AnimatePresence>
       </main>

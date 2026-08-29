@@ -16,6 +16,7 @@ import {
   FlaskConical,
   Info,
   Library,
+  Loader2,
   Package,
   Pill,
   Printer,
@@ -25,6 +26,7 @@ import {
   Syringe,
   Timer,
   TrendingDown,
+  TriangleAlert,
   Type,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -36,8 +38,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { fetchDrugDetail, postDrugView } from './api'
@@ -54,6 +60,49 @@ import {
 } from './status-badge'
 import { MAX_FAVORITES, useDzPharm } from './store'
 import { SafetyNote } from './safety-note'
+import { WILAYAS } from '@/lib/wilayas'
+
+/* ------------------------------------------------------------------ */
+/* Signalements de pénurie — types & fetchers locaux                   */
+/* ------------------------------------------------------------------ */
+
+interface DrugShortagesResponse {
+  reports: Array<{
+    id: number
+    brand: string
+    wilaya: string | null
+    createdAt: string
+    status: string
+  }>
+  stats: { total: number; active: number; resolved: number; last48h: number }
+}
+
+async function fetchDrugShortages(
+  drugId: number,
+  signal?: AbortSignal
+): Promise<DrugShortagesResponse> {
+  const res = await fetch(`/api/shortages?drugId=${drugId}`, { signal })
+  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+  return (await res.json()) as DrugShortagesResponse
+}
+
+async function postShortageReport(payload: {
+  drugId: number
+  brand: string
+  dci?: string | null
+  wilaya?: string | null
+  note?: string | null
+}): Promise<void> {
+  const res = await fetch('/api/shortages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: string } | null
+    throw new Error(data?.error ?? 'Échec du signalement')
+  }
+}
 
 function Metric({
   label,
@@ -89,6 +138,12 @@ export function DrugSheet() {
   const queryClient = useQueryClient()
   const [sheetTab, setSheetTab] = useState<'fiche' | 'rcp'>('fiche')
 
+  // Signalement pénurie (popover) — wilaya + note
+  const [shortageOpen, setShortageOpen] = useState(false)
+  const [shortageWilaya, setShortageWilaya] = useState('')
+  const [shortageNote, setShortageNote] = useState('')
+  const [shortageSubmitting, setShortageSubmitting] = useState(false)
+
   // Repart sur l'onglet Fiche à chaque changement de médicament (ajustement au rendu)
   const [prevDrugId, setPrevDrugId] = useState(sheetDrugId)
   if (sheetDrugId !== prevDrugId) {
@@ -108,6 +163,14 @@ export function DrugSheet() {
     queryFn: ({ signal }) => fetchDrugDetail(sheetDrugId as number, signal),
     enabled: sheetDrugId !== null,
   })
+
+  // Signalements de pénurie communautaires pour ce médicament
+  const { data: shortageData } = useQuery({
+    queryKey: ['shortages', 'drug', sheetDrugId],
+    queryFn: ({ signal }) => fetchDrugShortages(sheetDrugId as number, signal),
+    enabled: sheetDrugId !== null,
+  })
+  const activeShortageCount = shortageData?.stats.active ?? 0
 
   const drug = data?.drug
   const equivalents = data?.equivalents ?? []
@@ -237,6 +300,36 @@ export function DrugSheet() {
       toast({ title: 'Déjà présent', description: 'Ce médicament est déjà dans le panier d\u2019interactions.' })
     } else {
       toast({ title: 'Panier complet', description: 'Le contrôle d\u2019interactions est limité à 10 médicaments.' })
+    }
+  }
+
+  async function handleSubmitShortage() {
+    if (!drug) return
+    setShortageSubmitting(true)
+    try {
+      await postShortageReport({
+        drugId: drug.id,
+        brand: drug.brand,
+        dci: drug.dci,
+        wilaya: shortageWilaya || null,
+        note: shortageNote.trim() || null,
+      })
+      toast({
+        title: 'Signalement enregistré',
+        description: `Merci ! ${drug.brand} a été signalé en tension d'approvisionnement.`,
+      })
+      setShortageOpen(false)
+      setShortageWilaya('')
+      setShortageNote('')
+      await queryClient.invalidateQueries({ queryKey: ['shortages'] })
+    } catch (err) {
+      toast({
+        title: 'Signalement impossible',
+        description: err instanceof Error ? err.message : 'Une erreur est survenue. Réessayez.',
+        variant: 'destructive',
+      })
+    } finally {
+      setShortageSubmitting(false)
     }
   }
 
@@ -425,6 +518,111 @@ export function DrugSheet() {
                   ) : null}
                 </section>
               ) : null}
+
+              {/* Tension d'approvisionnement (signalements communautaires) */}
+              <section
+                aria-label="Tension d'approvisionnement"
+                className="rounded-xl border border-state-warning/30 bg-state-warning/5 p-4"
+              >
+                {activeShortageCount > 0 ? (
+                  <p
+                    className="flex items-start gap-2 text-sm leading-relaxed text-state-warning"
+                    role="status"
+                  >
+                    <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+                    <span>
+                      <span className="font-semibold">
+                        Signalé en tension d&apos;approvisionnement par la communauté
+                      </span>{' '}
+                      ({activeShortageCount} signalement{activeShortageCount > 1 ? 's' : ''} récent
+                      {activeShortageCount > 1 ? 's' : ''}) — signalements indicatifs non vérifiés.
+                    </span>
+                  </p>
+                ) : null}
+                <Popover open={shortageOpen} onOpenChange={setShortageOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'h-9 gap-1.5 border-state-warning/40 text-xs font-semibold text-state-warning hover:bg-state-warning/10 hover:text-state-warning',
+                        activeShortageCount > 0 && 'mt-2.5'
+                      )}
+                      aria-label={`Signaler une pénurie de ${drug.brand}`}
+                    >
+                      <TriangleAlert className="size-3.5" aria-hidden />
+                      Signaler une pénurie
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-80" aria-label="Formulaire de signalement de pénurie">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Signaler une pénurie</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {drug.brand}
+                          {drug.dci ? ` — ${drug.dci}` : ''}
+                        </p>
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="sheet-shortage-wilaya"
+                          className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                        >
+                          Wilaya
+                        </Label>
+                        <Select value={shortageWilaya} onValueChange={setShortageWilaya}>
+                          <SelectTrigger
+                            id="sheet-shortage-wilaya"
+                            className="h-10 w-full text-sm"
+                            aria-label="Sélectionner la wilaya de la pénurie"
+                          >
+                            <SelectValue placeholder="Sélectionner une wilaya" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-64">
+                            {WILAYAS.map((w) => (
+                              <SelectItem key={w} value={w}>
+                                {w}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label
+                          htmlFor="sheet-shortage-note"
+                          className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                        >
+                          Note (optionnel, 280 caractères max)
+                        </Label>
+                        <Textarea
+                          id="sheet-shortage-note"
+                          value={shortageNote}
+                          onChange={(e) => setShortageNote(e.target.value.slice(0, 280))}
+                          placeholder="Ex : introuvable depuis 2 semaines à Alger…"
+                          rows={2}
+                          className="resize-none text-sm"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleSubmitShortage}
+                        disabled={shortageSubmitting}
+                        className="h-10 w-full text-sm font-semibold"
+                      >
+                        {shortageSubmitting ? (
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                        ) : (
+                          <TriangleAlert className="size-4" aria-hidden />
+                        )}
+                        {shortageSubmitting ? 'Envoi…' : 'Envoyer le signalement'}
+                      </Button>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        Signalement communautaire indicatif — il sera visible dans l&apos;onglet
+                        Outils → Pénuries après rechargement de la liste.
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </section>
 
               {/* Alertes statut */}
               {drug.status === 'RETRIE' && (

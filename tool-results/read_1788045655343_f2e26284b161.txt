@@ -1,0 +1,1011 @@
+     1→'use client'
+     2→
+     3→import { useQuery } from '@tanstack/react-query'
+     4→import {
+     5→  Bar,
+     6→  BarChart,
+     7→  CartesianGrid,
+     8→  Cell,
+     9→  Pie,
+    10→  PieChart,
+    11→  ResponsiveContainer,
+    12→  Tooltip,
+    13→  XAxis,
+    14→  YAxis,
+    15→} from 'recharts'
+    16→import {
+    17→  Activity,
+    18→  BadgeCheck,
+    19→  Ban,
+    20→  BarChart3,
+    21→  BookOpen,
+    22→  Building2,
+    23→  CalendarX2,
+    24→  CircleDollarSign,
+    25→  Coins,
+    26→  Factory,
+    27→  History,
+    28→  PackageCheck,
+    29→  PieChart as PieChartIcon,
+    30→  Pill,
+    31→  Store,
+    32→  Tags,
+    33→} from 'lucide-react'
+    34→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    35→import { Skeleton } from '@/components/ui/skeleton'
+    36→import { fetchStats } from './api'
+    37→import { formatNumber, formatPrice, formatDate } from './status-badge'
+    38→import { useDzPharm } from './store'
+    39→
+    40→/* ------------------------------------------------------------------ */
+    41→/* Tooltip personnalisé                                                */
+    42→/* ------------------------------------------------------------------ */
+    43→
+    44→interface TipPayloadItem {
+    45→  name?: string | number
+    46→  value?: string | number
+    47→  payload?: { name?: string; count?: number }
+    48→}
+    49→
+    50→function ChartTip({
+    51→  active,
+    52→  payload,
+    53→  label,
+    54→}: {
+    55→  active?: boolean
+    56→  payload?: TipPayloadItem[]
+    57→  label?: string | number
+    58→}) {
+    59→  if (!active || !payload || payload.length === 0) return null
+    60→  const item = payload[0]
+    61→  const name = item.payload?.name ?? (typeof item.name === 'string' ? item.name : undefined)
+    62→  const value = item.value
+    63→  return (
+    64→    <div className="rounded-lg border border-border bg-popover px-3 py-2 shadow-xl">
+    65→      <p className="max-w-64 truncate text-xs font-semibold text-foreground">
+    66→        {name ?? label}
+    67→      </p>
+    68→      <p className="text-sm font-bold text-primary tabular-nums">
+    69→        {formatNumber(Number(value))} référence{Number(value) !== 1 ? 's' : ''}
+    70→      </p>
+    71→    </div>
+    72→  )
+    73→}
+    74→
+    75→const axisTick = { fill: 'var(--muted-foreground)', fontSize: 11 }
+    76→
+    77→function truncate(value: unknown, max = 30): string {
+    78→  const s = String(value ?? '')
+    79→  return s.length > max ? s.slice(0, max - 1) + '…' : s
+    80→}
+    81→
+    82→/** Tooltip dédié aux prix (DA). */
+    83→function PriceTip({
+    84→  active,
+    85→  payload,
+    86→}: {
+    87→  active?: boolean
+    88→  payload?: TipPayloadItem[]
+    89→}) {
+    90→  if (!active || !payload || payload.length === 0) return null
+    91→  const item = payload[0]
+    92→  const p = item.payload as { name?: string; count?: number; avg?: number | null } | undefined
+    93→  return (
+    94→    <div className="rounded-lg border border-border bg-popover px-3 py-2 shadow-xl">
+    95→      <p className="max-w-64 truncate text-xs font-semibold text-foreground">
+    96→        {p?.name ?? String(item.name ?? '')}
+    97→      </p>
+    98→      {typeof p?.avg === 'number' && p.avg !== null ? (
+    99→        <p className="text-sm font-bold text-chifa tabular-nums">
+   100→          PPA moyen : {formatPrice(p.avg)}
+   101→          {p.count ? (
+   102→            <span className="ml-1 text-xs font-normal text-muted-foreground">
+   103→              ({formatNumber(p.count)} produits)
+   104→            </span>
+   105→          ) : null}
+   106→        </p>
+   107→      ) : (
+   108→        <p className="text-sm font-bold text-primary tabular-nums">
+   109→          {formatNumber(Number(item.value))} produit{Number(item.value) !== 1 ? 's' : ''}
+   110→        </p>
+   111→      )}
+   112→    </div>
+   113→  )
+   114→}
+   115→
+   116→/* ------------------------------------------------------------------ */
+   117→/* Légende personnalisée pour les donuts                               */
+   118→/* ------------------------------------------------------------------ */
+   119→
+   120→interface LegendItem {
+   121→  name: string
+   122→  value: number
+   123→  colorClass: string
+   124→}
+   125→
+   126→function DonutLegend({ items }: { items: LegendItem[] }) {
+   127→  const total = items.reduce((sum, i) => sum + i.value, 0) || 1
+   128→  return (
+   129→    <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+   130→      {items.map((item) => (
+   131→        <li key={item.name} className="flex items-center gap-2 text-sm">
+   132→          <span
+   133→            className={`size-2.5 shrink-0 rounded-full ${item.colorClass}`}
+   134→            aria-hidden
+   135→          />
+   136→          <span className="text-muted-foreground">{item.name}</span>
+   137→          <span className="font-semibold text-foreground tabular-nums">
+   138→            {formatNumber(item.value)}
+   139→          </span>
+   140→          <span className="text-xs text-muted-foreground tabular-nums">
+   141→            ({Math.round((item.value / total) * 100)}%)
+   142→          </span>
+   143→        </li>
+   144→      ))}
+   145→    </ul>
+   146→  )
+   147→}
+   148→
+   149→/* ------------------------------------------------------------------ */
+   150→/* Vue Statistiques                                                    */
+   151→/* ------------------------------------------------------------------ */
+   152→
+   153→export function StatsView() {
+   154→  const { data: stats, isLoading } = useQuery({
+   155→    queryKey: ['stats'],
+   156→    queryFn: ({ signal }) => fetchStats(signal),
+   157→    staleTime: 30 * 60 * 1000,
+   158→  })
+   159→
+   160→  if (isLoading || !stats) {
+   161→    return (
+   162→      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
+   163→        <Skeleton className="h-9 w-56" />
+   164→        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+   165→          {Array.from({ length: 4 }).map((_, i) => (
+   166→            <Skeleton key={i} className="h-28 rounded-xl" />
+   167→          ))}
+   168→        </div>
+   169→        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   170→          {Array.from({ length: 4 }).map((_, i) => (
+   171→            <Skeleton key={i} className="h-96 rounded-xl" />
+   172→          ))}
+   173→        </div>
+   174→      </div>
+   175→    )
+   176→  }
+   177→
+   178→  const labsData = stats.topLabs.slice(0, 10).map((l) => ({ name: l.key, count: l.count }))
+   179→  const domainsData = stats.domains.slice(0, 12).map((d) => ({ name: d.key, count: d.count }))
+   180→  const formsData = stats.topForms.slice(0, 8).map((f) => ({ name: f.key, count: f.count }))
+   181→  const priceRangesData = (stats.prices?.ranges ?? []).map((r) => ({ name: r.label, count: r.count }))
+   182→  const priceByClassData = (stats.prices?.byClass ?? []).map((c) => ({
+   183→    name: c.key,
+   184→    count: c.count,
+   185→    avg: c.avg ?? 0,
+   186→  }))
+   187→  const originData = [
+   188→    { name: 'Production locale', value: stats.local },
+   189→    { name: 'Importations', value: stats.imported },
+   190→  ]
+   191→  const statusData = [
+   192→    { name: 'Actifs', value: stats.actifs },
+   193→    { name: 'Non renouvelés', value: stats.nonRenew },
+   194→    { name: 'Retirés', value: stats.retires },
+   195→  ]
+   196→
+   197→  const localPct = stats.actifs > 0 ? Math.round((stats.local / stats.actifs) * 100) : 0
+   198→
+   199→  const summaryCards = [
+   200→    {
+   201→      icon: Pill,
+   202→      label: 'Références totales',
+   203→      value: formatNumber(stats.total),
+   204→      hint: 'Toutes nomenclatures confondues',
+   205→      text: 'text-primary',
+   206→      bg: 'bg-primary/10',
+   207→    },
+   208→    {
+   209→      icon: PackageCheck,
+   210→      label: 'Médicaments actifs',
+   211→      value: formatNumber(stats.actifs),
+   212→      hint: `${Math.round((stats.actifs / stats.total) * 100)}% du référentiel`,
+   213→      text: 'text-state-safe',
+   214→      bg: 'bg-state-safe/10',
+   215→    },
+   216→    {
+   217→      icon: Factory,
+   218→      label: 'Part de production locale',
+   219→      value: `${localPct}%`,
+   220→      hint: `${formatNumber(stats.local)} produits fabriqués en Algérie`,
+   221→      text: 'text-chifa',
+   222→      bg: 'bg-chifa/10',
+   223→    },
+   224→    {
+   225→      icon: BookOpen,
+   226→      label: 'Monographies RCP',
+   227→      value: stats.monographs ? formatNumber(stats.monographs) : '—',
+   228→      hint: 'Fiches DCI issues des 24 livres techniques',
+   229→      text: 'text-primary',
+   230→      bg: 'bg-primary/10',
+   231→    },
+   232→    {
+   233→      icon: Ban,
+   234→      label: 'Retirés du marché',
+   235→      value: formatNumber(stats.retires),
+   236→      hint: `${formatNumber(stats.nonRenew)} enregistrements non renouvelés`,
+   237→      text: 'text-state-danger',
+   238→      bg: 'bg-state-danger/10',
+   239→    },
+   240→  ]
+   241→
+   242→  return (
+   243→    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+   244→      <div className="mb-6">
+   245→        <h1 className="text-2xl font-bold tracking-tight text-foreground">Statistiques</h1>
+   246→        <p className="mt-1 text-sm text-muted-foreground">
+   247→          Panorama du marché pharmaceutique algérien — nomenclature Juin 2026.
+   248→        </p>
+   249→      </div>
+   250→
+   251→      {/* Cartes résumées */}
+   252→      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+   253→        {summaryCards.map((card) => (
+   254→          <Card key={card.label} className="transition-colors hover:border-primary/40">
+   255→            <CardContent className="flex items-center gap-3.5 p-4">
+   256→              <span
+   257→                className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${card.bg}`}
+   258→                aria-hidden
+   259→              >
+   260→                <card.icon className={`size-5 ${card.text}`} />
+   261→              </span>
+   262→              <div className="min-w-0">
+   263→                <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   264→                  {card.label}
+   265→                </p>
+   266→                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+   267→                  {card.value}
+   268→                </p>
+   269→                <p className="text-[11px] leading-snug text-muted-foreground">{card.hint}</p>
+   270→              </div>
+   271→            </CardContent>
+   272→          </Card>
+   273→        ))}
+   274→      </div>
+   275→
+   276→      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   277→        {/* 1 — Top laboratoires */}
+   278→        <Card>
+   279→          <CardHeader>
+   280→            <CardTitle className="flex items-center gap-2 text-base">
+   281→              <Building2 className="size-4 text-primary" aria-hidden />
+   282→              Top 10 laboratoires
+   283→            </CardTitle>
+   284→            <CardDescription>Nombre de références par laboratoire (tous statuts)</CardDescription>
+   285→          </CardHeader>
+   286→          <CardContent>
+   287→            <ResponsiveContainer width="100%" height={360}>
+   288→              <BarChart data={labsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   289→                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   290→                <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   291→                <YAxis
+   292→                  type="category"
+   293→                  dataKey="name"
+   294→                  width={185}
+   295→                  tick={axisTick}
+   296→                  axisLine={false}
+   297→                  tickLine={false}
+   298→                  tickFormatter={(v: string) => truncate(v, 28)}
+   299→                />
+   300→                <Tooltip
+   301→                  cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   302→                  content={({ active, payload }) => (
+   303→                    <ChartTip
+   304→                      active={active}
+   305→                      payload={payload as TipPayloadItem[] | undefined}
+   306→                    />
+   307→                  )}
+   308→                />
+   309→                <Bar dataKey="count" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={16} />
+   310→              </BarChart>
+   311→            </ResponsiveContainer>
+   312→          </CardContent>
+   313→        </Card>
+   314→
+   315→        {/* 2 — Locale vs importations */}
+   316→        <Card>
+   317→          <CardHeader>
+   318→            <CardTitle className="flex items-center gap-2 text-base">
+   319→              <CircleDollarSign className="size-4 text-state-safe" aria-hidden />
+   320→              Production locale vs importations
+   321→            </CardTitle>
+   322→            <CardDescription>Répartition des médicaments actifs</CardDescription>
+   323→          </CardHeader>
+   324→          <CardContent>
+   325→            <ResponsiveContainer width="100%" height={300}>
+   326→              <PieChart>
+   327→                <Pie
+   328→                  data={originData}
+   329→                  dataKey="value"
+   330→                  nameKey="name"
+   331→                  innerRadius="55%"
+   332→                  outerRadius="80%"
+   333→                  paddingAngle={3}
+   334→                  strokeWidth={0}
+   335→                >
+   336→                  <Cell fill="var(--chart-2)" />
+   337→                  <Cell fill="var(--chart-3)" />
+   338→                </Pie>
+   339→                <Tooltip
+   340→                  content={({ active, payload }) => (
+   341→                    <ChartTip
+   342→                      active={active}
+   343→                      payload={payload as TipPayloadItem[] | undefined}
+   344→                    />
+   345→                  )}
+   346→                />
+   347→              </PieChart>
+   348→            </ResponsiveContainer>
+   349→            <div className="mt-1">
+   350→              <DonutLegend
+   351→                items={[
+   352→                  { name: 'Production locale', value: stats.local, colorClass: 'bg-state-safe' },
+   353→                  { name: 'Importations', value: stats.imported, colorClass: 'bg-chifa' },
+   354→                ]}
+   355→              />
+   356→            </div>
+   357→          </CardContent>
+   358→        </Card>
+   359→
+   360→        {/* 3 — Domaines thérapeutiques */}
+   361→        <Card>
+   362→          <CardHeader>
+   363→            <CardTitle className="flex items-center gap-2 text-base">
+   364→              <Activity className="size-4 text-primary" aria-hidden />
+   365→              Médicaments par domaine thérapeutique
+   366→            </CardTitle>
+   367→            <CardDescription>Les 12 spécialités les mieux représentées</CardDescription>
+   368→          </CardHeader>
+   369→          <CardContent>
+   370→            <ResponsiveContainer width="100%" height={420}>
+   371→              <BarChart data={domainsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   372→                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   373→                <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   374→                <YAxis
+   375→                  type="category"
+   376→                  dataKey="name"
+   377→                  width={200}
+   378→                  tick={axisTick}
+   379→                  axisLine={false}
+   380→                  tickLine={false}
+   381→                  tickFormatter={(v: string) => truncate(v, 30)}
+   382→                />
+   383→                <Tooltip
+   384→                  cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   385→                  content={({ active, payload }) => (
+   386→                    <ChartTip
+   387→                      active={active}
+   388→                      payload={payload as TipPayloadItem[] | undefined}
+   389→                    />
+   390→                  )}
+   391→                />
+   392→                <Bar dataKey="count" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={14} />
+   393→              </BarChart>
+   394→            </ResponsiveContainer>
+   395→          </CardContent>
+   396→        </Card>
+   397→
+   398→        {/* 4 — Statut global */}
+   399→        <Card>
+   400→          <CardHeader>
+   401→            <CardTitle className="flex items-center gap-2 text-base">
+   402→              <PieChartIcon className="size-4 text-state-warning" aria-hidden />
+   403→              Statut global des enregistrements
+   404→            </CardTitle>
+   405→            <CardDescription>Actifs, non renouvelés et retirés du marché</CardDescription>
+   406→          </CardHeader>
+   407→          <CardContent>
+   408→            <ResponsiveContainer width="100%" height={300}>
+   409→              <PieChart>
+   410→                <Pie
+   411→                  data={statusData}
+   412→                  dataKey="value"
+   413→                  nameKey="name"
+   414→                  innerRadius="55%"
+   415→                  outerRadius="80%"
+   416→                  paddingAngle={3}
+   417→                  strokeWidth={0}
+   418→                >
+   419→                  <Cell fill="var(--state-safe)" />
+   420→                  <Cell fill="var(--state-warning)" />
+   421→                  <Cell fill="var(--state-danger)" />
+   422→                </Pie>
+   423→                <Tooltip
+   424→                  content={({ active, payload }) => (
+   425→                    <ChartTip
+   426→                      active={active}
+   427→                      payload={payload as TipPayloadItem[] | undefined}
+   428→                    />
+   429→                  )}
+   430→                />
+   431→              </PieChart>
+   432→            </ResponsiveContainer>
+   433→            <div className="mt-1">
+   434→              <DonutLegend
+   435→                items={[
+   436→                  { name: 'Actifs', value: stats.actifs, colorClass: 'bg-state-safe' },
+   437→                  { name: 'Non renouvelés', value: stats.nonRenew, colorClass: 'bg-state-warning' },
+   438→                  { name: 'Retirés', value: stats.retires, colorClass: 'bg-state-danger' },
+   439→                ]}
+   440→              />
+   441→            </div>
+   442→          </CardContent>
+   443→        </Card>
+   444→
+   445→        {/* 5 — Formes pharmaceutiques */}
+   446→        <Card className="lg:col-span-2">
+   447→          <CardHeader>
+   448→            <CardTitle className="flex items-center gap-2 text-base">
+   449→              <BarChart3 className="size-4 text-chifa" aria-hidden />
+   450→              Top formes pharmaceutiques
+   451→            </CardTitle>
+   452→            <CardDescription>Les 8 formes galéniques les plus fréquentes</CardDescription>
+   453→          </CardHeader>
+   454→          <CardContent>
+   455→            <ResponsiveContainer width="100%" height={320}>
+   456→              <BarChart data={formsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   457→                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   458→                <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   459→                <YAxis
+   460→                  type="category"
+   461→                  dataKey="name"
+   462→                  width={190}
+   463→                  tick={axisTick}
+   464→                  axisLine={false}
+   465→                  tickLine={false}
+   466→                  tickFormatter={(v: string) => truncate(v, 28)}
+   467→                />
+   468→                <Tooltip
+   469→                  cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   470→                  content={({ active, payload }) => (
+   471→                    <ChartTip
+   472→                      active={active}
+   473→                      payload={payload as TipPayloadItem[] | undefined}
+   474→                    />
+   475→                  )}
+   476→                />
+   477→                <Bar dataKey="count" fill="var(--chart-4)" radius={[0, 4, 4, 0]} barSize={18} />
+   478→              </BarChart>
+   479→            </ResponsiveContainer>
+   480→          </CardContent>
+   481→        </Card>
+   482→      </div>
+   483→
+   484→      {/* ------------------------ Catalogue & prix officine ------------------------ */}
+   485→      {stats.prices ? (
+   486→        <section aria-label="Statistiques des prix" className="mt-10">
+   487→          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+   488→            <div>
+   489→              <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+   490→                <span
+   491→                  className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-chifa to-chifa/60 shadow-lg shadow-chifa/20"
+   492→                  aria-hidden
+   493→                >
+   494→                  <Store className="size-4.5 text-white" />
+   495→                </span>
+   496→                Catalogue &amp; prix officine
+   497→              </h2>
+   498→              <p className="mt-1 text-sm text-muted-foreground">
+   499→                Analyse des {formatNumber(stats.prices.productsTotal)} produits de la liste de prix
+   500→                (PPA — dernière mise à jour Août 2026).
+   501→              </p>
+   502→            </div>
+   503→          </div>
+   504→
+   505→          {/* Bandeau indicateurs */}
+   506→          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+   507→            {[
+   508→              {
+   509→                icon: Store,
+   510→                label: 'Produits référencés',
+   511→                value: formatNumber(stats.prices.productsTotal),
+   512→                hint: 'Médicaments + parapharmacie',
+   513→                text: 'text-chifa',
+   514→                bg: 'bg-chifa/10',
+   515→              },
+   516→              {
+   517→                icon: Pill,
+   518→                label: 'Liés au registre',
+   519→                value: formatNumber(stats.prices.linked),
+   520→                hint: 'Rattachés à une AMM',
+   521→                text: 'text-primary',
+   522→                bg: 'bg-primary/10',
+   523→              },
+   524→              {
+   525→                icon: PackageCheck,
+   526→                label: 'Parapharmacie',
+   527→                value: formatNumber(stats.prices.parapharma),
+   528→                hint: 'Hors nomenclature',
+   529→                text: 'text-state-warning',
+   530→                bg: 'bg-state-warning/10',
+   531→              },
+   532→              {
+   533→                icon: BadgeCheck,
+   534→                label: 'Remboursables CNAS',
+   535→                value: formatNumber(stats.prices.refundable),
+   536→                hint: `${Math.round((stats.prices.refundable / Math.max(stats.prices.productsTotal, 1)) * 100)}% du catalogue`,
+   537→                text: 'text-state-safe',
+   538→                bg: 'bg-state-safe/10',
+   539→              },
+   540→              {
+   541→                icon: Coins,
+   542→                label: 'PPA moyen',
+   543→                value: formatPrice(stats.prices.avgPpa),
+   544→                hint: `De ${formatPrice(stats.prices.minPpa)} à ${formatPrice(stats.prices.maxPpa)}`,
+   545→                text: 'text-chifa',
+   546→                bg: 'bg-chifa/10',
+   547→              },
+   548→            ].map((card) => (
+   549→              <Card key={card.label} className="transition-colors hover:border-chifa/40">
+   550→                <CardContent className="flex items-center gap-3.5 p-4">
+   551→                  <span
+   552→                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${card.bg}`}
+   553→                    aria-hidden
+   554→                  >
+   555→                    <card.icon className={`size-5 ${card.text}`} />
+   556→                  </span>
+   557→                  <div className="min-w-0">
+   558→                    <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   559→                      {card.label}
+   560→                    </p>
+   561→                    <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
+   562→                      {card.value}
+   563→                    </p>
+   564→                    <p className="truncate text-[11px] leading-snug text-muted-foreground">
+   565→                      {card.hint}
+   566→                    </p>
+   567→                  </div>
+   568→                </CardContent>
+   569→              </Card>
+   570→            ))}
+   571→          </div>
+   572→
+   573→          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   574→            {/* 6 — Répartition par tranche de prix */}
+   575→            <Card>
+   576→              <CardHeader>
+   577→                <CardTitle className="flex items-center gap-2 text-base">
+   578→                  <Coins className="size-4 text-chifa" aria-hidden />
+   579→                  Répartition des prix (PPA)
+   580→                </CardTitle>
+   581→                <CardDescription>Produits par tranche de prix public</CardDescription>
+   582→              </CardHeader>
+   583→              <CardContent>
+   584→                <ResponsiveContainer width="100%" height={320}>
+   585→                  <BarChart data={priceRangesData} margin={{ left: 8, right: 16, top: 12, bottom: 8 }}>
+   586→                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+   587→                    <XAxis
+   588→                      dataKey="name"
+   589→                      tick={axisTick}
+   590→                      axisLine={false}
+   591→                      tickLine={false}
+   592→                      interval={0}
+   593→                    />
+   594→                    <YAxis tick={axisTick} axisLine={false} tickLine={false} width={48} />
+   595→                    <Tooltip
+   596→                      cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   597→                      content={({ active, payload }) => (
+   598→                        <PriceTip
+   599→                          active={active}
+   600→                          payload={payload as TipPayloadItem[] | undefined}
+   601→                        />
+   602→                      )}
+   603→                    />
+   604→                    <Bar dataKey="count" fill="var(--chifa)" radius={[4, 4, 0, 0]} barSize={44} />
+   605→                  </BarChart>
+   606→                </ResponsiveContainer>
+   607→              </CardContent>
+   608→            </Card>
+   609→
+   610→            {/* 7 — Prix moyen par classe */}
+   611→            <Card>
+   612→              <CardHeader>
+   613→                <CardTitle className="flex items-center gap-2 text-base">
+   614→                  <Activity className="size-4 text-primary" aria-hidden />
+   615→                  Prix moyen par classe thérapeutique
+   616→                </CardTitle>
+   617→                <CardDescription>PPA moyen — 8 classes les plus fournies</CardDescription>
+   618→              </CardHeader>
+   619→              <CardContent>
+   620→                <ResponsiveContainer width="100%" height={360}>
+   621→                  <BarChart
+   622→                    data={priceByClassData}
+   623→                    layout="vertical"
+   624→                    margin={{ left: 8, right: 24, top: 4, bottom: 8 }}
+   625→                  >
+   626→                    <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   627→                    <XAxis
+   628→                      type="number"
+   629→                      tick={axisTick}
+   630→                      axisLine={false}
+   631→                      tickLine={false}
+   632→                      tickFormatter={(v: number) => `${formatNumber(v)} DA`}
+   633→                    />
+   634→                    <YAxis
+   635→                      type="category"
+   636→                      dataKey="name"
+   637→                      width={195}
+   638→                      tick={axisTick}
+   639→                      axisLine={false}
+   640→                      tickLine={false}
+   641→                      tickFormatter={(v: string) => truncate(v, 28)}
+   642→                    />
+   643→                    <Tooltip
+   644→                      cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   645→                      content={({ active, payload }) => (
+   646→                        <PriceTip
+   647→                          active={active}
+   648→                          payload={payload as TipPayloadItem[] | undefined}
+   649→                        />
+   650→                      )}
+   651→                    />
+   652→                    <Bar dataKey="avg" fill="var(--chart-5)" radius={[0, 4, 4, 0]} barSize={16} />
+   653→                  </BarChart>
+   654→                </ResponsiveContainer>
+   655→              </CardContent>
+   656→            </Card>
+   657→          </div>
+   658→        </section>
+   659→      ) : null}
+   660→
+   661→      {/* ------------------------ Retraits de marché ------------------------ */}
+   662→      <WithdrawalsSection
+   663→        actifs={stats.actifs}
+   664→        nonRenew={stats.nonRenew}
+   665→        retires={stats.retires}
+   666→        total={stats.total}
+   667→      />
+   668→
+   669→      <p className="mt-8 text-center text-xs text-muted-foreground">
+   670→        Analyses générées à partir de la nomenclature du Juin 2026 — les décomptes
+   671→        couvrent l&apos;ensemble des 9&nbsp;555 enregistrements.
+   672→      </p>
+   673→    </div>
+   674→  )
+   675→}
+   676→
+   677→/* ------------------------------------------------------------------ */
+   678→/* Section Retraits de marché & états d'enregistrement                 */
+   679→/* ------------------------------------------------------------------ */
+   680→
+   681→interface WithdrawalRow {
+   682→  id: number
+   683→  brand: string
+   684→  dci: string | null
+   685→  lab: string | null
+   686→  withdrawDate: string | null
+   687→  withdrawReason: string | null
+   688→}
+   689→
+   690→interface WithdrawalsResponse {
+   691→  total: number
+   692→  withReason: number
+   693→  recent: WithdrawalRow[]
+   694→  byReason: Array<{ reason: string; count: number }>
+   695→  byYear: Array<{ year: string; count: number }>
+   696→}
+   697→
+   698→async function fetchWithdrawals(signal?: AbortSignal): Promise<WithdrawalsResponse> {
+   699→  const res = await fetch('/api/withdrawals', { signal })
+   700→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+   701→  return (await res.json()) as WithdrawalsResponse
+   702→}
+   703→
+   704→/** Libellés courts lisibles pour les motifs de retrait (nomenclature brute en majuscules). */
+   705→const REASON_LABELS: Record<string, string> = {
+   706→  "RETRAIT PAR LE MSPRH POUR INTERDICTION D'IMPORTATION": "Interdiction d'importation (MSPRH)",
+   707→  'RETRAIT PAR LE DETENTEUR POUR MOTIF COMMERCIAL': 'Motif commercial (détenteur)',
+   708→  'PRODUIT NON COMMERCIALISE ET DECISION NON RENOUVELEE': 'Non commercialisé / non renouvelé',
+   709→  'RETRAIT PAR LE MSPRH POUR INTERDICTION DU LABORATOIRE': 'Interdiction du laboratoire (MSPRH)',
+   710→  "RETRAIT PAR LE DETENTEUR DANS LE PAYS D'ORIGINE": 'Retrait dans le pays d\u2019origine',
+   711→  'RETRAIT APRES TRANSFERT DE DETENTEUR': 'Transfert de détenteur',
+   712→  'RETRAIT PAR LE DETENTEUR POUR ARRET DE LA COOPERATION': 'Arrêt de coopération',
+   713→  'ARRET DE COMMERCIALISATION': 'Arrêt de commercialisation',
+   714→  'retrait par le laboratoire pour raisons commerciales': 'Motif commercial (laboratoire)',
+   715→  'RETRAIT PAR LE DETENTEUR POUR MOTIF DE PHARMACO-VIGILANCE (NOTE N°110 DU 17/02/2010)':
+   716→    'Pharmacovigilance (MSPRH, note 110)',
+   717→}
+   718→
+   719→function reasonLabel(reason: string | null | undefined): string {
+   720→  if (!reason) return 'Motif non communiqué'
+   721→  const mapped = REASON_LABELS[reason]
+   722→  if (mapped) return mapped
+   723→  return truncate(reason.charAt(0) + reason.slice(1).toLowerCase(), 42)
+   724→}
+   725→
+   726→function reasonBadgeClass(reason: string | null | undefined): string {
+   727→  if (!reason) return 'border-border bg-muted/60 text-muted-foreground'
+   728→  const r = reason.toUpperCase()
+   729→  if (r.includes('MSPRH') || r.includes('PHARMACO')) {
+   730→    return 'border-state-danger/30 bg-state-danger/10 text-state-danger'
+   731→  }
+   732→  if (r.includes('DETENTEUR') || r.includes('LABORATOIRE') || r.includes('COMMERCIAL')) {
+   733→    return 'border-state-warning/30 bg-state-warning/10 text-state-warning'
+   734→  }
+   735→  return 'border-border bg-secondary text-secondary-foreground'
+   736→}
+   737→
+   738→function WithdrawalsSection({
+   739→  actifs,
+   740→  nonRenew,
+   741→  retires,
+   742→  total,
+   743→}: {
+   744→  actifs: number
+   745→  nonRenew: number
+   746→  retires: number
+   747→  total: number
+   748→}) {
+   749→  const openDrug = useDzPharm((s) => s.openDrug)
+   750→  const { data, isLoading } = useQuery({
+   751→    queryKey: ['withdrawals'],
+   752→    queryFn: ({ signal }) => fetchWithdrawals(signal),
+   753→    staleTime: 30 * 60 * 1000,
+   754→  })
+   755→
+   756→  const reasonsData = (data?.byReason ?? []).slice(0, 8).map((r) => ({
+   757→    name: reasonLabel(r.reason),
+   758→    count: r.count,
+   759→  }))
+   760→  const yearsData = (data?.byYear ?? []).map((y) => ({ name: y.year, count: y.count }))
+   761→  const reasonPct =
+   762→    data && data.total > 0 ? Math.round((data.withReason / data.total) * 1000) / 10 : 0
+   763→
+   764→  // Stacked taxonomy bar (div-based, always proportional)
+   765→  const safePct = total > 0 ? (actifs / total) * 100 : 0
+   766→  const warnPct = total > 0 ? (nonRenew / total) * 100 : 0
+   767→  const dangerPct = total > 0 ? (retires / total) * 100 : 0
+   768→
+   769→  return (
+   770→    <section aria-label="Retraits de marché et états d'enregistrement" className="mt-10">
+   771→      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+   772→        <div>
+   773→          <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+   774→            <span
+   775→              className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-state-danger to-state-danger/60 shadow-lg shadow-state-danger/20"
+   776→              aria-hidden
+   777→            >
+   778→              <Ban className="size-4.5 text-white" />
+   779→            </span>
+   780→            Retraits de marché &amp; états d&apos;enregistrement
+   781→          </h2>
+   782→          <p className="mt-1 text-sm text-muted-foreground">
+   783→            Réconciliation des trois états de la nomenclature et analyse des motifs de retrait.
+   784→          </p>
+   785→        </div>
+   786→      </div>
+   787→
+   788→      {/* Carte de réconciliation taxonomique */}
+   789→      <Card className="mb-6">
+   790→        <CardHeader>
+   791→          <CardTitle className="flex items-center gap-2 text-base">
+   792→            <PackageCheck className="size-4 text-state-safe" aria-hidden />
+   793→            Réconciliation des états d&apos;enregistrement
+   794→          </CardTitle>
+   795→          <CardDescription>
+   796→            {formatNumber(actifs)} actifs + {formatNumber(nonRenew)} non renouvelés +{' '}
+   797→            {formatNumber(retires)} retirés = {formatNumber(total)} — total nomenclature
+   798→          </CardDescription>
+   799→        </CardHeader>
+   800→        <CardContent>
+   801→          <div
+   802→            className="flex h-5 w-full overflow-hidden rounded-full border border-border"
+   803→            role="img"
+   804→            aria-label={`Répartition des ${formatNumber(total)} enregistrements : ${formatNumber(actifs)} actifs, ${formatNumber(nonRenew)} non renouvelés, ${formatNumber(retires)} retirés`}
+   805→          >
+   806→            <div
+   807→              className="bg-state-safe transition-all"
+   808→              style={{ width: `${safePct}%` }}
+   809→              title={`Actifs : ${formatNumber(actifs)}`}
+   810→            />
+   811→            <div
+   812→              className="bg-state-warning transition-all"
+   813→              style={{ width: `${warnPct}%` }}
+   814→              title={`Non renouvelés : ${formatNumber(nonRenew)}`}
+   815→            />
+   816→            <div
+   817→              className="bg-state-danger transition-all"
+   818→              style={{ width: `${dangerPct}%` }}
+   819→              title={`Retirés : ${formatNumber(retires)}`}
+   820→            />
+   821→          </div>
+   822→          <ul className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+   823→            <li className="flex items-center gap-2">
+   824→              <span className="size-2.5 shrink-0 rounded-full bg-state-safe" aria-hidden />
+   825→              <span className="text-muted-foreground">Actifs</span>
+   826→              <span className="font-semibold text-foreground tabular-nums">
+   827→                {formatNumber(actifs)}
+   828→              </span>
+   829→              <span className="text-xs text-muted-foreground tabular-nums">
+   830→                ({Math.round(safePct)}%)
+   831→              </span>
+   832→            </li>
+   833→            <li className="flex items-center gap-2">
+   834→              <span className="size-2.5 shrink-0 rounded-full bg-state-warning" aria-hidden />
+   835→              <span className="text-muted-foreground">Non renouvelés</span>
+   836→              <span className="font-semibold text-foreground tabular-nums">
+   837→                {formatNumber(nonRenew)}
+   838→              </span>
+   839→              <span className="text-xs text-muted-foreground tabular-nums">
+   840→                ({Math.round(warnPct)}%)
+   841→              </span>
+   842→            </li>
+   843→            <li className="flex items-center gap-2">
+   844→              <span className="size-2.5 shrink-0 rounded-full bg-state-danger" aria-hidden />
+   845→              <span className="text-muted-foreground">Retirés</span>
+   846→              <span className="font-semibold text-foreground tabular-nums">
+   847→                {formatNumber(retires)}
+   848→              </span>
+   849→              <span className="text-xs text-muted-foreground tabular-nums">
+   850→                ({Math.round(dangerPct)}%)
+   851→              </span>
+   852→            </li>
+   853→          </ul>
+   854→          {data ? (
+   855→            <p className="mt-4 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+   856→              Motif de retrait précisé pour{' '}
+   857→              <span className="font-semibold text-foreground tabular-nums">
+   858→                {formatNumber(data.withReason)} / {formatNumber(data.total)}
+   859→              </span>{' '}
+   860→              retraits ({reasonPct.toLocaleString('fr-FR')} %) — les autres entrées portent la
+   861→              mention « motif non communiqué ».
+   862→            </p>
+   863→          ) : null}
+   864→        </CardContent>
+   865→      </Card>
+   866→
+   867→      {isLoading || !data ? (
+   868→        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   869→          {Array.from({ length: 3 }).map((_, i) => (
+   870→            <Skeleton key={i} className="h-96 rounded-xl" />
+   871→          ))}
+   872→        </div>
+   873→      ) : (
+   874→        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   875→          {/* Motifs de retrait */}
+   876→          <Card>
+   877→            <CardHeader>
+   878→              <CardTitle className="flex items-center gap-2 text-base">
+   879→                <Tags className="size-4 text-state-danger" aria-hidden />
+   880→                Motifs de retrait
+   881→              </CardTitle>
+   882→              <CardDescription>Les 8 motifs les plus fréquents (libellés officiels synthétisés)</CardDescription>
+   883→            </CardHeader>
+   884→            <CardContent>
+   885→              <ResponsiveContainer width="100%" height={340}>
+   886→                <BarChart data={reasonsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   887→                  <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   888→                  <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   889→                  <YAxis
+   890→                    type="category"
+   891→                    dataKey="name"
+   892→                    width={200}
+   893→                    tick={axisTick}
+   894→                    axisLine={false}
+   895→                    tickLine={false}
+   896→                    tickFormatter={(v: string) => truncate(v, 30)}
+   897→                  />
+   898→                  <Tooltip
+   899→                    cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   900→                    content={({ active, payload }) => (
+   901→                      <ChartTip active={active} payload={payload as TipPayloadItem[] | undefined} />
+   902→                    )}
+   903→                  />
+   904→                  <Bar dataKey="count" fill="var(--state-danger)" radius={[0, 4, 4, 0]} barSize={16} />
+   905→                </BarChart>
+   906→              </ResponsiveContainer>
+   907→            </CardContent>
+   908→          </Card>
+   909→
+   910→          {/* Retraits par année */}
+   911→          <Card>
+   912→            <CardHeader>
+   913→              <CardTitle className="flex items-center gap-2 text-base">
+   914→                <CalendarX2 className="size-4 text-state-warning" aria-hidden />
+   915→                Retraits par année
+   916→              </CardTitle>
+   917→              <CardDescription>
+   918→                Années de retrait documentées (les retraits sans date précise n&apos;apparaissent pas)
+   919→              </CardDescription>
+   920→            </CardHeader>
+   921→            <CardContent>
+   922→              <ResponsiveContainer width="100%" height={340}>
+   923→                <BarChart data={yearsData} margin={{ left: 0, right: 16, top: 12, bottom: 8 }}>
+   924→                  <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+   925→                  <XAxis dataKey="name" tick={axisTick} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+   926→                  <YAxis tick={axisTick} axisLine={false} tickLine={false} width={40} />
+   927→                  <Tooltip
+   928→                    cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   929→                    content={({ active, payload }) => (
+   930→                      <ChartTip active={active} payload={payload as TipPayloadItem[] | undefined} />
+   931→                    )}
+   932→                  />
+   933→                  <Bar dataKey="count" fill="var(--chart-5)" radius={[4, 4, 0, 0]} />
+   934→                </BarChart>
+   935→              </ResponsiveContainer>
+   936→            </CardContent>
+   937→          </Card>
+   938→
+   939→          {/* Derniers retraits */}
+   940→          <Card className="lg:col-span-2">
+   941→            <CardHeader>
+   942→              <CardTitle className="flex items-center gap-2 text-base">
+   943→                <History className="size-4 text-primary" aria-hidden />
+   944→                Derniers retraits de marché
+   945→              </CardTitle>
+   946→              <CardDescription>
+   947→                Les 30 retraits les plus récents datés — cliquez sur une ligne pour ouvrir la fiche
+   948→                du médicament
+   949→              </CardDescription>
+   950→            </CardHeader>
+   951→            <CardContent>
+   952→              {data.recent.length === 0 ? (
+   953→                <p className="py-6 text-center text-sm text-muted-foreground">
+   954→                  Aucun retrait daté dans la nomenclature.
+   955→                </p>
+   956→              ) : (
+   957→                <div className="scroll-thin max-h-72 overflow-y-auto rounded-lg border border-border/70">
+   958→                  <table className="w-full text-sm">
+   959→                    <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+   960→                      <tr className="border-b border-border text-left text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+   961→                        <th scope="col" className="px-3 py-2">Médicament</th>
+   962→                        <th scope="col" className="px-3 py-2">Laboratoire</th>
+   963→                        <th scope="col" className="px-3 py-2">Date</th>
+   964→                        <th scope="col" className="px-3 py-2">Motif</th>
+   965→                      </tr>
+   966→                    </thead>
+   967→                    <tbody>
+   968→                      {data.recent.map((row) => (
+   969→                        <tr
+   970→                          key={row.id}
+   971→                          className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
+   972→                          onClick={() => openDrug(row.id)}
+   973→                        >
+   974→                          <td className="px-3 py-2.5">
+   975→                            <span className="block font-semibold text-foreground">{row.brand}</span>
+   976→                            {row.dci ? (
+   977→                              <span className="block truncate text-xs text-muted-foreground">
+   978→                                {row.dci}
+   979→                              </span>
+   980→                            ) : null}
+   981→                          </td>
+   982→                          <td className="max-w-40 px-3 py-2.5">
+   983→                            <span className="block truncate text-xs text-muted-foreground">
+   984→                              {row.lab || '—'}
+   985→                            </span>
+   986→                          </td>
+   987→                          <td className="px-3 py-2.5 text-xs whitespace-nowrap text-foreground/90 tabular-nums">
+   988→                            {formatDate(row.withdrawDate)}
+   989→                          </td>
+   990→                          <td className="px-3 py-2.5">
+   991→                            <span
+   992→                              className={`inline-flex max-w-52 items-center rounded-full border px-2 py-0.5 text-[10px] leading-tight font-medium whitespace-nowrap ${reasonBadgeClass(row.withdrawReason)}`}
+   993→                              title={row.withdrawReason ?? 'Motif non communiqué'}
+   994→                            >
+   995→                              {reasonLabel(row.withdrawReason)}
+   996→                            </span>
+   997→                          </td>
+   998→                        </tr>
+   999→                      ))}
+  1000→                    </tbody>
+  1001→                  </table>
+  1002→                </div>
+  1003→              )}
+  1004→            </CardContent>
+  1005→          </Card>
+  1006→        </div>
+  1007→      )}
+  1008→    </section>
+  1009→  )
+  1010→}
+  1011→

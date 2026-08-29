@@ -1,0 +1,801 @@
+     1→'use client'
+     2→
+     3→import { createPortal } from 'react-dom'
+     4→import { useEffect, useRef, useState } from 'react'
+     5→import { useQuery, useQueryClient } from '@tanstack/react-query'
+     6→import {
+     7→  AlertTriangle,
+     8→  BadgeCheck,
+     9→  Ban,
+    10→  BookOpen,
+    11→  Building2,
+    12→  CalendarClock,
+    13→  CalendarX2,
+    14→  Coins,
+    15→  Eye,
+    16→  FlaskConical,
+    17→  Info,
+    18→  Library,
+    19→  Package,
+    20→  Pill,
+    21→  Printer,
+    22→  Share2,
+    23→  ShieldPlus,
+    24→  Star,
+    25→  Syringe,
+    26→  Timer,
+    27→  TrendingDown,
+    28→  Type,
+    29→} from 'lucide-react'
+    30→import { cn } from '@/lib/utils'
+    31→import {
+    32→  Sheet,
+    33→  SheetContent,
+    34→  SheetDescription,
+    35→  SheetHeader,
+    36→  SheetTitle,
+    37→} from '@/components/ui/sheet'
+    38→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    39→import { Skeleton } from '@/components/ui/skeleton'
+    40→import { Separator } from '@/components/ui/separator'
+    41→import { Button } from '@/components/ui/button'
+    42→import { useToast } from '@/hooks/use-toast'
+    43→import { fetchDrugDetail, postDrugView } from './api'
+    44→import type { DrugDetail } from './types'
+    45→import { RcpViewer } from './rcp-view'
+    46→import {
+    47→  ListeBadge,
+    48→  StatusBadge,
+    49→  countryCode,
+    50→  formatDate,
+    51→  formatNumber,
+    52→  formatPrice,
+    53→  isLocal,
+    54→} from './status-badge'
+    55→import { MAX_FAVORITES, useDzPharm } from './store'
+    56→import { SafetyNote } from './safety-note'
+    57→
+    58→function Metric({
+    59→  label,
+    60→  value,
+    61→  icon: Icon,
+    62→}: {
+    63→  label: string
+    64→  value: React.ReactNode
+    65→  icon?: typeof Pill
+    66→}) {
+    67→  return (
+    68→    <div className="rounded-lg border border-border/70 bg-muted/40 p-3">
+    69→      <p className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+    70→        {Icon ? <Icon className="size-3" aria-hidden /> : null}
+    71→        {label}
+    72→      </p>
+    73→      <p className="mt-1 text-sm font-semibold break-words text-foreground">{value || '—'}</p>
+    74→    </div>
+    75→  )
+    76→}
+    77→
+    78→export function DrugSheet() {
+    79→  const sheetDrugId = useDzPharm((s) => s.sheetDrugId)
+    80→  const closeDrug = useDzPharm((s) => s.closeDrug)
+    81→  const openDrug = useDzPharm((s) => s.openDrug)
+    82→  const addToBasket = useDzPharm((s) => s.addToBasket)
+    83→  const setView = useDzPharm((s) => s.setView)
+    84→  const openLibraryMonograph = useDzPharm((s) => s.openLibraryMonograph)
+    85→  const favorites = useDzPharm((s) => s.favorites)
+    86→  const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
+    87→  const pushRecent = useDzPharm((s) => s.pushRecent)
+    88→  const { toast } = useToast()
+    89→  const queryClient = useQueryClient()
+    90→  const [sheetTab, setSheetTab] = useState<'fiche' | 'rcp'>('fiche')
+    91→
+    92→  // Repart sur l'onglet Fiche à chaque changement de médicament (ajustement au rendu)
+    93→  const [prevDrugId, setPrevDrugId] = useState(sheetDrugId)
+    94→  if (sheetDrugId !== prevDrugId) {
+    95→    setPrevDrugId(sheetDrugId)
+    96→    setSheetTab('fiche')
+    97→  }
+    98→
+    99→  // Rafraîchit la fiche (compteur de consultations) à chaque ouverture
+   100→  useEffect(() => {
+   101→    if (sheetDrugId !== null) {
+   102→      queryClient.invalidateQueries({ queryKey: ['drug', sheetDrugId] })
+   103→    }
+   104→  }, [sheetDrugId, queryClient])
+   105→
+   106→  const { data, isLoading } = useQuery({
+   107→    queryKey: ['drug', sheetDrugId],
+   108→    queryFn: ({ signal }) => fetchDrugDetail(sheetDrugId as number, signal),
+   109→    enabled: sheetDrugId !== null,
+   110→  })
+   111→
+   112→  const drug = data?.drug
+   113→  const equivalents = data?.equivalents ?? []
+   114→  const isFav = drug ? favorites.some((f) => f.id === drug.id) : false
+   115→
+   116→  // Comparateur de prix sur les équivalents référencés en officine
+   117→  const pricedEquivalents = equivalents.filter((e) => e.price != null)
+   118→  const minEquivalentPrice =
+   119→    pricedEquivalents.length > 0
+   120→      ? Math.min(...pricedEquivalents.map((e) => e.price as number))
+   121→      : null
+   122→  const cheapestEquivalent =
+   123→    pricedEquivalents.length > 0
+   124→      ? pricedEquivalents.reduce((a, b) => ((a.price ?? Infinity) <= (b.price ?? Infinity) ? a : b))
+   125→      : null
+   126→
+   127→  // Historique récent + compteur de consultations (une fois par ouverture)
+   128→  const countedRef = useRef<number | null>(null)
+   129→  useEffect(() => {
+   130→    if (!drug) return
+   131→    pushRecent({ id: drug.id, brand: drug.brand, dci: drug.dci, status: drug.status })
+   132→    if (countedRef.current !== drug.id) {
+   133→      countedRef.current = drug.id
+   134→      postDrugView(drug.id)
+   135→    }
+   136→  }, [drug, pushRecent])
+   137→
+   138→  function handleToggleFavorite() {
+   139→    if (!drug) return
+   140→    const res = toggleFavorite({ id: drug.id, brand: drug.brand, dci: drug.dci })
+   141→    if (res === 'added') {
+   142→      toast({
+   143→        title: 'Ajouté aux favoris',
+   144→        description: `${drug.brand} est accessible depuis l'accueil —Mes favoris.`,
+   145→      })
+   146→    } else if (res === 'removed') {
+   147→      toast({ title: 'Retiré des favoris', description: `${drug.brand} n'est plus dans vos favoris.` })
+   148→    } else {
+   149→      toast({
+   150→        title: 'Favoris complets',
+   151→        description: `Limite de ${MAX_FAVORITES} favoris atteinte.`,
+   152→        variant: 'destructive',
+   153→      })
+   154→    }
+   155→  }
+   156→
+   157→  function handlePrint() {
+   158→    window.print()
+   159→  }
+   160→
+   161→  async function handleShare() {
+   162→    if (!drug) return
+   163→    const pharmacy = drug.pharmacy?.[0]
+   164→    const text = [
+   165→      `${drug.brand} — ${drug.dci}`,
+   166→      `Statut : ${drug.status === 'ACTIF' ? 'Actif' : drug.status === 'RETRIE' ? 'Retiré du marché' : 'Non renouvelé'}`,
+   167→      drug.form ? `Forme : ${drug.form}` : '',
+   168→      drug.dosage ? `Dosage : ${drug.dosage}` : '',
+   169→      drug.lab ? `Laboratoire : ${drug.lab}` : '',
+   170→      drug.regNumber ? `AMM : ${drug.regNumber}` : '',
+   171→      pharmacy?.ppa != null ? `Prix public : ${formatPrice(pharmacy.ppa)}` : '',
+   172→      `Voir la fiche complète sur DzPharm.`,
+   173→    ]
+   174→      .filter(Boolean)
+   175→      .join('\n')
+   176→
+   177→    let shared = false
+   178→    try {
+   179→      if (navigator.share) {
+   180→        await navigator.share({ title: `${drug.brand} — DzPharm`, text })
+   181→        shared = true
+   182→      }
+   183→    } catch {
+   184→      /* partage natif annulé — repli presse-papier */
+   185→    }
+   186→    if (!shared) {
+   187→      let copied = false
+   188→      try {
+   189→        await navigator.clipboard.writeText(text)
+   190→        copied = true
+   191→      } catch {
+   192→        // Repli execCommand (contextes sans permission Clipboard API)
+   193→        try {
+   194→          const ta = document.createElement('textarea')
+   195→          ta.value = text
+   196→          ta.style.position = 'fixed'
+   197→          ta.style.opacity = '0'
+   198→          document.body.appendChild(ta)
+   199→          ta.select()
+   200→          copied = document.execCommand('copy')
+   201→          document.body.removeChild(ta)
+   202→        } catch {
+   203→          copied = false
+   204→        }
+   205→      }
+   206→      if (copied) {
+   207→        toast({
+   208→          title: 'Fiche copiée',
+   209→          description: 'Le résumé du médicament est dans le presse-papier.',
+   210→        })
+   211→      } else {
+   212→        toast({
+   213→          title: 'Copie impossible',
+   214→          description: 'Votre navigateur bloque le presse-papier.',
+   215→          variant: 'destructive',
+   216→        })
+   217→      }
+   218→    }
+   219→  }
+   220→
+   221→  function handleAddToBasket() {
+   222→    if (!drug) return
+   223→    const result = addToBasket({
+   224→      id: drug.id,
+   225→      brand: drug.brand,
+   226→      dci: drug.dci,
+   227→      status: drug.status,
+   228→    })
+   229→    if (result === 'added') {
+   230→      toast({
+   231→        title: 'Ajouté au contrôle d\u2019interactions',
+   232→        description: `${drug.brand} (${drug.dci}) — retrouvez-le dans l\u2019onglet Interactions.`,
+   233→      })
+   234→      closeDrug()
+   235→      setView('interactions')
+   236→    } else if (result === 'duplicate') {
+   237→      toast({ title: 'Déjà présent', description: 'Ce médicament est déjà dans le panier d\u2019interactions.' })
+   238→    } else {
+   239→      toast({ title: 'Panier complet', description: 'Le contrôle d\u2019interactions est limité à 10 médicaments.' })
+   240→    }
+   241→  }
+   242→
+   243→  return (
+   244→    <Sheet open={sheetDrugId !== null} onOpenChange={(o) => !o && closeDrug()}>
+   245→      <SheetContent
+   246→        side="right"
+   247→        className="scroll-thin w-full gap-0 overflow-y-auto border-border bg-background p-0 sm:max-w-md md:max-w-xl"
+   248→      >
+   249→        {isLoading || !drug ? (
+   250→          <div className="space-y-4 p-6">
+   251→            <SheetTitle className="sr-only">Chargement de la fiche médicament</SheetTitle>
+   252→            <SheetDescription className="sr-only">
+   253→              Les données du médicament sont en cours de chargement.
+   254→            </SheetDescription>
+   255→            <Skeleton className="h-8 w-2/3" />
+   256→            <Skeleton className="h-5 w-1/2" />
+   257→            <div className="grid grid-cols-2 gap-3 pt-4">
+   258→              {Array.from({ length: 8 }).map((_, i) => (
+   259→                <Skeleton key={i} className="h-16 rounded-lg" />
+   260→              ))}
+   261→            </div>
+   262→          </div>
+   263→        ) : (
+   264→          <>
+   265→            <SheetHeader className="space-y-3 border-b border-border/70 bg-card/50 p-5">
+   266→              <div className="flex items-start justify-between gap-2">
+   267→                <div className="min-w-0">
+   268→                  <SheetTitle className="text-2xl leading-tight font-bold tracking-tight text-foreground">
+   269→                    {drug.brand}
+   270→                  </SheetTitle>
+   271→                  <SheetDescription className="mt-1 text-sm font-medium text-muted-foreground">
+   272→                    {drug.dci}
+   273→                  </SheetDescription>
+   274→                </div>
+   275→                <div className="flex shrink-0 items-center gap-1">
+   276→                  <Button
+   277→                    variant="ghost"
+   278→                    size="icon"
+   279→                    onClick={handleShare}
+   280→                    aria-label={`Partager la fiche de ${drug.brand}`}
+   281→                    className="size-9 rounded-lg text-muted-foreground hover:text-primary"
+   282→                  >
+   283→                    <Share2 className="size-5" aria-hidden />
+   284→                  </Button>
+   285→                  <Button
+   286→                    variant="ghost"
+   287→                    size="icon"
+   288→                    onClick={handleToggleFavorite}
+   289→                    aria-label={isFav ? `Retirer ${drug.brand} des favoris` : `Ajouter ${drug.brand} aux favoris`}
+   290→                    aria-pressed={isFav}
+   291→                    className={cn(
+   292→                      'size-9 rounded-lg transition-colors',
+   293→                      isFav
+   294→                        ? 'text-chifa hover:bg-chifa/10'
+   295→                        : 'text-muted-foreground hover:text-chifa'
+   296→                    )}
+   297→                  >
+   298→                    <Star
+   299→                      className={cn('size-5', isFav && 'fill-chifa')}
+   300→                      aria-hidden
+   301→                    />
+   302→                  </Button>
+   303→                  <Button
+   304→                    variant="ghost"
+   305→                    size="icon"
+   306→                    onClick={handlePrint}
+   307→                    aria-label="Imprimer la fiche du médicament"
+   308→                    className="size-9 rounded-lg text-muted-foreground hover:text-primary"
+   309→                  >
+   310→                    <Printer className="size-5" aria-hidden />
+   311→                  </Button>
+   312→                </div>
+   313→              </div>
+   314→              <div className="flex flex-wrap items-center gap-1.5">
+   315→                <StatusBadge status={drug.status} />
+   316→                {drug.domains.slice(0, 2).map((d) => (
+   317→                  <span
+   318→                    key={d}
+   319→                    className="inline-flex items-center rounded-md border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+   320→                  >
+   321→                    {d}
+   322→                  </span>
+   323→                ))}
+   324→                <ListeBadge liste={drug.liste} />
+   325→                <span
+   326→                  className={cn(
+   327→                    'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium',
+   328→                    isLocal(drug.country)
+   329→                      ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
+   330→                      : 'border-chifa/30 bg-chifa/10 text-chifa'
+   331→                  )}
+   332→                >
+   333→                  {isLocal(drug.country) ? 'Produit local' : 'Importé'}
+   334→                </span>
+   335→                {typeof drug.views === 'number' && drug.views > 0 ? (
+   336→                  <span
+   337→                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums"
+   338→                    title="Consultations de cette fiche sur DzPharm"
+   339→                  >
+   340→                    <Eye className="size-3" aria-hidden />
+   341→                    {formatNumber(drug.views)}
+   342→                  </span>
+   343→                ) : null}
+   344→              </div>
+   345→            </SheetHeader>
+   346→
+   347→            <Tabs
+   348→              value={sheetTab}
+   349→              onValueChange={(v) => setSheetTab(v as 'fiche' | 'rcp')}
+   350→              className="flex min-h-0 flex-1 flex-col"
+   351→            >
+   352→              <TabsList className="mx-5 mt-4 grid h-10 grid-cols-2">
+   353→                <TabsTrigger value="fiche" className="text-sm">
+   354→                  Fiche produit
+   355→                </TabsTrigger>
+   356→                <TabsTrigger value="rcp" className="gap-1.5 text-sm">
+   357→                  <BookOpen className="size-3.5" aria-hidden />
+   358→                  RCP
+   359→                  {drug.rcpSource === 'BOOK' && (
+   360→                    <span
+   361→                      className="rounded-full bg-primary/15 px-1.5 text-[10px] font-bold text-primary"
+   362→                      title="RCP issu des livres techniques DzPharm"
+   363→                    >
+   364→                      Livre
+   365→                    </span>
+   366→                  )}
+   367→                </TabsTrigger>
+   368→              </TabsList>
+   369→              <TabsContent value="fiche" className="mt-0 flex-1">
+   370→            <div className="space-y-6 p-5">
+   371→              {/* Prix officine (PPA) */}
+   372→              {drug.pharmacy && drug.pharmacy.length > 0 ? (
+   373→                <section
+   374→                  aria-label="Prix public en officine"
+   375→                  className="rounded-xl border border-chifa/30 bg-gradient-to-br from-chifa/10 via-chifa/5 to-transparent p-4"
+   376→                >
+   377→                  <div className="flex flex-wrap items-start justify-between gap-3">
+   378→                    <div>
+   379→                      <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-chifa uppercase">
+   380→                        <Coins className="size-3.5" aria-hidden />
+   381→                        Prix public — officine
+   382→                      </p>
+   383→                      <p className="mt-1.5 text-3xl font-bold tracking-tight text-foreground tabular-nums">
+   384→                        {formatPrice(drug.pharmacy[0].ppa)}
+   385→                      </p>
+   386→                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+   387→                        {drug.pharmacy[0].name}
+   388→                        {drug.pharmacy[0].lab ? ` · ${drug.pharmacy[0].lab}` : ''}
+   389→                      </p>
+   390→                    </div>
+   391→                    <div className="flex flex-col items-end gap-1.5">
+   392→                      {drug.pharmacy[0].refundable ? (
+   393→                        <span
+   394→                          className="inline-flex items-center gap-1 rounded-full border border-state-safe/30 bg-state-safe/10 px-2.5 py-1 text-xs font-semibold text-state-safe"
+   395→                          title={`ID CNAS : ${drug.pharmacy[0].cnasId}`}
+   396→                        >
+   397→                          <BadgeCheck className="size-3.5" aria-hidden />
+   398→                          Remboursable CNAS
+   399→                        </span>
+   400→                      ) : (
+   401→                        <span className="rounded-full border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+   402→                          Non remboursé
+   403→                        </span>
+   404→                      )}
+   405→                      {drug.pharmacy[0].class ? (
+   406→                        <span className="max-w-[200px] truncate rounded-md border border-border bg-card/70 px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
+   407→                          {drug.pharmacy[0].class}
+   408→                        </span>
+   409→                      ) : null}
+   410→                    </div>
+   411→                  </div>
+   412→                  {drug.pharmacy.length > 1 ? (
+   413→                    <p className="mt-2.5 border-t border-chifa/15 pt-2 text-xs text-muted-foreground">
+   414→                      {drug.pharmacy.length - 1} autre{drug.pharmacy.length > 2 ? 's' : ''} conditionnement
+   415→                      {drug.pharmacy.length > 2 ? 's' : ''} référencé
+   416→                      {drug.pharmacy.length > 2 ? 's' : ''} — de{' '}
+   417→                      <span className="font-semibold text-foreground tabular-nums">
+   418→                        {formatPrice(drug.pharmacy[drug.pharmacy.length - 1].ppa)}
+   419→                      </span>{' '}
+   420→                      à{' '}
+   421→                      <span className="font-semibold text-foreground tabular-nums">
+   422→                        {formatPrice(drug.pharmacy[0].ppa)}
+   423→                      </span>
+   424→                    </p>
+   425→                  ) : null}
+   426→                </section>
+   427→              ) : null}
+   428→
+   429→              {/* Alertes statut */}
+   430→              {drug.status === 'RETRIE' && (
+   431→                <div className="rounded-lg border border-state-danger/40 bg-state-danger/10 p-4" role="alert">
+   432→                  <p className="flex items-center gap-2 text-sm font-semibold text-state-danger">
+   433→                    <Ban className="size-4" aria-hidden />
+   434→                    Médicament retiré du marché
+   435→                  </p>
+   436→                  <div className="mt-2 space-y-1 text-sm text-foreground/90">
+   437→                    {drug.withdrawDate ? (
+   438→                      <p>
+   439→                        <span className="text-muted-foreground">Date de retrait : </span>
+   440→                        {formatDate(drug.withdrawDate)}
+   441→                      </p>
+   442→                    ) : null}
+   443→                    {drug.withdrawReason ? (
+   444→                      <p>
+   445→                        <span className="text-muted-foreground">Motif : </span>
+   446→                        {drug.withdrawReason}
+   447→                      </p>
+   448→                    ) : null}
+   449→                    {!drug.withdrawDate && !drug.withdrawReason ? (
+   450→                      <p className="text-muted-foreground">
+   451→                        Ce produit figure sur la liste des retraits de la nomenclature.
+   452→                      </p>
+   453→                    ) : null}
+   454→                  </div>
+   455→                </div>
+   456→              )}
+   457→              {drug.status === 'NON_RENOUVELE' && (
+   458→                <div className="rounded-lg border border-state-warning/40 bg-state-warning/10 p-4" role="alert">
+   459→                  <p className="flex items-center gap-2 text-sm font-semibold text-state-warning">
+   460→                    <AlertTriangle className="size-4" aria-hidden />
+   461→                    Enregistrement non renouvelé
+   462→                  </p>
+   463→                  <p className="mt-1.5 text-sm text-foreground/90">
+   464→                    L&apos;AMM de ce produit n&apos;a pas été renouvelée
+   465→                    {drug.regDateFinal ? ` (expiration : ${formatDate(drug.regDateFinal)})` : ''}.
+   466→                    Vérifiez son statut commercial avant toute dispensation.
+   467→                  </p>
+   468→                </div>
+   469→              )}
+   470→
+   471→              {/* Métriques */}
+   472→              <section aria-label="Caractéristiques du médicament">
+   473→                <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+   474→                  Caractéristiques
+   475→                </h3>
+   476→                <div className="grid grid-cols-2 gap-2.5">
+   477→                  <Metric label="N° AMM" value={drug.regNumber} icon={ShieldPlus} />
+   478→                  <Metric label="Forme" value={drug.form} icon={Pill} />
+   479→                  <Metric label="Dosage" value={drug.dosage} icon={FlaskConical} />
+   480→                  <Metric label="Conditionnement" value={drug.packaging} icon={Package} />
+   481→                  <Metric label="Laboratoire" value={drug.lab} icon={Building2} />
+   482→                  <Metric
+   483→                    label="Pays"
+   484→                    value={
+   485→                      drug.country ? (
+   486→                        <span className="flex items-center gap-1.5">
+   487→                          {countryCode(drug.country) ? (
+   488→                            <span
+   489→                              className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground"
+   490→                              aria-hidden
+   491→                            >
+   492→                              {countryCode(drug.country)}
+   493→                            </span>
+   494→                          ) : null}
+   495→                          {drug.country}
+   496→                        </span>
+   497→                      ) : null
+   498→                    }
+   499→                  />
+   500→                  <Metric label="Type" value={drug.type} icon={Type} />
+   501→                  <Metric label="Stabilité" value={drug.stability} icon={Timer} />
+   502→                  <Metric
+   503→                    label="Tarification P1/P2"
+   504→                    value={[drug.p1, drug.p2].filter(Boolean).join(' / ')}
+   505→                    icon={Syringe}
+   506→                  />
+   507→                  <Metric label="Enregistré le" value={formatDate(drug.regDateInitial)} icon={CalendarClock} />
+   508→                  <Metric label="Expire le" value={formatDate(drug.regDateFinal)} icon={CalendarX2} />
+   509→                </div>
+   510→                {drug.obs ? (
+   511→                  <div className="mt-2.5 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground/90">
+   512→                    <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+   513→                    <p>{drug.obs}</p>
+   514→                  </div>
+   515→                ) : null}
+   516→              </section>
+   517→
+   518→              {/* Équivalents */}
+   519→              {equivalents.length > 0 && (
+   520→                <section aria-label="Équivalents même DCI">
+   521→                  <h3 className="mb-3 flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+   522→                    <span>Équivalents même DCI</span>
+   523→                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary tabular-nums">
+   524→                      {formatNumber(equivalents.length)}
+   525→                    </span>
+   526→                  </h3>
+   527→                  {cheapestEquivalent ? (
+   528→                    <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-state-safe/25 bg-state-safe/5 px-3 py-2 text-xs text-foreground">
+   529→                      <TrendingDown className="size-4 shrink-0 text-state-safe" aria-hidden />
+   530→                      <span>
+   531→                        Équivalent le moins cher :{' '}
+   532→                        <span className="font-semibold text-state-safe">
+   533→                          {cheapestEquivalent.brand}
+   534→                        </span>{' '}
+   535→                        à{' '}
+   536→                        <span className="font-bold text-state-safe tabular-nums">
+   537→                          {formatPrice(cheapestEquivalent.price ?? null)}
+   538→                        </span>
+   539→                        {drug.pharmacy?.[0]?.ppa != null &&
+   540→                        (cheapestEquivalent.price ?? Infinity) < drug.pharmacy[0].ppa ? (
+   541→                          <span className="text-muted-foreground">
+   542→                            {' '}
+   543→                            (économisez{' '}
+   544→                            <span className="font-semibold tabular-nums">
+   545→                              {formatPrice(
+   546→                                Math.round(
+   547→                                  (drug.pharmacy[0].ppa - (cheapestEquivalent.price ?? 0)) * 100
+   548→                                ) / 100
+   549→                              )}
+   550→                            </span>{' '}
+   551→                            vs {drug.brand})
+   552→                          </span>
+   553→                        ) : null}
+   554→                      </span>
+   555→                    </div>
+   556→                  ) : null}
+   557→                  <div className="scroll-thin max-h-72 overflow-y-auto rounded-lg border border-border/70">
+   558→                    <table className="w-full text-sm">
+   559→                      <tbody>
+   560→                        {equivalents.map((eq) => (
+   561→                          <tr
+   562→                            key={eq.id}
+   563→                            className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
+   564→                            onClick={() => openDrug(eq.id)}
+   565→                          >
+   566→                            <td className="px-3 py-2.5">
+   567→                              <span className="flex items-center gap-1.5">
+   568→                                <span className="block font-semibold text-foreground">{eq.brand}</span>
+   569→                                {eq.price != null && eq.price === minEquivalentPrice ? (
+   570→                                  <span
+   571→                                    className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-state-safe/30 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
+   572→                                    title="Prix le plus bas parmi les équivalents"
+   573→                                  >
+   574→                                    <TrendingDown className="size-2.5" aria-hidden />
+   575→                                    Éco
+   576→                                  </span>
+   577→                                ) : null}
+   578→                              </span>
+   579→                              <span className="block truncate text-xs text-muted-foreground">
+   580→                                {eq.lab}
+   581→                                {eq.dosage ? ` · ${eq.dosage}` : ''}
+   582→                              </span>
+   583→                            </td>
+   584→                            <td className="px-3 py-2.5 text-right align-top">
+   585→                              {eq.price != null ? (
+   586→                                <span
+   587→                                  className={cn(
+   588→                                    'block font-semibold tabular-nums',
+   589→                                    eq.price === minEquivalentPrice ? 'text-state-safe' : 'text-foreground'
+   590→                                  )}
+   591→                                >
+   592→                                  {formatPrice(eq.price)}
+   593→                                </span>
+   594→                              ) : null}
+   595→                              {eq.refundable ? (
+   596→                                <span className="text-[10px] font-medium text-state-safe">
+   597→                                  CNAS
+   598→                                </span>
+   599→                              ) : null}
+   600→                            </td>
+   601→                            <td className="px-3 py-2.5 text-right">
+   602→                              <StatusBadge status={eq.status} />
+   603→                            </td>
+   604→                          </tr>
+   605→                        ))}
+   606→                      </tbody>
+   607→                    </table>
+   608→                  </div>
+   609→                </section>
+   610→              )}
+   611→
+   612→              <Separator />
+   613→
+   614→              <Button
+   615→                onClick={handleAddToBasket}
+   616→                className="h-11 w-full text-sm font-semibold"
+   617→                size="lg"
+   618→              >
+   619→                <ShieldPlus className="size-4" aria-hidden />
+   620→                Ajouter au contrôle d&apos;interactions
+   621→              </Button>
+   622→
+   623→              <SafetyNote />
+   624→            </div>
+   625→              </TabsContent>
+   626→              <TabsContent value="rcp" className="mt-0 flex-1">
+   627→                {drug.rcpSource === 'BOOK' && drug.dciKey ? (
+   628→                  <div className="px-5 pt-4">
+   629→                    <button
+   630→                      type="button"
+   631→                      onClick={() => {
+   632→                        closeDrug()
+   633→                        openLibraryMonograph(drug.dciKey!)
+   634→                      }}
+   635→                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   636→                    >
+   637→                      <span className="flex items-center gap-2.5">
+   638→                        <Library className="size-4 shrink-0 text-primary" aria-hidden />
+   639→                        <span>
+   640→                          <span className="block text-sm font-semibold text-foreground">
+   641→                            Monographie complète de {drug.dci}
+   642→                          </span>
+   643→                          <span className="block text-xs text-muted-foreground">
+   644→                            Ouvrir dans la Bibliothèque clinique (24 livres)
+   645→                          </span>
+   646→                        </span>
+   647→                      </span>
+   648→                      <span className="shrink-0 text-sm font-semibold text-primary">
+   649→                        Ouvrir →
+   650→                      </span>
+   651→                    </button>
+   652→                  </div>
+   653→                ) : null}
+   654→                <RcpViewer drugId={drug.id} brand={drug.brand} />
+   655→              </TabsContent>
+   656→            </Tabs>
+   657→          </>
+   658→        )}
+   659→      </SheetContent>
+   660→      {drug && sheetTab === 'fiche' ? (
+   661→        <PrintMonograph drug={drug} equivalents={equivalents.slice(0, 30)} />
+   662→      ) : null}
+   663→    </Sheet>
+   664→  )
+   665→}
+   666→
+   667→/* ------------------------------------------------------------------ */
+   668→/* Fiche imprimable — monographie A4 (uniquement à l'impression)        */
+   669→/* ------------------------------------------------------------------ */
+   670→
+   671→function PrintMonograph({
+   672→  drug,
+   673→  equivalents,
+   674→}: {
+   675→  drug: DrugDetail
+   676→  equivalents: Array<{ id: number; brand: string; lab: string; dosage: string | null; status: string }>
+   677→}) {
+   678→  if (typeof document === 'undefined') return null
+   679→
+   680→  return createPortal(
+   681→    <div className="print-monograph fixed inset-0 z-[999] hidden bg-white text-black print:block print:overflow-visible">
+   682→      <div className="mx-auto max-w-[190mm] px-6 py-8">
+   683→        {/* En-tête */}
+   684→        <div className="flex items-start justify-between border-b-2 border-black pb-4">
+   685→          <div>
+   686→            <p className="text-[10px] font-bold tracking-[0.2em] uppercase">
+   687→              Référentiel Pharmaceutique Algérien — DzPharm
+   688→            </p>
+   689→            <h1 className="mt-1 text-3xl font-bold tracking-tight">{drug.brand}</h1>
+   690→            <p className="mt-0.5 text-sm font-semibold">{drug.dci}</p>
+   691→          </div>
+   692→          <div className="text-right text-[11px]">
+   693→            <p className="font-bold">Monographie</p>
+   694→            <p>Édité le {new Date().toLocaleDateString('fr-FR')}</p>
+   695→            <p>AMM : {drug.regNumber || '—'}</p>
+   696→          </div>
+   697→        </div>
+   698→
+   699→        {/* Statut */}
+   700→        <p className="mt-3 text-[11px]">
+   701→          <strong>Statut :</strong> {drug.status === 'ACTIF' ? 'Actif (AMM en cours de validité)' : drug.status === 'RETRIE' ? 'RETIRÉ du marché' : 'Enregistrement non renouvelé'}
+   702→          {drug.liste ? (
+   703→            <>
+   704→              {' '}· <strong>Liste :</strong> {drug.liste}
+   705→            </>
+   706→          ) : null}
+   707→          {drug.domains?.length ? (
+   708→            <>
+   709→              {' '}· <strong>Domaine :</strong> {drug.domains.join(', ')}
+   710→            </>
+   711→          ) : null}
+   712→        </p>
+   713→
+   714→        {/* Caractéristiques */}
+   715→        <h2 className="mt-5 border-b border-black/30 pb-1 text-[12px] font-bold tracking-widest uppercase">
+   716→          Caractéristiques du produit
+   717→        </h2>
+   718→        <table className="mt-2 w-full text-[11px]">
+   719→          <tbody>
+   720→            {[
+   721→              ['Forme', drug.form],
+   722→              ['Dosage', drug.dosage],
+   723→              ['Conditionnement', drug.packaging],
+   724→              ['Prix public (PPA)', drug.pharmacy?.[0]?.ppa != null ? formatPrice(drug.pharmacy[0].ppa) : ''],
+   725→              ['Remboursement CNAS', drug.pharmacy?.[0]?.refundable ? 'Remboursable' : ''],
+   726→              ['Laboratoire titulaire', drug.lab],
+   727→              ['Pays', drug.country],
+   728→              ['Type d\'enregistrement', drug.type],
+   729→              ['Tarification P1 / P2', [drug.p1, drug.p2].filter(Boolean).join(' / ')],
+   730→              ['Date d\'enregistrement initial', formatDate(drug.regDateInitial)],
+   731→              ['Validité (date finale)', formatDate(drug.regDateFinal)],
+   732→              ['Stabilité', drug.stability],
+   733→            ]
+   734→              .filter(([, v]) => v)
+   735→              .map(([label, value]) => (
+   736→                <tr key={label} className="align-top">
+   737→                  <td className="w-56 py-1 pr-3 font-semibold">{label}</td>
+   738→                  <td className="py-1">{value}</td>
+   739→                </tr>
+   740→              ))}
+   741→          </tbody>
+   742→        </table>
+   743→
+   744→        {drug.obs ? (
+   745→          <p className="mt-3 text-[11px]">
+   746→            <strong>Observations : </strong>
+   747→            {drug.obs}
+   748→          </p>
+   749→        ) : null}
+   750→
+   751→        {(drug.status === 'RETRIE' || drug.status === 'NON_RENOUVELE') && (
+   752→          <p className="mt-3 border-2 border-black p-2 text-[11px] font-bold">
+   753→            ⚠ {drug.status === 'RETRIE' ? 'PRODUIT RETIRÉ DU MARCHÉ' : 'ENREGISTREMENT NON RENOUVELÉ'}
+   754→            {drug.withdrawDate ? ` — retrait le ${formatDate(drug.withdrawDate)}` : ''}
+   755→            {drug.withdrawReason ? ` (${drug.withdrawReason})` : ''}
+   756→          </p>
+   757→        )}
+   758→
+   759→        {/* Équivalents */}
+   760→        {equivalents.length > 0 ? (
+   761→          <>
+   762→            <h2 className="mt-5 border-b border-black/30 pb-1 text-[12px] font-bold tracking-widest uppercase">
+   763→              Équivalents — même DCI ({formatNumber(equivalents.length)}
+   764→              {equivalents.length === 30 ? '+' : ''})
+   765→            </h2>
+   766→            <table className="mt-2 w-full text-[10px]">
+   767→              <thead>
+   768→                <tr className="border-b border-black/40 text-left">
+   769→                  <th className="py-1 pr-2">Marque</th>
+   770→                  <th className="py-1 pr-2">Laboratoire</th>
+   771→                  <th className="py-1 pr-2">Dosage</th>
+   772→                  <th className="py-1">Statut</th>
+   773→                </tr>
+   774→              </thead>
+   775→              <tbody>
+   776→                {equivalents.map((eq) => (
+   777→                  <tr key={eq.id} className="border-b border-black/10">
+   778→                    <td className="py-1 pr-2 font-semibold">{eq.brand}</td>
+   779→                    <td className="py-1 pr-2">{eq.lab}</td>
+   780→                    <td className="py-1 pr-2">{eq.dosage || '—'}</td>
+   781→                    <td className="py-1">
+   782→                      {eq.status === 'ACTIF' ? 'Actif' : eq.status === 'RETRIE' ? 'Retiré' : 'Non renouvelé'}
+   783→                    </td>
+   784→                  </tr>
+   785→                ))}
+   786→              </tbody>
+   787→            </table>
+   788→          </>
+   789→        ) : null}
+   790→
+   791→        <p className="mt-6 border-t border-black/40 pt-2 text-[9px] text-black/70">
+   792→          Source : Nomenclature nationale des produits pharmaceutiques (Ministère de l&apos;Industrie
+   793→          Pharmaceutique, Algérie — Juin 2026). Document généré par DzPharm à titre informatif — ne
+   794→          remplace pas l&apos;AMM officielle ni les référentiels en vigueur.
+   795→        </p>
+   796→      </div>
+   797→    </div>,
+   798→    document.body
+   799→  )
+   800→}
+   801→

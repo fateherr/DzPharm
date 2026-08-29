@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "1) **PASS**\n2) **PASS**\n\n**Visual Problems:** None. The layout is professional, the cards are perfectly aligned, there is no overlapping text, and no visual glitches are present. The \"Insights automatiques\" section contains exactly 8 cards in a 4x2 grid with the specified data, icons, labels, and explanations. The subtle green gradient borders are correctly applied to specific cards (Production locale, Remboursables CNAS, Parc ancien).",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1788046843,
+  "id": "20260830074041a2206f29159b4442",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "20260830074041a2206f29159b4442",
+  "usage": {
+    "completion_tokens": 99,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 1799,
+    "prompt_tokens_details": {
+      "cached_tokens": 2
+    },
+    "total_tokens": 1898
+  }
+}

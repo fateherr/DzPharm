@@ -48,7 +48,9 @@ async function computeStats() {
     db.drug.count({ where: { status: "ACTIF" } }),
     db.drug.count({ where: { status: "NON_RENOUVELE" } }),
     db.drug.count({ where: { status: "RETRIE" } }),
-    db.drug.count({ where: { country: "ALGERIE" } }),
+    // Local production among ACTIVE drugs only — the donut is labelled
+    // "Répartition des médicaments actifs" (imported = actifs - local).
+    db.drug.count({ where: { status: "ACTIF", country: "ALGERIE" } }),
     db.monograph.count().catch(() => 0),
     groupCount("lab", { status: "ACTIF" }, 12),
     groupCount("dci", { status: "ACTIF" }, 12),
