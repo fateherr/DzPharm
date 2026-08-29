@@ -33,6 +33,7 @@ import { SearchAutocomplete } from './search-autocomplete'
 import { fetchDrugDetail } from './api'
 import { formatPrice } from './status-badge'
 import { useToast } from '@/hooks/use-toast'
+import { SafetyNote } from './safety-note'
 
 interface Line {
   uid: string
@@ -467,6 +468,7 @@ export function ChifaSimulator() {
           n&apos;est remboursé qu&apos;à 80 % avec une carte standard, et reste à 0 % sans
           couverture. Les prix par défaut sont indicatifs — ajustez-les selon le PPA réel.
         </p>
+        <SafetyNote className="mt-4" />
       </div>
     </div>
   )

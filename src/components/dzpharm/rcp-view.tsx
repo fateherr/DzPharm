@@ -171,7 +171,7 @@ export function RcpViewer({ drugId, brand }: { drugId: number; brand: string }) 
         {data.source === 'AI' && (
           <p className="mt-2.5 flex items-start gap-1.5 rounded-md border border-chifa/30 bg-chifa/5 p-2 text-[11px] leading-relaxed text-foreground/80">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-chifa" aria-hidden />
-            Aucune fiche dans les 17 livres techniques pour cette DCI — ce RCP a été
+            Aucune fiche dans les 24 livres techniques pour cette DCI — ce RCP a été
             généré par IA à partir du registre algérien. Vérifiez les points critiques
             (4.3, 4.5, 4.6) avant usage professionnel.
           </p>

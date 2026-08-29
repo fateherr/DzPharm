@@ -346,6 +346,108 @@ export interface Rcp {
   disclaimer: string
 }
 
+/* ------------------------------------------------------------------ */
+/* Bibliothèque — monographies des 17 livres techniques                */
+/* ------------------------------------------------------------------ */
+
+export interface MonographSummary {
+  dciKey: string
+  dci: string
+  domain: string
+  book: string
+  itemCount: number
+  hasPregnancy: boolean
+  summary: string
+}
+
+export interface MonographsResponse {
+  items: MonographSummary[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  domains: { name: string; count: number }[]
+}
+
+export interface MonoItem {
+  label?: string
+  text: string
+}
+
+export interface MonographDetail {
+  dciKey: string
+  dci: string
+  domain: string
+  book: string
+  context: string | null
+  alias: string | null
+  sections: {
+    categories: MonoItem[]
+    available: MonoItem[]
+    mechanism: MonoItem[]
+    indications: MonoItem[]
+    contraindications: MonoItem[]
+    adverse: MonoItem[]
+    management: MonoItem[]
+    interactions: MonoItem[]
+    pregnancy: MonoItem[]
+    posology: MonoItem[]
+    galenic: MonoItem[]
+    advice: MonoItem[]
+    pk: MonoItem[]
+    notes: MonoItem[]
+  }
+  registry: {
+    id: number
+    brand: string
+    dosage: string
+    form: string
+    lab: string
+    status: DrugStatus
+    domain: string | null
+  }[]
+  registryTotal: number
+}
+
+/* ------------------------------------------------------------------ */
+/* Grossesse & Allaitement — vérificateur CRAT                        */
+/* ------------------------------------------------------------------ */
+
+export type PregnancyRisk = 'SURE' | 'PRUDENCE' | 'DECONSEILLE' | 'CONTRE_INDIQUE' | 'NEUTRE'
+
+export interface PregnancyCheckResponse {
+  found: boolean
+  message?: string
+  drug?: {
+    id: number
+    brand: string
+    dci: string
+    form: string
+    dosage: string
+    status: DrugStatus
+    domain: string
+    activesCount: number
+  }
+  riskLevel?: PregnancyRisk | null
+  breastfeedingLevel?: PregnancyRisk | null
+  rule?: {
+    pregnancy: PregnancyRisk
+    trimesters?: { t1?: PregnancyRisk; t2?: PregnancyRisk; t3?: PregnancyRisk } | null
+    breastfeeding: PregnancyRisk
+    pregnancyNote: string
+    breastfeedingNote: string
+    alternatives: string[]
+  } | null
+  book?: {
+    dci: string
+    domain: string
+    pregnancyItems: MonoItem[]
+    breastfeedingItems: MonoItem[]
+    detailItems: MonoItem[]
+  } | null
+  source?: 'RULE+BOOK' | 'RULE' | 'BOOK' | 'NONE'
+}
+
 export interface TopViewedDrug {
   id: number
   brand: string

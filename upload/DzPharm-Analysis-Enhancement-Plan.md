@@ -1,0 +1,328 @@
+# DzPharm — Comparative Review & Full Enhancement Plan
+
+*Prepared by reviewing the build you're about to publish against your three earlier iterations, then mapping the best of all four into one prioritized plan.*
+
+## Builds referenced in this document
+
+| Label | Brand shown on the page | URL |
+|---|---|---|
+| **MAIN** *(the site to publish)* | DzPharm — Référentiel Pharmaceutique Algérien | https://preview-chat-d6baa598-856b-4b7f-8744-9beb41aa88ec.space-z.ai/ |
+| **V1** | PharmaDZ — Référentiel algérien du médicament | https://preview-chat-f092ebba-c307-41db-ba05-68cb7ded021a.space-z.ai/ |
+| **V2** | PharmaDZ — Référence algérienne du médicament | https://preview-chat-854f0ccc-b25c-46e5-b762-b6fedb921c7e.space-z.ai/ |
+| **V3** | PharmaDZ — Référentiel Algérien du Médicament | https://preview-chat-b7c2c9ff-6d45-4ebc-aee0-3b493fc62563.space-z.ai/ |
+
+Every recommendation below targets **MAIN**. V1/V2/V3 are treated purely as donors of features, copy, and ideas.
+
+### Method & limits of this review
+I read everything each site serves as static markup — titles, meta tags, headings, and all pre-rendered copy. Three of the four builds turned out to render most of their real content this way: full glossary entries, full laboratory lists, per-chapter fascicule counts, real lab names and market shares. So this review is grounded in actual copy and actual numbers, not guesses. What I couldn't do from outside a browser is click into live search results, run the AI assistant, or watch a chart render — so a feature that lives one click below the homepage may be under-represented here. Where that matters, I've flagged it.
+
+---
+
+## 1. Executive summary
+
+Each of your four builds explored different territory. **MAIN has the cleanest structure** — an 8-item top nav and a strong bench of clinical calculators (renal function, Chifa reimbursement, Ramadan dosing) that none of the other three have. But the other three collectively carry a lot of high-value material that MAIN is currently missing: a permanent emergency-numbers bar, shortage tracking, market-withdrawal history with stated reasons, a full laboratory directory, an 85-term glossary, patient education guides, and a transparent sources/methodology page.
+
+**Top 5 things to act on first:**
+
+1. **Lock one brand.** Three of your four builds say "PharmaDZ"; the one you're about to publish says "DzPharm." Pick one before it goes live — see §4.1.
+2. **Fix the numbers.** Every build shows different totals for the same things (molecules documented, laboratories, even within a single page in V2). Build one computed stats source instead of typed-in copy — see §4.2.
+3. **Port the three most locally-relevant missing features**: shortage/*pénurie* tracking, market withdrawals with reasons, and on-duty pharmacy (*pharmacies de garde*) lookup. These map directly to problems Algerian patients are dealing with right now (see §7, grounded with current news).
+4. **Keep MAIN's clean top nav, but build a real "Outils" hub.** V2 crams 22 items into its top nav; don't copy that. Instead, expose that same breadth through a well-organized tools hub and contextual links — see §6.
+5. **QA the content before publishing.** I found a health-awareness-calendar entry mislabeled next to heart-failure drugs, and an "AI-generates a photo of the pill" feature that's a real mismatch risk for a medical reference site — see §4.3 and §8.4.
+
+---
+
+## 2. What each build gets right
+
+### 2.1 MAIN — the build you're publishing
+**Strengths:**
+- The only build with a genuinely restrained top nav: *Accueil, Répertoire, Prix, Bibliothèque, Interactions, Outils, Copilote IA, Statistiques* — 8 items, not 16–22.
+- Unique clinical tools none of the others show: a **renal-function calculator** (Cockcroft-Gault & MDRD, dosage adaptation across 10 critical drug classes) and a **Chifa/CNAS reimbursement simulator**.
+- **Pricing is first-class**: a dedicated "Prix" nav item and a 1,791-product PPA catalog in DA — none of the other three surface price this prominently.
+- Cleanly separates the **official RCP library** (ANSM format, per-product) from the **clinical monograph library** (mechanism, posology, counselling) — the other builds blend these into one "fascicules" concept.
+- Only build that states offline/PWA support ("Mode hors ligne").
+
+**What it's missing relative to the other three** (detailed in §3–§7): emergency numbers, shortage tracking, withdrawal history with reasons, glossary, lab directory, patient education content, sources/methodology page, natural-language search framing, and a family/multi-profile mode.
+
+### 2.2 V1 — the "safety-first" build
+Its standout idea is a **permanent emergency bar** pinned above the header: *SAMU 14 · Secours 15 · Police 17 · Centre Anti-Poison Alger 021.71.30.42*. For a medication site, always-visible emergency numbers cost almost nothing to build and materially matter in a real overdose or reaction. It also has the most explicit safety framing of any build — "*l'IA ne freelance pas une dose*" (the assistant doesn't improvise a dose) is a good, quotable design principle worth carrying forward literally. Other notable pieces: phonetic/typo-tolerant search, a market-withdrawals list that claims to show the reason for each withdrawal, a family medicine-cabinet feature ("Armoire famille"), a printable pharmacist counter-reference sheet, and a 50-term glossary.
+
+### 2.3 V2 — the "broadest catalog" build
+Its nav lists 22 distinct tools — the widest feature *vocabulary* of the four, including several nothing else mentions: **prescription management** ("Ordonnance"), **batch traceability**, **pharmacovigilance reporting**, and **on-duty pharmacy lookup** ("Pharmacies de garde"). That breadth is valuable as a feature backlog, but the build itself is the least internally consistent: its own homepage shows both "850 molécules documentées" (meta tag) and "744 molécules documentées" (stat block), and both "528 laboratoires" and "1 047 laboratoires," on the same page. Treat its feature *list* as a strong source of ideas, not its numbers as a source of truth.
+
+### 2.4 V3 — the "deepest content" build
+Structured as one long, anchor-linked homepage rather than separate pages — not a pattern to copy — but it is by far the richest in **real, specific content**: a laboratory directory naming 24+ real Algerian and foreign labs with exact product counts (Groupe Saidal 374, El Kendi 319, Hikma Pharma Algeria 237, Biopharm 207…), an 85-term glossary organized into 8 categories, a 10-fascicule clinical library with per-fascicule chapter/paragraph/linked-medication counts, a 30-year registration timeline with 4 chart modes, auto-generated narrative market insights, and a health-awareness calendar tied to specific medications. Its stats are also the only ones that are internally *coherent*: active (5,381) + non-renewed (1,495) + withdrawn (2,679) = 9,555, exactly matching the total nomenclature figure used elsewhere. That's the kind of rigor worth copying even more than any single feature.
+
+---
+
+## 3. Cross-cutting issues to resolve before publishing
+
+### 3.1 Brand name is inconsistent
+Three builds say **PharmaDZ**; the one you're publishing says **DzPharm**. This isn't cosmetic — it affects the domain you'll want, your social/OG previews, App Store listings if you ever wrap it, and anyone who already knows the project by one name. "PharmaDZ" also matches the naming pattern most Algerian digital products use (word + "DZ" suffix), which may make it feel more locally native. Whichever you pick, update the *other* builds' titles, meta tags, and footers to match — right now even the on-page `<title>` and Open Graph tags disagree with each other across your own project.
+
+### 3.2 The same metric shows different numbers in different places
+This shows up two ways, and they need different fixes:
+
+- **Real contradictions** (same metric, same page, different number) — e.g., V2 shows 850 *and* 744 for "molecules documented," and 528 *and* 1,047 for laboratories, in the same homepage. This is a bug: one hardcoded value in the meta tag, another in the rendered component. Fix: compute every displayed number from the live dataset at build/request time — never hand-type a count into copy.
+- **Different metrics that look like contradictions** — e.g., MAIN's "764 monographies DCI" and V1's "2 232 DCI" aren't necessarily wrong relative to each other; one may be "molecules with a written clinical monograph" and the other "all distinct active ingredients in the nomenclature," which are legitimately different numbers. Fix: label every stat with exactly what it counts ("764 molecules with a full clinical monograph, out of ~2,200+ registered active ingredients") rather than a bare number.
+
+  A genuinely nice pattern to adopt from V3: its numbers actually add up — **5,381 active + 1,495 non-renewed + 2,679 withdrawn = 9,555**, the same total nomenclature figure everyone quotes. That reconciliation is worth stating explicitly on your stats page; it's a strong, verifiable trust signal that most builds (yours included) currently leave invisible. On labs specifically, 528 shows up in two independent places (V2's own meta tag and V3's fully-built directory) versus V1's 810 and V2's own conflicting 1,047 — worth reconciling against your actual current export before you publish a final figure.
+
+### 3.3 Content QA catches
+- V3's health-awareness calendar lists a **Sept. 9 entry labeled "Journée mondiale de sensibilisation à l'IVG"** paired with heart-failure medications (ramipril, bisoprolol, furosémide) and elsewhere describes the same entry as "*Prévention de l'insuffisance cardiaque*." IVG (interruption volontaire de grossesse) and heart failure are unrelated — this reads like a mismatched label that slipped through. Worth a full pass over every calendar entry's date/label/linked-drugs triplet before launch; a factual slip on a medical reference site costs more trust than most other bugs.
+- V3's "**AI-generated images of medications**, cached by form and dosage" is a feature to think twice about rather than copy outright — see §8.4.
+- Leftover **builder-platform branding**: V3's footer includes "*Demo Z.ai*" and a "*Plateforme Z.ai*" badge. Fine for a preview link, not fine on the version you publish — scrub any Z.ai/space-z.ai references from user-facing copy, disclaimers, and metadata on MAIN before launch.
+
+### 3.4 Navigation breadth vs. usability
+V2's 22-item top nav and V3's 16-anchor single page both show *scope*, but neither is a usable pattern at face value — a visitor scanning a header shouldn't have to parse pharmacovigilance, traceability, and a quiz all as equal, competing top-level items. MAIN's 8-item nav is the right shape; the fix is to grow the *catalog* underneath it (§6), not the nav bar itself.
+
+---
+
+## 4. Master feature matrix
+
+✅ = present and described · ➖ = mentioned only as a nav label, depth unclear · ❌ = not visible on this homepage
+
+### Clinical & safety tools
+| Feature | MAIN | V1 | V2 | V3 | Priority for MAIN |
+|---|---|---|---|---|---|
+| Interaction checker (list-based) | ✅ | ✅ | ➖ | ✅ | Keep |
+| Interaction matrix (heatmap, up to 6 drugs) | ❌ | ❌ | ❌ | ✅ | **P1** — strong visual upgrade over a plain list |
+| Renal function calculator (Cockcroft-Gault/MDRD) | ✅ | ❌ | ❌ | ❌ | Keep — genuine MAIN differentiator |
+| Pediatric weight-based dose calculator | ✅ | ✅ | ➖ | ✅ | Keep; adopt V3's duration-preset chips (3/5/7/10/14 days) |
+| Pregnancy & breastfeeding (CRAT) compatibility | ✅ | ❌ | ❌ | ❌ | Keep — differentiator |
+| Printable pharmacist counter sheet | ❌ | ✅ | ❌ | ❌ | **P1** |
+| AI clinical copilot / assistant | ✅ | ✅ | ✅ | ✅ | Keep; adopt V1's "never freelances a dose" framing as an explicit, stated guardrail |
+
+### Practical, patient-facing life tools
+| Feature | MAIN | V1 | V2 | V3 | Priority for MAIN |
+|---|---|---|---|---|---|
+| Chifa/CNAS reimbursement simulator | ✅ | ❌ | ❌ | ❌ | Keep — differentiator |
+| Ramadan medication planner | ✅ | ✅ | ➖ | ❌ | Keep; add the wilaya-level Iftar/Suhoor timing MAIN's own copy promises |
+| Generic-substitution savings simulator | ❌ | ✅ | ➖ | ❌ | **P1** |
+| Family medicine cabinet (multi-profile tracking) | ❌ | ✅ | ➖ | ❌ | **P2** |
+| Prescription upload/management | ❌ | ❌ | ➖ | ❌ | **P3** |
+| On-duty pharmacy locator ("pharmacies de garde") | ❌ | ❌ | ✅ | ❌ | **P1** — very high real-world search demand |
+| Emergency numbers, permanently visible | ❌ | ✅ | ✅ | ❌ | **P0** — trivial to build, high safety value |
+
+### Market, data & regulatory intelligence
+| Feature | MAIN | V1 | V2 | V3 | Priority for MAIN |
+|---|---|---|---|---|---|
+| Pricing catalog (PPA) as first-class feature | ✅ | ❌ | ❌ | ❌ | Keep — differentiator |
+| Shortage / "pénurie" tracking | ❌ | ✅ | ✅ | ❌ | **P0/P1** — see §7, this is a live national issue |
+| Market withdrawals list, with stated reason | ❌ | ✅ | ✅ | ✅ | **P1** |
+| Non-renewed vs. withdrawn as distinct statuses | ❌ | ❌ | ➖ | ✅ | **P1** — adopt V3's exact taxonomy and reconciliation |
+| Laboratory directory (named, with product counts) | ➖ | ❌ | ➖ | ✅ | **P1** — you already have "Laboratoires leaders," extend it into a full directory |
+| Market stats dashboard (form, origin, top labs) | ✅ | ✅ | ✅ | ✅ | Keep; adopt V3's depth |
+| 30-year registration timeline, multi-view | ❌ | ➖ | ❌ | ✅ | **P2** |
+| Auto-generated narrative insights on the stats | ❌ | ❌ | ❌ | ✅ | **P2** — cheap to compute, high perceived intelligence |
+| Trending / most-searched DCI leaderboard | ❌ | ❌ | ❌ | ✅ | **P2** |
+| Batch traceability | ❌ | ❌ | ➖ | ❌ | **P3** — depends on data availability |
+| Pharmacovigilance reporting | ❌ | ❌ | ➖ | ❌ | **P2** — high trust value if linked to a real ANPP/ministry channel |
+
+### Content & education
+| Feature | MAIN | V1 | V2 | V3 | Priority for MAIN |
+|---|---|---|---|---|---|
+| Official RCP library (ANSM format) | ✅ | ➖ | ➖ | ➖ | Keep — differentiator |
+| Clinical monograph library | ✅ | ✅ | ✅ | ✅ | Keep; adopt V3's per-fascicule structure |
+| Glossary of pharma terms | ❌ | ✅ (50+) | ✅ | ✅ (85, 8 categories) | **P1** — copy V3's structure |
+| Patient education guides by therapeutic class | ❌ | ❌ | ❌ | ✅ (10 guides) | **P1** |
+| World-health-awareness calendar linked to drugs | ❌ | ❌ | ✅ | ✅ | **P2** (QA it first — §3.3) |
+| Quiz / self-test | ❌ | ❌ | ➖ | ❌ | **P3** |
+| Natural-language ("ask in plain French") search | ❌ | ❌ | ✅ | ✅ | **P1** |
+
+### Platform, trust & infrastructure
+| Feature | MAIN | V1 | V2 | V3 | Priority for MAIN |
+|---|---|---|---|---|---|
+| Sources & methodology page | ➖ | ✅ | ✅ | ✅ (very detailed) | **P0/P1** |
+| Offline mode / PWA | ✅ | ❌ | ❌ | ❌ | Keep — differentiator |
+| Language switcher visible in UI | ❌ | ❌ | ✅ | ❌ | **P2** |
+| AI assistant explicitly multilingual (FR/AR/Darija) | ✅ (stated) | ❌ | ❌ | ❌ | Keep, and actually verify/ship it |
+| News feed of sector updates | ❌ | ❌ | ❌ | ➖ (loading) | **P3** |
+
+---
+
+## 5. Feature roadmap by priority
+
+**P0 — before you publish (low effort, high risk if skipped)**
+- [ ] Decide the final brand name and make every page, meta tag, and disclaimer agree with it.
+- [ ] Add the permanent emergency-numbers bar (SAMU 14, Protection civile 14/15 depending on region, Police 17, your local Centre Anti-Poison number).
+- [ ] Replace every hardcoded stat with a value computed from your actual dataset; label each one with what it measures.
+- [ ] Remove any leftover builder-platform branding ("Z.ai", "Demo", "space-z.ai") from user-facing text.
+- [ ] Full pass over the health-awareness calendar and any AI-generated content for factual mismatches.
+- [ ] Confirm the medical/legal disclaimer is present on every page that gives dosing, interaction, or interpretive content — not just the homepage footer.
+
+**P1 — high-impact, feasible soon**
+- [ ] Shortage ("pénurie") tracking — even a simple, manually-updated "signalé en tension" flag per product beats nothing (see §7).
+- [ ] Market withdrawals with stated reason, plus the active/non-renewed/withdrawn three-way split (adopt V3's reconciled taxonomy).
+- [ ] On-duty pharmacy ("pharmacies de garde") lookup — high, recurring real-world search demand.
+- [ ] Full glossary (start from V3's 85-term, 8-category structure).
+- [ ] Sources & methodology page — you already cite the Ministry of Pharmaceutical Industry as your data source; make that, plus any academic cross-references you actually use, an explicit, linkable page.
+- [ ] Natural-language search bar ("describe what you're looking for") feeding your existing filters.
+- [ ] Printable pharmacist counter-reference sheet per DCI.
+- [ ] Generic-substitution savings simulator.
+- [ ] Interaction matrix (heatmap) as an alternative view alongside your existing list-based checker.
+
+**P2 — growth phase**
+- [ ] Full laboratory directory (you already have "Laboratoires leaders" — extend it with the country/product-count table V3 demonstrates).
+- [ ] Patient education guides, one per therapeutic class, matching your existing fascicule structure.
+- [ ] 30-year registration timeline with multiple chart views.
+- [ ] Auto-generated narrative insights on the statistics page (the "🇩🇿 71% of active medications are locally produced" style of insight).
+- [ ] Trending/most-searched DCI leaderboard.
+- [ ] Pharmacovigilance reporting flow, ideally linked to a real ANPP/ministry reporting channel rather than a self-contained form.
+- [ ] Family medicine-cabinet mode (multi-profile tracking within one account).
+- [ ] Health-awareness calendar (only once QA'd).
+
+**P3 — ambitious / longer-term**
+- [ ] Batch traceability, if your data source actually carries lot-level information.
+- [ ] Prescription upload/management.
+- [ ] Quiz / self-test mode for students.
+- [ ] Full UI language switcher (French/Arabic, with proper RTL layout — not just the AI assistant being multilingual).
+- [ ] Native push notifications (shortage alerts, recall alerts) via the PWA you already claim to support.
+- [ ] A public read-only API for pharmacy-management or e-prescription software to consume.
+
+---
+
+## 6. Information architecture & navigation
+
+Keep MAIN's 8-item top nav — it's the best of the four. Grow depth *underneath* it instead of widening it:
+
+- **Accueil** — as-is, but pull in a few of V3's homepage patterns: "recently registered," a trending-searches strip, one or two auto-generated insight lines.
+- **Répertoire** → each medication's detail page should be the hub that *pulls in* your other tools contextually, rather than making the visitor bounce to separate top-level pages. A single Paracétamol page should surface: price (from Prix), interaction warnings (from Interactions), renal-dose adjustment if relevant, Chifa reimbursement, and a "report a shortage" or "this is hard to find" flag — all inline, not as five separate destinations.
+- **Prix** — keep as first-class; it's already a differentiator.
+- **Bibliothèque** — merge in glossary, patient-education guides, and the RCP library as tabs/sections of one hub, rather than scattering them.
+- **Interactions** — add the matrix/heatmap view as a second tab next to the existing list checker.
+- **Outils** — this is where V2's long tail belongs: generic-substitution simulator, counter sheet, family cabinet, pharmacovigilance reporting, pharmacy locator. A clean grid of tool cards (which your homepage "Outils cliniques" section already does well) scales much better than 22 nav items.
+- **Copilote IA** — keep as top-level; it's a genuine differentiator to have it this visible.
+- **Statistiques** — this is where the timeline, lab directory, and auto-generated insights all belong.
+- Add a lightweight **"À propos / Sources"** entry (footer is fine) linking your methodology page — every other build has this; MAIN currently doesn't.
+
+### Mobile & accessibility
+- All four builds appear to be single-column-friendly, but verify tap-target sizing on the dense tool grids (11 cards on MAIN's homepage) at 360–390px widths.
+- Any interaction-matrix heatmap needs a legible mobile fallback (a heatmap with 6×6 cells doesn't survive a narrow viewport well) — consider collapsing to a ranked list of "most severe pairs first" below a breakpoint.
+- If you add Arabic, plan RTL from the CSS layer up (logical properties, not fixed left/right), not as a late toggle.
+- Keep color-independent signaling for interaction severity (icon + text label, not color alone) for accessibility and for anyone using an older/monochrome device.
+
+---
+
+## 7. Why shortage tracking and pharmacy lookup deserve P0/P1 priority
+
+This isn't a guess — medication shortages are a live, actively-reported issue in Algeria right now. The Ministry of Pharmaceutical Industry issued a formal notice in April 2026 giving pharmaceutical manufacturers, importers, and distributors a 48-hour-to-5-day deadline to release stock after investigations found products reported as unavailable in pharmacies were sitting in warehouses further up the supply chain. Industry and patient-advocacy groups have continued to weigh in on the issue since. A reference site that lets a patient or pharmacist flag "this is hard to find right now" — even as a simple, moderated community signal rather than a live inventory feed — solves a real, current problem that none of your four builds fully address yet (V1 and V2 both gesture at it with a "Détection pénurie" / "Pénuries" nav item, but neither shows it fully built out). Pairing that with an on-duty-pharmacy lookup (V2's "pharmacies de garde") turns "I can't find my medication" into an actionable next step instead of a dead end.
+
+---
+
+## 8. AI features — what to keep, and what to guard
+
+- **Keep the copilot, and keep it visible at the top level** — all four builds have one, and MAIN is the only one that explicitly claims French/Arabic/Darija support in *both* professional and patient modes. That's worth actually shipping and testing, not just stating in copy.
+- **Adopt V1's stated guardrail language verbatim as a design principle, not just marketing copy**: the assistant should refuse to state a specific dose it can't source from your corpus, and should say so plainly rather than guessing. Show its sources inline where possible.
+- **Natural-language search** (V2 and V3 both frame this as "describe what you're looking for in plain French") is a good pattern to adopt for your main search bar, provided it's mapping to your existing structured filters rather than generating unsourced free-text answers.
+- **Auto-generated narrative insights** (V3's "🇩🇿 71% of active medications are locally produced" style bullets) are a genuinely good, low-cost pattern for the statistics page — they're derived directly from your own data, not open-ended generation, so the accuracy risk is low and the perceived value is high.
+- **Be careful with AI-generated medication images.** V3's "AI generates a reference photo of each medication by form and dosage" is the one AI feature I'd flag as higher-risk rather than recommend porting as-is: on a medical reference site, a generated image that doesn't precisely match the real packaging or pill a patient is holding creates a genuine misidentification risk. If you want visual reference, real photos (even crowd-submitted and moderated) or clearly-labeled schematic icons (by form only — "tablet," "syrup," "suppository" — not by attempted photorealistic likeness) are safer than photorealistic AI generation of a specific product's actual appearance.
+
+---
+
+## 9. Data & content governance
+
+- **One computed stats service.** Every count on the site (medications, DCI, labs, withdrawn, non-renewed) should derive from one query against your live dataset, consumed by every page that displays it — not typed into three different components with three different answers, as V2 currently does.
+- **A visible "last updated" + reconciliation note.** V3's active/non-renewed/withdrawn split summing exactly to the total nomenclature figure is a strong trust signal precisely *because* it's checkable — make that arithmetic visible on your stats page, not just internally consistent.
+- **A real methodology page.** You already cite the Ministère de l'Industrie Pharmaceutique nomenclature as your source (June 2026 edition, per your own footer) — formalize this into a page that states exactly what's official-nomenclature data versus what's AI-enriched or AI-generated content, mirroring the transparency V3 and V1 already model.
+- **An editorial pass on the glossary and education content** for medical accuracy before publishing, given the calendar mislabeling found in §3.3 — the same kind of review should cover the glossary and any AI-assisted monograph text.
+
+---
+
+## 10. Algeria-specific grounding
+
+- Your data-source citation (Ministère de l'Industrie Pharmaceutique, with product registration handled by the Agence Nationale des Produits Pharmaceutiques — ANPP) matches the real regulatory structure — ANPP is the actual body responsible for pharmaceutical product registration and classification in Algeria, operating under that ministry. Linking out to ANPP's own site (anpp.dz) from your methodology page would reinforce that you're citing a real, checkable authority rather than an opaque "official source."
+- The Chifa/CNAS reimbursement simulator (MAIN) and the shortage-tracking concept (V1/V2) are your two most locally-specific ideas — lean into both rather than treating them as one-of-many tool cards.
+- If you do build out Arabic support, budget real time for it: Darija (spoken Algerian Arabic) framing for the AI assistant and Modern Standard Arabic for formal UI copy are two different jobs, not one translation pass.
+- Wilaya-level features (your own copy promises "chronopharmacologie par wilaya" for the Ramadan planner) are a genuine differentiator if actually built out — most pan-Arab or French drug references have no concept of Algeria's 58 wilayas at all.
+
+---
+
+## 11. Trust, legal & safety copy
+
+Consolidate the best disclaimer language you already have across the four builds rather than writing new copy from scratch:
+- V1's plain-language framing ("*outil d'information et d'éducation — pas un diagnostic ni un substitut à un avis médical*") is clear and short — good for near every page.
+- V3's longer-form disclaimer (naming who should make therapeutic decisions, and pointing to the Centre Antipoison for adverse events or overdose) is good for a dedicated legal/methodology page.
+- Put the emergency-numbers bar (§3, P0) and a one-line disclaimer on *every* page that outputs a dose, an interaction result, or an AI answer — not only the homepage footer.
+- If you add pharmacovigilance reporting (§6, P2), make clear whether reports actually route anywhere official (ANPP) or are informational only — don't imply a regulatory reporting channel you haven't built.
+
+---
+
+## 12. Technical & performance notes
+
+- **Multi-page, not one long scroll.** V3 proves you can pack in enormous depth, but as one anchor-linked homepage it will be slow to load fully, hard to deep-link into individual sections for SEO, and hard to maintain. Keep MAIN's page-per-section architecture and pour V3's *content depth* into those pages instead.
+- **Cache AI outputs.** Assistant answers, natural-language search parsing, and any auto-generated insights should be cached per query/product rather than regenerated on every page view, both for cost and for consistency (the same question should get the same sourced answer).
+- **SEO structure.** With thousands of medication pages, structured data (schema.org `Drug`/`MedicalEntity` markup where it fits), clean per-medication URLs, and an XML sitemap will matter a lot — this kind of reference content can rank well for long-tail searches ("paracétamol posologie enfant Algérie," etc.) if the technical foundation is there from the start.
+- **PWA scope.** You already claim offline mode — decide explicitly what's cached offline (the full medication list and interaction engine are the highest-value candidates; AI features generally can't work offline, so design a clear "you're offline" state for those).
+
+---
+
+## 13. Suggested sitemap
+
+```
+DzPharm
+├── Accueil
+├── Répertoire (medication list + individual product pages)
+│   └── Product page: price · interactions · renal dosing · Chifa reimbursement ·
+│                      report-a-shortage · related fascicule/monograph
+├── Prix (PPA catalog, CNAS reimbursement status)
+├── Bibliothèque
+│   ├── Monographies cliniques (by fascicule/DCI)
+│   ├── Bibliothèque RCP (ANSM format)
+│   ├── Glossaire
+│   └── Guides patient (by therapeutic class)
+├── Interactions
+│   ├── Vérificateur (list-based)
+│   └── Matrice (heatmap)
+├── Outils
+│   ├── Posologie pédiatrique
+│   ├── Fonction rénale
+│   ├── Adaptateur Ramadan
+│   ├── Simulateur Chifa
+│   ├── Économies génériques
+│   ├── Comparateur
+│   ├── Armoire famille
+│   ├── Fiche comptoir (imprimable)
+│   ├── Pharmacies de garde
+│   └── Pénuries / signalement de tension
+├── Copilote IA
+├── Statistiques
+│   ├── Tableau de bord marché (formes, origines, labos)
+│   ├── Chronologie (depuis 1996)
+│   ├── Annuaire des laboratoires
+│   └── Insights automatiques
+└── À propos
+    ├── Sources & méthodologie
+    ├── Calendrier de sensibilisation santé
+    └── Mentions légales / confidentialité
+```
+
+---
+
+## 14. Phased rollout
+
+| Phase | Timeframe | Focus | Key deliverables |
+|---|---|---|---|
+| **0 — Pre-launch cleanup** | 1–2 weeks | Fix what would embarrass or mislead on day one | Brand consistency, computed stats, remove builder branding, calendar/content QA, disclaimer coverage |
+| **1 — Close the gap** | Weeks 2–6 | Port the highest-value missing features | Emergency bar, shortage tracking (even manual), withdrawals + status taxonomy, pharmacy locator, glossary, methodology page, natural-language search, counter sheet |
+| **2 — Depth & growth** | Months 2–4 | Match V3's content depth, add discovery/trust features | Lab directory, patient education guides, timeline, auto-insights, trending DCI, pharmacovigilance flow, family cabinet |
+| **3 — Platform** | Months 4+ | Longer-term, higher-effort bets | Full Arabic/RTL, batch traceability, prescription upload, push notifications, public API |
+
+---
+
+## 15. Quick-wins checklist (do these regardless of phase)
+
+- [ ] One brand name, everywhere (title tags, OG tags, footers, all three other builds if you keep them around for reference).
+- [ ] Emergency numbers bar, permanent, on every page.
+- [ ] One computed stats source; label what each number measures.
+- [ ] Remove "Z.ai"/"Demo"/builder-platform references from anything user-facing.
+- [ ] Fix the mislabeled calendar entry (and audit the rest of the calendar).
+- [ ] Publish a Sources & Methodology page linking your actual data source.
+- [ ] Add a disclaimer to every page that outputs dosing, interactions, or AI answers — not just the homepage.
+- [ ] Ship at least a manual/moderated version of shortage flagging before the full automated version.
+
+---
+
+### External references consulted for this document
+- Agence Nationale des Produits Pharmaceutiques (official site): https://anpp.dz/fr/
+- Algérie Presse Service, on the April 2026 ministry directive to release withheld pharmaceutical stock: https://www.aps.dz/fr/algerie/sante-et-environnement/mnkt1otb-les-etablissements-pharmaceutiques-tenus-de-commercialiser-leurs-stocks-avant-lundi-prochain-pour-assurer-la-stabilite-de-l-approvisionnement

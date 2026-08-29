@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   Home,
+  Library,
   Moon,
   Pill,
   ShieldAlert,
@@ -26,6 +27,7 @@ const NAV_ITEMS: { id: ViewId; label: string; icon: typeof Home }[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
   { id: 'repertoire', label: 'Répertoire', icon: BookOpen },
   { id: 'catalogue', label: 'Prix', icon: Store },
+  { id: 'bibliotheque', label: 'Bibliothèque', icon: Library },
   { id: 'interactions', label: 'Interactions', icon: ShieldAlert },
   { id: 'outils', label: 'Outils', icon: Wrench },
   { id: 'copilote', label: 'Copilote IA', icon: Sparkles },
@@ -60,7 +62,7 @@ export function Header() {
   })
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
+    <header className="sticky top-9 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         {/* Logo */}
         <button

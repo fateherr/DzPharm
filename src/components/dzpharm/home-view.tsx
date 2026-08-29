@@ -24,9 +24,11 @@ import {
   Flame,
   GitCompareArrows,
   Heart,
+  HeartPulse,
   History,
   Layers,
   Leaf,
+  Library,
   Microscope,
   Moon,
   Plane,
@@ -123,9 +125,23 @@ const TOOL_CARDS: Array<{
   {
     icon: FileText,
     title: 'Bibliothèque RCP',
-    desc: 'Résumés Caractéristiques du Produit au format ANSM : 764 fiches issues des livres + génération IA.',
+    desc: 'Résumés Caractéristiques du Produit au format ANSM : 911 fiches issues des livres + génération IA.',
     view: 'repertoire',
     accent: 'primary',
+  },
+  {
+    icon: Library,
+    title: 'Bibliothèque clinique',
+    desc: '911 monographies DCI des 24 livres : mécanismes, posologies, CI, grossesse, conseils comptoir.',
+    view: 'bibliotheque',
+    accent: 'primary',
+  },
+  {
+    icon: HeartPulse,
+    title: 'Grossesse & allaitement',
+    desc: 'Compatibilité CRAT par trimestre et allaitement — base locale croisée avec les livres techniques.',
+    view: 'outils',
+    accent: 'danger',
   },
 ]
 
@@ -332,11 +348,11 @@ export function HomeView() {
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
                 <BookOpen className="size-3.5 text-primary" aria-hidden />
-                17 livres de pharmacologie clinique
+                24 livres de pharmacologie clinique
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
                 <FileText className="size-3.5 text-primary" aria-hidden />
-                {stats?.monographs ? formatNumber(stats.monographs) : '764'} monographies DCI
+                {stats?.monographs ? formatNumber(stats.monographs) : '911'} monographies DCI
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/5 px-3 py-1 text-chifa">
                 <Store className="size-3.5" aria-hidden />
@@ -348,6 +364,10 @@ export function HomeView() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
                 <FileCheck className="size-3.5 text-primary" aria-hidden />
                 RCP au format ANSM pour chaque produit
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/50 bg-pink-50 px-3 py-1 text-pink-700 dark:border-pink-500/30 dark:bg-pink-950/30 dark:text-pink-300">
+                <HeartPulse className="size-3.5" aria-hidden />
+                Grossesse &amp; allaitement (CRAT)
               </span>
             </div>
           </motion.div>

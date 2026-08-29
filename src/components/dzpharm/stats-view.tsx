@@ -221,7 +221,7 @@ export function StatsView() {
       icon: BookOpen,
       label: 'Monographies RCP',
       value: stats.monographs ? formatNumber(stats.monographs) : '—',
-      hint: 'Fiches DCI issues des 17 livres techniques',
+      hint: 'Fiches DCI issues des 24 livres techniques',
       text: 'text-primary',
       bg: 'bg-primary/10',
     },

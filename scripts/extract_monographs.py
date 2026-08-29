@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
-"""DzPharm — Extract full DCI monographs from the 17 pharmacology docx books.
+"""DzPharm — Extract full DCI monographs from the 24 pharmacology docx books.
 
-Handles 3 layout formats:
+Handles layout formats:
   A) "N. DCI : Name (Seule)" heading (H2/H3) + sections as Normal ":" paragraphs + bullets
   B) Numbered fiches "131.8.1. Name" (H3) + sections as Heading 4
   C) "152A.5 DCI : Name" at H2 level
+  D) Sections inline "Label : item - item" in Body Text
+  E) "181.1.1 — PROPOFOL" (H2, em-dash) + numbered H3 sections   [Anesthésie]
+  F) "171.1.1 Ciclosporine (usage ...)" (H3) + H4 sections       [Immunologie]
+  G) "221.1 Name" (H3) + H4 sections numbered "1. ..."          [Nutrition/Dialyse]
+  H) "Chapitre 241 — Domain : DCI name" (H1 chapter = fiche)     [Phytothérapie]
+  I) "231.4. DCI : Albumine humaine" (H2) + "Sous-section N" H3  [Produits sanguins]
+  J) "211.2 Fiche DCI : GADOBUTROL" (H2) + H3 sections          [Radiologie]
+  K) "191.11 DCI 1 : Naloxone (Antidote ...)" (H2) + H3          [Toxicologie]
 
 Output: data/monographs.json — one entry per DCI fiche with canonical sections.
 """
@@ -20,6 +28,7 @@ BOOKS = os.path.join(BASE, "upload/pharmacie_extracted/pharmacie")
 OUT = os.path.join(BASE, "data")
 
 DOMAINS = {
+    "Anesthesie": ("Anesthésie & Réanimation", "Anesthesie_Reanimation"),
     "Antalgiques": ("Antalgiques & Anti-inflammatoires", "Antalgiques_Anti-inflammatoires"),
     "Antibiotiques": ("Antibiotiques", "Antibiotiques"),
     "Antifongiques": ("Antifongiques & Antiparasitaires", "Antifongiques_Antiparasitaires"),
@@ -28,16 +37,29 @@ DOMAINS = {
     "Diabetologie": ("Diabétologie & Endocrinologie", "Diabetologie_Endocrinologie"),
     "Gastro-enterologie": ("Gastro-entérologie", "Gastro-enterologie"),
     "Gynecologie": ("Gynécologie & Obstétrique", "Gynecologie_Obstetrique"),
+    "Immunologie": ("Immunologie & Transplantation", "Immunologie_Transplantation"),
     "Neurologie": ("Neurologie & Antiépileptiques", "Neurologie_Antiepileptiques"),
+    "Nutrition": ("Nutrition, Dialyse & Perfusion", "Nutrition_Dialyse_Parfusion"),
     "ORL": ("ORL", "ORL"),
     "Oncologie": ("Oncologie", "Oncologie"),
     "Ophtalmologie": ("Ophtalmologie", "Ophtalmologie"),
+    "Phytotherapie": ("Phytothérapie & Médecine Nucléaire", "Phytotherapie_Medecine_Nucleaire"),
     "Pneumologie": ("Pneumologie & Antiasthmatiques", "Pneumologie_Antiasthmatiques"),
+    "Produits": ("Produits Sanguins & Coagulation", "Produits_Sanguins_Coagulation"),
     "Psychiatrie": ("Psychiatrie & Psychotropes", "Psychiatrie_Psychotropes"),
+    "Radiologie": ("Radiologie & Produits de Contraste", "Radiologie_Contraste"),
     "Rhumatologie": ("Rhumatologie", "Rhumatologie"),
+    "Toxicologie": ("Toxicologie & Antidotes", "Toxicologie_Antidotes"),
     "Urologie": ("Urologie", "Urologie"),
     "Vitamines": ("Vitamines & Minéraux", "Vitamines_Mineraux"),
 }
+
+# Books where the DCI fiche is the whole H1 chapter ("Chapitre 241 — Domain : DCI")
+# and canonical sections live at H2 level.
+CHAPTER_FICHE_BOOKS = {"Phytotherapie"}
+
+# H1 chapter heading in a chapter-fiche book
+CHAPTER_RE = re.compile(r"^Chapitre\s+\d+\s*[\u2014\u2013-]\s*(.+)$", re.IGNORECASE)
 
 GENERIC_HEADS = (
     "INTRODUCTION", "SOMMAIRE", "AVANT-PROPOS", "OBJET DU", "CONTEXTE", "PERIMETRE",
@@ -47,6 +69,10 @@ GENERIC_HEADS = (
     "PHARMACO", "CAS CLINIQUES", "PARTICULARITES", "METHODOLOGIE", "STRATEGIE",
     "CATEGORIES", "CATÉGORIES", "PLAN DU", "CADRE NOSOLOGIQUE", "RAPPEL", "DEFINITION", "PLACE", "DIFFERENCES",
     "SPECIFICITES", "SPECIFICITÉS", "STRUCTURE TYPE", "ENGAGEMENTS", "FICHES DCI",
+    "EFFETS INDESIRABLES", "EFFETS INDÉSIRABLES", "POSITIONNEMENT PHARMACOLOGIQUE",
+    "PHARMACOLOGIE COMPAREE", "COMPARATIF", "VUE D ENSEMBLE", "SOMMAIRE DU",
+    "INDICATIONS", "CONTRE-INDICATIONS", "INSTRUCTIONS", "CHOIX", "MESURES",
+    "SURVEILLANCE", "PREVENTION", "PROPHYLAXIE", "BILAN", "PROTOCOLE",
 )
 
 # Canonical section keys -> regex recognizers (on normalized lowercase label)
@@ -55,7 +81,7 @@ SECTION_DEFS = [
     ("available", r"medicaments disponibles"),
     ("mechanism", r"sous[- ]classe et mecanisme|mecanisme d action|mecanismes d action"),
     ("profile", r"profil pharmacologique"),
-    ("management", r"prevention et gestion des effets|prevention des effets"),
+    ("management", r"prevention et gestion des effets|prevention des effets|effets indesirables et prevention"),
     ("interactions", r"interactions (importantes|medicamenteuses|avec d autres)"),
     ("pregnancy", r"grossesse et allaitement|grossesse"),
     ("posology", r"posologie et mode d administration|posologie"),
@@ -67,6 +93,10 @@ SECTION_DEFS = [
 
 DCI_RE = re.compile(r"^(?:\d{1,3}[A-Za-z]?(?:\.\d+)*\.?\s*)?DCI\s*:\s*(.+?)\s*$", re.IGNORECASE)
 NUM_RE = re.compile(r"^(\d{2,}[A-Za-z]?(?:\.\d+)+)\.?\s+(.+)$")
+# "1. Sumatriptan (Seule)" — single leading number, role suffix required
+SINGLE_NUM_RE = re.compile(r"^(\d{1,3})\.?\s+(.+)$")
+# "Fiche 1 — Paracétamol + Ibuprofène (En Association)" / "Fiche Conceptuelle (...) : X"
+FICHE_RE = re.compile(r"^Fiche\s+((?:Conceptuelle\s*(?:\([^)]*\))?\s*:|\d+\s*[\u2014\u2013])\s*)(.+)$", re.IGNORECASE)
 
 SALTS = {
     "DICHLORHYDRATE", "CHLORHYDRATE", "HYDROCHLORIDE", "MALEATE", "SUCCINATE",
@@ -107,7 +137,20 @@ def clean_dci_name(raw):
     if m and len(m.group(2)) < 40 and "," not in m.group(2):
         alias = m.group(2)
         t = m.group(1).strip()
+    elif m and "," not in m.group(2):
+        # long parenthetical — descriptive context, not an alias
+        context = m.group(2)
+        t = m.group(1).strip()
     return t, context, alias
+
+
+def clean_fiche_candidate(raw):
+    """Clean a numbered-fiche candidate name (formats E/J/K).
+    Strips leading em-dashes and 'Fiche DCI :' / 'DCI 1 :' / 'DCI 1 —' prefixes."""
+    t = (raw or "").strip()
+    t = re.sub(r"^[\s\u2014\u2013-]+", "", t)
+    t = re.sub(r"^(?:Fiche\s+)?DCI\s*\d*\s*[:\u2013\u2014-]\s*", "", t, flags=re.IGNORECASE)
+    return t.strip()
 
 
 def canonical_section(label):
@@ -145,14 +188,29 @@ class FicheParser:
                     sub = None
                     # section heading text itself may carry info e.g. "Posologie"
                     continue
+                # profile sub-sections that are NOT canonical keys
+                n = norm_label(t)
+                if "contre" in n and "indication" in n:
+                    current, sub = "profile", "contraindications"
+                    continue
+                if "indication" in n:
+                    current, sub = "profile", "indications"
+                    continue
+                if "effet" in n and "indesirable" in n:
+                    current, sub = "profile", "adverse"
+                    continue
+                if "posologie" in n or "mode d administration" in n:
+                    current, sub = "posology", None
+                    continue
                 # unknown heading -> end of tracked sections
                 current = None
                 sub = None
                 continue
             is_bullet = "List" in st
             # Format C (inline): "Label : content - item - item" in ONE paragraph
+            # (also inside List Bullet paragraphs — e.g. Oncologie all-bullet fiches)
             m2 = re.match(r"^(.{3,90}?)\s*:\s*(.+)$", t, flags=re.DOTALL)
-            if m2 and not is_bullet:
+            if m2:
                 key = canonical_section(m2.group(1))
                 if key:
                     current = key
@@ -164,7 +222,7 @@ class FicheParser:
                             self._feed(piece, current)
                     continue
             # Format A: paragraph ending with ':' that names a canonical section
-            if not is_bullet and t.endswith(":"):
+            if t.endswith(":"):
                 key = canonical_section(t.rstrip(":").strip())
                 if key:
                     current = key
@@ -227,7 +285,23 @@ class FicheParser:
                 arr.append(text)
 
 
-def extract_book(path, domain):
+def chapter_fiche_label(t):
+    """Extract the DCI name from an H1 chapter title like
+    'Chapitre 241 — Phytothérapie : Ginkgo biloba (extrait ...)'. Returns None if
+    the title has no ':' (container chapter) or the part after ':' looks generic."""
+    m = CHAPTER_RE.match(t)
+    if not m:
+        return None
+    rest = m.group(1)
+    if ":" not in rest and " : " not in rest:
+        return None
+    name = rest.split(":", 1)[1].strip()
+    if not name or len(name) < 3 or is_generic_fiche_name(name):
+        return None
+    return name
+
+
+def extract_book(path, domain, chapter_mode=False):
     doc = Document(path)
     paragraphs = [(p.style.name if p.style else "Normal", p.text) for p in doc.paragraphs]
     fiches = []          # list of dict(label, blocks)
@@ -239,6 +313,22 @@ def extract_book(path, domain):
         t = text.strip()
         is_head = style.startswith("Heading")
         if is_head and t:
+            # --- chapter-as-fiche books (format H) ---
+            if chapter_mode and style == "Heading 1":
+                if cur and len(cur["blocks"]) >= 3:
+                    fiches.append(cur)
+                cur = None
+                label = chapter_fiche_label(t)
+                if label:
+                    cur = {"label": label, "blocks": []}
+                i += 1
+                continue
+            if chapter_mode and cur is not None and style == "Heading 2":
+                # H2 = canonical section inside the chapter-fiche; skip fascicule banners
+                if not t.lower().startswith("fascicule"):
+                    cur["blocks"].append((style, t))
+                i += 1
+                continue
             m = DCI_RE.match(t)
             is_fiche = False
             name = None
@@ -246,19 +336,37 @@ def extract_book(path, domain):
                 name = m.group(1)
                 is_fiche = True
             else:
-                mn = NUM_RE.match(t)
+                mnum = NUM_RE.match(t)
+                msingle = None if mnum else SINGLE_NUM_RE.match(t)
+                mfiche = FICHE_RE.match(t)
+                mn = mnum or msingle or mfiche
                 if mn and style in ("Heading 2", "Heading 3"):
-                    cand = mn.group(2).strip()
-                    # numbered fiche: name not generic & not itself a section heading,
-                    # and next ~45 blocks contain >=2 canonical sections
+                    cand = clean_fiche_candidate(mn.group(2))
+                    # single-number headings ("1. Sumatriptan (Seule)") are only safe
+                    # when they carry the (Seule)/(En Association) role suffix
+                    single = bool(msingle)
+                    role_suffix = re.search(r"\((?:Seule|En Association|En assoc)\)\s*$",
+                                            cand, re.IGNORECASE) is not None
+                    # French leading articles indicate prose, not a DCI name
+                    article = re.match(r"(?i)^(les|la|le|du|des|une|ces|ce|dans|pour|avec|sur|l)\b", cand)
                     if not is_generic_fiche_name(cand) and not canonical_section(cand) \
-                            and len(cand) > 3 and len(cand) < 90 and not cand.isdigit():
+                            and len(cand) > 3 and len(cand) < 90 and not cand.isdigit() \
+                            and not article \
+                            and (not single or role_suffix):
                         look = []
                         for j in range(i + 1, min(i + 45, n)):
                             st2, tx2 = paragraphs[j]
-                            if tx2.strip() and st2.startswith("Heading"):
-                                if canonical_section(tx2):
-                                    look.append(tx2)
+                            tx2s = tx2.strip()
+                            if not tx2s:
+                                continue
+                            if st2.startswith("Heading"):
+                                if canonical_section(tx2s):
+                                    look.append(tx2s)
+                            else:
+                                # body-text inline section label "Label : - item - item"
+                                m3 = re.match(r"^(.{3,90}?)\s*:", tx2s)
+                                if m3 and canonical_section(m3.group(1)):
+                                    look.append(tx2s)
                             if len(look) >= 2:
                                 break
                         if len(look) >= 2:
@@ -329,7 +437,8 @@ def main():
         if stem not in DOMAINS:
             continue
         domain, _ = DOMAINS[stem]
-        monos = extract_book(os.path.join(BOOKS, fname), domain)
+        monos = extract_book(os.path.join(BOOKS, fname), domain,
+                             chapter_mode=stem in CHAPTER_FICHE_BOOKS)
         print(f"{stem:18} fiches={len(monos):3}")
         for mo in monos:
             k = ukey(mo["label"])

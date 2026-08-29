@@ -1,11 +1,13 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
+import { EmergencyBar } from '@/components/dzpharm/emergency-bar'
 import { Header } from '@/components/dzpharm/header'
 import { Footer } from '@/components/dzpharm/footer'
 import { HomeView } from '@/components/dzpharm/home-view'
 import { DirectoryView } from '@/components/dzpharm/directory-view'
 import { CatalogView } from '@/components/dzpharm/catalog-view'
+import { LibraryView } from '@/components/dzpharm/library-view'
 import { InteractionsView } from '@/components/dzpharm/interactions-view'
 import { CopilotView } from '@/components/dzpharm/copilot-view'
 import { ToolsView } from '@/components/dzpharm/tools-view'
@@ -18,6 +20,7 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <EmergencyBar />
       <Header />
       <main id="contenu" className="flex-1">
         <AnimatePresence mode="wait">
@@ -31,6 +34,7 @@ export default function Page() {
             {view === 'accueil' ? <HomeView /> : null}
             {view === 'repertoire' ? <DirectoryView /> : null}
             {view === 'catalogue' ? <CatalogView /> : null}
+            {view === 'bibliotheque' ? <LibraryView /> : null}
             {view === 'interactions' ? <InteractionsView /> : null}
             {view === 'outils' ? <ToolsView /> : null}
             {view === 'copilote' ? <CopilotView /> : null}

@@ -22,6 +22,7 @@ import type { DrugDetail } from './types'
 import { ListeBadge, StatusBadge, countryCode, formatDate, isLocal } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
 import { useDzPharm } from './store'
+import { SafetyNote } from './safety-note'
 
 const MAX_COMPARE = 3
 
@@ -389,6 +390,7 @@ export function DrugComparator() {
         Comparaison établie à partir de la nomenclature officielle (Juin 2026). La décision de
         substitution relève du pharmacien selon la réglementation en vigueur.
       </p>
+      <SafetyNote className="mt-3" />
     </div>
   )
 }

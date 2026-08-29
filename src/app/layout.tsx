@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/dzpharm/providers";
+import { PwaProvider } from "@/components/dzpharm/pwa-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,20 @@ export const metadata: Metadata = {
     "référentiel pharmaceutique",
   ],
   authors: [{ name: "DzPharm" }],
+  manifest: "/manifest.webmanifest",
+  applicationName: "DzPharm",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "DzPharm",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
@@ -42,6 +57,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster />
+          <PwaProvider />
         </Providers>
       </body>
     </html>

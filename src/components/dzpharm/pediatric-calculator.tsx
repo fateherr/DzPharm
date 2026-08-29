@@ -35,6 +35,7 @@ import { PEDIATRIC_DRUGS, computeDose } from '@/lib/pediatric-dosing'
 import { fetchDrugs } from './api'
 import { formatNumber } from './status-badge'
 import { useDzPharm } from './store'
+import { SafetyNote } from './safety-note'
 
 function fmt(n: number | null, unit = ''): string {
   if (n == null) return '—'
@@ -444,6 +445,7 @@ export function PediatricCalculator() {
           Vérifiez toujours la prescription médicale : la posologie retenue peut
           différer selon l&apos;indication. En cas de doute, contactez le prescripteur.
         </p>
+        <SafetyNote className="mt-4" />
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 export type ViewId =
   | 'accueil'
   | 'repertoire'
+  | 'bibliotheque'
   | 'catalogue'
   | 'interactions'
   | 'copilote'
@@ -72,6 +73,11 @@ interface DzPharmStore {
   openDrug: (id: number) => void
   closeDrug: () => void
 
+  /** Monographie ouverte dans la Bibliothèque (cross-link depuis une fiche). */
+  libraryDciKey: string | null
+  openLibraryMonograph: (dciKey: string) => void
+  closeLibraryMonograph: () => void
+
   basket: BasketItem[]
   addToBasket: (item: BasketItem) => AddResult
   removeFromBasket: (id: number) => void
@@ -106,6 +112,11 @@ export const useDzPharm = create<DzPharmStore>()(
       sheetDrugId: null,
       openDrug: (id) => set({ sheetDrugId: id }),
       closeDrug: () => set({ sheetDrugId: null }),
+
+      libraryDciKey: null,
+      openLibraryMonograph: (dciKey) =>
+        set({ view: 'bibliotheque', libraryDciKey: dciKey }),
+      closeLibraryMonograph: () => set({ libraryDciKey: null }),
 
       basket: [],
       addToBasket: (item) => {

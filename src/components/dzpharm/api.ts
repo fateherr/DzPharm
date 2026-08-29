@@ -8,6 +8,9 @@ import type {
   DrugQueryParams,
   DrugsResponse,
   InteractionsResponse,
+  MonographDetail,
+  MonographsResponse,
+  PregnancyCheckResponse,
   Rcp,
   Stats,
   TopViewedDrug,
@@ -140,4 +143,44 @@ export function postLocalInteractions(drugs: string[]): Promise<InteractionsResp
   return postJson<InteractionsResponse>('/api/interactions', {
     drugs: drugs.map((name) => ({ name })),
   })
+}
+
+/* ------------------------------------------------------------------ */
+/* Bibliothèque & grossesse                                            */
+/* ------------------------------------------------------------------ */
+
+/** Bibliothèque des monographies DCI (recherche + filtre domaine + pagination). */
+export function fetchMonographs(
+  params: { q?: string; domain?: string; page?: number; pageSize?: number },
+  signal?: AbortSignal
+): Promise<MonographsResponse> {
+  const search = new URLSearchParams()
+  if (params.q?.trim()) search.set('q', params.q.trim())
+  if (params.domain) search.set('domain', params.domain)
+  if (params.page) search.set('page', String(params.page))
+  if (params.pageSize) search.set('pageSize', String(params.pageSize))
+  const qs = search.toString()
+  return getJson<MonographsResponse>(`/api/monographs${qs ? `?${qs}` : ''}`, signal)
+}
+
+/** Fiche monographie complète (12 sections + registre lié). */
+export function fetchMonograph(
+  dciKey: string,
+  signal?: AbortSignal
+): Promise<MonographDetail> {
+  return getJson<MonographDetail>(
+    `/api/monographs/${encodeURIComponent(dciKey)}`,
+    signal
+  )
+}
+
+/** Vérificateur grossesse & allaitement (règles CRAT + livres). */
+export function checkPregnancy(
+  q: string,
+  signal?: AbortSignal
+): Promise<PregnancyCheckResponse> {
+  return getJson<PregnancyCheckResponse>(
+    `/api/pregnancy?q=${encodeURIComponent(q.trim())}`,
+    signal
+  )
 }

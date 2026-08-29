@@ -15,6 +15,7 @@ import {
   Eye,
   FlaskConical,
   Info,
+  Library,
   Package,
   Pill,
   Printer,
@@ -52,6 +53,7 @@ import {
   isLocal,
 } from './status-badge'
 import { MAX_FAVORITES, useDzPharm } from './store'
+import { SafetyNote } from './safety-note'
 
 function Metric({
   label,
@@ -79,6 +81,7 @@ export function DrugSheet() {
   const openDrug = useDzPharm((s) => s.openDrug)
   const addToBasket = useDzPharm((s) => s.addToBasket)
   const setView = useDzPharm((s) => s.setView)
+  const openLibraryMonograph = useDzPharm((s) => s.openLibraryMonograph)
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const pushRecent = useDzPharm((s) => s.pushRecent)
@@ -616,9 +619,38 @@ export function DrugSheet() {
                 <ShieldPlus className="size-4" aria-hidden />
                 Ajouter au contrôle d&apos;interactions
               </Button>
+
+              <SafetyNote />
             </div>
               </TabsContent>
               <TabsContent value="rcp" className="mt-0 flex-1">
+                {drug.rcpSource === 'BOOK' && drug.dciKey ? (
+                  <div className="px-5 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeDrug()
+                        openLibraryMonograph(drug.dciKey!)
+                      }}
+                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Library className="size-4 shrink-0 text-primary" aria-hidden />
+                        <span>
+                          <span className="block text-sm font-semibold text-foreground">
+                            Monographie complète de {drug.dci}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            Ouvrir dans la Bibliothèque clinique (24 livres)
+                          </span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-primary">
+                        Ouvrir →
+                      </span>
+                    </button>
+                  </div>
+                ) : null}
                 <RcpViewer drugId={drug.id} brand={drug.brand} />
               </TabsContent>
             </Tabs>

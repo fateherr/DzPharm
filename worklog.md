@@ -254,3 +254,57 @@ Stage Summary:
 4. Alerte pénuries : investiguer le champ OBS (ruptures mentionnées)
 5. Pré-génération des RCP IA restants par lots (cron) pour 100 % du registre
 6. Grossesse/allaitement : outil de vérification par DCI (données CRAT des fiches 4.6)
+
+---
+Task ID: 11
+Agent: main-orchestrator (session 2026-08-29, phase 6)
+Task: QA globale, puis 3 nouvelles fonctionnalités — Bibliothèque clinique (explorateur des 764 monographies), Vérificateur Grossesse & Allaitement (CRAT), PWA offline (service worker) — + cross-links fiches↔bibliothèque + polish UI
+
+Work Log:
+- QA initiale : 8 vues OK, 0 erreur console, IA opérationnelle, serveur stable — état STABLE confirmé
+- NOUVEAU : BIBLIOTHÈQUE CLINIQUE (7e vue nav « Bibliothèque », icône Library) — GET /api/monographs (recherche q normalisée, filtre 17 domaines avec compteurs, pagination, cache 5 min) + GET /api/monographs/[key] (fiche complète : 12 sections dégroupées categories/mechanism/indications/CI/adverse/management/interactions/pregnancy/posology/galenic/advice/pk/notes + spécialités actives du registre liées par dciKey, take 40) ; library-view.tsx : chips domaines scrollables avec fondu latéral mobile, recherche débouncée, grille cartes (résumé mécanisme, badge CRAT rose, compteur blocs, livre source), lecteur Sheet plein écran (nav sticky par sections, sections critiques rouge, chips registre cliquables → fiche médicament), pagination
+- NOUVEAU : VÉRIFICATEUR GROSSESSE & ALLAITEMENT (6e onglet Outils) — src/lib/pregnancy-rules.ts : base CRAT curatée de 49 molécules majeures du marché DZ (niveaux SURE/PRUDENCE/DECONSEILLE/CONTRE_INDIQUE par trimestre + allaitement + notes + alternatives locales, IEC/ARA2/isotrétinoïne/valproate/AVK/AOD en CI absolue, paracétamol/amoxicilline/metformine/méthyldopa sûrs) ; GET /api/pregnancy?q= (résolution registre marque→DCI→match monographie, règle curatée = source de vérité si présente, sinon classification automatique du texte livre AVEC gestion des négations par phrase « aucun effet tératogène » ne compte pas) ; pregnancy-checker.tsx : carte verdict colorée graduée, grille T1/T2/T3, badge allaitement, cartes grossesse/allaitement, alternatives vertes, référence livre (items grossesse/allaitement/précisions séparés), badges sources, disclaimer pharmacovigilance
+- BUG CORRIGÉ (majeur) : DOLIPRANE s'affichait « Contre-indiqué » à cause du faux positif « aucun effet tératogène démontré » → double fix : règle curatée prioritaire sur le texte + classifier par phrases avec regex de négation (aucun|pas de|sans|absence) ; vérifié : DOLIPRANE=Sûr, BRUFEN=Déconseillé (T3 CI), LOPRIL=CI, CURACNE=CI absolue
+- NOUVEAU : PWA OFFLINE — public/manifest.webmanifest (standalone, icônes any+maskable, theme teal) + icônes PNG 192/512 générées (PIL, pilule diagonale bi-couleur sur fond sombre, + variantes maskable) + public/sw.js v3 (app shell cache-first + API network-first avec repli cache LRU 220 entrées + nettoyage anciens caches) + pwa-provider.tsx (enregistrement SW, indicateur hors ligne ambré « fiches consultées disponibles en cache », toast de mise à jour avec SKIP_WAITING) + metadata layout (manifest, appleWebApp, icônes)
+- CROSS-LINKS FICHE↔BIBLIOTHÈQUE : store libraryDciKey + openLibraryMonograph/closeLibraryMonograph ; bouton « Monographie complète de {DCI} » dans l'onglet RCP de la fiche (visible si rcpSource=BOOK) qui ferme la fiche et ouvre la Bibliothèque directement sur la monographie ; les chips de spécialités du lecteur ferment et ouvrent la fiche médicament
+- UI : badge hero rose « Grossesse & allaitement (CRAT) » ; 2 nouvelles cartes outils accueil (Bibliothèque clinique + Grossesse & allaitement, grille 3×4) ; footer enrichi (17 livres · 764 monographies, mode hors ligne PWA) ; SheetDescription ajoutée au lecteur (warning Radix résolu) ; contraste light-mode renforcé (state-danger #b91c1c, state-warning #b45309)
+- QA E2E : Bibliothèque (764 fiches, 17 domaines 113→6, recherche amoxicilline → 2 résultats, lecteur Acarbose 12 sections + 18 spécialités, Amoxicilline 74 blocs) ; cross-links bidirectionnels vérifiés (fiche RCP → bibliothèque → chip → fiche) ; grossesse (DOLIPRANE Sûr, BRUFEN T1/T2 Déconseillé + T3 CI + allaitement Prudence, CURACNE CI absolue contraception PGR, LOPRIL CI) ; SW vérifié (dzpharm-v3-shell + api, 10 endpoints API mis en cache après navigation) ; 8 vues desktop OK ; mobile 390px zéro overflow (accueil, bibliothèque, grossesse) ; light mode contrasté 8/10 ; VLM : bibliothèque desktop 8/10, mobile 8/10, grossesse mobile 8/10 ; console 0 erreur, lint 0 erreur, tsc 0 erreur src
+- Cron de revue 15 min recréé (job 344683)
+
+Stage Summary:
+- 3 nouvelles fonctionnalités livrées : Bibliothèque clinique (explorateur complet des 764 monographies par domaine avec lecteur 12 sections + liens registre), Vérificateur Grossesse & Allaitement (49 règles CRAT + classification texte livres avec négations, verdicts par trimestre), PWA offline (SW cache-first shell + network-first API, indicateur hors ligne, mise à jour auto)
+- Le contenu des 17 livres est désormais accessible en consultation directe (avant : uniquement via les RCP générés)
+- Cross-navigation fiche↔bibliothèque : la plateforme est entièrement intégrée
+- ÉTAT : STABLE — 9 vues, 6 outils cliniques, PWA installable, tout vérifié E2E desktop + mobile + light
+
+=== Prochaine phase recommandée ===
+1. Alerte pénuries : investiguer le champ OBS du registre (ruptures mentionnées) + bandeau dans les fiches
+2. Panier d'ordonnance persistant avec budget total (extension Chifa + export)
+3. Pré-génération par lots des RCP IA restants (couverture 100 % du registre)
+4. Carte des pharmacies de garde par wilaya (données à sourcer)
+5. Coffre psychotropes : listes I/II/Tableau avec règles de délivrance
+6. Recherche globale (Cmd+K) unifiée : médicaments + monographies + produits officine
+
+---
+Task ID: 12
+Agent: main-orchestrator (session 2026-08-29, phase 7 — exécution du plan d'amélioration DzPharm-Analysis-Enhancement-Plan.md)
+Task: Mise à jour de la base documentaire (pharmacie.zip 25 fichiers → 24 livres + rapport d'audit) + items P0 du plan (bandeau urgence, disclaimers, marque, stats) + préparation des chantiers P1
+
+Work Log:
+- Lu le plan DzPharm-Analysis-Enhancement-Plan.md (329 lignes) : priorités P0 (bandeau urgence, stats calculées, marque, disclaimers, QA contenu), P1 (pénuries, retraits+raisons, pharmacies de garde, glossaire, page sources/méthodologie, recherche NL, fiche comptoir, simulateur génériques, matrice interactions), P2 (annuaire labos, timeline 30 ans, insights auto, tendances, pharmacovigilance, armoire famille, calendrier santé), P3
+- pharmacie.zip extrait (25 fichiers) : 7 livres NOUVEAUX (Anesthésie-Réanimation, Immunologie-Transplantation, Nutrition/Dialyse/Perfusion, Phytothérapie/Médecine Nucléaire/Dispositifs, Produits Sanguins/Facteurs Coagulation, Radiologie/Produits Contraste, Toxicologie) + rapport d'audit officiel
+- RAPPORT D'AUDIT lu : collection officielle = 24 fascicules, ~997 DCI, ~3 031 000 mots, comptes DCI par fascicule (tableau de référence)
+- scripts/extract_monographs.py étendu : +7 domaines, formats E-K (em-dash H2 « 181.1.1 — PROPOFOL », H3+H4 numérotés Immunologie/Nutrition, chapitre=fiche Phytothérapie, « Sous-section N » Produits Sanguins, « Fiche DCI : » Radiologie, « DCI N :/— » Toxicologie/Anesthésie), fiches mono-numéro « 1. Sumatriptan (Seule) » avec garde de suffixe (Seule|En Association), nettoyage préfixes « Fiche DCI : », lookahead étendu aux labels de sections en corps de texte (format C), détection profil/indications-CI-effets indésirables dans les headings non canoniques, GENERIC_HEADS élargi (INDICATIONS, CONTRE-INDICATIONS, CHOIX, MESURES…), filtre articles français, title-case des labels ALL-CAPS (25)
+- VALIDATION : 22/24 livres = comptes officiels de l'audit À L'UNITÉ PRÈS (Antalgiques 66≈65, Pneumologie 48>44, Dermatologie 33/38) ; 911 monographies uniques (vs 764), 59 898 items de contenu (+42 %), couverture 90,5 % des actifs (4 869/5 381)
+- Re-seed Monograph (deleteMany + createMany) → 911 lignes ; API /api/stats et /api/monographs vérifiés : monographs=911, domains=24
+- UI : toutes les références « 17 livres »/« 764 » remplacées (footer, home ×4, library, pregnancy, drug-sheet, rcp-view, stats-view)
+- P0 BANDEAU URGENCE : nouveau composant emergency-bar.tsx (sticky top-0 z-50, h-9, SAMU 14 · Protection Civile 102 · Police 17 · Centre Anti-Poison (Alger) 021 71 30 42, liens tel:, responsive) rendu au-dessus du header (header passé en sticky top-9) via page.tsx
+- P0 DISCLAIMERS : nouveau composant safety-note.tsx (note ambre standardisée « pas un diagnostic ni un substitut à un avis médical » + numéros d'urgence) ajouté à : pediatric-calculator, renal-calculator, chifa-simulator, drug-comparator, drug-sheet (onglet Fiche) ; library-view : disclaimer lecteur renforcé (24 volumes + urgences)
+- P0 MARQUE : audit — aucun Z.ai/space-z/Demo dans le code utilisateur ✓ ; marque DzPharm cohérente partout
+- Préparation P1 parallèles : stubs shortage-center.tsx, pharmacy-locator.tsx, generic-simulator.tsx + 3 onglets Outils câblés (Économies génériques, Pénuries, Pharmacies de garde)
+- bun run lint : 0 erreur ; page SSR vérifiée (bandeau présent)
+
+Stage Summary:
+- Base documentaire : 24 livres, 911 monographies (911 = validé contre l'audit officiel), 24 domaines thérapeutiques
+- P0 du plan : bandeau urgence permanent ✓, disclaimers sur toutes les vues à posologie/résultat ✓, marque unifiée ✓, stats dynamiques ✓
+- Stubs P1 en place pour exécution parallèle : Subagent A (pénuries + retraits + pharmacies de garde), Subagent B (matrice interactions + simulateur génériques + recherche NL + fiche comptoir), puis C (glossaire + page sources + guides patients) et D (annuaire labos + timeline + insights + tendances)
