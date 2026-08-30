@@ -227,11 +227,22 @@ export function PediatricCalculator() {
                 <li key={b}>{b}</li>
               ))}
             </ul>
+            <p className="mt-2 text-xs font-medium text-foreground/70">
+              Le calcul ci-dessous est fourni à titre indicatif uniquement — il ne doit pas
+              être dispensé sans validation médicale.
+            </p>
           </div>
         ) : null}
 
-        {/* Dose principale */}
-        <Card className={cn('overflow-hidden', !blocked && 'border-primary/30')}>
+        {/* Dose principale — atténuée si un bloqueur d'âge/poids est actif */}
+        <Card
+          className={cn(
+            'overflow-hidden transition-opacity',
+            !blocked && 'border-primary/30',
+            blocked && 'opacity-50 saturate-50'
+          )}
+          aria-disabled={blocked || undefined}
+        >
           <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>

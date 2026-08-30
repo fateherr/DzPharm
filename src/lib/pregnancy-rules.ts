@@ -65,7 +65,7 @@ export const PREGNANCY_RULES: PregnancyRule[] = [
     pregnancy: 'DECONSEILLE',
     trimesters: { t1: 'DECONSEILLE', t2: 'DECONSEILLE', t3: 'CONTRE_INDIQUE' },
     breastfeeding: 'PRUDENCE',
-    pregnancyNote: 'AINS à éviter du 6e mois de grossesse (contrefort: fermeture prématurée du canal artériel, oligoamnios, effet rénale fœtal). Avant 6 mois : usage ponctuel uniquement. CRAT : « éviter ».',
+    pregnancyNote: 'AINS à éviter du 6e mois de grossesse (fermeture prématurée du canal artériel, oligoamnios, atteinte rénale fœtale). Avant 6 mois : usage ponctuel uniquement. CRAT : « éviter ».',
     breastfeedingNote: 'Compatible si occasionnel et courte durée (CRAT) — préférer le paracétamol en traitement prolongé.',
     alternatives: ['Paracétamol'],
   },
@@ -273,7 +273,7 @@ export const PREGNANCY_RULES: PregnancyRule[] = [
     dciKey: 'FLUOXETINE', dci: 'Fluoxétine',
     pregnancy: 'PRUDENCE', breastfeeding: 'PRUDENCE',
     pregnancyNote: 'ISRS utilisable si nécessaire (pas de majoration du risque malformatif) ; poursuivre un traitement efficace plutôt que de substituer.',
-    breastfeedingNote: 'Possible — surveiller somnolence/irritabilité du nourrisson ; préférer sérotra/paroxétine si traitement débutant.',
+    breastfeedingNote: 'Possible — surveiller somnolence/irritabilité du nourrisson ; préférer sertraline/paroxétine si traitement débutant.',
   },
   {
     dciKey: 'SERTRALINE', dci: 'Sertraline',

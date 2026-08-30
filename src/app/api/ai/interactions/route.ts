@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
+import { clientIpFrom, rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 120;
+
+/** Garde anti-abus : 12 requêtes / minute / IP (analyse approfondie coûteuse). */
+const RATE_LIMIT = 12;
+const RATE_WINDOW_MS = 60_000;
 
 interface InteractionPair {
   drugs: [string, string];
@@ -18,6 +23,14 @@ interface InteractionPair {
  */
 export async function POST(req: NextRequest) {
   try {
+    const rl = rateLimit(`ai-int:${clientIpFrom(req)}`, RATE_LIMIT, RATE_WINDOW_MS);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: `Trop de requêtes — réessayez dans ${rl.retryAfterSec} s.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     const inputDrugs: { name?: string }[] = Array.isArray(body?.drugs) ? body.drugs : [];
     const patientContext: string = String(body?.patientContext || "").slice(0, 500);

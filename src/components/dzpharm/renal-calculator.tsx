@@ -142,7 +142,7 @@ const RENAL_RULES: RenalDrugRule[] = [
   {
     dci: 'IEC (captopril, énalapril…) & ARA2',
     class: 'Antihypertenseurs',
-    advice: 'Débuter prudemment, contrôler créatine et kaliémie à 1-2 semaines ; risque d\'IRA fonctionnelle si sténose.',
+    advice: 'Débuter prudemment, contrôler créatinine et kaliémie à 1-2 semaines ; risque d\'IRA fonctionnelle si sténose.',
     at: (c) => (c < 30 ? 'adjust' : 'caution'),
   },
   {

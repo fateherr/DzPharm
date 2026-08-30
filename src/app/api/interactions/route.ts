@@ -98,19 +98,32 @@ export async function POST(req: NextRequest) {
 
     const globalRisk = globalRiskFromPairs(pairs);
 
+    // Avertissement pour les produits non résolus dans le registre :
+    // ne jamais présenter « aucune interaction » sans signaler l'angle mort.
+    const unresolved = enriched
+      .filter((e) => !e.dci && !e.brand)
+      .map((e) => e.input);
+
     const hasCi = pairs.some((p) => p.severity === "CONTRE-INDIQUE");
     const hasMajor = pairs.some((p) => p.severity === "MAJEURE");
 
     const summary =
-      pairs.length === 0
-        ? `Aucune interaction connue dans la base de règles locale entre les ${enriched.length} produits analysés.`
-        : hasCi
-          ? `${pairs.length} association(s) à risque identifiée(s), dont une contre-indication formelle — cette ordonnance doit être validée avant dispensation.`
-          : hasMajor
-            ? `${pairs.length} association(s) à risque identifiée(s), dont ${pairs.filter((p) => p.severity === "MAJEURE").length} majeure(s) — surveillance et adaptation recommandées.`
-            : `${pairs.length} association(s) à surveiller selon la base de règles locale.`;
+      unresolved.length > 0
+        ? `Analyse partielle : ${unresolved.length} produit(s) non reconnu(s) dans le registre — vérifiez la saisie. Aucune interaction connue entre les produits identifiés.`
+        : pairs.length === 0
+          ? `Aucune interaction connue dans la base de règles locale entre les ${enriched.length} produits analysés.`
+          : hasCi
+            ? `${pairs.length} association(s) à risque identifiée(s), dont une contre-indication formelle — cette ordonnance doit être validée avant dispensation.`
+            : hasMajor
+              ? `${pairs.length} association(s) à risque identifiée(s), dont ${pairs.filter((p) => p.severity === "MAJEURE").length} majeure(s) — surveillance et adaptation recommandées.`
+              : `${pairs.length} association(s) à surveiller selon la base de règles locale.`;
 
     const advice: string[] = [];
+    if (unresolved.length > 0) {
+      advice.push(
+        `Attention : ${unresolved.join(", ")} n'a pas été reconnu dans le registre algérien — l'analyse porte uniquement sur les produits identifiés. Essayez la DCI ou vérifiez l'orthographe.`
+      );
+    }
     if (hasCi) {
       advice.push(
         "Contre-indication détectée : contacter le prescripteur avant toute dispensation."
@@ -133,7 +146,12 @@ export async function POST(req: NextRequest) {
     }
 
     const monitoring: string[] = [];
-    if (enriched.some((e) => e.dci?.toUpperCase().includes("WARFARINE"))) {
+    if (
+      enriched.some((e) =>
+        e.dci?.toUpperCase().includes("WARFARINE") ||
+        e.dci?.toUpperCase().includes("ACENOCOUMAROL") ||
+        e.dci?.toUpperCase().includes("FLUINDIONE"))
+    ) {
       monitoring.push("INR (international normalized ratio)");
     }
     if (enriched.some((e) => e.dci?.toUpperCase().includes("LITHIUM"))) {

@@ -177,6 +177,7 @@ export function DirectoryView() {
   const drugs = data?.drugs ?? []
   const total = data?.total ?? 0
   const totalPages = data?.totalPages ?? 0
+  const fuzzy = data?.fuzzy === true
 
   const hasActiveFilters =
     filters.q || filters.status || filters.domain || filters.form || filters.liste || filters.country || filters.lab
@@ -280,6 +281,11 @@ export function DirectoryView() {
               <>
                 <span className="font-semibold text-foreground">{formatNumber(total)}</span>{' '}
                 médicament{total !== 1 ? 's' : ''} trouvé{total !== 1 ? 's' : ''}
+                {fuzzy ? (
+                  <span className="ml-1 rounded-full border border-state-warning/40 bg-state-warning/10 px-2 py-0.5 text-[11px] font-medium text-state-warning">
+                    orthographe approximative — résultats les plus proches
+                  </span>
+                ) : null}
                 {isFetching ? ' · actualisation…' : ''}
               </>
             )}

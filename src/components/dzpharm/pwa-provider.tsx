@@ -7,12 +7,43 @@ import { Button } from '@/components/ui/button'
 
 /**
  * Enregistrement du service worker DzPharm (PWA offline)
- * + indicateur d'état hors ligne discret.
+ * + indicateur d'état hors ligne discret
+ * + détection des réponses API servies depuis le cache (fraîcheur).
  */
 export function PwaProvider() {
   const [offline, setOffline] = useState(false)
   const [updateReady, setUpdateReady] = useState(false)
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
+  const [staleHit, setStaleHit] = useState(false)
+
+  useEffect(() => {
+    // Détection fraîcheur : le SW marque les réponses servies du cache
+    // (X-DzPharm-Cache: hit) — on l'indique clairement à l'utilisateur.
+    let staleTimer: ReturnType<typeof setTimeout> | undefined
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const response = await originalFetch(input, init)
+      try {
+        if (
+          response.headers?.get?.('x-dzpharm-cache') === 'hit' &&
+          typeof (input as Request)?.url === 'string' &&
+          (input as Request).url.includes('/api/')
+        ) {
+          setStaleHit(true)
+          if (staleTimer) clearTimeout(staleTimer)
+          staleTimer = setTimeout(() => setStaleHit(false), 6000)
+        }
+      } catch {
+        /* en-têtes indisponibles — ignorer */
+      }
+      return response
+    }
+
+    return () => {
+      window.fetch = originalFetch
+      if (staleTimer) clearTimeout(staleTimer)
+    }
+  }, [])
 
   useEffect(() => {
     // État en ligne / hors ligne
@@ -63,7 +94,7 @@ export function PwaProvider() {
 
   return (
     <>
-      {offline && (
+      {(offline || staleHit) && (
         <div
           role="status"
           aria-live="polite"
@@ -71,7 +102,9 @@ export function PwaProvider() {
         >
           <span className="pointer-events-auto flex items-center gap-2 rounded-full border border-state-warning/40 bg-state-warning/15 px-4 py-1.5 text-xs font-semibold text-state-warning shadow-lg backdrop-blur-sm">
             <WifiOff className="size-3.5" aria-hidden />
-            Hors ligne — fiches consultées disponibles en cache
+            {offline
+              ? 'Hors ligne — fiches consultées disponibles en cache'
+              : 'Serveur momentanément indisponible — données servies depuis le cache (fraîcheur non garantie)'}
           </span>
         </div>
       )}

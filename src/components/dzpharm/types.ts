@@ -87,6 +87,8 @@ export interface DrugsResponse {
   page: number
   pageSize: number
   totalPages: number
+  /** true si les résultats viennent du repli flou (tolérance aux fautes de saisie). */
+  fuzzy?: boolean
 }
 
 export interface DrugDetailResponse {

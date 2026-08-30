@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
+import { clientIpFrom, rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 120;
+
+/** Garde anti-abus : 20 requêtes / minute / IP (coût + stabilité du service). */
+const RATE_LIMIT = 20;
+const RATE_WINDOW_MS = 60_000;
 
 /**
  * POST /api/ai/chat — DzPharm Copilote Clinique
@@ -11,6 +16,14 @@ export const maxDuration = 120;
  */
 export async function POST(req: NextRequest) {
   try {
+    const rl = rateLimit(`ai-chat:${clientIpFrom(req)}`, RATE_LIMIT, RATE_WINDOW_MS);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: `Trop de requêtes — réessayez dans ${rl.retryAfterSec} s.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     const messages: { role: string; content: string }[] = Array.isArray(body?.messages)
       ? body.messages.filter((m: { role?: string; content?: string }) => m?.content)
@@ -80,7 +93,9 @@ RÈGLES:
 2. Pour toute question sur un médicament en Algérie, précise si possible: DCI, marques locales disponibles, statut (actif/retiré), liste de prescription.
 3. Inclus les mises en garde de sécurité essentielles (grossesse, allaitement, pédiatrie, insuffisance rénale) quand pertinent.
 4. Ne prescris jamais: oriente vers le professionnel de santé.
-5. Si une donnée est incertaine, dis-le clairement plutôt que d'inventer.${registryContext}`;
+5. Si une donnée est incertaine, dis-le clairement plutôt que d'inventer.
+6. JAMAIS de concentration/formulation inventée : n'énonce pas la concentration d'un sirop, de gouttes ou d'une forme locale sans la tenir du contexte « PRODUITS DU REGISTRE » fourni. Sinon, demande à l'utilisateur de lire l'étiquette (mg/mL ou mg/5 mL) et montre le calcul avec une variable. Ne cite que des marques du registre algérien (pas de marques étrangères comme Dafalgan ou Doliprane France si absentes du contexte).
+7. En pédiatrie, toute dose doit être exprimée en mg/kg puis convertie seulement si la concentration est fournie par l'utilisateur.${registryContext}`;
 
     const zai = await ZAI.create();
     const completion = await zai.chat.completions.create({

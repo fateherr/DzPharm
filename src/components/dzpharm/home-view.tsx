@@ -517,7 +517,7 @@ export function HomeView() {
                     {item.brand}
                   </span>
                   <span className="block max-w-44 truncate text-[11px] text-muted-foreground">
-                    {item.dci}
+                    {cleanDciLabel(item.dci)}
                   </span>
                 </span>
               </button>
@@ -564,7 +564,7 @@ export function HomeView() {
                     {fav.brand}
                   </span>
                   <span className="block max-w-44 truncate text-[11px] text-muted-foreground">
-                    {fav.dci}
+                    {cleanDciLabel(fav.dci)}
                   </span>
                 </button>
                 <button
@@ -620,7 +620,7 @@ export function HomeView() {
                 <p className="mt-2 truncate pr-5 text-sm font-semibold text-foreground">
                   {item.brand}
                 </p>
-                <p className="truncate text-[11px] text-muted-foreground">{item.dci}</p>
+                <p className="truncate text-[11px] text-muted-foreground">{cleanDciLabel(item.dci)}</p>
                 <p className="mt-2 flex items-center gap-1 text-[11px] font-medium text-chifa tabular-nums">
                   <Eye className="size-3" aria-hidden />
                   {formatNumber(item.views)} consultations

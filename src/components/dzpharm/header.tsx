@@ -137,7 +137,8 @@ export function Header() {
             onClick={() => setView(item.id)}
             aria-current={view === item.id ? 'page' : undefined}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium whitespace-nowrap transition-colors',
+              'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
+              'min-h-11',
               view === item.id
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'

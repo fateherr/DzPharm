@@ -260,7 +260,7 @@ export function CopilotView() {
                     )}
                   >
                     {message.role === 'assistant' ? (
-                      <div className="min-w-0">
+                      <div className="min-w-0" dir="auto">
                         <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                           {message.content}
                         </Markdown>

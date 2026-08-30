@@ -418,3 +418,38 @@ Stage Summary:
 - PLAN EXÉCUTÉ — P0 complet (bandeau urgence, marque, stats calculées/étiquetées, disclaimers partout, 0 branding builder) ; P1 complet (pénuries, retraits+raisons+taxonomie, pharmacies de garde, glossaire 92/8, page sources & méthodologie, recherche NL, fiche comptoir, simulateur génériques, matrice interactions) ; P2 largement couvert (annuaire 1045 labos, timeline 30 ans 3 modes, 8 insights auto, tendances DCI, 10 guides patients, pharmacovigilance info) — restent en P2/P3 : armoire famille multi-profils, calendrier sensibilisation (QA requise), switch langue AR/RTL, traçabilité lots, upload ordonnance, quiz, push notifications, API publique
 - Base documentaire : 24 livres (audit officiel validé), 911 monographies, 24 domaines, 59 898 items, 90,5 % des actifs couverts ; RCP BOOK étendus aux 7 nouveaux domaines
 - ÉTAT : STABLE — 9 vues + 13 onglets outils + 3 onglets bibliothèque + vue À propos, tout vérifié E2E desktop + mobile, IA opérationnelle, lint/tsc 0 erreur
+
+---
+Task ID: 15
+Agent: main-orchestrator (session 2026-08-30, audit complet 10 phases)
+Task: Audit intégral (exactitude du contenu, intégrité fonctionnelle, UI/UX, santé technique) + correctifs sûrs + backlog priorisé — exécution des phases 1→10 demandées par l'utilisateur
+
+Work Log:
+- PHASE 1 (Inventaire) : 9 vues + 8 items nav, 9 onglets Outils, 3 onglets Bibliothèque, 2 onglets Interactions, 12 endpoints API testés 200 OK, dataset servi côté serveur via Prisma (pas de JSON client), PWA SW v3 active
+- PHASE 2 (Intégrité clinique & prix) : posologies pédiatriques 15 molécules vérifiées (math exacte aux bornes : 12kg→180mg→7,5mL ; plafonds 1000/4000 ; bloqueurs âge/poids OK) ; moteur d'interactions 48 règles revues (sévrités conformes ANSM/BCB) ; CRAT 49 règles vérifiées (valproate 10%/30-40%, isotrétinoïne PGR, warfarine CI grossesse/OK allaitement ✓) ; Cockcroft-Gault & MDRD vérifiés numériquement exacts ; 10 classes rénales conformes (metformine EMA 30-45-60) ; Chifa 80/100/40 + plafonnement carte corrects ; PPA 1791/1791 identiques au fichier source (0 écart) ; registre 9555 = 5381+1495+2679 ✓ ; 0 placeholder (SEPTODONT = faux positif TODO) ; devise Juin 2026/Août 2026 = dernières versions fournies (recherche web : pas d'édition plus récente visible)
+- FAUX NÉGATIFS CRITIQUES TROUVÉS : (1) ACÉNOCOUMAROL (seul AVK commercialisé en Algérie — SINTROM/AURACENO/NOVAROL) absent des 7 règles AVK → SINTROM+ASPEGIC/BRUFEN/CLARIDAR/CORDARONE = aucune alerte locale ; (2) graphie registre « ACIDE ACETYLSALICYTIQUE » (ASPEGIC actif) ne matchait aucun jeton aspirine ; (3) noms étrangers non résolus → « aucune interaction » sans avertissement ; (4) hallucination copilote : « Doliprane sirop 100 mg/ml » (réel : 120mg/5mL) + marque Dafalgan non algérienne
+- PHASE 3 (Fonctionnel) : toutes vues rendues, console 0 erreur, interactions E2E (BRUFEN+LOPRIL→MAJEURE), copilote patient mode conservateur ✓, darija ✓ ; recherche sans tolérance aux fautes ni arabe ; dose affichée malgré bloqueur pédiatrique ; PWA : données cachées servies sans indicateur de fraîcheur
+- PHASE 4 (UI/UX) : VLM desktop 8,5-9/10, mobile 7,5/10 ; cibles tactiles nav mobile 36px (<44px WCAG) ; contrastes 7,28x/12,88x (AAA) ; RTL : bulles user dir=auto ✓ mais markdown assistant non ; marqueurs «**» du registre visibles dans Les plus consultés
+- PHASE 5 (Technique) : AUCUN rate-limiting sur les 2 endpoints IA (coût/abus) ; pas de JSON-LD ni sitemap (SPA) ; perf excellente (API 14-45ms, next/font, zéro dataset client) ; pas de clé exposée, Prisma paramétré, anti-abus pénuries OK
+- PHASE 6 (Concurrence) : Vidal/BCB/Thériaque (intégration POS, monographies, référentiel), Epocrates (pill identifier, formulary), UpToDate Lexidrug (IV compatibilité), régionaux : Medicaments Algérie 2026 (pharmaos), DZAIRPHARMA, Aladwiah (arabe), app de suivi des ruptures (scidev) — DzPharm reste seul avec IA trilingue + outils Chifa/Ramadan/pédiatrie locaux
+- PHASE 9 (CORRECTIFS APPLIQUÉS — tout vérifié E2E) :
+  * interaction-rules.ts : AVK = [WARFARINE, ACENOCOUMAROL, FLUINDIONE] sur les 7 règles + ASPIRINE_TOKENS avec graphies registre + 6 nouvelles règles (cotrimoxazole+MTX MAJEURE, IEC+ARA2 MAJEURE, statines+gemfibrozil MAJEURE, AINS+diurétiques MODEREE, potassium+IEC/épargneurs MAJEURE, rifampicine+midazolam MAJEURE) + TRIMETOPRIME (graphie FR) — [MODIFICATIONS CLINIQUES : EN ATTENTE DE VALIDATION PHARMACIENNE, marquées dans le code]
+  * /api/interactions : avertissement « produit non reconnu » (summary + advice) + INR monitoring étendu aux AVK
+  * rate-limit.ts (nouveau) : limiteur IP mémoire + appliqué à /api/ai/chat (20/min) et /api/ai/interactions (12/min) → 429 vérifié
+  * prompt copilote : règles 6-7 anti-hallucination (jamais de concentration inventée, marques du registre uniquement, mg/kg avant conversion mL)
+  * sw.js v4 : en-tête X-DzPharm-Cache: hit sur réponses servies du cache + pwa-provider : bannière ambre « fraîcheur non garantie » (fetch wrapper)
+  * pediatric-calculator : carte dose atténuée (opacity/saturate + aria-disabled) + note « indicatif uniquement » quand bloqueur actif
+  * typos cliniques : « contrefort »→supprimé, « effet rénale »→« atteinte rénale fœtale », « sérotra »→« sertraline », « créatine »→« créatinine »
+  * /api/drugs : repli flou Levenshtein ≤2 (doliprne→DOLIPRANE, amoxyciline→amoxicilline vérifiés) + drapeau fuzzy + badge UI Répertoire « orthographe approximative »
+  * recherche arabe : dictionnaire 20 entrées (باراسيتامول→PARACETAMOL 308 résultats vérifié)
+  * header : cibles tactiles nav mobile min-h-11 (44px vérifié)
+  * copilot-view : dir="auto" sur markdown assistant (RTL arabe)
+  * home-view : marqueurs «**» nettoyés (cleanDciLabel sur consultés/récents/favoris)
+  * bun run lint 0 erreur ; tsc --noEmit 0 erreur fichiers modifiés ; console navigateur 0 erreur après reload ; toutes vues 0 overflow
+- PHASE 8 (BACKLOG PRIORISÉ) : compartiment « sécurité patient — faire maintenant » (tout appliqué ci-dessus sauf validation pharmacienne des règles cliniques) ; Quick Wins restants : badges « dernière vérification » par point de données, panier ordonnance persistant ; Paris stratégiques : scan code-barres boîte (5×4), OCR ordonnance→interactions (4×4), mode « expliquer en darija » (4×2), API publique POS (4×4), pages SSR par médicament pour SEO (4×4, structurel — approbation requise), alertes retraits/rappels push (4×3), quiz étudiant (3×2), armoire famille (3×3)
+
+Stage Summary:
+- AUDIT COMPLET : le socle clinique est sain (math exacte, sources fidèles à 100 %), mais 4 risques réels corrigés (AVK algérien, graphies registre, silence sur produits non résolus, hallucination de formulation)
+- 14 correctifs livrés et vérifiés E2E ; modifications cliniques marquées « en attente de validation pharmacienne » dans le code
+- Restes recommandés : validation pharmacienne des 6 nouvelles règles + AVK étendu, badges de fraîcheur par donnée, scan code-barres, OCR ordonnance
+- ÉTAT : STABLE — lint/tsc/console/overflow 0 erreur, SW v4, rate limiting actif

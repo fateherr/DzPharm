@@ -8,7 +8,7 @@
  *  - Nettoyage des anciens caches à l'activation.
  */
 
-const VERSION = 'dzpharm-v3';
+const VERSION = 'dzpharm-v4';
 const SHELL_CACHE = `${VERSION}-shell`;
 const API_CACHE = `${VERSION}-api`;
 const MAX_API_ENTRIES = 220;
@@ -87,17 +87,25 @@ self.addEventListener('fetch', (event) => {
         .catch(() =>
           caches
             .match(request)
-            .then(
-              (cached) =>
-                cached ||
-                new Response(
-                  JSON.stringify({
-                    error: 'Hors ligne — ressource non mise en cache',
-                    offline: true,
-                  }),
-                  { status: 503, headers: { 'Content-Type': 'application/json' } }
-                )
-            )
+            .then((cached) => {
+              if (cached) {
+                // Marqueur de fraîcheur : l'UI peut signaler « données en cache »
+                const headers = new Headers(cached.headers)
+                headers.set('X-DzPharm-Cache', 'hit')
+                return new Response(cached.body, {
+                  status: cached.status,
+                  statusText: cached.statusText,
+                  headers,
+                })
+              }
+              return new Response(
+                JSON.stringify({
+                  error: 'Hors ligne — ressource non mise en cache',
+                  offline: true,
+                }),
+                { status: 503, headers: { 'Content-Type': 'application/json' } }
+              )
+            })
         )
     );
     return;

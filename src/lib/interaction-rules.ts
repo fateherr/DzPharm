@@ -45,6 +45,20 @@ const NITRES = ['TRINITRINE', 'ISOSORBIDE', 'MOLSIDOMINE']
 const ANTACIDES = ['CALCIUM', 'MAGNESIUM', 'ALUMINIUM', 'HYDROXYDE D ALUMINIUM', 'CARBONATE DE CALCIUM', 'SIMETICONE']
 const DIGITALIQUES = ['DIGOXINE']
 const SYSTEMIQUES_AZOLES_CYP3A4 = ['KETOCONAZOLE', 'ITRACONAZOLE']
+const SULFAMIDES_ANTIBIO = ['TRIMETHOPRIME', 'TRIMETOPRIME', 'SULFAMETHOXAZOLE', 'COTRIMOXAZOLE', 'COTRIMOXAZOLE TRIMETOPRIME']
+
+/*
+ * AVK — en Algérie, l'antivitamine K commercialisé (SINTROM, AURACENO,
+ * NOVAROL) est l'ACÉNOCOUMAROL ; warfarine/fluindione incluses pour les
+ * ordonnances étrangères. Toutes les règles AVK couvrent la classe entière.
+ * [Étendu lors de l'audit — en attente de validation pharmacienne]
+ */
+const AVK = ['WARFARINE', 'ACENOCOUMAROL', 'FLUINDIONE']
+
+/* Variantes orthographiques du registre officiel
+ * (ex. « ACIDE ACETYLSALICYTIQUE » — graphie du fichier source). */
+const ASPIRINE_TOKENS = ['ASPIRINE', 'ACIDE ACETYLSALICYLIQUE', 'ACIDE ACETYLSALICYTIQUE', 'ACETYLSALICYLATE DE LYSINE']
+
 
 /* ------------------------------------------------------------------ */
 /* Règles                                                              */
@@ -53,32 +67,32 @@ const SYSTEMIQUES_AZOLES_CYP3A4 = ['KETOCONAZOLE', 'ITRACONAZOLE']
 export const LOCAL_RULES: LocalRule[] = [
   // --- Antalgiques / AINS / anticoagulants -------------------------
   {
-    id: 'aspirine-warfarine',
-    left: ['ASPIRINE', 'ACIDE ACETYLSALICYLIQUE'],
-    right: ['WARFARINE'],
+    id: 'aspirine-avk',
+    left: ASPIRINE_TOKENS,
+    right: AVK,
     severity: 'MAJEURE',
     mechanism: 'Addition des effets anticoagulants (aspirine : inhibition plaquettaire + lésion de la muqueuse digestive ; warfarine : inhibition de la vitamine K). Risque hémorragique majeur.',
     management: 'Association déconseillée sauf avis spécialisé. Si nécessaire : INR rapproché, dose minimale d\u2019aspirine, protection gastrique par IPP et surveillance clinique des signes hémorragiques.',
   },
   {
-    id: 'paracetamol-warfarine',
+    id: 'paracetamol-avk',
     left: ['PARACETAMOL'],
-    right: ['WARFARINE'],
+    right: AVK,
     severity: 'MODEREE',
     mechanism: 'Le paracétamol à doses répétées (> 2 g/j pendant plusieurs jours) potentialise l\u2019anticoagulant en perturbant la synthèse des facteurs hépatiques.',
     management: 'Paracétamol préféré aux AINS comme antalgique chez le patient anticoagulé, sans dépasser 2 g/j de façon prolongée. Contrôle de l\u2019INR si prise itérative.',
   },
   {
-    id: 'ains-warfarine',
+    id: 'ains-avk',
     left: AINS.filter((a) => a !== 'ASPIRINE'),
-    right: ['WARFARINE'],
+    right: AVK,
     severity: 'MAJEURE',
-    mechanism: 'Inhibition plaquettaire + toxicité digestive additive des AINS sur l\u2019anticoagulation par warfarine : risque hémorragique (surtout digestif) multiplié.',
+    mechanism: 'Inhibition plaquettaire + toxicité digestive additive des AINS sur l\u2019anticoagulation par AVK : risque hémorragique (surtout digestif) multiplié.',
     management: 'Éviter l\u2019association. Antalgique de première intention : paracétamol. Si AINS indispensable : durée courte + IPP + surveillance INR et de l\u2019hémogramme.',
   },
   {
     id: 'aspirine-ibuprofene',
-    left: ['ASPIRINE', 'ACIDE ACETYLSALICYLIQUE'],
+    left: ASPIRINE_TOKENS,
     right: ['IBUPROFENE', 'KETOPROFENE', 'DICLOFENAC'],
     severity: 'MODEREE',
     mechanism: 'Compétition au niveau du site de liaison de la cyclooxygénase : l\u2019AINS peut réduire l\u2019effet antiagrégant de l\u2019aspirine à faible dose, avec addition de la toxicité digestive.',
@@ -151,9 +165,9 @@ export const LOCAL_RULES: LocalRule[] = [
     management: 'Corriger la kaliémie (supplémentation si K+ < 4 mmol/L), surveiller ECG et digoxinémie, éducation aux signes de toxicité digitalique.',
   },
   {
-    id: 'amiodarone-warfarine',
+    id: 'amiodarone-avk',
     left: ['AMIODARONE'],
-    right: ['WARFARINE'],
+    right: AVK,
     severity: 'MAJEURE',
     mechanism: 'Inhibition du CYP2C9 par l\u2019amiodarone : augmentation de l\u2019INR avec risque hémorragique (effet retardé de plusieurs jours).',
     management: 'Réduire la warfarine de 30-50 % à l\u2019introduction. INR rapproché la première semaine puis hebdomadaire jusqu\u2019à stabilisation.',
@@ -193,9 +207,9 @@ export const LOCAL_RULES: LocalRule[] = [
 
   // --- Anti-infectieux ----------------------------------------------
   {
-    id: 'macrolides-warfarine',
+    id: 'macrolides-avk',
     left: MACROLIDES.filter((m) => m !== 'AZITHROMYCINE'),
-    right: ['WARFARINE'],
+    right: AVK,
     severity: 'MAJEURE',
     mechanism: 'Inhibition du CYP3A4 et déplacement protéique : majoration de l\u2019effet anticoagulant et de l\u2019INR.',
     management: 'INR à 3-4 jours après l\u2019initiation. Signes hémorragiques à expliquer au patient. L\u2019azithromycine est l\u2019alternative la plus sûre.',
@@ -233,9 +247,9 @@ export const LOCAL_RULES: LocalRule[] = [
     management: 'Ajouter une méthode barrier (préservatif) pendant le traitement et 4 à 8 semaines après l\u2019arrêt, ou utiliser un contraceptif adapté (progestatif hors CYP3A4 / DIU).',
   },
   {
-    id: 'rifampicine-warfarine',
+    id: 'rifampicine-avk',
     left: ['RIFAMPICINE', 'RIFABUTINE'],
-    right: ['WARFARINE'],
+    right: AVK,
     severity: 'MAJEURE',
     mechanism: 'Induction du CYP2C9 : chute de l\u2019INR et risque thrombotique à l\u2019introduction, effet inverse (surdosage) à l\u2019arrêt.',
     management: 'Contrôle de l\u2019INR très rapproché (2×/semaine en début et à l\u2019arrêt). Adaptation posologique fréquente et nécessaire.',
@@ -249,9 +263,9 @@ export const LOCAL_RULES: LocalRule[] = [
     management: 'Réduire la théophylline d\u2019environ 1/3 et surveiller la théophyllinémie. Éducation aux signes de surdosage (palpitations, tremblements, insomnie, vomissements).',
   },
   {
-    id: 'griseofulvine-warfarine',
+    id: 'griseofulvine-avk',
     left: ['GRISEOFULVINE'],
-    right: ['WARFARINE'],
+    right: AVK,
     severity: 'MODEREE',
     mechanism: 'Induction enzymatique : diminution de l\u2019effet anticoagulant.',
     management: 'Surveiller l\u2019INR et adapter la posologie de warfarine pendant et après le traitement.',
@@ -435,7 +449,7 @@ export const LOCAL_RULES: LocalRule[] = [
   {
     id: 'cimetidine-anticoagulants',
     left: ['CIMETIDINE'],
-    right: ['WARFARINE', 'PHENYTOINE', 'THEOPHYLLINE', 'DIAZEPAM'],
+    right: [...AVK, 'PHENYTOINE', 'THEOPHYLLINE', 'DIAZEPAM'],
     severity: 'MODEREE',
     mechanism: 'Inhibition du CYP3A4/2C9 par la cimétidine : augmentation des concentrations des médicaments métabolisés par ces voies.',
     management: 'Préférer un IPP ou la famotidine. Si cimétidine nécessaire : surveiller INR, concentrations et effets indésirables.',
@@ -455,6 +469,57 @@ export const LOCAL_RULES: LocalRule[] = [
     severity: 'MODEREE',
     mechanism: 'Addition du blocage dopaminergique central : risque de syndrome extrapyramidal et de syndrome malin des neuroleptiques.',
     management: 'Limiter la durée du métoclopramide (≤ 5 jours), doses minimales, surtout chez le sujet âgé. Arrêt aux premiers signes extrapyramidaux.',
+  },
+
+  // --- Règles ajoutées lors de l'audit d'intégrité (couverture classe) ---
+  // [Ajouts cliniques — en attente de validation pharmacienne]
+  {
+    id: 'cotrimoxazole-methotrexate',
+    left: SULFAMIDES_ANTIBIO,
+    right: ['METHOTREXATE'],
+    severity: 'MAJEURE',
+    mechanism: 'Le triméthoprime inhibe le transport tubulaire rénal du méthotrexate et possède un effet antifolique propre : majoration de la myélotoxicité et de la mucite.',
+    management: 'Éviter l’association. Alternative antibiotique à privilégier. Si indispensable : NFS rapprochée, surveillance clinique (aphtes, infections, pâleur).',
+  },
+  {
+    id: 'iec-ara2',
+    left: IEC,
+    right: ARA2,
+    severity: 'MAJEURE',
+    mechanism: 'Double blocage du système rénine-angiotensine : hypotension, syncope, insuffisance rénale aiguë et hyperkaliémie (données ONTARGET).',
+    management: 'Association déconseillée. En cas de besoin (insuffisance cardiaque sous surveillance spécialisée) : contrôles tensionnels, créatinine et kaliémie rapprochés.',
+  },
+  {
+    id: 'statines-gemfibrozil',
+    left: STATINES,
+    right: ['GEMFIBROZIL', 'FENOFIBRATE'],
+    severity: 'MAJEURE',
+    mechanism: 'Inhibition de l’OATP1B1 et du CYP2C8 (gemfibrozil) : multiplication des concentrations de statine avec risque de rhabdomyolyse. Association contre-indiquée avec la simvastatine.',
+    management: 'Éviter, surtout avec simvastatine. Préférer la pravastatine/rosuvastatine à faible dose ou espacer les prises. Éducation aux myalgies et urines foncées ; CPK si symptômes.',
+  },
+  {
+    id: 'ains-diurétiques',
+    left: AINS,
+    right: [...THIAZIDIQUES, 'FUROSEMIDE', 'BUMETANIDE'],
+    severity: 'MODEREE',
+    mechanism: 'Les AINS réduisent la synthèse des prostaglandines rénales vasodilatatrices : chute de l’effet diurétique et antihypertenseur, risque d’insuffisance rénale aiguë.',
+    management: 'Surveillance du poids, de la tension et de la créatinine. Hydratation correcte. Association à risque majoré si IEC/ARA2 associé (triple whammy).',
+  },
+  {
+    id: 'potassium-iec-epargneurs',
+    left: ['POTASSIUM', 'CHLORURE DE POTASSIUM', 'POTASSIUM CHLORURE'],
+    right: [...IEC, ...ARA2, 'SPIRONOLACTONE', 'EPLERENONE', 'AMILORIDE', 'CANRENOATE'],
+    severity: 'MAJEURE',
+    mechanism: 'Apport potassique exogène additionné de l’effet hyperkaliémiant des IEC/ARA2/épargneurs : risque d’hyperkaliémie menaçante (arythmies).',
+    management: 'Éviter l’automédication par suppléments potassiques (y compris sels de régime). Kaliémie de contrôle et ECG si association maintenue.',
+  },
+  {
+    id: 'cyclines-contraceptifs-secours',
+    left: ['RIFAMPICINE', 'RIFABUTINE'],
+    right: ['MIDAZOLAM', 'TRIAZOLAM'],
+    severity: 'MAJEURE',
+    mechanism: 'Induction enzymatique puissante (CYP3A4) par la rifampicine : chute drastique des concentrations de benzodiazépine avec perte d’efficacité (et risque de sevrage).',
+    management: 'Éviter ; utiliser une benzodiazépine non métabolisée par le CYP3A4 (lorazépam) si anxiolyse nécessaire sous rifampicine.',
   },
 ]
 
