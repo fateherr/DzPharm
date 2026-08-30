@@ -1,0 +1,863 @@
+     1→'use client'
+     2→
+     3→import { useMemo, useState } from 'react'
+     4→import { useQuery } from '@tanstack/react-query'
+     5→import { motion } from 'framer-motion'
+     6→import {
+     7→  Activity,
+     8→  AlertCircle,
+     9→  AlertTriangle,
+    10→  Ban,
+    11→  Check,
+    12→  FlaskConical,
+    13→  Grid3x3,
+    14→  Info,
+    15→  Lightbulb,
+    16→  Loader2,
+    17→  Minus,
+    18→  Plus,
+    19→  ShieldAlert,
+    20→  ShieldCheck,
+    21→  Stethoscope,
+    22→  Trash2,
+    23→  X,
+    24→} from 'lucide-react'
+    25→import { cn } from '@/lib/utils'
+    26→import { Button } from '@/components/ui/button'
+    27→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    28→import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+    29→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    30→import { Textarea } from '@/components/ui/textarea'
+    31→import { useToast } from '@/hooks/use-toast'
+    32→import { postInteractions, postLocalInteractions } from './api'
+    33→import type { InteractionPair, InteractionsResponse, InteractionSeverity } from './types'
+    34→import { RISK_META, SeverityBadge, StatusBadge } from './status-badge'
+    35→import { MAX_BASKET, useDzPharm } from './store'
+    36→import { SearchAutocomplete } from './search-autocomplete'
+    37→
+    38→const SEVERITY_ORDER: InteractionSeverity[] = ['CONTRE-INDIQUE', 'MAJEURE', 'MODEREE', 'MINEURE']
+    39→
+    40→const SEVERITY_LEGEND: Record<InteractionSeverity, string> = {
+    41→  'CONTRE-INDIQUE': 'bg-state-danger',
+    42→  MAJEURE: 'bg-state-danger/60',
+    43→  MODEREE: 'bg-state-warning',
+    44→  MINEURE: 'bg-muted-foreground/40',
+    45→}
+    46→
+    47→const SEVERITY_LABELS: Record<InteractionSeverity, string> = {
+    48→  'CONTRE-INDIQUE': 'Contre-indication',
+    49→  MAJEURE: 'Majeure',
+    50→  MODEREE: 'Modérée',
+    51→  MINEURE: 'Mineure',
+    52→}
+    53→
+    54→/** Nombre max de médicaments affichés dans la matrice. */
+    55→const MAX_MATRIX = 6
+    56→
+    57→function PairCard({ pair }: { pair: InteractionPair }) {
+    58→  return (
+    59→    <Card className="overflow-hidden">
+    60→      <CardContent className="p-4">
+    61→        <div className="flex flex-wrap items-center justify-between gap-2">
+    62→          <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+    63→            <FlaskConical className="size-4 shrink-0 text-primary" aria-hidden />
+    64→            <span className="truncate">{pair.drugs[0]}</span>
+    65→            <span className="text-muted-foreground" aria-hidden>
+    66→              +
+    67→            </span>
+    68→            <span className="truncate">{pair.drugs[1]}</span>
+    69→          </p>
+    70→          <SeverityBadge severity={pair.severity} />
+    71→        </div>
+    72→        <div className="mt-3 space-y-2.5 text-sm">
+    73→          <div>
+    74→            <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+    75→              Mécanisme
+    76→            </p>
+    77→            <p className="mt-0.5 text-foreground/90">{pair.mechanism}</p>
+    78→          </div>
+    79→          <div>
+    80→            <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+    81→              Conduite à tenir
+    82→            </p>
+    83→            <p className="mt-0.5 text-foreground/90">{pair.management}</p>
+    84→          </div>
+    85→        </div>
+    86→      </CardContent>
+    87→    </Card>
+    88→  )
+    89→}
+    90→
+    91→export function InteractionsView() {
+    92→  const [tab, setTab] = useState('verificateur')
+    93→
+    94→  return (
+    95→    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    96→      <div className="mb-6">
+    97→        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+    98→          Contrôle d&apos;interactions médicamenteuses
+    99→        </h1>
+   100→        <p className="mt-1 text-sm text-muted-foreground">
+   101→          Sélectionnez 2 à 10 médicaments — le contrôle identifie les interactions
+   102→          médicamenteuses et propose la conduite à tenir pour la dispensation.
+   103→        </p>
+   104→      </div>
+   105→
+   106→      <Tabs value={tab} onValueChange={setTab} className="gap-6">
+   107→        <TabsList className="scroll-thin h-12 w-full justify-start gap-1 overflow-x-auto rounded-xl p-1.5 sm:w-auto">
+   108→          <TabsTrigger
+   109→            value="verificateur"
+   110→            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm"
+   111→          >
+   112→            <ShieldAlert className="size-4" aria-hidden />
+   113→            Vérificateur
+   114→          </TabsTrigger>
+   115→          <TabsTrigger
+   116→            value="matrice"
+   117→            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm"
+   118→          >
+   119→            <Grid3x3 className="size-4" aria-hidden />
+   120→            Matrice
+   121→          </TabsTrigger>
+   122→        </TabsList>
+   123→
+   124→        <TabsContent value="verificateur" className="mt-0">
+   125→          <VerifierPanel />
+   126→        </TabsContent>
+   127→        <TabsContent value="matrice" className="mt-0">
+   128→          <MatrixPanel onGoToVerifier={() => setTab('verificateur')} />
+   129→        </TabsContent>
+   130→      </Tabs>
+   131→    </div>
+   132→  )
+   133→}
+   134→
+   135→/* ------------------------------------------------------------------ */
+   136→/* Onglet 1 — Vérificateur (liste des paires détectées)                */
+   137→/* ------------------------------------------------------------------ */
+   138→
+   139→function VerifierPanel() {
+   140→  const basket = useDzPharm((s) => s.basket)
+   141→  const addToBasket = useDzPharm((s) => s.addToBasket)
+   142→  const removeFromBasket = useDzPharm((s) => s.removeFromBasket)
+   143→  const clearBasket = useDzPharm((s) => s.clearBasket)
+   144→  const openDrug = useDzPharm((s) => s.openDrug)
+   145→  const { toast } = useToast()
+   146→
+   147→  const [patientContext, setPatientContext] = useState('')
+   148→  const [result, setResult] = useState<InteractionsResponse | null>(null)
+   149→  const [analyzedIds, setAnalyzedIds] = useState<string>('')
+   150→  const [pending, setPending] = useState(false)
+   151→
+   152→  const items = useMemo(
+   153→    () => basket.map((b) => ({ name: b.brand, dci: b.dci })),
+   154→    [basket]
+   155→  )
+   156→
+   157→  async function analyze() {
+   158→    if (items.length < 2) return
+   159→    setPending(true)
+   160→    try {
+   161→      // Vérification instantanée (moteur de règles, déterministe) puis
+   162→      // analyse approfondie — le verdict des paires couvertes par la base
+   163→      // de référence est identique dans les deux cas (arbitrage serveur).
+   164→      const local = await postLocalInteractions(items)
+   165→      setResult(local)
+   166→      setAnalyzedIds(basket.map((b) => b.id).join(','))
+   167→
+   168→      const ai = await postInteractions(items, patientContext)
+   169→      if (ai) setResult(ai)
+   170→    } catch {
+   171→      // le résultat local instantané reste affiché s'il est disponible
+   172→    } finally {
+   173→      setPending(false)
+   174→    }
+   175→  }
+   176→  const stale =
+   177→    result !== null && analyzedIds !== basket.map((b) => b.id).join(',')
+   178→
+   179→  const severityCounts = useMemo(() => {
+   180→    const counts = new Map<InteractionSeverity, number>()
+   181→    for (const p of result?.pairs ?? []) {
+   182→      counts.set(p.severity, (counts.get(p.severity) ?? 0) + 1)
+   183→    }
+   184→    return counts
+   185→  }, [result])
+   186→
+   187→  function handleSelect(name: Parameters<typeof addToBasket>[0]) {
+   188→    const res = addToBasket(name)
+   189→    if (res === 'added') {
+   190→      toast({
+   191→        title: 'Médicament ajouté',
+   192→        description: `${name.brand} (${name.dci}) — ${basket.length + 1} produit(s) dans le panier.`,
+   193→      })
+   194→    } else if (res === 'duplicate') {
+   195→      toast({ title: 'Déjà présent', description: `${name.brand} est déjà dans le panier.` })
+   196→    } else {
+   197→      toast({
+   198→        title: 'Panier complet',
+   199→        description: `Le contrôle est limité à ${MAX_BASKET} médicaments.`,
+   200→        variant: 'destructive',
+   201→      })
+   202→    }
+   203→  }
+   204→
+   205→  const risk = result ? RISK_META[result.globalRisk] : null
+   206→
+   207→  return (
+   208→    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr] xl:grid-cols-[420px_1fr]">
+   209→      {/* ------------------------- Panier ------------------------- */}
+   210→      <div className="space-y-4">
+   211→        <Card>
+   212→          <CardHeader className="pb-3">
+   213→            <CardTitle className="flex items-center justify-between text-base">
+   214→              <span className="flex items-center gap-2">
+   215→                <Stethoscope className="size-4 text-primary" aria-hidden />
+   216→                Panier d&apos;analyse
+   217→              </span>
+   218→              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
+   219→                {basket.length}/{MAX_BASKET}
+   220→              </span>
+   221→            </CardTitle>
+   222→          </CardHeader>
+   223→          <CardContent className="space-y-4">
+   224→            <SearchAutocomplete
+   225→              placeholder="Ajouter un médicament…"
+   226→              ariaLabel="Ajouter un médicament au contrôle d'interactions"
+   227→              onSelect={handleSelect}
+   228→              rightHint={
+   229→                <Plus className="size-4 shrink-0 text-muted-foreground/50" aria-hidden />
+   230→              }
+   231→            />
+   232→
+   233→            {basket.length === 0 ? (
+   234→              <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+   235→                Le panier est vide. Recherchez un médicament pour l&apos;ajouter —
+   236→                depuis le répertoire, utilisez le bouton «&nbsp;Ajouter au contrôle
+   237→                d&apos;interactions&nbsp;».
+   238→              </p>
+   239→            ) : (
+   240→              <ul className="flex flex-wrap gap-2" aria-label="Médicaments sélectionnés">
+   241→                {basket.map((item) => (
+   242→                  <li key={item.id}>
+   243→                    <span className="flex max-w-full items-center gap-2 rounded-lg border border-border bg-secondary/60 py-1.5 pr-1.5 pl-3 text-sm">
+   244→                      <button
+   245→                        type="button"
+   246→                        onClick={() => openDrug(item.id)}
+   247→                        className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   248→                        title="Ouvrir la fiche du médicament"
+   249→                      >
+   250→                        <span className="block truncate font-medium text-foreground">
+   251→                          {item.brand}
+   252→                        </span>
+   253→                        <span className="block truncate text-[11px] text-muted-foreground">
+   254→                          {item.dci}
+   255→                        </span>
+   256→                      </button>
+   257→                      <button
+   258→                        type="button"
+   259→                        onClick={() => removeFromBasket(item.id)}
+   260→                        aria-label={`Retirer ${item.brand} du panier`}
+   261→                        className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-state-danger/10 hover:text-state-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   262→                      >
+   263→                        <X className="size-3.5" />
+   264→                      </button>
+   265→                    </span>
+   266→                  </li>
+   267→                ))}
+   268→              </ul>
+   269→            )}
+   270→
+   271→            <div>
+   272→              <label
+   273→                htmlFor="patient-context"
+   274→                className="mb-1.5 block text-xs font-medium text-muted-foreground"
+   275→              >
+   276→                Contexte patient — âge, pathologies, grossesse…
+   277→              </label>
+   278→              <Textarea
+   279→                id="patient-context"
+   280→                value={patientContext}
+   281→                onChange={(e) => setPatientContext(e.target.value)}
+   282→                placeholder="Ex : femme enceinte 2e trimestre, insuffisance rénale chronique, 72 ans…"
+   283→                rows={3}
+   284→                className="resize-none text-sm"
+   285→              />
+   286→            </div>
+   287→
+   288→            <div className="flex gap-2">
+   289→              <Button
+   290→                onClick={analyze}
+   291→                disabled={basket.length < 2 || pending}
+   292→                className="h-11 flex-1 text-sm font-semibold"
+   293→              >
+   294→                {pending ? (
+   295→                  <>
+   296→                    <Loader2 className="size-4 animate-spin" aria-hidden />
+   297→                    Analyse…
+   298→                  </>
+   299→                ) : (
+   300→                  <>
+   301→                    <ShieldAlert className="size-4" aria-hidden />
+   302→                    Analyser les interactions
+   303→                  </>
+   304→                )}
+   305→              </Button>
+   306→              {basket.length > 0 ? (
+   307→                <Button
+   308→                  variant="ghost"
+   309→                  size="icon"
+   310→                  className="size-11 text-muted-foreground hover:text-state-danger"
+   311→                  onClick={() => {
+   312→                    clearBasket()
+   313→                    setResult(null)
+   314→                  }}
+   315→                  aria-label="Vider le panier"
+   316→                >
+   317→                  <Trash2 className="size-4" />
+   318→                </Button>
+   319→              ) : null}
+   320→            </div>
+   321→            {pending ? (
+   322→              <p className="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
+   323→                <Loader2 className="size-3 animate-spin" aria-hidden />
+   324→                Vérification des {basket.length} médicaments en cours…
+   325→              </p>
+   326→            ) : null}
+   327→          </CardContent>
+   328→        </Card>
+   329→      </div>
+   330→
+   331→      {/* ------------------------ Résultats ------------------------ */}
+   332→      <div className="min-w-0">
+   333→        {!result && !pending ? (
+   334→          <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-10 text-center">
+   335→            <ShieldCheck className="size-12 text-muted-foreground/40" aria-hidden />
+   336→            <p className="mt-4 text-base font-semibold text-foreground">
+   337→              Aucune analyse pour le moment
+   338→            </p>
+   339→            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+   340→              Ajoutez au moins 2 médicaments au panier puis lancez l&apos;analyse. Le
+   341→              rapport présente le niveau de risque global, les associations à
+   342→              surveiller et les conseils de dispensation.
+   343→            </p>
+   344→          </div>
+   345→        ) : pending && !result ? (
+   346→          <div className="flex h-full min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-card p-10 text-center">
+   347→            <Loader2 className="size-10 animate-spin text-primary" aria-hidden />
+   348→            <p className="mt-4 text-base font-semibold text-foreground">
+   349→              Analyse en cours…
+   350→            </p>
+   351→            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+   352→              Vérification des {basket.length} médicaments du panier.
+   353→            </p>
+   354→          </div>
+   355→        ) : result ? (
+   356→          <div className="space-y-4">
+   357→            {stale ? (
+   358→              <div
+   359→                className="flex items-center gap-2 rounded-lg border border-state-warning/40 bg-state-warning/10 px-4 py-2.5 text-sm text-state-warning"
+   360→                role="status"
+   361→              >
+   362→                <AlertTriangle className="size-4 shrink-0" aria-hidden />
+   363→                Le panier a été modifié depuis cette analyse — relancez l&apos;analyse
+   364→                pour actualiser les résultats.
+   365→              </div>
+   366→            ) : null}
+   367→
+   368→            {/* Bandeau risque global */}
+   369→            <div
+   370→              className={cn(
+   371→                'flex items-start gap-4 rounded-xl border p-5',
+   372→                risk?.border,
+   373→                risk?.className
+   374→              )}
+   375→              role="status"
+   376→              aria-live="polite"
+   377→            >
+   378→              {result.globalRisk === 'FAIBLE' ? (
+   379→                <ShieldCheck className={cn('size-9 shrink-0', risk?.icon)} aria-hidden />
+   380→              ) : (
+   381→                <ShieldAlert className={cn('size-9 shrink-0', risk?.icon)} aria-hidden />
+   382→              )}
+   383→              <div className="min-w-0">
+   384→                <p className="text-lg font-bold tracking-tight">
+   385→                  {risk?.label}
+   386→                  {result.pairs.length > 0 ? (
+   387→                    <span className="ml-2 align-middle text-sm font-medium opacity-80">
+   388→                      · {result.pairs.length} association{result.pairs.length > 1 ? 's' : ''} analysée
+   389→                      {result.pairs.length > 1 ? 's' : ''}
+   390→                    </span>
+   391→                  ) : null}
+   392→                </p>
+   393→                <p className="mt-1 text-sm leading-relaxed text-foreground/90">{result.summary}</p>
+   394→              </div>
+   395→            </div>
+   396→
+   397→            {/* Répartition des gravités */}
+   398→            {result.pairs.length > 0 ? (
+   399→              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-border bg-card px-4 py-2.5">
+   400→                {SEVERITY_ORDER.filter((s) => severityCounts.has(s)).map((s) => (
+   401→                  <span
+   402→                    key={s}
+   403→                    className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+   404→                  >
+   405→                    <span className={cn('size-2 rounded-full', SEVERITY_LEGEND[s])} aria-hidden />
+   406→                    {SEVERITY_LABELS[s]}
+   407→                    <span className="font-semibold text-foreground tabular-nums">
+   408→                      {severityCounts.get(s)}
+   409→                    </span>
+   410→                  </span>
+   411→                ))}
+   412→              </div>
+   413→            ) : null}
+   414→
+   415→            {/* Médicaments enrichis */}
+   416→            {result.enriched.length > 0 ? (
+   417→              <Card>
+   418→                <CardHeader className="pb-2">
+   419→                  <CardTitle className="text-sm">Produits analysés</CardTitle>
+   420→                </CardHeader>
+   421→                <CardContent className="flex flex-wrap gap-2">
+   422→                  {result.enriched.map((e) => (
+   423→                    <span
+   424→                      key={e.input}
+   425→                      className="flex max-w-full items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs"
+   426→                    >
+   427→                      <span className="min-w-0">
+   428→                        <span className="block truncate font-semibold text-foreground">
+   429→                          {e.input}
+   430→                        </span>
+   431→                        {e.dci ? (
+   432→                          <span className="block truncate text-muted-foreground">{e.dci}</span>
+   433→                        ) : null}
+   434→                      </span>
+   435→                      {e.status ? (
+   436→                        e.status === 'RETRIE' ? (
+   437→                          <span className="shrink-0 rounded bg-state-danger/15 px-1.5 py-0.5 text-[10px] font-semibold text-state-danger">
+   438→                            Retiré
+   439→                          </span>
+   440→                        ) : (
+   441→                          <StatusBadge status={e.status} className="shrink-0" />
+   442→                        )
+   443→                      ) : null}
+   444→                    </span>
+   445→                  ))}
+   446→                </CardContent>
+   447→              </Card>
+   448→            ) : null}
+   449→
+   450→            {/* Paires */}
+   451→            {result.pairs.length > 0 ? (
+   452→              <section aria-label="Interactions détectées" className="space-y-3">
+   453→                <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+   454→                  Interactions détectées
+   455→                </h2>
+   456→                {result.pairs.map((pair, i) => (
+   457→                  <PairCard key={`${pair.drugs.join('-')}-${i}`} pair={pair} />
+   458→                ))}
+   459→              </section>
+   460→            ) : (
+   461→              <Card className="border-state-safe/40 bg-state-safe/5">
+   462→                <CardContent className="flex items-center gap-3 p-4 text-sm text-foreground/90">
+   463→                  <ShieldCheck className="size-5 shrink-0 text-state-safe" aria-hidden />
+   464→                  Aucune interaction significative identifiée entre les produits analysés.
+   465→                </CardContent>
+   466→              </Card>
+   467→            )}
+   468→
+   469→            {/* Conseils */}
+   470→            {result.advice.length > 0 ? (
+   471→              <Card>
+   472→                <CardHeader className="pb-2">
+   473→                  <CardTitle className="flex items-center gap-2 text-sm">
+   474→                    <Lightbulb className="size-4 text-chifa" aria-hidden />
+   475→                    Conseils
+   476→                  </CardTitle>
+   477→                </CardHeader>
+   478→                <CardContent>
+   479→                  <ul className="list-disc space-y-1.5 pl-5 text-sm text-foreground/90">
+   480→                    {result.advice.map((a, i) => (
+   481→                      <li key={i}>{a}</li>
+   482→                    ))}
+   483→                  </ul>
+   484→                </CardContent>
+   485→              </Card>
+   486→            ) : null}
+   487→
+   488→            {/* Surveillance */}
+   489→            {result.monitoring.length > 0 ? (
+   490→              <Card>
+   491→                <CardHeader className="pb-2">
+   492→                  <CardTitle className="flex items-center gap-2 text-sm">
+   493→                    <Activity className="size-4 text-state-warning" aria-hidden />
+   494→                    Surveillance
+   495→                  </CardTitle>
+   496→                </CardHeader>
+   497→                <CardContent>
+   498→                  <ul className="list-disc space-y-1.5 pl-5 text-sm text-foreground/90">
+   499→                    {result.monitoring.map((m, i) => (
+   500→                      <li key={i}>{m}</li>
+   501→                    ))}
+   502→                  </ul>
+   503→                </CardContent>
+   504→              </Card>
+   505→            ) : null}
+   506→
+   507→            <p className="flex items-start gap-2 text-xs text-muted-foreground">
+   508→              <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+   509→              Ne remplace pas la validation pharmaceutique ni l&apos;avis médical.
+   510→            </p>
+   511→          </div>
+   512→        ) : null}
+   513→      </div>
+   514→    </div>
+   515→  )
+   516→}
+   517→
+   518→/* ------------------------------------------------------------------ */
+   519→/* Onglet 2 — Matrice des interactions (heatmap N×N triangulaire)      */
+   520→/* ------------------------------------------------------------------ */
+   521→
+   522→type CellKind = InteractionSeverity | 'NONE'
+   523→
+   524→const CELL_META: Record<CellKind, { icon: typeof Ban; short: string; label: string; className: string }> = {
+   525→  'CONTRE-INDIQUE': {
+   526→    icon: Ban,
+   527→    short: 'CI',
+   528→    label: 'Contre-indication',
+   529→    className: 'bg-state-danger text-white hover:bg-state-danger/90 focus-visible:ring-state-danger',
+   530→  },
+   531→  MAJEURE: {
+   532→    icon: AlertTriangle,
+   533→    short: 'MAJ',
+   534→    label: 'Interaction majeure',
+   535→    className: 'bg-state-danger/60 text-white hover:bg-state-danger/70 focus-visible:ring-state-danger/60',
+   536→  },
+   537→  MODEREE: {
+   538→    icon: AlertCircle,
+   539→    short: 'MOD',
+   540→    label: 'Interaction modérée',
+   541→    className:
+   542→      'border border-state-warning/60 bg-state-warning/20 text-state-warning hover:bg-state-warning/30 focus-visible:ring-state-warning/60',
+   543→  },
+   544→  MINEURE: {
+   545→    icon: Minus,
+   546→    short: 'MIN',
+   547→    label: 'Interaction mineure',
+   548→    className:
+   549→      'border border-border bg-muted-foreground/25 text-foreground hover:bg-muted-foreground/35 focus-visible:ring-ring',
+   550→  },
+   551→  NONE: {
+   552→    icon: Check,
+   553→    short: 'OK',
+   554→    label: "Pas d'interaction connue",
+   555→    className:
+   556→      'border border-state-safe/40 bg-state-safe/15 text-state-safe hover:bg-state-safe/25 focus-visible:ring-state-safe/60',
+   557→  },
+   558→}
+   559→
+   560→/** Initiales lisibles d'une marque (3-4 premières lettres). */
+   561→function initials(brand: string): string {
+   562→  const clean = brand.trim().split(/[\s-]/)[0] ?? brand
+   563→  return clean.slice(0, 4).toUpperCase()
+   564→}
+   565→
+   566→function MatrixPanel({ onGoToVerifier }: { onGoToVerifier: () => void }) {
+   567→  const basket = useDzPharm((s) => s.basket)
+   568→  const openDrug = useDzPharm((s) => s.openDrug)
+   569→
+   570→  const truncated = basket.length > MAX_MATRIX
+   571→  const drugs = useMemo(() => basket.slice(0, MAX_MATRIX), [basket])
+   572→  const items = useMemo(() => drugs.map((d) => ({ name: d.brand, dci: d.dci })), [drugs])
+   573→  const idsKey = drugs.map((d) => d.id).join('|')
+   574→
+   575→  const { data, isFetching } = useQuery({
+   576→    queryKey: ['interactions-matrix', idsKey],
+   577→    queryFn: () => postLocalInteractions(items),
+   578→    enabled: drugs.length >= 2,
+   579→    staleTime: 30 * 1000,
+   580→  })
+   581→
+   582→  /** Paire d'interaction entre deux marques (null si aucune connue). */
+   583→  const pairFor = (a: string, b: string): InteractionPair | undefined =>
+   584→    (data?.pairs ?? []).find(
+   585→      (p) =>
+   586→        (p.drugs[0] === a && p.drugs[1] === b) || (p.drugs[0] === b && p.drugs[1] === a)
+   587→    )
+   588→
+   589→  if (basket.length < 2) {
+   590→    return (
+   591→      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-10 text-center">
+   592→        <Grid3x3 className="size-12 text-muted-foreground/40" aria-hidden />
+   593→        <p className="mt-4 text-base font-semibold text-foreground">
+   594→          La matrice nécessite au moins 2 médicaments
+   595→        </p>
+   596→        <p className="mt-1 max-w-md text-sm text-muted-foreground">
+   597→          Ajoutez des médicaments au panier depuis l&apos;onglet «&nbsp;Vérificateur&nbsp;»
+   598→          (ou depuis une fiche médicament) — la matrice croise ensuite chaque paire et
+   599→          colore chaque association selon sa gravité.
+   600→        </p>
+   601→        <Button variant="outline" className="mt-5 gap-2" onClick={onGoToVerifier}>
+   602→          <Plus className="size-4" aria-hidden />
+   603→          Ajouter des médicaments
+   604→        </Button>
+   605→      </div>
+   606→    )
+   607→  }
+   608→
+   609→  const risk = data ? RISK_META[data.globalRisk] : null
+   610→  const pairs = data?.pairs ?? []
+   611→
+   612→  return (
+   613→    <div className="space-y-4">
+   614→      {/* Bandeau risque global */}
+   615→      <div
+   616→        className={cn(
+   617→          'flex flex-wrap items-start gap-4 rounded-xl border p-5',
+   618→          risk?.border,
+   619→          risk?.className
+   620→        )}
+   621→        role="status"
+   622→        aria-live="polite"
+   623→      >
+   624→        {data?.globalRisk === 'FAIBLE' ? (
+   625→          <ShieldCheck className={cn('size-8 shrink-0', risk?.icon)} aria-hidden />
+   626→        ) : (
+   627→          <ShieldAlert className={cn('size-8 shrink-0', risk?.icon)} aria-hidden />
+   628→        )}
+   629→        <div className="min-w-0 flex-1">
+   630→          <p className="flex flex-wrap items-center gap-2 text-lg font-bold tracking-tight">
+   631→            {risk?.label ?? 'Analyse…'}
+   632→            <span className="rounded-full bg-card/60 px-2 py-0.5 text-xs font-semibold">
+   633→              Matrice {drugs.length}×{drugs.length} · {pairs.length} association
+   634→              {pairs.length > 1 ? 's' : ''} à risque
+   635→            </span>
+   636→            {isFetching ? (
+   637→              <Loader2 className="size-4 animate-spin" aria-hidden />
+   638→            ) : null}
+   639→          </p>
+   640→          <p className="mt-1 text-sm leading-relaxed text-foreground/90">
+   641→            {data?.summary ??
+   642→              "Croisez chaque paire de médicaments du panier — chaque cellule s'ouvre au clic pour le détail (mécanisme, conduite à tenir)."}
+   643→          </p>
+   644→        </div>
+   645→      </div>
+   646→
+   647→      {truncated ? (
+   648→        <div
+   649→          className="flex items-center gap-2 rounded-lg border border-state-warning/40 bg-state-warning/10 px-4 py-2.5 text-sm text-state-warning"
+   650→          role="status"
+   651→        >
+   652→          <AlertTriangle className="size-4 shrink-0" aria-hidden />
+   653→          Panier de {basket.length} médicaments — max {MAX_MATRIX} pour la matrice :
+   654→          les {MAX_MATRIX} premiers produits du panier sont affichés.
+   655→        </div>
+   656→      ) : null}
+   657→
+   658→      {/* ------------------- Matrice (desktop ≥ sm) ------------------- */}
+   659→      <Card className="hidden sm:block">
+   660→        <CardHeader className="pb-3">
+   661→          <CardTitle className="flex items-center gap-2 text-base">
+   662→            <Grid3x3 className="size-4 text-primary" aria-hidden />
+   663→            Matrice des interactions
+   664→          </CardTitle>
+   665→        </CardHeader>
+   666→        <CardContent>
+   667→          <motion.div
+   668→            initial={{ opacity: 0, scale: 0.98 }}
+   669→            animate={{ opacity: 1, scale: 1 }}
+   670→            transition={{ duration: 0.25 }}
+   671→            className="mx-auto grid w-full max-w-[560px] gap-1.5"
+   672→            style={{ gridTemplateColumns: `repeat(${drugs.length}, minmax(0, 1fr))` }}
+   673→            role="group"
+   674→            aria-label="Matrice des interactions médicamenteuses"
+   675→          >
+   676→            {drugs.map((row, i) =>
+   677→              drugs.map((col, j) => {
+   678→                if (i === j) {
+   679→                  return (
+   680→                    <div
+   681→                      key={`${i}-${j}`}
+   682→                      className="flex aspect-square min-h-11 items-center justify-center rounded-lg border border-border bg-muted/60 px-1"
+   683→                      title={`${row.brand} (${row.dci})`}
+   684→                    >
+   685→                      <span className="text-center text-[10px] leading-tight font-bold tracking-wide text-foreground/80 sm:text-xs">
+   686→                        {initials(row.brand)}
+   687→                      </span>
+   688→                    </div>
+   689→                  )
+   690→                }
+   691→                if (i > j) {
+   692→                  return <div key={`${i}-${j}`} className="aspect-square rounded-lg bg-transparent" aria-hidden />
+   693→                }
+   694→                return (
+   695→                  <MatrixCell
+   696→                    key={`${i}-${j}`}
+   697→                    a={row}
+   698→                    b={col}
+   699→                    pair={pairFor(row.brand, col.brand)}
+   700→                  />
+   701→                )
+   702→              })
+   703→            )}
+   704→          </motion.div>
+   705→
+   706→          {/* Légende des couleurs */}
+   707→          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-border bg-background/60 px-4 py-2.5">
+   708→            {(['CONTRE-INDIQUE', 'MAJEURE', 'MODEREE', 'MINEURE', 'NONE'] as CellKind[]).map((k) => {
+   709→              const meta = CELL_META[k]
+   710→              return (
+   711→                <span
+   712→                  key={k}
+   713→                  className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+   714→                >
+   715→                  <span
+   716→                    className={cn(
+   717→                      'flex size-4 items-center justify-center rounded',
+   718→                      meta.className.replace(/hover:[^\s]+/g, '')
+   719→                    )}
+   720→                    aria-hidden
+   721→                  >
+   722→                    <meta.icon className="size-2.5" />
+   723→                  </span>
+   724→                  {k === 'NONE' ? 'Pas d\u2019interaction connue' : meta.label}
+   725→                  <span className="rounded bg-muted px-1 font-mono text-[9px] font-bold text-foreground/70">
+   726→                    {meta.short}
+   727→                  </span>
+   728→                </span>
+   729→              )
+   730→            })}
+   731→          </div>
+   732→
+   733→          {/* Correspondance initiales → médicaments */}
+   734→          <div className="mt-3 flex flex-wrap gap-2">
+   735→            {drugs.map((d, i) => (
+   736→              <button
+   737→                key={d.id}
+   738→                type="button"
+   739→                onClick={() => openDrug(d.id)}
+   740→                title="Ouvrir la fiche du médicament"
+   741→                className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   742→              >
+   743→                <span className="font-mono font-bold text-primary">{i + 1}</span>
+   744→                <span className="font-mono font-bold text-foreground/70">{initials(d.brand)}</span>
+   745→                <span className="max-w-[160px] truncate font-medium text-foreground">{d.brand}</span>
+   746→              </button>
+   747→            ))}
+   748→          </div>
+   749→        </CardContent>
+   750→      </Card>
+   751→
+   752→      {/* ------------- Repli mobile : liste triée par gravité ------------- */}
+   753→      <div className="space-y-3 sm:hidden">
+   754→        <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+   755→          <AlertTriangle className="size-4" aria-hidden />
+   756→          Paires par gravité décroissante
+   757→        </h2>
+   758→        {isFetching && pairs.length === 0 ? (
+   759→          <div className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card p-8 text-sm text-muted-foreground">
+   760→            <Loader2 className="size-4 animate-spin" aria-hidden />
+   761→            Analyse des interactions…
+   762→          </div>
+   763→        ) : pairs.length === 0 ? (
+   764→          <Card className="border-state-safe/40 bg-state-safe/5">
+   765→            <CardContent className="flex items-center gap-3 p-4 text-sm text-foreground/90">
+   766→              <ShieldCheck className="size-5 shrink-0 text-state-safe" aria-hidden />
+   767→              Aucune interaction connue entre les {drugs.length} médicaments de la
+   768→              matrice ({MAX_MATRIX} max).
+   769→            </CardContent>
+   770→          </Card>
+   771→        ) : (
+   772→          pairs.map((pair, i) => <PairCard key={`${pair.drugs.join('-')}-${i}`} pair={pair} />)
+   773→        )}
+   774→      </div>
+   775→
+   776→      <p className="flex items-start gap-2 text-xs text-muted-foreground">
+   777→        <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+   778→        Chaque cellule détaille l&apos;interaction au clic (mécanisme, conduite à tenir).
+   779→        L&apos;absence de coloration ne garantit pas l&apos;absence d&apos;interaction — le
+   780→        «&nbsp;Vérificateur&nbsp;» complète le contrôle.
+   781→      </p>
+   782→    </div>
+   783→  )
+   784→}
+   785→
+   786→/** Cellule triangulaire supérieure : bouton + popover de détail de la paire. */
+   787→function MatrixCell({
+   788→  a,
+   789→  b,
+   790→  pair,
+   791→}: {
+   792→  a: { id: number; brand: string; dci: string }
+   793→  b: { id: number; brand: string; dci: string }
+   794→  pair?: InteractionPair
+   795→}) {
+   796→  const kind: CellKind = pair?.severity ?? 'NONE'
+   797→  const meta = CELL_META[kind]
+   798→  const Icon = meta.icon
+   799→
+   800→  return (
+   801→    <Popover>
+   802→      <PopoverTrigger asChild>
+   803→        <button
+   804→          type="button"
+   805→          aria-label={`Interaction ${a.brand} et ${b.brand} : ${meta.label}`}
+   806→          className={cn(
+   807→            'flex aspect-square min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none',
+   808→            meta.className
+   809→          )}
+   810→        >
+   811→          <Icon className="size-4 shrink-0 sm:size-5" aria-hidden />
+   812→          <span className="text-[9px] font-bold tracking-wide sm:text-[10px]" aria-hidden>
+   813→            {meta.short}
+   814→          </span>
+   815→          <span className="sr-only">{meta.label}</span>
+   816→        </button>
+   817→      </PopoverTrigger>
+   818→      <PopoverContent side="top" align="center" className="w-80 rounded-xl p-4">
+   819→        <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-foreground">
+   820→          <span className="truncate">{a.brand}</span>
+   821→          <span className="text-muted-foreground" aria-hidden>
+   822→            +
+   823→          </span>
+   824→          <span className="truncate">{b.brand}</span>
+   825→        </p>
+   826→        <p className="mt-0.5 text-xs text-muted-foreground">
+   827→          {a.dci} · {b.dci}
+   828→        </p>
+   829→        <div className="mt-2.5">
+   830→          {pair ? (
+   831→            <SeverityBadge severity={pair.severity} />
+   832→          ) : (
+   833→            <span className="inline-flex items-center gap-1.5 rounded-full border border-state-safe/40 bg-state-safe/10 px-2.5 py-0.5 text-xs font-medium text-state-safe">
+   834→              <ShieldCheck className="size-3" aria-hidden />
+   835→              Pas d&apos;interaction connue
+   836→            </span>
+   837→          )}
+   838→        </div>
+   839→        {pair ? (
+   840→          <div className="mt-3 space-y-2.5 text-sm">
+   841→            <div>
+   842→              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+   843→                Mécanisme
+   844→              </p>
+   845→              <p className="mt-0.5 text-foreground/90">{pair.mechanism}</p>
+   846→            </div>
+   847→            <div>
+   848→              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+   849→                Conduite à tenir
+   850→              </p>
+   851→              <p className="mt-0.5 text-foreground/90">{pair.management}</p>
+   852→            </div>
+   853→          </div>
+   854→        ) : (
+   855→          <p className="mt-3 text-sm text-foreground/90">
+   856→            Aucune interaction documentée entre ces deux molécules.
+   857→          </p>
+   858→        )}
+   859→      </PopoverContent>
+   860→    </Popover>
+   861→  )
+   862→}
+   863→

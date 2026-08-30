@@ -41,6 +41,7 @@ import {
   Stethoscope,
   Store,
   TrendingUp,
+  Users,
   Waves,
   Wind,
   X,
@@ -51,6 +52,7 @@ import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchStats } from './api'
+import { computeCabinetAlerts } from './armoire-view'
 import type { TopViewedDrug } from './types'
 import { formatNumber } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
@@ -138,6 +140,13 @@ const TOOL_CARDS: Array<{
     desc: 'Moteur local instantané + analyse IA approfondie sur votre panier de médicaments.',
     view: 'interactions',
     accent: 'danger',
+  },
+  {
+    icon: Users,
+    title: 'Armoire familiale',
+    desc: 'Un profil par membre de la famille : péremptions, produits retirés, doublons et analyse en un clic.',
+    view: 'armoire',
+    accent: 'primary',
   },
   {
     icon: Sparkles,
@@ -319,6 +328,9 @@ export function HomeView() {
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const recentlyViewed = useDzPharm((s) => s.recentlyViewed)
+  const armoireProfiles = useDzPharm((s) => s.armoireProfiles)
+  const armoireItems = useDzPharm((s) => s.armoireItems)
+  const setActiveArmoireProfile = useDzPharm((s) => s.setActiveArmoireProfile)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const { data: stats, isLoading } = useQuery({
@@ -522,6 +534,72 @@ export function HomeView() {
                 </span>
               </button>
             ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* --------------------------- Armoire familiale ------------------- */}
+      {armoireProfiles.length > 0 ? (
+        <section
+          aria-labelledby="armoire-home-title"
+          className="mx-auto max-w-7xl px-4 pb-8 pt-2 sm:px-6"
+        >
+          <div className="mb-3.5 flex items-center justify-between gap-4">
+            <h2
+              id="armoire-home-title"
+              className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground"
+            >
+              <Users className="size-4.5 text-primary" aria-hidden />
+              Votre armoire
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
+                {armoireProfiles.length}
+              </span>
+            </h2>
+            <button
+              type="button"
+              onClick={() => setView('armoire')}
+              className="text-xs text-muted-foreground transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              Gérer l’armoire
+            </button>
+          </div>
+          <div className="scroll-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+            {armoireProfiles.map((p) => {
+              const items = armoireItems[p.id] ?? []
+              const alerts = computeCabinetAlerts(items)
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveArmoireProfile(p.id)
+                    setView('armoire')
+                  }}
+                  className="group flex shrink-0 items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/5 py-2 pr-4 pl-3 transition-colors hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <span className="flex relative size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {p.name.trim().slice(0, 2).toUpperCase()}
+                    {alerts.length > 0 ? (
+                      <span
+                        className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-state-danger text-[9px] font-bold text-white"
+                        aria-label={`${alerts.length} alerte(s)`}
+                      >
+                        {alerts.length}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="min-w-0 text-left">
+                    <span className="block max-w-36 truncate text-sm font-semibold text-foreground">
+                      {p.name}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {items.length} médicament{items.length > 1 ? 's' : ''}
+                      {alerts.length > 0 ? ` · ${alerts.length} alerte${alerts.length > 1 ? 's' : ''}` : ''}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </section>
       ) : null}

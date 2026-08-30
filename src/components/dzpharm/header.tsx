@@ -13,6 +13,7 @@ import {
   Sparkles,
   Store,
   Sun,
+  Users,
   Wrench,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,7 @@ const NAV_ITEMS: { id: ViewId; label: string; icon: typeof Home }[] = [
   { id: 'catalogue', label: 'Prix', icon: Store },
   { id: 'bibliotheque', label: 'Bibliothèque', icon: Library },
   { id: 'interactions', label: 'Interactions', icon: ShieldAlert },
+  { id: 'armoire', label: 'Armoire', icon: Users },
   { id: 'outils', label: 'Outils', icon: Wrench },
   { id: 'copilote', label: 'Copilote IA', icon: Sparkles },
   { id: 'stats', label: 'Statistiques', icon: BarChart3 },
