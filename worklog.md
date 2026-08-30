@@ -453,3 +453,28 @@ Stage Summary:
 - 14 correctifs livrés et vérifiés E2E ; modifications cliniques marquées « en attente de validation pharmacienne » dans le code
 - Restes recommandés : validation pharmacienne des 6 nouvelles règles + AVK étendu, badges de fraîcheur par donnée, scan code-barres, OCR ordonnance
 - ÉTAT : STABLE — lint/tsc/console/overflow 0 erreur, SW v4, rate limiting actif
+
+---
+Task ID: 16
+Agent: main-orchestrator (session 2026-08-30, suite — moteur d'interactions : invariance DCI)
+Task: Corriger l'invariance du verdict par nom commercial (traiter les médicaments par DCI, gérer dérivés + associations), nettoyer les textes « méta » des résultats, synchroniser matrice/vérificateur, auto-feedback, brainstorm
+
+Work Log:
+- Diagnostic : le flip « Contre-indication ↔ Risque majeur » venait du LLM qui remplaçait le verdict local (non-déterminisme) ; la dépendance à la marque venait des jetons de marque dans la correspondance + marques dans le prompt LLM + résolution `contains` ambiguë
+- CRÉÉ src/lib/dci-normalizer.ts : identité canonique DCI — éclatement des associations sur la chaîne brute (+, /, comma, ET, AVEC, EXPRIME), nettoyage des sels/hydrates (SALT_NOISE), mots génériques exclus (GENERIC_WORDS : « ACIDE » etc.), alias de dérivés (DEXKETOPROFENE→KETOPROFENE, PHENPROCOUMON→AVK, NITROGLYCERINE→TRINITRINE, AMINOPHYLLINE→THEOPHYLLINE…), jetons FER pour graphies ferreuses, graphies aspirine du registre
+- RÉÉCRIT src/lib/interaction-rules.ts (moteur) : correspondance EXCLUSIVEMENT sur jetons DCI canoniques (marques exclues → invariance) ; classes étendues (AINS+11, bêtabloquants+6, macrolides+2, FQ+4, AVK+phénprocoumone, azolés+posaconazole, IPP+déxlansoprazole, nitrés+nitroglycérine, digitaliques+digitoxine, IEC+3, ARA2+azilsartan, BZD+3, thiazidiques+2, contraceptifs corrigés LEVNORGESTREL→LEVONORGESTREL+3, ISRSN sérotoninergiques) ; NOUVELLE règle sérotoninergiques×linézolide CI ; NOUVELLE détection de doublons de DCI (HIGH_RISK_DUPLICATES) ; résumé déterministe buildInteractionSummary() ; paires par indices (pairIndicesFromRule) — tout marqué « en attente de validation pharmaceutique » pour les ajouts cliniques
+- RÉÉCRIT /api/interactions : résolution exacte avant partielle, DCI du panier prioritaire, doublons de DCI, résumé déterministe, monitoring par regex sur DCI, rulesVersion 2
+- RÉÉCRIT /api/ai/interactions (arbitrage déterministe) : moteur local d'abord → prompt LLM avec DCI canoniques uniquement (marques exclues, produits non résolus exclus avec instruction anti-devinette) → au retour, paires IA couvertes localement ÉCARTÉES, paires IA sur produits sans DCI rejetées, sévérité validée, globalRisk/résumé recalculés déterministement, advice/monitoring fusionnés dédupliqués
+- UI interactions-view.tsx : bandeaux « Analyse IA / moteur local » SUPPRIMÉS, textes de chargement neutres (« Analyse… »), pied de page réduit à « Ne remplace pas la validation pharmaceutique ni l'avis médical », libellés matrice/popovers nettoyés (« Aucune interaction documentée entre ces deux molécules »), panier envoie brand+dci
+- QA curl (15 cas, cf. AUTO-FEEDBACK.md) : invariance de marque prouvée (PLAVIX+MOPRAL ≡ CLOPIDOGREL+OMEPRAZOLE ≡ PIDOGREL+ANTAG ≡ INEXIUM+PLAVIX, MD5 identique ×3), dérivés ✓ (ésoméprazole), association ✓ (CARDIOFLUX), doublons ✓ (DOLIPRANE+EFFERALGAN), faux positifs éliminés (SINTROM+ASPEGIC 1 paire, vitamine C 0), anti-hallucination ✓ (TAHOR+TILDEN), enrichissement IA ✓ (MOTILIUM+ZITHROMAX → QT MODÉRÉE + ECG)
+- QA agent-browser : E2E complet — ajout PLAVIX+MOPRAL au panier, analyse → « Risque élevé · 1 association analysée », mécanisme canonique, onglet Matrice synchronisé (MAJEURE identique), popover matrice avec DCI, console 0 erreur, lint 0 erreur, tsc 0 erreur (fichiers projet)
+- CRÉÉ AUTO-FEEDBACK.md : journal automatique des 5 bugs + 3 anomalies + 4 changements découverts/corrigés pendant la session (BUG-001 verdict fluctuant, BUG-002 dépendance marque, BUG-003 éclatement associations cassé, BUG-004 faux positif « ACIDE », BUG-005 hallucination LLM produit non résolu)
+
+Stage Summary:
+- INVARIANCE DCI GARANTIE : le verdict, le mécanisme, la conduite et le résumé d'une paire couverte par la base de règles sont strictement identiques quel que soit le nom commercial saisi (marque, générique ou DCI) — déterminisme vérifié par hash sur exécutions répétées
+- L'IA n'a plus le pouvoir de changer un verdict de référence : elle ne fait qu'AJOUTER des paires hors base (avec sévérité validée) — enrichissement vérifié (dompéridone+azithromycine QT)
+- Matrice ↔ vérificateur synchronisés par construction (même moteur, verdicts locaux épinglés)
+- Résultats épurés : plus aucun texte « méta » (IA, règles) — uniquement verdict, mécanisme, conduite, conseils, surveillance + 1 ligne de prudence
+- 4 bugs supplémentaires découverts et corrigés pendant l'audit (éclatement d'associations cassé, faux positif « ACIDE », hallucination LLM, coquille LEVNORGESTREL) — auto-feedback consigné dans AUTO-FEEDBACK.md
+- Ajouts cliniques (classes étendues, linézolide, doublons DCI) marqués « en attente de validation pharmaceutique » dans le code
+- Restent en attente : armoire familiale multi-profils (demande utilisateur précédente), brainstorm détaillé dans le rapport final (espacement des prises chronopharmacologique, export PDF du rapport, analyse depuis l'armoire, alertes QT/Torsades dédiées, calendrier de surveillance biologique)

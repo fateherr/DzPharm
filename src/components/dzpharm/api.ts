@@ -129,19 +129,21 @@ export function postChat(
 }
 
 export function postInteractions(
-  drugs: string[],
+  drugs: { name: string; dci?: string }[],
   patientContext?: string
 ): Promise<InteractionsResponse> {
   return postJson<InteractionsResponse>('/api/ai/interactions', {
-    drugs: drugs.map((name) => ({ name })),
+    drugs,
     patientContext: patientContext?.trim() || undefined,
   })
 }
 
 /** Analyse locale instantanée (moteur de règles, sans IA). */
-export function postLocalInteractions(drugs: string[]): Promise<InteractionsResponse> {
+export function postLocalInteractions(
+  drugs: { name: string; dci?: string }[]
+): Promise<InteractionsResponse> {
   return postJson<InteractionsResponse>('/api/interactions', {
-    drugs: drugs.map((name) => ({ name })),
+    drugs,
   })
 }
 

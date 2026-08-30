@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
+  buildInteractionSummary,
+  detectDuplicateDci,
   globalRiskFromPairs,
   matchInteractions,
-  pairsFromRule,
+  pairIndicesFromRule,
+  type DuplicateDciAlert,
   type LocalRule,
 } from "@/lib/interaction-rules";
 import type { InteractionSeverity } from "@/components/dzpharm/types";
 
 /**
  * POST /api/interactions — Contrôle d'interactions par le moteur local de règles.
- * Body: { drugs: [{ name: string }] }
- * Réponse instantanée (aucun appel IA) — premier niveau d'analyse et repli
- * lorsque le service d'analyse IA approfondie est indisponible.
+ * Body: { drugs: [{ name: string, dci?: string }] }
+ *
+ * DÉTERMINISME — le cœur de la garantie d'invariance :
+ *  1. chaque produit est résolu vers sa DCI (registre) ;
+ *  2. la DCI est canonisée (constituants d'associations éclatés, dérivés
+ *     rattachés à la molécule mère, sels/hydrates ignorés) ;
+ *  3. la correspondance des règles utilise EXCLUSIVEMENT ces jetons canoniques ;
+ *  4. verdict, mécanisme, conduite et résumé proviennent de la base de règles.
+ * → Changer le nom commercial ne change JAMAIS le verdict ni le résumé.
  */
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -22,69 +31,113 @@ const SEVERITY_ORDER: Record<string, number> = {
   MINEURE: 1,
 };
 
+/** Normalisation de saisie pour la recherche registre. */
+function toSearchKey(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Résolution produit : marque ou DCI saisie → fiche registre (marque, DCI, statut). */
+async function resolveProduct(input: string, dciHint?: string) {
+  const key = toSearchKey(input);
+
+  // La DCI fournie par le client (panier issu du registre) est prioritaire :
+  // résolution exacte, insensible à la marque.
+  if (dciHint && dciHint.trim().length > 0) {
+    const dciKeyHint = toSearchKey(dciHint);
+    const byDci = await db.drug.findFirst({
+      where: { dciKey: dciKeyHint },
+      orderBy: [{ status: "asc" }, { brandKey: "asc" }],
+    });
+    if (byDci) {
+      return {
+        input,
+        dci: dciHint,
+        brand: byDci.brand ?? input,
+        status: byDci.status ?? null,
+        lab: byDci.lab ?? null,
+        forme: byDci.form ?? null,
+      };
+    }
+  }
+
+  if (!key) {
+    return { input, dci: null, brand: null, status: null, lab: null, forme: null };
+  }
+
+  // Recherche par marque exacte d'abord (plus précise), puis partielle.
+  const exact = await db.drug.findFirst({
+    where: { OR: [{ brandKey: key }, { dciKey: key }] },
+    orderBy: [{ status: "asc" }, { brandKey: "asc" }],
+  });
+  const m =
+    exact ??
+    (await db.drug.findFirst({
+      where: {
+        OR: [{ brandKey: { contains: key } }, { dciKey: { contains: key } }],
+      },
+      orderBy: [{ status: "asc" }, { brandKey: "asc" }],
+    }));
+
+  return {
+    input,
+    dci: m?.dci ?? dciHint ?? null,
+    brand: m?.brand ?? null,
+    status: m?.status ?? null,
+    lab: m?.lab ?? null,
+    forme: m?.form ?? null,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    const inputDrugs: { name?: string }[] = Array.isArray(body?.drugs)
+    const inputDrugs: { name?: string; dci?: string }[] = Array.isArray(body?.drugs)
       ? body.drugs
       : [];
 
-    const names = inputDrugs
-      .map((d) => String(d?.name || "").trim())
-      .filter((n) => n.length > 0);
+    const cleaned = inputDrugs
+      .map((d) => ({
+        name: String(d?.name || "").trim(),
+        dci: d?.dci ? String(d.dci).trim() : undefined,
+      }))
+      .filter((d) => d.name.length > 0);
 
-    if (names.length < 2) {
+    if (cleaned.length < 2) {
       return NextResponse.json(
         { error: "Sélectionnez au moins 2 médicaments pour analyser les interactions." },
         { status: 400 }
       );
     }
-    if (names.length > 10) {
+    if (cleaned.length > 10) {
       return NextResponse.json(
         { error: "Maximum 10 médicaments par analyse." },
         { status: 400 }
       );
     }
 
-    // Enrichissement registre : marque → DCI (essentiel pour les règles)
+    // Enrichissement registre : marque/DCI → fiche + DCI canonique
     const enriched = await Promise.all(
-      names.map(async (name) => {
-        const key = name
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toUpperCase()
-          .replace(/[^A-Z0-9 ]/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-        const m = await db.drug.findFirst({
-          where: {
-            OR: [{ brandKey: { contains: key } }, { dciKey: { contains: key } }],
-          },
-          orderBy: [{ status: "asc" }, { brandKey: "asc" }],
-        });
-        return {
-          input: name,
-          dci: m?.dci ?? null,
-          brand: m?.brand ?? null,
-          status: m?.status ?? null,
-          lab: m?.lab ?? null,
-          forme: m?.form ?? null,
-        };
-      })
+      cleaned.map((d) => resolveProduct(d.name, d.dci))
     );
 
     const rules = matchInteractions(enriched);
 
     const pairs = rules
       .flatMap((rule: LocalRule) =>
-        pairsFromRule(rule, enriched).map(
-          ([a, b]): {
+        pairIndicesFromRule(rule, enriched).map(
+          ([i, j]): {
             drugs: [string, string];
             severity: InteractionSeverity;
             mechanism: string;
             management: string;
           } => ({
-            drugs: [a, b],
+            drugs: [enriched[i].input, enriched[j].input],
             severity: rule.severity,
             mechanism: rule.mechanism,
             management: rule.management,
@@ -96,27 +149,34 @@ export async function POST(req: NextRequest) {
           (SEVERITY_ORDER[b.severity] ?? 0) - (SEVERITY_ORDER[a.severity] ?? 0)
       );
 
-    const globalRisk = globalRiskFromPairs(pairs);
+    // Doublons de DCI : même constituant actif dans plusieurs produits
+    const duplicates = detectDuplicateDci(enriched);
+    const duplicatePairs = duplicates.map((dup: DuplicateDciAlert) => ({
+      drugs: [dup.products[0], dup.products.slice(1).join(" + ")] as [string, string],
+      severity: dup.severity as InteractionSeverity,
+      mechanism: dup.mechanism,
+      management: dup.management,
+    }));
 
-    // Avertissement pour les produits non résolus dans le registre :
-    // ne jamais présenter « aucune interaction » sans signaler l'angle mort.
+    const allPairs = [...pairs, ...duplicatePairs];
+
+    const globalRisk = globalRiskFromPairs(allPairs);
+
     const unresolved = enriched
       .filter((e) => !e.dci && !e.brand)
       .map((e) => e.input);
 
-    const hasCi = pairs.some((p) => p.severity === "CONTRE-INDIQUE");
-    const hasMajor = pairs.some((p) => p.severity === "MAJEURE");
+    const hasCi = allPairs.some((p) => p.severity === "CONTRE-INDIQUE");
+    const hasMajor = allPairs.some((p) => p.severity === "MAJEURE");
 
-    const summary =
-      unresolved.length > 0
-        ? `Analyse partielle : ${unresolved.length} produit(s) non reconnu(s) dans le registre — vérifiez la saisie. Aucune interaction connue entre les produits identifiés.`
-        : pairs.length === 0
-          ? `Aucune interaction connue dans la base de règles locale entre les ${enriched.length} produits analysés.`
-          : hasCi
-            ? `${pairs.length} association(s) à risque identifiée(s), dont une contre-indication formelle — cette ordonnance doit être validée avant dispensation.`
-            : hasMajor
-              ? `${pairs.length} association(s) à risque identifiée(s), dont ${pairs.filter((p) => p.severity === "MAJEURE").length} majeure(s) — surveillance et adaptation recommandées.`
-              : `${pairs.length} association(s) à surveiller selon la base de règles locale.`;
+    const summary = buildInteractionSummary({
+      pairsCount: allPairs.length,
+      contreIndications: allPairs.filter((p) => p.severity === "CONTRE-INDIQUE").length,
+      majeures: allPairs.filter((p) => p.severity === "MAJEURE").length,
+      duplicates: duplicates.length,
+      unresolvedCount: unresolved.length,
+      totalDrugs: enriched.length,
+    });
 
     const advice: string[] = [];
     if (unresolved.length > 0) {
@@ -139,58 +199,42 @@ export async function POST(req: NextRequest) {
         "Un des produits figure sur la liste des retraits du marché — vérifier son statut commercial."
       );
     }
-    if (pairs.length > 0) {
+    if (allPairs.length > 0) {
       advice.push(
         "Rappel systématique au patient : ne pas automédiquer avec des AINS ou produits en vente libre sans avis pharmaceutique."
       );
     }
 
     const monitoring: string[] = [];
-    if (
-      enriched.some((e) =>
-        e.dci?.toUpperCase().includes("WARFARINE") ||
-        e.dci?.toUpperCase().includes("ACENOCOUMAROL") ||
-        e.dci?.toUpperCase().includes("FLUINDIONE"))
-    ) {
+    const dciAll = enriched.map((e) => (e.dci ?? "").toUpperCase()).join(" | ");
+    if (/WARFARINE|ACENOCOUMAROL|FLUINDIONE|PHENPROCOUMON/.test(dciAll)) {
       monitoring.push("INR (international normalized ratio)");
     }
-    if (enriched.some((e) => e.dci?.toUpperCase().includes("LITHIUM"))) {
+    if (/LITHIUM/.test(dciAll)) {
       monitoring.push("Lithémie");
     }
-    if (
-      enriched.some((e) => e.dci?.toUpperCase().includes("DIGOXINE")) ||
-      enriched.some((e) => e.dci?.toUpperCase().includes("FUROSEMIDE"))
-    ) {
+    if (/DIGOXINE|FUROSEMIDE/.test(dciAll)) {
       monitoring.push("Kaliémie, ECG");
     }
-    if (
-      enriched.some((e) =>
-        ["GLIBENCLAMIDE", "GLICLAZIDE", "GLIMEPIRIDE", "INSULINE"].some((x) =>
-          e.dci?.toUpperCase().includes(x)
-        )
-      )
-    ) {
+    if (/GLIBENCLAMIDE|GLICLAZIDE|GLIMEPIRIDE|INSULINE/.test(dciAll)) {
       monitoring.push("Glycémie capillaire");
     }
-    if (
-      enriched.some((e) =>
-        ["SIMVASTATINE", "ATORVASTATINE", "ROSUVASTATINE", "COLCHICINE"].some(
-          (x) => e.dci?.toUpperCase().includes(x)
-        )
-      )
-    ) {
+    if (/SIMVASTATINE|ATORVASTATINE|ROSUVASTATINE|COLCHICINE/.test(dciAll)) {
       monitoring.push("CPK (créatine phosphokinase) si myalgies");
+    }
+    if (/PARACETAMOL/.test(dciAll) && duplicates.length > 0) {
+      monitoring.push("Fonction hépatique (ASAT/ALAT) en cas de doses cumulées élevées");
     }
 
     return NextResponse.json({
       enriched,
       globalRisk,
       summary,
-      pairs,
+      pairs: allPairs,
       advice,
       monitoring,
       source: "local" as const,
-      rulesVersion: 1,
+      rulesVersion: 2,
     });
   } catch (error) {
     console.error("[api/interactions]", error);

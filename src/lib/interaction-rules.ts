@@ -26,26 +26,30 @@ export interface LocalRule {
 /* Jetons de classes pharmacologiques                                  */
 /* ------------------------------------------------------------------ */
 
-const IEC = ['CAPTOPRIL', 'ENALAPRIL', 'LISINOPRIL', 'RAMIPRIL', 'PERINDOPRIL', 'QUINAPRIL', 'FOSINOPRIL', 'TRANDOLAPRIL', 'ZOFENOPRIL']
-const ARA2 = ['LOSARTAN', 'VALSARTAN', 'IRBESARTAN', 'CANDESARTAN', 'TELMISARTAN', 'OLMESARTAN']
-const AINS = ['IBUPROFENE', 'DICLOFENAC', 'KETOPROFENE', 'NAPROXENE', 'PIROXICAM', 'MELOXICAM', 'ACECLOFENAC', 'INDOMETACINE', 'FLURBIPROFENE', 'ASPIRINE']
+const IEC = ['CAPTOPRIL', 'ENALAPRIL', 'LISINOPRIL', 'RAMIPRIL', 'PERINDOPRIL', 'QUINAPRIL', 'FOSINOPRIL', 'TRANDOLAPRIL', 'ZOFENOPRIL', 'CILAZAPRIL', 'MOEXIPRIL', 'SPIRAPRIL']
+const ARA2 = ['LOSARTAN', 'VALSARTAN', 'IRBESARTAN', 'CANDESARTAN', 'TELMISARTAN', 'OLMESARTAN', 'AZILSARTAN']
+const AINS = ['IBUPROFENE', 'DICLOFENAC', 'KETOPROFENE', 'NAPROXENE', 'PIROXICAM', 'MELOXICAM', 'ACECLOFENAC', 'INDOMETACINE', 'FLURBIPROFENE', 'ASPIRINE', 'DEXKETOPROFENE', 'DEXIBUPROFENE', 'NIMESULIDE', 'CELECOXIB', 'ETORICOXIB', 'PARECOXIB', 'ETODOLAC', 'TENOXICAM', 'ACIDE NIFLUMIQUE', 'ACIDE MEFENAMIQUE', 'ACIDE TIAPROFIQUE', 'MEFENAMIQUE']
 const ISRS = ['FLUOXETINE', 'SERTRALINE', 'PAROXETINE', 'CITALOPRAM', 'ESCITALOPRAM', 'FLUVOXAMINE']
+/** Antidépresseurs sérotoninergiques non-ISRS (ISRSN) — même risque de syndrome sérotoninergique avec IMAO/tramadol. [Ajout clinique — en attente de validation pharmaceutique] */
+const SEROTONERGIQUES = [...ISRS, 'VENLAFAXINE', 'DULOXETINE', 'MILNACIPRAN']
 const IMAT = ['PHENELZINE', 'MOCLOBEMIDE', 'IPRONIAZIDE', 'ISOCARBOXAZIDE']
-const MACROLIDES = ['ERYTHROMYCINE', 'CLARITHROMYCINE', 'AZITHROMYCINE', 'ROXITHROMYCINE', 'SPIRAMYCINE']
-const FLUOROQUINOLONES = ['CIPROFLOXACINE', 'OFLOXACINE', 'LEVOFLOXACINE', 'NORFLOXACINE', 'MOXIFLOXACINE']
-const STATINES = ['SIMVASTATINE', 'ATORVASTATINE', 'ROSUVASTATINE', 'PRAVASTATINE', 'FLUVASTATINE']
-const AZOLES = ['KETOCONAZOLE', 'ITRACONAZOLE', 'FLUCONAZOLE', 'VORICONAZOLE']
-const BENZODIAZEPINES = ['DIAZEPAM', 'BROMAZEPAM', 'ALPRAZOLAM', 'LORAZEPAM', 'CLONAZEPAM', 'OXAZEPAM', 'MIDAZOLAM']
-const THIAZIDIQUES = ['HYDROCHLOROTHIAZIDE', 'INDAPAMIDE', 'CHLORTALIDONE']
-const IPP = ['OMEPRAZOLE', 'ESOMEPRAZOLE', 'PANTOPRAZOLE', 'LANSOPRAZOLE', 'RABEPRAZOLE']
-const SULFONYLUREES = ['GLIBENCLAMIDE', 'GLICLAZIDE', 'GLIMEPIRIDE', 'GLIPIZIDE']
+const MACROLIDES = ['ERYTHROMYCINE', 'CLARITHROMYCINE', 'AZITHROMYCINE', 'ROXITHROMYCINE', 'SPIRAMYCINE', 'JOSAMYCINE', 'MIDECAMYCINE']
+const FLUOROQUINOLONES = ['CIPROFLOXACINE', 'OFLOXACINE', 'LEVOFLOXACINE', 'NORFLOXACINE', 'MOXIFLOXACINE', 'PEFLOXACINE', 'LOMEFLOXACINE', 'GATIFLOXACINE', 'SPARFLOXACINE']
+const STATINES = ['SIMVASTATINE', 'ATORVASTATINE', 'ROSUVASTATINE', 'PRAVASTATINE', 'FLUVASTATINE', 'LOVASTATINE']
+const AZOLES = ['KETOCONAZOLE', 'ITRACONAZOLE', 'FLUCONAZOLE', 'VORICONAZOLE', 'POSACONAZOLE']
+const BENZODIAZEPINES = ['DIAZEPAM', 'BROMAZEPAM', 'ALPRAZOLAM', 'LORAZEPAM', 'CLONAZEPAM', 'OXAZEPAM', 'MIDAZOLAM', 'TRIAZOLAM', 'PRAZEPAM', 'BROTIZOLAM']
+const THIAZIDIQUES = ['HYDROCHLOROTHIAZIDE', 'INDAPAMIDE', 'CHLORTALIDONE', 'XIPAMIDE', 'METOLAZONE']
+const IPP = ['OMEPRAZOLE', 'ESOMEPRAZOLE', 'PANTOPRAZOLE', 'LANSOPRAZOLE', 'RABEPRAZOLE', 'DEXLANSOPRAZOLE']
+const SULFONYLUREES = ['GLIBENCLAMIDE', 'GLICLAZIDE', 'GLIMEPIRIDE', 'GLIPIZIDE', 'GLIQUIDONE']
 const INDUCTEURS_ENZYMATIQUES = ['RIFAMPICINE', 'CARBAMAZEPINE', 'PHENYTOINE', 'PHENOBARBITAL', 'PRIMIDONE']
-const OPIOIDES_FORTS = ['MORPHINE', 'TRAMADOL', 'FENTANYL', 'OXYCODONE', 'CODEINE']
-const NITRES = ['TRINITRINE', 'ISOSORBIDE', 'MOLSIDOMINE']
+const OPIOIDES_FORTS = ['MORPHINE', 'TRAMADOL', 'FENTANYL', 'OXYCODONE', 'CODEINE', 'PETHIDINE']
+const NITRES = ['TRINITRINE', 'ISOSORBIDE', 'MOLSIDOMINE', 'NITROGLYCERINE']
 const ANTACIDES = ['CALCIUM', 'MAGNESIUM', 'ALUMINIUM', 'HYDROXYDE D ALUMINIUM', 'CARBONATE DE CALCIUM', 'SIMETICONE']
-const DIGITALIQUES = ['DIGOXINE']
-const SYSTEMIQUES_AZOLES_CYP3A4 = ['KETOCONAZOLE', 'ITRACONAZOLE']
+const DIGITALIQUES = ['DIGOXINE', 'DIGITOXINE']
+const SYSTEMIQUES_AZOLES_CYP3A4 = ['KETOCONAZOLE', 'ITRACONAZOLE', 'VORICONAZOLE', 'POSACONAZOLE']
 const SULFAMIDES_ANTIBIO = ['TRIMETHOPRIME', 'TRIMETOPRIME', 'SULFAMETHOXAZOLE', 'COTRIMOXAZOLE', 'COTRIMOXAZOLE TRIMETOPRIME']
+const BETABLOQUANTS = ['ATENOLOL', 'BISOPROLOL', 'METOPROLOL', 'PROPRANOLOL', 'NEBIVOLOL', 'CARVEDILOL', 'SOTALOL', 'BETAXOLOL', 'ACEBUTOLOL', 'CELIPROLOL', 'PINDOLOL', 'LABETALOL']
+const CONTRACEPTIFS_HORMONAUX = ['ETHINYLESTRADIOL', 'LEVONORGESTREL', 'DESOGESTREL', 'DROSPIRENONE', 'CONTRACEPTIF', 'NORETHISTERONE', 'GESTODENE', 'ETONOGESTREL']
 
 /*
  * AVK — en Algérie, l'antivitamine K commercialisé (SINTROM, AURACENO,
@@ -53,7 +57,7 @@ const SULFAMIDES_ANTIBIO = ['TRIMETHOPRIME', 'TRIMETOPRIME', 'SULFAMETHOXAZOLE',
  * ordonnances étrangères. Toutes les règles AVK couvrent la classe entière.
  * [Étendu lors de l'audit — en attente de validation pharmacienne]
  */
-const AVK = ['WARFARINE', 'ACENOCOUMAROL', 'FLUINDIONE']
+const AVK = ['WARFARINE', 'ACENOCOUMAROL', 'FLUINDIONE', 'PHENPROCOUMON']
 
 /* Variantes orthographiques du registre officiel
  * (ex. « ACIDE ACETYLSALICYTIQUE » — graphie du fichier source). */
@@ -142,7 +146,7 @@ export const LOCAL_RULES: LocalRule[] = [
   },
   {
     id: 'bêtabloquant-verapamil',
-    left: ['ATENOLOL', 'BISOPROLOL', 'METOPROLOL', 'PROPRANOLOL', 'NEBIVOLOL', 'CARVEDILOL'],
+    left: BETABLOQUANTS,
     right: ['VERAPAMIL', 'DILTIAZEM'],
     severity: 'MAJEURE',
     mechanism: 'Addition des effets chronotropes et dromotropes négatifs : bradycardie sévère, troubles de conduction, décompensation cardiaque.',
@@ -241,7 +245,7 @@ export const LOCAL_RULES: LocalRule[] = [
   {
     id: 'rifampicine-contraceptifs',
     left: INDUCTEURS_ENZYMATIQUES,
-    right: ['ETHINYLESTRADIOL', 'LEVNORGESTREL', 'DESOGESTREL', 'DROSPIRENONE', 'CONTRACEPTIF'],
+    right: CONTRACEPTIFS_HORMONAUX,
     severity: 'MAJEURE',
     mechanism: 'Induction enzymatique hépatique (CYP3A4) : accélération du métabolisme des hormones contraceptives avec risque d\u2019échec de contraception.',
     management: 'Ajouter une méthode barrier (préservatif) pendant le traitement et 4 à 8 semaines après l\u2019arrêt, ou utiliser un contraceptif adapté (progestatif hors CYP3A4 / DIU).',
@@ -300,15 +304,24 @@ export const LOCAL_RULES: LocalRule[] = [
   // --- Psychotropes ---------------------------------------------------
   {
     id: 'isrs-imao',
-    left: ISRS,
+    left: SEROTONERGIQUES,
     right: IMAT,
     severity: 'CONTRE-INDIQUE',
     mechanism: 'Blocage simultané de la recapture et de la dégradation de la sérotonine : risque de syndrome sérotoninergique grave (hyperthermie, convulsions, rhabdomyolyse).',
     management: 'Association contre-indiquée. Respecter un délai de wash-out de 2 semaines (5 semaines pour la fluoxétine) entre les deux traitements.',
   },
   {
+    id: 'serotonergiques-linezolide',
+    // [Ajout clinique — en attente de validation pharmaceutique]
+    left: SEROTONERGIQUES,
+    right: ['LINEZOLIDE'],
+    severity: 'CONTRE-INDIQUE',
+    mechanism: 'Le linézolide est un antibiotique inhibiteur réversible de la monoamine oxydase A : associé à un antidépresseur sérotoninergique, risque de syndrome sérotoninergique grave.',
+    management: 'Association contre-indiquée. Si antibiothérapie indispensable, interrompre l\u2019antidépresseur pendant le traitement et 2 semaines après (avis spécialisé).',
+  },
+  {
     id: 'isrs-tramadol',
-    left: ISRS,
+    left: SEROTONERGIQUES,
     right: ['TRAMADOL'],
     severity: 'MAJEURE',
     mechanism: 'Addition sérotoninergique + diminution de l\u2019efficacité analgésique (compétition métabolique) : risque de syndrome sérotoninergique et de convulsions.',
@@ -341,7 +354,7 @@ export const LOCAL_RULES: LocalRule[] = [
   {
     id: 'carbamazepine-contraceptifs',
     left: ['CARBAMAZEPINE', 'PHENYTOINE', 'PHENOBARBITAL', 'PRIMIDONE', 'OXCARBAZEPINE'],
-    right: ['ETHINYLESTRADIOL', 'LEVNORGESTREL', 'DESOGESTREL', 'DROSPIRENONE', 'CONTRACEPTIF'],
+    right: CONTRACEPTIFS_HORMONAUX,
     severity: 'MODEREE',
     mechanism: 'Induction enzymatique : diminution des concentrations hormonales et risque d\u2019échec contraceptif.',
     management: 'Méthode contraceptive non hormonale ou adaptation (progestatif à forte dose / DIU cuivre). Informer la patiente.',
@@ -524,83 +537,169 @@ export const LOCAL_RULES: LocalRule[] = [
 ]
 
 /* ------------------------------------------------------------------ */
-/* Moteur de correspondance                                            */
+/* Moteur de correspondance — identité canonique DCI                   */
 /* ------------------------------------------------------------------ */
-
-export function normalizeKey(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9 ]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-/**
- * Détecte les règles applicables sur une liste de médicaments.
- * Chaque médicament est identifié par sa marque (`name` ou `input`) et sa DCI
- * (l'une des deux peut manquer) ; la correspondance se fait sur les jetons
- * DCI/marque normalisés.
+/*
+ * PRINCIPE : la correspondance se fait EXCLUSIVEMENT sur les jetons
+ * canoniques dérivés de la DCI (voir dci-normalizer.ts). Les noms de
+ * marque ne participent jamais à la recherche : deux marques de la
+ * même molécule donnent un verdict et un résumé strictement identiques.
  */
-export function matchInteractions(
-  drugs: { name?: string; input?: string; dci?: string | null }[]
-): LocalRule[] {
-  const keysPerDrug = drugs.map((d) => {
-    const label = d.name ?? d.input ?? ''
-    const keys = new Set<string>()
-    if (d.dci) {
-      const k = normalizeKey(d.dci)
-      if (k) keys.add(k)
-      // les DCI composées (« X + Y ») sont éclatées
-      for (const part of k.split(/(?: \+ | ET )/)) {
-        const p = part.trim()
-        if (p.length >= 3) keys.add(p)
-      }
-    }
-    const n = normalizeKey(label)
-    if (n) keys.add(n)
-    return Array.from(keys)
-  })
 
-  const allKeys = new Set(keysPerDrug.flat())
+import {
+  buildCanonicalIdentity,
+  sharedConstituents,
+  type CanonicalDrugIdentity,
+} from './dci-normalizer'
 
-  return LOCAL_RULES.filter((rule) => {
-    const leftHit = rule.left.some((t) => tokenMatch(allKeys, t))
-    const rightHit = rule.right.some((t) => tokenMatch(allKeys, t))
-    // les deux membres doivent être touchés par des médicaments distincts
-    if (!leftHit || !rightHit) return false
-    for (let i = 0; i < drugs.length; i++) {
-      const di = keysPerDrug[i]
-      const leftSelf = rule.left.some((t) => tokenMatch(new Set(di), t))
-      const rightSelf = rule.right.some((t) => tokenMatch(new Set(di), t))
-      if (leftSelf && rightSelf) {
-        // un seul produit couvre les deux membres (ex : association fixe) → non pertinent
-        continue
-      }
-      for (let j = i + 1; j < drugs.length; j++) {
-        const dj = keysPerDrug[j]
-        const pairLeft = rule.left.some((t) => tokenMatch(new Set(di), t))
-        const pairRight = rule.right.some((t) => tokenMatch(new Set(dj), t))
-        const pairLeftR = rule.right.some((t) => tokenMatch(new Set(di), t))
-        const pairRightL = rule.left.some((t) => tokenMatch(new Set(dj), t))
-        if ((pairLeft && pairRight) || (pairLeftR && pairRightL)) return true
-      }
-    }
-    return false
-  })
+export { normalizeKey } from './dci-normalizer'
+
+export type InteractionDrugInput = { name?: string; input?: string; dci?: string | null }
+
+/** Identités canoniques d'une liste de produits (une par produit, ordre conservé). */
+export function canonicalIdentities(drugs: InteractionDrugInput[]): CanonicalDrugIdentity[] {
+  return drugs.map((d) => buildCanonicalIdentity(d.name ?? d.input ?? '', d.dci ?? null))
 }
 
+/** Une clé (jeton canonique) correspond-elle au jeton de règle ? (correspondance de mots) */
 function tokenMatch(keys: Set<string>, token: string): boolean {
   if (keys.has(token)) return true
   const t = ` ${token} `
   for (const k of keys) {
     if (k === token) return true
-    if ((` ${k} `).includes(t) && token.length >= 4) return true
-    if ((` ${token} `).includes(` ${k} `) && k.length >= 4) return true
+    if (` ${k} `.includes(t) && token.length >= 4) return true
+    if (` ${token} `.includes(` ${k} `) && k.length >= 4) return true
   }
   return false
 }
+
+function matchesSide(tokens: Set<string>, side: string[]): boolean {
+  return side.some((t) => tokenMatch(tokens, t))
+}
+
+/**
+ * Détecte les règles applicables sur une liste de médicaments.
+ * La correspondance repose UNIQUEMENT sur les jetons canoniques DCI —
+ * invariante par changement de nom commercial.
+ *
+ * Sémantique : une règle s'applique dès que DEUX PRODUITS DISTINCTS de la
+ * liste couvrent chacun un membre de l'association. Un produit isolé qui
+ * contiendrait les deux membres (association fixe validée) ne déclenche
+ * rien à lui seul — et lorsqu'il est combiné à un autre produit apportant
+ * l'un des membres, la co-administration est réelle et la règle se déclenche
+ * légitimement (chaque constituant de l'association est testé séparément,
+ * cf. éclatement des associations dans dci-normalizer.ts).
+ */
+export function matchInteractions(drugs: InteractionDrugInput[]): LocalRule[] {
+  const ids = canonicalIdentities(drugs)
+  return LOCAL_RULES.filter((rule) =>
+    pairIndices(rule, ids).length > 0
+  )
+}
+
+/** Paires de produits (indices) concernées par une règle. */
+export function pairIndicesFromRule(
+  rule: LocalRule,
+  drugs: InteractionDrugInput[]
+): [number, number][] {
+  return pairIndices(rule, canonicalIdentities(drugs))
+}
+
+function pairIndices(
+  rule: LocalRule,
+  ids: CanonicalDrugIdentity[]
+): [number, number][] {
+  const result: [number, number][] = []
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const iL = matchesSide(ids[i].tokens, rule.left)
+      const iR = matchesSide(ids[i].tokens, rule.right)
+      const jL = matchesSide(ids[j].tokens, rule.left)
+      const jR = matchesSide(ids[j].tokens, rule.right)
+      if ((iL && jR) || (iR && jL)) result.push([i, j])
+    }
+  }
+  return result
+}
+
+/** Associe une règle aux paires de produits concernées (libellés lisibles saisis). */
+export function pairsFromRule(
+  rule: LocalRule,
+  drugs: InteractionDrugInput[]
+): [string, string][] {
+  const label = (d: InteractionDrugInput) => d.name ?? d.input ?? d.dci ?? '—'
+  return pairIndicesFromRule(rule, drugs).map(([i, j]) => [label(drugs[i]), label(drugs[j])])
+}
+
+/* ------------------------------------------------------------------ */
+/* Détection de doublons de DCI (surdosage par redondance)             */
+/* ------------------------------------------------------------------ */
+
+/** DCI à faible marge thérapeutique : doublon = alerte majeure. [En attente de validation pharmaceutique] */
+const HIGH_RISK_DUPLICATES = [
+  'PARACETAMOL', 'ASPIRINE', 'ACIDE ACETYLSALICYLIQUE', 'ACIDE ACETYLSALICYTIQUE',
+  'IBUPROFENE', 'DICLOFENAC', 'KETOPROFENE', 'DEXKETOPROFENE', 'NAPROXENE',
+  'WARFARINE', 'ACENOCOUMAROL', 'FLUINDIONE', 'PHENPROCOUMON',
+  'LITHIUM', 'METHOTREXATE', 'DIGOXINE', 'INSULINE', 'METFORMINE',
+  'MORPHINE', 'TRAMADOL', 'CODEINE', 'FENTANYL', 'OXYCODONE',
+  'COLCHICINE', 'AMIODARONE', 'PHENYTOINE', 'CARBAMAZEPINE',
+  'CLOPIDOGREL', 'RIVAROXABAN', 'DABIGATRAN', 'APIXABAN',
+]
+
+export interface DuplicateDciAlert {
+  /** Constituant DCI dupliqué (ex. « PARACETAMOL »). */
+  dci: string
+  /** Libellés des produits contenant ce constituant. */
+  products: string[]
+  severity: LocalSeverity
+  mechanism: string
+  management: string
+}
+
+/**
+ * Détecte la présence du MÊME constituant actif dans plusieurs produits
+ * (ex. DOLIPRANE + FERVEX → paracétamol en double ; ou deux associations
+ * fixes contenant toutes deux de l'ibuprofène). Le risque de surdosage est
+ * réel et classique en automédication.
+ */
+export function detectDuplicateDci(drugs: InteractionDrugInput[]): DuplicateDciAlert[] {
+  const ids = canonicalIdentities(drugs)
+  const byDci = new Map<string, number[]>()
+  ids.forEach((id, idx) => {
+    for (const c of id.constituents) {
+      // on ignore les constituants vides ou trop génériques
+      if (c.length < 4) continue
+      const list = byDci.get(c) ?? []
+      if (!list.includes(idx)) list.push(idx)
+      byDci.set(c, list)
+    }
+  })
+
+  const label = (i: number) => drugs[i].name ?? drugs[i].input ?? drugs[i].dci ?? '—'
+  const alerts: DuplicateDciAlert[] = []
+  for (const [dci, idxs] of byDci) {
+    if (idxs.length < 2) continue
+    const isHighRisk = HIGH_RISK_DUPLICATES.some((h) => dci === h || dci.includes(` ${h} `) || ` ${dci} `.includes(` ${h} `))
+    alerts.push({
+      dci,
+      products: idxs.map(label),
+      severity: isHighRisk ? 'MAJEURE' : 'MODEREE',
+      mechanism: `Doublon de DCI : ${dci.toLowerCase()} est présent(e) dans ${idxs.length} produits (${idxs
+        .map(label)
+        .join(' + ')}) — la dose quotidienne cumulée peut dépasser la dose maximale autorisée.`,
+      management: `Ne conserver qu'un seul produit contenant ${dci.toLowerCase()}, ou répartir les doses pour respecter la dose maximale quotidienne. Vérifier la posologie cumulée avant la dispensation.`,
+    })
+  }
+  // sévérité décroissante puis ordre alphabétique (déterministe)
+  return alerts.sort(
+    (a, b) =>
+      SEVERITY_WEIGHT[b.severity] - SEVERITY_WEIGHT[a.severity] || a.dci.localeCompare(b.dci)
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Gravité globale & résumé déterministe                               */
+/* ------------------------------------------------------------------ */
 
 export const SEVERITY_WEIGHT: Record<LocalSeverity, number> = {
   'CONTRE-INDIQUE': 4,
@@ -620,34 +719,44 @@ export function globalRiskFromPairs(
   return 'FAIBLE'
 }
 
-/** Associe une règle aux paires de produits concernés (marques lisibles). */
-export function pairsFromRule(
-  rule: LocalRule,
-  drugs: { name?: string; input?: string; dci?: string | null }[]
-): [string, string][] {
-  const result: [string, string][] = []
-  for (let i = 0; i < drugs.length; i++) {
-    for (let j = i + 1; j < drugs.length; j++) {
-      const ki = new Set(
-        [drugs[i].dci, drugs[i].name ?? drugs[i].input]
-          .filter(Boolean)
-          .map((s) => normalizeKey(s as string))
-      )
-      const kj = new Set(
-        [drugs[j].dci, drugs[j].name ?? drugs[j].input]
-          .filter(Boolean)
-          .map((s) => normalizeKey(s as string))
-      )
-      const iL = rule.left.some((t) => tokenMatch(ki, t))
-      const iR = rule.right.some((t) => tokenMatch(ki, t))
-      const jL = rule.left.some((t) => tokenMatch(kj, t))
-      const jR = rule.right.some((t) => tokenMatch(kj, t))
-      if ((iL && jR) || (iR && jL)) {
-        const label = (d: { name?: string; input?: string; dci?: string | null }) =>
-          d.name ?? d.input ?? d.dci ?? '—'
-        result.push([label(drugs[i]), label(drugs[j])])
-      }
-    }
+/**
+ * Résumé DÉTERMINISTE : construit exclusivement à partir des paires
+ * détectées (aucun texte libre) — deux analyses de la même combinaison
+ * de DCI produisent exactement le même résumé, quelle que soit la marque.
+ */
+export function buildInteractionSummary(params: {
+  pairsCount: number
+  contreIndications: number
+  majeures: number
+  duplicates: number
+  unresolvedCount: number
+  totalDrugs: number
+}): string {
+  const { pairsCount, contreIndications, majeures, duplicates, unresolvedCount, totalDrugs } = params
+  if (unresolvedCount > 0 && pairsCount === 0 && duplicates === 0) {
+    return `Analyse partielle : ${unresolvedCount} produit(s) non reconnu(s) dans le registre — vérifiez la saisie. Aucune interaction connue entre les produits identifiés.`
   }
-  return result
+  if (pairsCount === 0 && duplicates === 0) {
+    return `Aucune interaction connue entre les ${totalDrugs} produits analysés.`
+  }
+  const parts: string[] = []
+  if (contreIndications > 0) {
+    parts.push(`${contreIndications} contre-indication(s) formelle(s)`)
+  }
+  if (majeures > 0) {
+    parts.push(`${majeures} association(s) majeure(s)`)
+  }
+  const moderate = pairsCount - contreIndications - majeures
+  if (moderate > 0) {
+    parts.push(`${moderate} association(s) à surveiller`)
+  }
+  if (duplicates > 0) {
+    parts.push(`${duplicates} doublon(s) de DCI`)
+  }
+  const head = contreIndications > 0
+    ? 'Cette ordonnance doit être validée avant dispensation :'
+    : majeures > 0
+      ? 'Associations à risque identifiées :'
+      : 'Points de vigilance identifiés :'
+  return `${head} ${parts.join(', ')}.`
 }

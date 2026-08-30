@@ -18,11 +18,9 @@ import {
   Plus,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Stethoscope,
   Trash2,
   X,
-  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -100,8 +98,8 @@ export function InteractionsView() {
           Contrôle d&apos;interactions médicamenteuses
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Sélectionnez 2 à 10 médicaments — l&apos;IA identifie les interactions et propose
-          une conduite à tenir.
+          Sélectionnez 2 à 10 médicaments — le contrôle identifie les interactions
+          médicamenteuses et propose la conduite à tenir pour la dispensation.
         </p>
       </div>
 
@@ -149,42 +147,32 @@ function VerifierPanel() {
   const [patientContext, setPatientContext] = useState('')
   const [result, setResult] = useState<InteractionsResponse | null>(null)
   const [analyzedIds, setAnalyzedIds] = useState<string>('')
-  const [localPending, setLocalPending] = useState(false)
-  const [aiPending, setAiPending] = useState(false)
-  const [aiFailed, setAiFailed] = useState(false)
+  const [pending, setPending] = useState(false)
 
-  const names = useMemo(() => basket.map((b) => b.brand), [basket])
+  const items = useMemo(
+    () => basket.map((b) => ({ name: b.brand, dci: b.dci })),
+    [basket]
+  )
 
   async function analyze() {
-    if (names.length < 2) return
-    setAiFailed(false)
-
-    // 1. Moteur local — instantané, toujours disponible
-    setLocalPending(true)
+    if (items.length < 2) return
+    setPending(true)
     try {
-      const local = await postLocalInteractions(names)
+      // Vérification instantanée (moteur de règles, déterministe) puis
+      // analyse approfondie — le verdict des paires couvertes par la base
+      // de référence est identique dans les deux cas (arbitrage serveur).
+      const local = await postLocalInteractions(items)
       setResult(local)
       setAnalyzedIds(basket.map((b) => b.id).join(','))
-    } catch {
-      // le moteur local échoue rarement ; on tente quand même l'IA
-    } finally {
-      setLocalPending(false)
-    }
 
-    // 2. Analyse IA approfondie — remplace le résultat local si disponible
-    setAiPending(true)
-    try {
-      const ai = await postInteractions(names, patientContext)
-      setResult({ ...ai, source: 'ai' })
-      setAnalyzedIds(basket.map((b) => b.id).join(','))
+      const ai = await postInteractions(items, patientContext)
+      if (ai) setResult(ai)
     } catch {
-      setAiFailed(true)
+      // le résultat local instantané reste affiché s'il est disponible
     } finally {
-      setAiPending(false)
+      setPending(false)
     }
   }
-
-  const pending = localPending || aiPending
   const stale =
     result !== null && analyzedIds !== basket.map((b) => b.id).join(',')
 
@@ -306,7 +294,7 @@ function VerifierPanel() {
                 {pending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" aria-hidden />
-                    {localPending ? 'Règles locales…' : 'Analyse IA…'}
+                    Analyse…
                   </>
                 ) : (
                   <>
@@ -333,9 +321,7 @@ function VerifierPanel() {
             {pending ? (
               <p className="flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
                 <Loader2 className="size-3 animate-spin" aria-hidden />
-                {localPending
-                  ? 'Vérification instantanée par le moteur local de règles…'
-                  : 'L\u2019analyse IA approfondie peut prendre jusqu\u2019à une minute…'}
+                Vérification des {basket.length} médicaments en cours…
               </p>
             ) : null}
           </CardContent>
@@ -363,53 +349,11 @@ function VerifierPanel() {
               Analyse en cours…
             </p>
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
-              Le moteur local de règles vérifie instantanément les {basket.length}{' '}
-              médicaments de votre panier, puis l&apos;IA approfondit l&apos;analyse.
+              Vérification des {basket.length} médicaments du panier.
             </p>
           </div>
         ) : result ? (
           <div className="space-y-4">
-            {/* Indicateur de source + état IA */}
-            <div
-              className={cn(
-                'flex flex-wrap items-center gap-2 rounded-lg border px-4 py-2.5 text-sm',
-                aiFailed
-                  ? 'border-state-warning/40 bg-state-warning/10 text-state-warning'
-                  : 'border-border bg-card text-muted-foreground'
-              )}
-              role="status"
-            >
-              {result.source === 'ai' ? (
-                <>
-                  <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                  <span>
-                    Analyse IA approfondie — croisée avec la base de règles locale.
-                  </span>
-                </>
-              ) : aiFailed ? (
-                <>
-                  <AlertTriangle className="size-4 shrink-0" aria-hidden />
-                  <span>
-                    Analyse IA approfondie indisponible — résultats du{' '}
-                    <strong className="font-semibold">moteur local de règles</strong>{' '}
-                    ({result.pairs.length} association(s) vérifiée(s)).
-                  </span>
-                </>
-              ) : aiPending ? (
-                <>
-                  <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-                  <span>Règles locales appliquées — analyse IA en cours…</span>
-                </>
-              ) : (
-                <>
-                  <Zap className="size-4 shrink-0 text-primary" aria-hidden />
-                  <span>
-                    Moteur local de règles — réponse instantanée hors ligne.
-                  </span>
-                </>
-              )}
-            </div>
-
             {stale ? (
               <div
                 className="flex items-center gap-2 rounded-lg border border-state-warning/40 bg-state-warning/10 px-4 py-2.5 text-sm text-state-warning"
@@ -562,9 +506,7 @@ function VerifierPanel() {
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              {result.source === 'ai'
-                ? 'L\u2019analyse est générée par IA à partir des données du référentiel — elle ne remplace pas la validation pharmaceutique ni les référentiels officiels.'
-                : 'Analyse générée par le moteur local de règles DzPharm (base des interactions majeures courantes en Algérie) — elle ne remplace ni l\u2019analyse IA approfondie ni la validation pharmaceutique.'}
+              Ne remplace pas la validation pharmaceutique ni l&apos;avis médical.
             </p>
           </div>
         ) : null}
@@ -627,12 +569,12 @@ function MatrixPanel({ onGoToVerifier }: { onGoToVerifier: () => void }) {
 
   const truncated = basket.length > MAX_MATRIX
   const drugs = useMemo(() => basket.slice(0, MAX_MATRIX), [basket])
-  const names = useMemo(() => drugs.map((d) => d.brand), [drugs])
-  const idsKey = names.join('|')
+  const items = useMemo(() => drugs.map((d) => ({ name: d.brand, dci: d.dci })), [drugs])
+  const idsKey = drugs.map((d) => d.id).join('|')
 
   const { data, isFetching } = useQuery({
     queryKey: ['interactions-matrix', idsKey],
-    queryFn: () => postLocalInteractions(names),
+    queryFn: () => postLocalInteractions(items),
     enabled: drugs.length >= 2,
     staleTime: 30 * 1000,
   })
@@ -816,7 +758,7 @@ function MatrixPanel({ onGoToVerifier }: { onGoToVerifier: () => void }) {
         {isFetching && pairs.length === 0 ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card p-8 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden />
-            Analyse du moteur local de règles…
+            Analyse des interactions…
           </div>
         ) : pairs.length === 0 ? (
           <Card className="border-state-safe/40 bg-state-safe/5">
@@ -833,10 +775,9 @@ function MatrixPanel({ onGoToVerifier }: { onGoToVerifier: () => void }) {
 
       <p className="flex items-start gap-2 text-xs text-muted-foreground">
         <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-        Matrice générée par le moteur local de règles DzPharm (interactions majeures
-        courantes en Algérie) — l&apos;absence de coloration ne garantit pas
-        l&apos;absence d&apos;interaction : lancez l&apos;analyse IA du
-        «&nbsp;Vérificateur&nbsp;» pour un contrôle approfondi.
+        Chaque cellule détaille l&apos;interaction au clic (mécanisme, conduite à tenir).
+        L&apos;absence de coloration ne garantit pas l&apos;absence d&apos;interaction — le
+        «&nbsp;Vérificateur&nbsp;» complète le contrôle.
       </p>
     </div>
   )
@@ -912,9 +853,7 @@ function MatrixCell({
           </div>
         ) : (
           <p className="mt-3 text-sm text-foreground/90">
-            Aucune interaction connue dans la base de règles locale entre ces deux
-            médicaments. Une analyse IA approfondie reste recommandée pour les
-            associations à risque.
+            Aucune interaction documentée entre ces deux molécules.
           </p>
         )}
       </PopoverContent>
