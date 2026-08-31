@@ -76,3 +76,36 @@ Le plan a été vérifié **ligne par ligne contre le code réel** (et non les r
 ---
 
 *SW bump dzpharm-v6 → v7 (network-first conservé). QA complet : lint 0, tsc 0, console 0, mobile 0 overflow.*
+
+---
+
+## 7. Armoire à Pharmacie Familiale v2 — reconstruction complète (session « focus armoire »)
+
+**Conformité au plan dédié** (« New Feature — Armoire à Pharmacie Familiale ») :
+
+| Exigence plan | Livré |
+|---|---|
+| 3.3 Foyer → Membres (nom, bande d'âge, relation, avatar/couleur, drapeaux grossesse/allaitement/rénal/allergies) | ✅ membres + 8 couleurs, drapeaux alimentant Analyse |
+| 3.3 Entrée (AMM/DCI liée, forme, quantité, péremption, ouverture/achat, kit, membres multiples partagés, catégorie 5 dont stupéfiants & contrôlés, lot, ordonnance) | ✅ dialogue complet + modèle store v2 |
+| 3.3 Kits (Cuisine, Salle de bain, Réfrigérateur, Voyage, Auto, Cartable) | ✅ 6 kits multi-sélection |
+| 3.4.1 Recherche-répertoire avec autofill (9 555 AMM) | ✅ statut + PPA + bannière retrait/non renouvelé |
+| 3.4.3 Saisie manuelle OTC/parapharmacie | ✅ onglet dédié, détachement AMM possible |
+| 3.4.4 Multi-membres + vue par membre | ✅ assignation partagée + filtres + groupes |
+| 3.4.5 Auto-catégorisation (5 catégories) + kits manuels | ✅ |
+| 3.4.6 Péremption couleur+icône+texte, rappels 7/30/90 configurables | ✅ Réglages |
+| 3.4.7 Stock faible chroniques (« jours restants ») | ✅ alerte dédiée |
+| 3.4.8 Interactions du FOYER ENTIER, automatique à chaque changement | ✅ auto-run debounced + attribution par membre |
+| 3.4.9 Fiche d'urgence < 10 s (noms, doses, allergies) | ✅ onglet Urgence + partage + impression |
+| 3.4.10 Grossesse/allaitement → CRAT ; rénal → renvoi honnête | ✅ via moteurs existants, zéro invention |
+| 3.4.11 Guidage destruction produits périmés (source officielle) | ✅ consigne ANSM/Ministère + pharmacie |
+| 3.4.14 Réassort → fiche prix PPA + équivalents | ✅ depuis les alertes de renouvellement |
+| 3.4.15 Export PDF inventaire complet | ✅ A4 imprimable (portail .print-counter) |
+| 3.4.16 Widget « X expirent ce mois » | ✅ page d'accueil |
+| 3.6 Confidentialité (local-first, PIN dédié, restreint par membre, zéro analytics, consentement 1er usage, export/effacement) | ✅ + Loi 18-07 notée |
+| Migration v1 → v2 | ✅ données existantes conservées (testée E2E) |
+
+**Brainstorm livré au-delà du plan** : score d'organisation indicatif (explicitement non clinique), échéancier de péremption visuel 90 j, groupement 3 axes (membre/catégorie/lieu), journal des contrôles dédupliqué, nouveautés 7 jours, conseils saisonniers, badge « Liste contrôlée », alerte doublons DCI par membre.
+
+**Revue approfondie avant livraison** (E2E agent-browser) : parcours complet vert — consentement, membres (drapeaux), ajout répertoire, analyse auto (paire MAJEURE PLAVIX×MOPRAL + attribution, grossesse « Non documenté » honnête, posologie Lina 24 kg → 360 mg = 15 mL exacte), urgence, PIN verrou/déverrouillage, migration v0→v1, impression, mobile 390 px 0 débordement, console 0 erreur, lint 0, tsc 0. SW v8.
+
+**Restent hors périmètre (décision humaine)** : ajout par photo (VLM), accès partagé/délégué (nécessite comptes), scan code-barres (couverture GS1 DZ à vérifier), lien pharmacien sécurisé, carnet de santé familial (sous-régime réglementaire distinct).

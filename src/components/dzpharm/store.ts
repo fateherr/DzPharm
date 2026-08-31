@@ -1,6 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ChifaCardType, ChifaLine } from './types'
+import type {
+  ArmoireEntry,
+  ArmoireEntryInput,
+  ArmoireMember,
+  ArmoireMemberInput,
+  ArmoireJournalEntry,
+} from './armoire/types'
+import { MAX_ENTRIES, MAX_JOURNAL, MAX_MEMBERS, MEMBER_COLORS } from './armoire/constants'
+import { uid } from './armoire/utils'
 
 export const MAX_CHIFA_LINES = 15
 
@@ -64,64 +73,6 @@ export interface RecentItem {
   viewedAt: number
 }
 
-/* ------------------------------------------------------------------ */
-/* Armoire familiale — profils & médicaments                           */
-/* ------------------------------------------------------------------ */
-
-export type ArmoireRelation = 'adulte' | 'enfant' | 'bebe'
-
-export interface ArmoireProfile {
-  id: string
-  name: string
-  relation: ArmoireRelation
-  ageYears: number
-  weightKg: number | null
-  pregnant: boolean
-  breastfeeding: boolean
-  createdAt: number
-}
-
-export interface ArmoireItem {
-  uid: string
-  drugId: number
-  brand: string
-  dci: string
-  dciKey: string
-  status: string
-  form: string
-  dosage: string
-  /** Nombre de boîtes/unités restantes (optionnel). */
-  quantity: number
-  /** Date d'expiration (YYYY-MM-DD) — vide si inconnue. */
-  expiry: string
-  addedAt: number
-}
-
-export type ArmoireItemInput = Omit<ArmoireItem, 'uid' | 'addedAt' | 'quantity' | 'expiry'> &
-  Partial<Pick<ArmoireItem, 'quantity' | 'expiry'>>
-
-/**
- * Journal des contrôles de l'armoire — historique local des analyses
- * effectuées (interactions, grossesse/allaitement, alertes armoire).
- * Aucune donnée clinique nominative ne quitte le navigateur.
- */
-export interface ArmoireJournalEntry {
-  id: string
-  at: number
-  profileId: string
-  profileName: string
-  itemsCount: number
-  interactions: number
-  maxSeverity: string | null
-  pregnancyAlerts: number
-  cabinetAlerts: number
-}
-
-export const MAX_JOURNAL_ENTRIES = 20
-
-export const MAX_PROFILES = 8
-export const MAX_ITEMS_PER_PROFILE = 30
-
 export type AddResult = 'added' | 'duplicate' | 'full'
 
 export const MAX_BASKET = 10
@@ -166,23 +117,22 @@ interface DzPharmStore {
   pushRecent: (item: Omit<RecentItem, 'viewedAt'>) => void
   clearRecent: () => void
 
-  /** Armoire familiale multi-profils. */
-  armoireProfiles: ArmoireProfile[]
-  /** Médicaments par profil, indexés par id de profil. */
-  armoireItems: Record<string, ArmoireItem[]>
-  activeArmoireProfileId: string | null
-  addArmoireProfile: (p: Omit<ArmoireProfile, 'id' | 'createdAt'>) => ArmoireProfile | null
-  updateArmoireProfile: (id: string, patch: Partial<Omit<ArmoireProfile, 'id' | 'createdAt'>>) => void
-  deleteArmoireProfile: (id: string) => void
-  setActiveArmoireProfile: (id: string) => void
-  addArmoireItem: (profileId: string, item: ArmoireItemInput) => AddResult
-  updateArmoireItem: (
-    profileId: string,
+  /* ------------------ Armoire v2 (plan « Armoire à Pharmacie
+     Familiale » — membres + entrées assignables/partagées) ----------- */
+
+  armoireMembers: ArmoireMember[]
+  armoireEntries: ArmoireEntry[]
+  addArmoireMember: (m: ArmoireMemberInput) => ArmoireMember | null
+  updateArmoireMember: (id: string, patch: Partial<Omit<ArmoireMember, 'id' | 'createdAt'>>) => void
+  deleteArmoireMember: (id: string) => void
+  addArmoireEntry: (e: ArmoireEntryInput) => AddResult
+  updateArmoireEntry: (
     uid: string,
-    patch: Partial<Pick<ArmoireItem, 'quantity' | 'expiry'>>
+    patch: Partial<Omit<ArmoireEntry, 'uid' | 'addedAt' | 'updatedAt'>>
   ) => void
-  removeArmoireItem: (profileId: string, uid: string) => void
-  clearArmoireProfile: (profileId: string) => void
+  removeArmoireEntry: (uid: string) => void
+  /** Efface tout l'armoire (membres, entrées, journal) — droit d'effacement. */
+  wipeArmoireData: () => void
 
   /** Journal des contrôles (20 dernières analyses, persisté). */
   armoireJournal: ArmoireJournalEntry[]
@@ -197,6 +147,11 @@ interface DzPharmStore {
   updateChifaLine: (uid: string, patch: Partial<Omit<ChifaLine, 'uid'>>) => void
   removeChifaLine: (uid: string) => void
   clearChifaLines: () => void
+}
+
+/** Membres identiques (ordre insensible) ? */
+function sameMembers(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((x) => b.includes(x))
 }
 
 export const useDzPharm = create<DzPharmStore>()(
@@ -264,97 +219,95 @@ export const useDzPharm = create<DzPharmStore>()(
         })),
       clearRecent: () => set({ recentlyViewed: [] }),
 
-      armoireProfiles: [],
-      armoireItems: {},
-      activeArmoireProfileId: null,
-      addArmoireProfile: (p) => {
-        const { armoireProfiles } = get()
-        if (armoireProfiles.length >= MAX_PROFILES) return null
-        const profile: ArmoireProfile = {
-          ...p,
-          id: `ap-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      armoireMembers: [],
+      armoireEntries: [],
+      addArmoireMember: (m) => {
+        const { armoireMembers } = get()
+        if (armoireMembers.length >= MAX_MEMBERS) return null
+        const member: ArmoireMember = {
+          ...m,
+          color: m.color || MEMBER_COLORS[armoireMembers.length % MEMBER_COLORS.length].id,
+          id: uid('am'),
           createdAt: Date.now(),
         }
-        set((s) => ({
-          armoireProfiles: [...s.armoireProfiles, profile],
-          activeArmoireProfileId: profile.id,
-        }))
-        return profile
+        set((s) => ({ armoireMembers: [...s.armoireMembers, member] }))
+        return member
       },
-      updateArmoireProfile: (id, patch) =>
+      updateArmoireMember: (id, patch) =>
         set((s) => ({
-          armoireProfiles: s.armoireProfiles.map((p) =>
-            p.id === id ? { ...p, ...patch } : p
-          ),
+          armoireMembers: s.armoireMembers.map((m) => (m.id === id ? { ...m, ...patch } : m)),
         })),
-      deleteArmoireProfile: (id) =>
-        set((s) => {
-          const items = { ...s.armoireItems }
-          delete items[id]
-          const profiles = s.armoireProfiles.filter((p) => p.id !== id)
-          return {
-            armoireProfiles: profiles,
-            armoireItems: items,
-            activeArmoireProfileId:
-              s.activeArmoireProfileId === id
-                ? (profiles[0]?.id ?? null)
-                : s.activeArmoireProfileId,
-          }
-        }),
-      setActiveArmoireProfile: (id) => set({ activeArmoireProfileId: id }),
-      addArmoireItem: (profileId, item) => {
-        const list = get().armoireItems[profileId] ?? []
-        if (list.some((i) => i.drugId === item.drugId)) return 'duplicate'
-        if (list.length >= MAX_ITEMS_PER_PROFILE) return 'full'
-        const full: ArmoireItem = {
+      deleteArmoireMember: (id) =>
+        set((s) => ({
+          armoireMembers: s.armoireMembers.filter((m) => m.id !== id),
+          // Les entrées restent mais ne sont plus assignées à ce membre.
+          armoireEntries: s.armoireEntries.map((e) => ({
+            ...e,
+            memberIds: e.memberIds.filter((m) => m !== id),
+            updatedAt: Date.now(),
+          })),
+        })),
+      addArmoireEntry: (e) => {
+        const { armoireEntries } = get()
+        // Doublon strict : même médicament du répertoire ET même ensemble de membres.
+        if (
+          e.drugId != null &&
+          armoireEntries.some(
+            (x) => x.drugId === e.drugId && sameMembers(x.memberIds, e.memberIds ?? [])
+          )
+        ) {
+          return 'duplicate'
+        }
+        if (armoireEntries.length >= MAX_ENTRIES) return 'full'
+        const now = Date.now()
+        const defaults: Omit<ArmoireEntry, 'uid' | 'addedAt' | 'updatedAt'> = {
+          drugId: null,
+          brand: '',
+          dci: '',
+          dciKey: '',
+          status: 'MANUEL',
+          form: '',
+          dosage: '',
+          category: 'besoin',
           quantity: 1,
           expiry: '',
-          ...item,
-          uid: `ai-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
-          addedAt: Date.now(),
+          openedAt: '',
+          purchasedAt: '',
+          kits: [],
+          memberIds: [],
+          batch: '',
+          prescription: '',
+          daysLeft: null,
+          notes: '',
         }
-        set((s) => ({
-          armoireItems: {
-            ...s.armoireItems,
-            [profileId]: [...(s.armoireItems[profileId] ?? []), full],
-          },
-        }))
+        const entry: ArmoireEntry = {
+          ...defaults,
+          ...e,
+          uid: uid('ae'),
+          addedAt: now,
+          updatedAt: now,
+        }
+        set((s) => ({ armoireEntries: [...s.armoireEntries, entry] }))
         return 'added'
       },
-      updateArmoireItem: (profileId, uid, patch) =>
+      updateArmoireEntry: (id, patch) =>
         set((s) => ({
-          armoireItems: {
-            ...s.armoireItems,
-            [profileId]: (s.armoireItems[profileId] ?? []).map((i) =>
-              i.uid === uid ? { ...i, ...patch } : i
-            ),
-          },
+          armoireEntries: s.armoireEntries.map((e) =>
+            e.uid === id ? { ...e, ...patch, updatedAt: Date.now() } : e
+          ),
         })),
-      removeArmoireItem: (profileId, uid) =>
-        set((s) => ({
-          armoireItems: {
-            ...s.armoireItems,
-            [profileId]: (s.armoireItems[profileId] ?? []).filter(
-              (i) => i.uid !== uid
-            ),
-          },
-        })),
-      clearArmoireProfile: (profileId) =>
-        set((s) => ({
-          armoireItems: { ...s.armoireItems, [profileId]: [] },
-        })),
+      removeArmoireEntry: (id) =>
+        set((s) => ({ armoireEntries: s.armoireEntries.filter((e) => e.uid !== id) })),
+      wipeArmoireData: () =>
+        set({ armoireMembers: [], armoireEntries: [], armoireJournal: [] }),
 
       armoireJournal: [],
       addArmoireJournalEntry: (entry) =>
         set((s) => ({
           armoireJournal: [
-            {
-              ...entry,
-              id: `aj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
-              at: Date.now(),
-            },
+            { ...entry, id: uid('aj'), at: Date.now() },
             ...s.armoireJournal,
-          ].slice(0, MAX_JOURNAL_ENTRIES),
+          ].slice(0, MAX_JOURNAL),
         })),
       clearArmoireJournal: () => set({ armoireJournal: [] }),
 
@@ -378,15 +331,123 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      // Persiste mode d'usage + favoris + historique récent + armoire + journal
-      // + panier Chifa — l'état de navigation reste éphémère
+      version: 1,
+      /**
+       * Migration v0 → v1 : ancien modèle (profils × items imbriqués) vers
+       * le modèle du plan (membres + entrées assignables/partagées).
+       * Les données existantes sont conservées au maximum.
+       */
+      migrate: (persisted, _version) => {
+        const state = persisted as Record<string, unknown> & {
+          armoireProfiles?: {
+            id: string
+            name: string
+            relation: 'adulte' | 'enfant' | 'bebe'
+            ageYears: number
+            weightKg: number | null
+            pregnant: boolean
+            breastfeeding: boolean
+            createdAt: number
+          }[]
+          armoireItems?: Record<
+            string,
+            {
+              uid: string
+              drugId: number
+              brand: string
+              dci: string
+              dciKey: string
+              status: string
+              form: string
+              dosage: string
+              quantity: number
+              expiry: string
+              addedAt: number
+            }[]
+          >
+          armoireJournal?: {
+            id: string
+            at: number
+            profileName: string
+            itemsCount: number
+            interactions: number
+            maxSeverity: string | null
+            pregnancyAlerts: number
+            cabinetAlerts: number
+          }[]
+        }
+        const next: Record<string, unknown> = { ...state }
+        if (Array.isArray(state.armoireProfiles)) {
+          next.armoireMembers = state.armoireProfiles.map((p, i) => ({
+            id: p.id,
+            name: p.name,
+            relation: p.relation,
+            ageYears: p.ageYears,
+            weightKg: p.weightKg,
+            color: MEMBER_COLORS[i % MEMBER_COLORS.length].id,
+            pregnant: p.pregnant,
+            breastfeeding: p.breastfeeding,
+            renal: false,
+            allergies: [],
+            restricted: false,
+            createdAt: p.createdAt,
+          }))
+          const entries: ArmoireEntry[] = []
+          for (const [profileId, items] of Object.entries(state.armoireItems ?? {})) {
+            for (const it of items) {
+              entries.push({
+                uid: it.uid,
+                drugId: it.drugId,
+                brand: it.brand,
+                dci: it.dci,
+                dciKey: it.dciKey,
+                status: it.status,
+                form: it.form,
+                dosage: it.dosage,
+                category: 'besoin',
+                quantity: it.quantity,
+                expiry: it.expiry,
+                openedAt: '',
+                purchasedAt: '',
+                kits: [],
+                memberIds: [profileId],
+                batch: '',
+                prescription: '',
+                daysLeft: null,
+                notes: '',
+                addedAt: it.addedAt,
+                updatedAt: it.addedAt,
+              })
+            }
+          }
+          next.armoireEntries = entries
+          // Journal v0 → v1 (scope textuel).
+          if (Array.isArray(state.armoireJournal)) {
+            next.armoireJournal = state.armoireJournal.map((j) => ({
+              id: j.id,
+              at: j.at,
+              scope: j.profileName,
+              itemsCount: j.itemsCount,
+              interactions: j.interactions,
+              maxSeverity: j.maxSeverity,
+              pregnancyAlerts: j.pregnancyAlerts,
+              cabinetAlerts: j.cabinetAlerts,
+            }))
+          }
+        }
+        delete next.armoireProfiles
+        delete next.armoireItems
+        delete next.activeArmoireProfileId
+        return next as unknown as DzPharmStore
+      },
+      // Persiste mode d'usage + favoris + historique récent + armoire v2
+      // + journal + panier Chifa — l'état de navigation reste éphémère
       partialize: (state) => ({
         audience: state.audience,
         favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,
-        armoireProfiles: state.armoireProfiles,
-        armoireItems: state.armoireItems,
-        activeArmoireProfileId: state.activeArmoireProfileId,
+        armoireMembers: state.armoireMembers,
+        armoireEntries: state.armoireEntries,
         armoireJournal: state.armoireJournal,
         chifaCardType: state.chifaCardType,
         chifaLines: state.chifaLines,
