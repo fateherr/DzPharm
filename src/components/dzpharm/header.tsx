@@ -5,12 +5,14 @@ import { useTheme } from 'next-themes'
 import {
   BarChart3,
   BookOpen,
+  HeartHandshake,
   Home,
   Library,
   Moon,
   Pill,
   ShieldAlert,
   Sparkles,
+  Stethoscope,
   Store,
   Sun,
   Users,
@@ -51,6 +53,60 @@ function ThemeToggle() {
       <Sun className="hidden size-4.5 dark:block" aria-hidden />
       <Moon className="block size-4.5 dark:hidden" aria-hidden />
     </Button>
+  )
+}
+
+/**
+ * Bascule Mode professionnel / Mode famille (audit 1.3 / P14).
+ * Segmente compact à côté du thème — icônes seules sur mobile
+ * (labels visibles à partir de `sm`) pour éviter tout débordement.
+ */
+function AudienceToggle() {
+  const audience = useDzPharm((s) => s.audience)
+  const setAudience = useDzPharm((s) => s.setAudience)
+
+  const base =
+    'flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+
+  return (
+    <div
+      role="group"
+      aria-label="Mode d’usage — professionnel ou famille"
+      className="flex h-9 items-center rounded-lg border border-border bg-muted/60 p-0.5"
+    >
+      <button
+        type="button"
+        onClick={() => setAudience('pro')}
+        aria-pressed={audience === 'pro'}
+        aria-label="Mode professionnel"
+        title="Mode professionnel"
+        className={cn(
+          base,
+          audience === 'pro'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+        )}
+      >
+        <Stethoscope className="size-4 shrink-0" aria-hidden />
+        <span className="hidden sm:inline">Pro</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setAudience('famille')}
+        aria-pressed={audience === 'famille'}
+        aria-label="Mode famille"
+        title="Mode famille"
+        className={cn(
+          base,
+          audience === 'famille'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+        )}
+      >
+        <HeartHandshake className="size-4 shrink-0" aria-hidden />
+        <span className="hidden sm:inline">Famille</span>
+      </button>
+    </div>
   )
 }
 
@@ -123,6 +179,7 @@ export function Header() {
           ) : (
             <Skeleton className="hidden h-6 w-32 rounded-full sm:block" aria-hidden />
           )}
+          <AudienceToggle />
           <ThemeToggle />
         </div>
       </div>

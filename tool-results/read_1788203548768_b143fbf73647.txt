@@ -1,0 +1,1893 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useMemo, useState } from 'react'
+     4→import { useQuery } from '@tanstack/react-query'
+     5→import {
+     6→  Area,
+     7→  AreaChart,
+     8→  Bar,
+     9→  BarChart,
+    10→  CartesianGrid,
+    11→  Cell,
+    12→  Line,
+    13→  LineChart,
+    14→  Pie,
+    15→  PieChart,
+    16→  ResponsiveContainer,
+    17→  Tooltip,
+    18→  XAxis,
+    19→  YAxis,
+    20→} from 'recharts'
+    21→import {
+    22→  Activity,
+    23→  BadgeCheck,
+    24→  Ban,
+    25→  BarChart3,
+    26→  BookOpen,
+    27→  Building2,
+    28→  CalendarClock,
+    29→  CalendarX2,
+    30→  ChevronLeft,
+    31→  ChevronRight,
+    32→  CircleDollarSign,
+    33→  Coins,
+    34→  Factory,
+    35→  History,
+    36→  PackageCheck,
+    37→  PieChart as PieChartIcon,
+    38→  Pill,
+    39→  Search,
+    40→  Sparkles,
+    41→  Store,
+    42→  Tags,
+    43→  Trophy,
+    44→  TrendingDown,
+    45→  TrendingUp,
+    46→  type LucideIcon,
+    47→} from 'lucide-react'
+    48→import { cn } from '@/lib/utils'
+    49→import { Button } from '@/components/ui/button'
+    50→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    51→import { Input } from '@/components/ui/input'
+    52→import { Skeleton } from '@/components/ui/skeleton'
+    53→import { fetchStats } from './api'
+    54→import { formatNumber, formatPrice, formatDate } from './status-badge'
+    55→import { useDzPharm } from './store'
+    56→
+    57→/* ------------------------------------------------------------------ */
+    58→/* Tooltip personnalisé                                                */
+    59→/* ------------------------------------------------------------------ */
+    60→
+    61→interface TipPayloadItem {
+    62→  name?: string | number
+    63→  value?: string | number
+    64→  payload?: { name?: string; count?: number }
+    65→}
+    66→
+    67→function ChartTip({
+    68→  active,
+    69→  payload,
+    70→  label,
+    71→}: {
+    72→  active?: boolean
+    73→  payload?: TipPayloadItem[]
+    74→  label?: string | number
+    75→}) {
+    76→  if (!active || !payload || payload.length === 0) return null
+    77→  const item = payload[0]
+    78→  const name = item.payload?.name ?? (typeof item.name === 'string' ? item.name : undefined)
+    79→  const value = item.value
+    80→  return (
+    81→    <div className="rounded-lg border border-border bg-popover px-3 py-2 shadow-xl">
+    82→      <p className="max-w-64 truncate text-xs font-semibold text-foreground">
+    83→        {name ?? label}
+    84→      </p>
+    85→      <p className="text-sm font-bold text-primary tabular-nums">
+    86→        {formatNumber(Number(value))} référence{Number(value) !== 1 ? 's' : ''}
+    87→      </p>
+    88→    </div>
+    89→  )
+    90→}
+    91→
+    92→const axisTick = { fill: 'var(--muted-foreground)', fontSize: 11 }
+    93→
+    94→function truncate(value: unknown, max = 30): string {
+    95→  const s = String(value ?? '')
+    96→  return s.length > max ? s.slice(0, max - 1) + '…' : s
+    97→}
+    98→
+    99→/** Tooltip dédié aux prix (DA). */
+   100→function PriceTip({
+   101→  active,
+   102→  payload,
+   103→}: {
+   104→  active?: boolean
+   105→  payload?: TipPayloadItem[]
+   106→}) {
+   107→  if (!active || !payload || payload.length === 0) return null
+   108→  const item = payload[0]
+   109→  const p = item.payload as { name?: string; count?: number; avg?: number | null } | undefined
+   110→  return (
+   111→    <div className="rounded-lg border border-border bg-popover px-3 py-2 shadow-xl">
+   112→      <p className="max-w-64 truncate text-xs font-semibold text-foreground">
+   113→        {p?.name ?? String(item.name ?? '')}
+   114→      </p>
+   115→      {typeof p?.avg === 'number' && p.avg !== null ? (
+   116→        <p className="text-sm font-bold text-chifa tabular-nums">
+   117→          PPA moyen : {formatPrice(p.avg)}
+   118→          {p.count ? (
+   119→            <span className="ml-1 text-xs font-normal text-muted-foreground">
+   120→              ({formatNumber(p.count)} produits)
+   121→            </span>
+   122→          ) : null}
+   123→        </p>
+   124→      ) : (
+   125→        <p className="text-sm font-bold text-primary tabular-nums">
+   126→          {formatNumber(Number(item.value))} produit{Number(item.value) !== 1 ? 's' : ''}
+   127→        </p>
+   128→      )}
+   129→    </div>
+   130→  )
+   131→}
+   132→
+   133→/* ------------------------------------------------------------------ */
+   134→/* Légende personnalisée pour les donuts                               */
+   135→/* ------------------------------------------------------------------ */
+   136→
+   137→interface LegendItem {
+   138→  name: string
+   139→  value: number
+   140→  colorClass: string
+   141→}
+   142→
+   143→function DonutLegend({ items }: { items: LegendItem[] }) {
+   144→  const total = items.reduce((sum, i) => sum + i.value, 0) || 1
+   145→  return (
+   146→    <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+   147→      {items.map((item) => (
+   148→        <li key={item.name} className="flex items-center gap-2 text-sm">
+   149→          <span
+   150→            className={`size-2.5 shrink-0 rounded-full ${item.colorClass}`}
+   151→            aria-hidden
+   152→          />
+   153→          <span className="text-muted-foreground">{item.name}</span>
+   154→          <span className="font-semibold text-foreground tabular-nums">
+   155→            {formatNumber(item.value)}
+   156→          </span>
+   157→          <span className="text-xs text-muted-foreground tabular-nums">
+   158→            ({Math.round((item.value / total) * 100)}%)
+   159→          </span>
+   160→        </li>
+   161→      ))}
+   162→    </ul>
+   163→  )
+   164→}
+   165→
+   166→/* ------------------------------------------------------------------ */
+   167→/* Chronologie & insights — types locaux + fetchers                    */
+   168→/* ------------------------------------------------------------------ */
+   169→
+   170→interface TimelineYear {
+   171→  year: number
+   172→  actifs: number
+   173→  nonRenouveles: number
+   174→  retires: number
+   175→  total: number
+   176→}
+   177→
+   178→interface InsightItem {
+   179→  icon: string
+   180→  value: string
+   181→  label: string
+   182→  text: string
+   183→  tone: 'positive' | 'neutral' | 'warning'
+   184→}
+   185→
+   186→interface TimelineResponse {
+   187→  years: TimelineYear[]
+   188→  firstYear: number
+   189→  lastYear: number
+   190→  dated: number
+   191→  totalDrugs: number
+   192→  insights: InsightItem[]
+   193→}
+   194→
+   195→async function fetchTimeline(signal?: AbortSignal): Promise<TimelineResponse> {
+   196→  const res = await fetch('/api/timeline', { signal })
+   197→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+   198→  return (await res.json()) as TimelineResponse
+   199→}
+   200→
+   201→/* ------------------------------------------------------------------ */
+   202→/* Annuaire des laboratoires — types locaux + fetchers                 */
+   203→/* ------------------------------------------------------------------ */
+   204→
+   205→interface LabEntry {
+   206→  lab: string
+   207→  totalProducts: number
+   208→  actifs: number
+   209→  retraites: number
+   210→  nonRenouveles: number
+   211→  localShare: number
+   212→  countries: string[]
+   213→  topDomain: string | null
+   214→}
+   215→
+   216→interface LabsResponse {
+   217→  labs: LabEntry[]
+   218→  total: number
+   219→  page: number
+   220→  totalPages: number
+   221→  topLabsQuick: Array<{ lab: string; totalProducts: number }>
+   222→  topFiltered: { lab: string; totalProducts: number } | null
+   223→}
+   224→
+   225→async function fetchLabs(
+   226→  params: { q?: string; page?: number; pageSize?: number },
+   227→  signal?: AbortSignal
+   228→): Promise<LabsResponse> {
+   229→  const sp = new URLSearchParams()
+   230→  if (params.q?.trim()) sp.set('q', params.q.trim())
+   231→  if (params.page) sp.set('page', String(params.page))
+   232→  if (params.pageSize) sp.set('pageSize', String(params.pageSize))
+   233→  const qs = sp.toString()
+   234→  const res = await fetch(`/api/labs${qs ? `?${qs}` : ''}`, { signal })
+   235→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+   236→  return (await res.json()) as LabsResponse
+   237→}
+   238→
+   239→/* ------------------------------------------------------------------ */
+   240→/* Vue Statistiques                                                    */
+   241→/* ------------------------------------------------------------------ */
+   242→
+   243→export function StatsView() {
+   244→  const { data: stats, isLoading } = useQuery({
+   245→    queryKey: ['stats'],
+   246→    queryFn: ({ signal }) => fetchStats(signal),
+   247→    staleTime: 30 * 60 * 1000,
+   248→  })
+   249→
+   250→  if (isLoading || !stats) {
+   251→    return (
+   252→      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
+   253→        <Skeleton className="h-9 w-56" />
+   254→        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+   255→          {Array.from({ length: 4 }).map((_, i) => (
+   256→            <Skeleton key={i} className="h-28 rounded-xl" />
+   257→          ))}
+   258→        </div>
+   259→        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   260→          {Array.from({ length: 4 }).map((_, i) => (
+   261→            <Skeleton key={i} className="h-96 rounded-xl" />
+   262→          ))}
+   263→        </div>
+   264→      </div>
+   265→    )
+   266→  }
+   267→
+   268→  const labsData = stats.topLabs.slice(0, 10).map((l) => ({ name: l.key, count: l.count }))
+   269→  const domainsData = stats.domains.slice(0, 12).map((d) => ({ name: d.key, count: d.count }))
+   270→  const formsData = stats.topForms.slice(0, 8).map((f) => ({ name: f.key, count: f.count }))
+   271→  const priceRangesData = (stats.prices?.ranges ?? []).map((r) => ({ name: r.label, count: r.count }))
+   272→  const priceByClassData = (stats.prices?.byClass ?? []).map((c) => ({
+   273→    name: c.key,
+   274→    count: c.count,
+   275→    avg: c.avg ?? 0,
+   276→  }))
+   277→  const originData = [
+   278→    { name: 'Production locale', value: stats.local },
+   279→    { name: 'Importations', value: stats.imported },
+   280→  ]
+   281→  const statusData = [
+   282→    { name: 'Actifs', value: stats.actifs },
+   283→    { name: 'Non renouvelés', value: stats.nonRenew },
+   284→    { name: 'Retirés', value: stats.retires },
+   285→  ]
+   286→
+   287→  const localPct = stats.actifs > 0 ? Math.round((stats.local / stats.actifs) * 100) : 0
+   288→
+   289→  const summaryCards = [
+   290→    {
+   291→      icon: Pill,
+   292→      label: 'Références totales',
+   293→      value: formatNumber(stats.total),
+   294→      hint: 'Toutes nomenclatures confondues',
+   295→      text: 'text-primary',
+   296→      bg: 'bg-primary/10',
+   297→    },
+   298→    {
+   299→      icon: PackageCheck,
+   300→      label: 'Médicaments actifs',
+   301→      value: formatNumber(stats.actifs),
+   302→      hint: `${Math.round((stats.actifs / stats.total) * 100)}% du référentiel`,
+   303→      text: 'text-state-safe',
+   304→      bg: 'bg-state-safe/10',
+   305→    },
+   306→    {
+   307→      icon: Factory,
+   308→      label: 'Part de production locale',
+   309→      value: `${localPct}%`,
+   310→      hint: `${formatNumber(stats.local)} produits fabriqués en Algérie`,
+   311→      text: 'text-chifa',
+   312→      bg: 'bg-chifa/10',
+   313→    },
+   314→    {
+   315→      icon: BookOpen,
+   316→      label: 'Monographies RCP',
+   317→      value: stats.monographs ? formatNumber(stats.monographs) : '—',
+   318→      hint: 'Fiches DCI issues des 24 livres techniques',
+   319→      text: 'text-primary',
+   320→      bg: 'bg-primary/10',
+   321→    },
+   322→    {
+   323→      icon: Ban,
+   324→      label: 'Retirés du marché',
+   325→      value: formatNumber(stats.retires),
+   326→      hint: `${formatNumber(stats.nonRenew)} enregistrements non renouvelés`,
+   327→      text: 'text-state-danger',
+   328→      bg: 'bg-state-danger/10',
+   329→    },
+   330→  ]
+   331→
+   332→  return (
+   333→    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+   334→      <div className="mb-6">
+   335→        <h1 className="text-2xl font-bold tracking-tight text-foreground">Statistiques</h1>
+   336→        <p className="mt-1 text-sm text-muted-foreground">
+   337→          Panorama du marché pharmaceutique algérien — nomenclature Juin 2026.
+   338→        </p>
+   339→      </div>
+   340→
+   341→      {/* Cartes résumées */}
+   342→      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+   343→        {summaryCards.map((card) => (
+   344→          <Card key={card.label} className="transition-colors hover:border-primary/40">
+   345→            <CardContent className="flex items-center gap-3.5 p-4">
+   346→              <span
+   347→                className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${card.bg}`}
+   348→                aria-hidden
+   349→              >
+   350→                <card.icon className={`size-5 ${card.text}`} />
+   351→              </span>
+   352→              <div className="min-w-0">
+   353→                <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   354→                  {card.label}
+   355→                </p>
+   356→                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+   357→                  {card.value}
+   358→                </p>
+   359→                <p className="text-[11px] leading-snug text-muted-foreground">{card.hint}</p>
+   360→              </div>
+   361→            </CardContent>
+   362→          </Card>
+   363→        ))}
+   364→      </div>
+   365→
+   366→      {/* ------------------------ Insights automatiques ------------------------ */}
+   367→      <InsightsSection />
+   368→
+   369→      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   370→        {/* 1 — Top laboratoires */}
+   371→        <Card>
+   372→          <CardHeader>
+   373→            <CardTitle className="flex items-center gap-2 text-base">
+   374→              <Building2 className="size-4 text-primary" aria-hidden />
+   375→              Top 10 laboratoires
+   376→            </CardTitle>
+   377→            <CardDescription>Nombre de références par laboratoire (tous statuts)</CardDescription>
+   378→          </CardHeader>
+   379→          <CardContent>
+   380→            <ResponsiveContainer width="100%" height={360}>
+   381→              <BarChart data={labsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   382→                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   383→                <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   384→                <YAxis
+   385→                  type="category"
+   386→                  dataKey="name"
+   387→                  width={185}
+   388→                  tick={axisTick}
+   389→                  axisLine={false}
+   390→                  tickLine={false}
+   391→                  tickFormatter={(v: string) => truncate(v, 28)}
+   392→                />
+   393→                <Tooltip
+   394→                  cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   395→                  content={({ active, payload }) => (
+   396→                    <ChartTip
+   397→                      active={active}
+   398→                      payload={payload as TipPayloadItem[] | undefined}
+   399→                    />
+   400→                  )}
+   401→                />
+   402→                <Bar dataKey="count" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={16} />
+   403→              </BarChart>
+   404→            </ResponsiveContainer>
+   405→          </CardContent>
+   406→        </Card>
+   407→
+   408→        {/* 2 — Locale vs importations */}
+   409→        <Card>
+   410→          <CardHeader>
+   411→            <CardTitle className="flex items-center gap-2 text-base">
+   412→              <CircleDollarSign className="size-4 text-state-safe" aria-hidden />
+   413→              Production locale vs importations
+   414→            </CardTitle>
+   415→            <CardDescription>Répartition des médicaments actifs</CardDescription>
+   416→          </CardHeader>
+   417→          <CardContent>
+   418→            <ResponsiveContainer width="100%" height={300}>
+   419→              <PieChart>
+   420→                <Pie
+   421→                  data={originData}
+   422→                  dataKey="value"
+   423→                  nameKey="name"
+   424→                  innerRadius="55%"
+   425→                  outerRadius="80%"
+   426→                  paddingAngle={3}
+   427→                  strokeWidth={0}
+   428→                >
+   429→                  <Cell fill="var(--chart-2)" />
+   430→                  <Cell fill="var(--chart-3)" />
+   431→                </Pie>
+   432→                <Tooltip
+   433→                  content={({ active, payload }) => (
+   434→                    <ChartTip
+   435→                      active={active}
+   436→                      payload={payload as TipPayloadItem[] | undefined}
+   437→                    />
+   438→                  )}
+   439→                />
+   440→              </PieChart>
+   441→            </ResponsiveContainer>
+   442→            <div className="mt-1">
+   443→              <DonutLegend
+   444→                items={[
+   445→                  { name: 'Production locale', value: stats.local, colorClass: 'bg-state-safe' },
+   446→                  { name: 'Importations', value: stats.imported, colorClass: 'bg-chifa' },
+   447→                ]}
+   448→              />
+   449→            </div>
+   450→          </CardContent>
+   451→        </Card>
+   452→
+   453→        {/* 3 — Domaines thérapeutiques */}
+   454→        <Card>
+   455→          <CardHeader>
+   456→            <CardTitle className="flex items-center gap-2 text-base">
+   457→              <Activity className="size-4 text-primary" aria-hidden />
+   458→              Médicaments par domaine thérapeutique
+   459→            </CardTitle>
+   460→            <CardDescription>Les 12 spécialités les mieux représentées</CardDescription>
+   461→          </CardHeader>
+   462→          <CardContent>
+   463→            <ResponsiveContainer width="100%" height={420}>
+   464→              <BarChart data={domainsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   465→                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   466→                <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   467→                <YAxis
+   468→                  type="category"
+   469→                  dataKey="name"
+   470→                  width={200}
+   471→                  tick={axisTick}
+   472→                  axisLine={false}
+   473→                  tickLine={false}
+   474→                  tickFormatter={(v: string) => truncate(v, 30)}
+   475→                />
+   476→                <Tooltip
+   477→                  cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   478→                  content={({ active, payload }) => (
+   479→                    <ChartTip
+   480→                      active={active}
+   481→                      payload={payload as TipPayloadItem[] | undefined}
+   482→                    />
+   483→                  )}
+   484→                />
+   485→                <Bar dataKey="count" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={14} />
+   486→              </BarChart>
+   487→            </ResponsiveContainer>
+   488→          </CardContent>
+   489→        </Card>
+   490→
+   491→        {/* 4 — Statut global */}
+   492→        <Card>
+   493→          <CardHeader>
+   494→            <CardTitle className="flex items-center gap-2 text-base">
+   495→              <PieChartIcon className="size-4 text-state-warning" aria-hidden />
+   496→              Statut global des enregistrements
+   497→            </CardTitle>
+   498→            <CardDescription>Actifs, non renouvelés et retirés du marché</CardDescription>
+   499→          </CardHeader>
+   500→          <CardContent>
+   501→            <ResponsiveContainer width="100%" height={300}>
+   502→              <PieChart>
+   503→                <Pie
+   504→                  data={statusData}
+   505→                  dataKey="value"
+   506→                  nameKey="name"
+   507→                  innerRadius="55%"
+   508→                  outerRadius="80%"
+   509→                  paddingAngle={3}
+   510→                  strokeWidth={0}
+   511→                >
+   512→                  <Cell fill="var(--state-safe)" />
+   513→                  <Cell fill="var(--state-warning)" />
+   514→                  <Cell fill="var(--state-danger)" />
+   515→                </Pie>
+   516→                <Tooltip
+   517→                  content={({ active, payload }) => (
+   518→                    <ChartTip
+   519→                      active={active}
+   520→                      payload={payload as TipPayloadItem[] | undefined}
+   521→                    />
+   522→                  )}
+   523→                />
+   524→              </PieChart>
+   525→            </ResponsiveContainer>
+   526→            <div className="mt-1">
+   527→              <DonutLegend
+   528→                items={[
+   529→                  { name: 'Actifs', value: stats.actifs, colorClass: 'bg-state-safe' },
+   530→                  { name: 'Non renouvelés', value: stats.nonRenew, colorClass: 'bg-state-warning' },
+   531→                  { name: 'Retirés', value: stats.retires, colorClass: 'bg-state-danger' },
+   532→                ]}
+   533→              />
+   534→            </div>
+   535→          </CardContent>
+   536→        </Card>
+   537→
+   538→        {/* 5 — Formes pharmaceutiques */}
+   539→        <Card className="lg:col-span-2">
+   540→          <CardHeader>
+   541→            <CardTitle className="flex items-center gap-2 text-base">
+   542→              <BarChart3 className="size-4 text-chifa" aria-hidden />
+   543→              Top formes pharmaceutiques
+   544→            </CardTitle>
+   545→            <CardDescription>Les 8 formes galéniques les plus fréquentes</CardDescription>
+   546→          </CardHeader>
+   547→          <CardContent>
+   548→            <ResponsiveContainer width="100%" height={320}>
+   549→              <BarChart data={formsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   550→                <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   551→                <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   552→                <YAxis
+   553→                  type="category"
+   554→                  dataKey="name"
+   555→                  width={190}
+   556→                  tick={axisTick}
+   557→                  axisLine={false}
+   558→                  tickLine={false}
+   559→                  tickFormatter={(v: string) => truncate(v, 28)}
+   560→                />
+   561→                <Tooltip
+   562→                  cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   563→                  content={({ active, payload }) => (
+   564→                    <ChartTip
+   565→                      active={active}
+   566→                      payload={payload as TipPayloadItem[] | undefined}
+   567→                    />
+   568→                  )}
+   569→                />
+   570→                <Bar dataKey="count" fill="var(--chart-4)" radius={[0, 4, 4, 0]} barSize={18} />
+   571→              </BarChart>
+   572→            </ResponsiveContainer>
+   573→          </CardContent>
+   574→        </Card>
+   575→      </div>
+   576→
+   577→      {/* ------------------------ Catalogue & prix officine ------------------------ */}
+   578→      {stats.prices ? (
+   579→        <section aria-label="Statistiques des prix" className="mt-10">
+   580→          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+   581→            <div>
+   582→              <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+   583→                <span
+   584→                  className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-chifa to-chifa/60 shadow-lg shadow-chifa/20"
+   585→                  aria-hidden
+   586→                >
+   587→                  <Store className="size-4.5 text-white" />
+   588→                </span>
+   589→                Catalogue &amp; prix officine
+   590→              </h2>
+   591→              <p className="mt-1 text-sm text-muted-foreground">
+   592→                Analyse des {formatNumber(stats.prices.productsTotal)} produits de la liste de prix
+   593→                (PPA — dernière mise à jour Août 2026).
+   594→              </p>
+   595→            </div>
+   596→          </div>
+   597→
+   598→          {/* Bandeau indicateurs */}
+   599→          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+   600→            {[
+   601→              {
+   602→                icon: Store,
+   603→                label: 'Produits référencés',
+   604→                value: formatNumber(stats.prices.productsTotal),
+   605→                hint: 'Médicaments + parapharmacie',
+   606→                text: 'text-chifa',
+   607→                bg: 'bg-chifa/10',
+   608→              },
+   609→              {
+   610→                icon: Pill,
+   611→                label: 'Liés au registre',
+   612→                value: formatNumber(stats.prices.linked),
+   613→                hint: 'Rattachés à une AMM',
+   614→                text: 'text-primary',
+   615→                bg: 'bg-primary/10',
+   616→              },
+   617→              {
+   618→                icon: PackageCheck,
+   619→                label: 'Parapharmacie',
+   620→                value: formatNumber(stats.prices.parapharma),
+   621→                hint: 'Hors nomenclature',
+   622→                text: 'text-state-warning',
+   623→                bg: 'bg-state-warning/10',
+   624→              },
+   625→              {
+   626→                icon: BadgeCheck,
+   627→                label: 'Remboursables CNAS',
+   628→                value: formatNumber(stats.prices.refundable),
+   629→                hint: `${Math.round((stats.prices.refundable / Math.max(stats.prices.productsTotal, 1)) * 100)}% du catalogue`,
+   630→                text: 'text-state-safe',
+   631→                bg: 'bg-state-safe/10',
+   632→              },
+   633→              {
+   634→                icon: Coins,
+   635→                label: 'PPA moyen',
+   636→                value: formatPrice(stats.prices.avgPpa),
+   637→                hint: `De ${formatPrice(stats.prices.minPpa)} à ${formatPrice(stats.prices.maxPpa)}`,
+   638→                text: 'text-chifa',
+   639→                bg: 'bg-chifa/10',
+   640→              },
+   641→            ].map((card) => (
+   642→              <Card key={card.label} className="transition-colors hover:border-chifa/40">
+   643→                <CardContent className="flex items-center gap-3.5 p-4">
+   644→                  <span
+   645→                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${card.bg}`}
+   646→                    aria-hidden
+   647→                  >
+   648→                    <card.icon className={`size-5 ${card.text}`} />
+   649→                  </span>
+   650→                  <div className="min-w-0">
+   651→                    <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   652→                      {card.label}
+   653→                    </p>
+   654→                    <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
+   655→                      {card.value}
+   656→                    </p>
+   657→                    <p className="truncate text-[11px] leading-snug text-muted-foreground">
+   658→                      {card.hint}
+   659→                    </p>
+   660→                  </div>
+   661→                </CardContent>
+   662→              </Card>
+   663→            ))}
+   664→          </div>
+   665→
+   666→          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   667→            {/* 6 — Répartition par tranche de prix */}
+   668→            <Card>
+   669→              <CardHeader>
+   670→                <CardTitle className="flex items-center gap-2 text-base">
+   671→                  <Coins className="size-4 text-chifa" aria-hidden />
+   672→                  Répartition des prix (PPA)
+   673→                </CardTitle>
+   674→                <CardDescription>Produits par tranche de prix public</CardDescription>
+   675→              </CardHeader>
+   676→              <CardContent>
+   677→                <ResponsiveContainer width="100%" height={320}>
+   678→                  <BarChart data={priceRangesData} margin={{ left: 8, right: 16, top: 12, bottom: 8 }}>
+   679→                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+   680→                    <XAxis
+   681→                      dataKey="name"
+   682→                      tick={axisTick}
+   683→                      axisLine={false}
+   684→                      tickLine={false}
+   685→                      interval={0}
+   686→                    />
+   687→                    <YAxis tick={axisTick} axisLine={false} tickLine={false} width={48} />
+   688→                    <Tooltip
+   689→                      cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   690→                      content={({ active, payload }) => (
+   691→                        <PriceTip
+   692→                          active={active}
+   693→                          payload={payload as TipPayloadItem[] | undefined}
+   694→                        />
+   695→                      )}
+   696→                    />
+   697→                    <Bar dataKey="count" fill="var(--chifa)" radius={[4, 4, 0, 0]} barSize={44} />
+   698→                  </BarChart>
+   699→                </ResponsiveContainer>
+   700→              </CardContent>
+   701→            </Card>
+   702→
+   703→            {/* 7 — Prix moyen par classe */}
+   704→            <Card>
+   705→              <CardHeader>
+   706→                <CardTitle className="flex items-center gap-2 text-base">
+   707→                  <Activity className="size-4 text-primary" aria-hidden />
+   708→                  Prix moyen par classe thérapeutique
+   709→                </CardTitle>
+   710→                <CardDescription>PPA moyen — 8 classes les plus fournies</CardDescription>
+   711→              </CardHeader>
+   712→              <CardContent>
+   713→                <ResponsiveContainer width="100%" height={360}>
+   714→                  <BarChart
+   715→                    data={priceByClassData}
+   716→                    layout="vertical"
+   717→                    margin={{ left: 8, right: 24, top: 4, bottom: 8 }}
+   718→                  >
+   719→                    <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   720→                    <XAxis
+   721→                      type="number"
+   722→                      tick={axisTick}
+   723→                      axisLine={false}
+   724→                      tickLine={false}
+   725→                      tickFormatter={(v: number) => `${formatNumber(v)} DA`}
+   726→                    />
+   727→                    <YAxis
+   728→                      type="category"
+   729→                      dataKey="name"
+   730→                      width={195}
+   731→                      tick={axisTick}
+   732→                      axisLine={false}
+   733→                      tickLine={false}
+   734→                      tickFormatter={(v: string) => truncate(v, 28)}
+   735→                    />
+   736→                    <Tooltip
+   737→                      cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   738→                      content={({ active, payload }) => (
+   739→                        <PriceTip
+   740→                          active={active}
+   741→                          payload={payload as TipPayloadItem[] | undefined}
+   742→                        />
+   743→                      )}
+   744→                    />
+   745→                    <Bar dataKey="avg" fill="var(--chart-5)" radius={[0, 4, 4, 0]} barSize={16} />
+   746→                  </BarChart>
+   747→                </ResponsiveContainer>
+   748→              </CardContent>
+   749→            </Card>
+   750→          </div>
+   751→        </section>
+   752→      ) : null}
+   753→
+   754→      {/* ------------------------ Retraits de marché ------------------------ */}
+   755→      <WithdrawalsSection
+   756→        actifs={stats.actifs}
+   757→        nonRenew={stats.nonRenew}
+   758→        retires={stats.retires}
+   759→        total={stats.total}
+   760→      />
+   761→
+   762→      {/* ------------------------ Chronologie des enregistrements ------------------------ */}
+   763→      <TimelineSection />
+   764→
+   765→      {/* ------------------------ Annuaire des laboratoires ------------------------ */}
+   766→      <LabsDirectorySection />
+   767→
+   768→      <p className="mt-8 text-center text-xs text-muted-foreground">
+   769→        Analyses générées à partir de la nomenclature du Juin 2026 — les décomptes
+   770→        couvrent l&apos;ensemble des 9&nbsp;555 enregistrements.
+   771→      </p>
+   772→    </div>
+   773→  )
+   774→}
+   775→
+   776→/* ------------------------------------------------------------------ */
+   777→/* Section Retraits de marché & états d'enregistrement                 */
+   778→/* ------------------------------------------------------------------ */
+   779→
+   780→interface WithdrawalRow {
+   781→  id: number
+   782→  brand: string
+   783→  dci: string | null
+   784→  lab: string | null
+   785→  withdrawDate: string | null
+   786→  withdrawReason: string | null
+   787→}
+   788→
+   789→interface WithdrawalsResponse {
+   790→  total: number
+   791→  withReason: number
+   792→  recent: WithdrawalRow[]
+   793→  byReason: Array<{ reason: string; count: number }>
+   794→  byYear: Array<{ year: string; count: number }>
+   795→}
+   796→
+   797→async function fetchWithdrawals(signal?: AbortSignal): Promise<WithdrawalsResponse> {
+   798→  const res = await fetch('/api/withdrawals', { signal })
+   799→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+   800→  return (await res.json()) as WithdrawalsResponse
+   801→}
+   802→
+   803→/** Libellés courts lisibles pour les motifs de retrait (nomenclature brute en majuscules). */
+   804→const REASON_LABELS: Record<string, string> = {
+   805→  "RETRAIT PAR LE MSPRH POUR INTERDICTION D'IMPORTATION": "Interdiction d'importation (MSPRH)",
+   806→  'RETRAIT PAR LE DETENTEUR POUR MOTIF COMMERCIAL': 'Motif commercial (détenteur)',
+   807→  'PRODUIT NON COMMERCIALISE ET DECISION NON RENOUVELEE': 'Non commercialisé / non renouvelé',
+   808→  'RETRAIT PAR LE MSPRH POUR INTERDICTION DU LABORATOIRE': 'Interdiction du laboratoire (MSPRH)',
+   809→  "RETRAIT PAR LE DETENTEUR DANS LE PAYS D'ORIGINE": 'Retrait dans le pays d\u2019origine',
+   810→  'RETRAIT APRES TRANSFERT DE DETENTEUR': 'Transfert de détenteur',
+   811→  'RETRAIT PAR LE DETENTEUR POUR ARRET DE LA COOPERATION': 'Arrêt de coopération',
+   812→  'ARRET DE COMMERCIALISATION': 'Arrêt de commercialisation',
+   813→  'retrait par le laboratoire pour raisons commerciales': 'Motif commercial (laboratoire)',
+   814→  'RETRAIT PAR LE DETENTEUR POUR MOTIF DE PHARMACO-VIGILANCE (NOTE N°110 DU 17/02/2010)':
+   815→    'Pharmacovigilance (MSPRH, note 110)',
+   816→}
+   817→
+   818→function reasonLabel(reason: string | null | undefined): string {
+   819→  if (!reason) return 'Motif non communiqué'
+   820→  const mapped = REASON_LABELS[reason]
+   821→  if (mapped) return mapped
+   822→  return truncate(reason.charAt(0) + reason.slice(1).toLowerCase(), 42)
+   823→}
+   824→
+   825→function reasonBadgeClass(reason: string | null | undefined): string {
+   826→  if (!reason) return 'border-border bg-muted/60 text-muted-foreground'
+   827→  const r = reason.toUpperCase()
+   828→  if (r.includes('MSPRH') || r.includes('PHARMACO')) {
+   829→    return 'border-state-danger/30 bg-state-danger/10 text-state-danger'
+   830→  }
+   831→  if (r.includes('DETENTEUR') || r.includes('LABORATOIRE') || r.includes('COMMERCIAL')) {
+   832→    return 'border-state-warning/30 bg-state-warning/10 text-state-warning'
+   833→  }
+   834→  return 'border-border bg-secondary text-secondary-foreground'
+   835→}
+   836→
+   837→function WithdrawalsSection({
+   838→  actifs,
+   839→  nonRenew,
+   840→  retires,
+   841→  total,
+   842→}: {
+   843→  actifs: number
+   844→  nonRenew: number
+   845→  retires: number
+   846→  total: number
+   847→}) {
+   848→  const openDrug = useDzPharm((s) => s.openDrug)
+   849→  const { data, isLoading } = useQuery({
+   850→    queryKey: ['withdrawals'],
+   851→    queryFn: ({ signal }) => fetchWithdrawals(signal),
+   852→    staleTime: 30 * 60 * 1000,
+   853→  })
+   854→
+   855→  const reasonsData = (data?.byReason ?? []).slice(0, 8).map((r) => ({
+   856→    name: reasonLabel(r.reason),
+   857→    count: r.count,
+   858→  }))
+   859→  const yearsData = (data?.byYear ?? []).map((y) => ({ name: y.year, count: y.count }))
+   860→  const reasonPct =
+   861→    data && data.total > 0 ? Math.round((data.withReason / data.total) * 1000) / 10 : 0
+   862→
+   863→  // Stacked taxonomy bar (div-based, always proportional)
+   864→  const safePct = total > 0 ? (actifs / total) * 100 : 0
+   865→  const warnPct = total > 0 ? (nonRenew / total) * 100 : 0
+   866→  const dangerPct = total > 0 ? (retires / total) * 100 : 0
+   867→
+   868→  return (
+   869→    <section aria-label="Retraits de marché et états d'enregistrement" className="mt-10">
+   870→      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+   871→        <div>
+   872→          <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+   873→            <span
+   874→              className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-state-danger to-state-danger/60 shadow-lg shadow-state-danger/20"
+   875→              aria-hidden
+   876→            >
+   877→              <Ban className="size-4.5 text-white" />
+   878→            </span>
+   879→            Retraits de marché &amp; états d&apos;enregistrement
+   880→          </h2>
+   881→          <p className="mt-1 text-sm text-muted-foreground">
+   882→            Réconciliation des trois états de la nomenclature et analyse des motifs de retrait.
+   883→          </p>
+   884→        </div>
+   885→      </div>
+   886→
+   887→      {/* Carte de réconciliation taxonomique */}
+   888→      <Card className="mb-6">
+   889→        <CardHeader>
+   890→          <CardTitle className="flex items-center gap-2 text-base">
+   891→            <PackageCheck className="size-4 text-state-safe" aria-hidden />
+   892→            Réconciliation des états d&apos;enregistrement
+   893→          </CardTitle>
+   894→          <CardDescription>
+   895→            {formatNumber(actifs)} actifs + {formatNumber(nonRenew)} non renouvelés +{' '}
+   896→            {formatNumber(retires)} retirés = {formatNumber(total)} — total nomenclature
+   897→          </CardDescription>
+   898→        </CardHeader>
+   899→        <CardContent>
+   900→          <div
+   901→            className="flex h-5 w-full overflow-hidden rounded-full border border-border"
+   902→            role="img"
+   903→            aria-label={`Répartition des ${formatNumber(total)} enregistrements : ${formatNumber(actifs)} actifs, ${formatNumber(nonRenew)} non renouvelés, ${formatNumber(retires)} retirés`}
+   904→          >
+   905→            <div
+   906→              className="bg-state-safe transition-all"
+   907→              style={{ width: `${safePct}%` }}
+   908→              title={`Actifs : ${formatNumber(actifs)}`}
+   909→            />
+   910→            <div
+   911→              className="bg-state-warning transition-all"
+   912→              style={{ width: `${warnPct}%` }}
+   913→              title={`Non renouvelés : ${formatNumber(nonRenew)}`}
+   914→            />
+   915→            <div
+   916→              className="bg-state-danger transition-all"
+   917→              style={{ width: `${dangerPct}%` }}
+   918→              title={`Retirés : ${formatNumber(retires)}`}
+   919→            />
+   920→          </div>
+   921→          <ul className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+   922→            <li className="flex items-center gap-2">
+   923→              <span className="size-2.5 shrink-0 rounded-full bg-state-safe" aria-hidden />
+   924→              <span className="text-muted-foreground">Actifs</span>
+   925→              <span className="font-semibold text-foreground tabular-nums">
+   926→                {formatNumber(actifs)}
+   927→              </span>
+   928→              <span className="text-xs text-muted-foreground tabular-nums">
+   929→                ({Math.round(safePct)}%)
+   930→              </span>
+   931→            </li>
+   932→            <li className="flex items-center gap-2">
+   933→              <span className="size-2.5 shrink-0 rounded-full bg-state-warning" aria-hidden />
+   934→              <span className="text-muted-foreground">Non renouvelés</span>
+   935→              <span className="font-semibold text-foreground tabular-nums">
+   936→                {formatNumber(nonRenew)}
+   937→              </span>
+   938→              <span className="text-xs text-muted-foreground tabular-nums">
+   939→                ({Math.round(warnPct)}%)
+   940→              </span>
+   941→            </li>
+   942→            <li className="flex items-center gap-2">
+   943→              <span className="size-2.5 shrink-0 rounded-full bg-state-danger" aria-hidden />
+   944→              <span className="text-muted-foreground">Retirés</span>
+   945→              <span className="font-semibold text-foreground tabular-nums">
+   946→                {formatNumber(retires)}
+   947→              </span>
+   948→              <span className="text-xs text-muted-foreground tabular-nums">
+   949→                ({Math.round(dangerPct)}%)
+   950→              </span>
+   951→            </li>
+   952→          </ul>
+   953→          {data ? (
+   954→            <p className="mt-4 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+   955→              Motif de retrait précisé pour{' '}
+   956→              <span className="font-semibold text-foreground tabular-nums">
+   957→                {formatNumber(data.withReason)} / {formatNumber(data.total)}
+   958→              </span>{' '}
+   959→              retraits ({reasonPct.toLocaleString('fr-FR')} %) — les autres entrées portent la
+   960→              mention « motif non communiqué ».
+   961→            </p>
+   962→          ) : null}
+   963→        </CardContent>
+   964→      </Card>
+   965→
+   966→      {isLoading || !data ? (
+   967→        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   968→          {Array.from({ length: 3 }).map((_, i) => (
+   969→            <Skeleton key={i} className="h-96 rounded-xl" />
+   970→          ))}
+   971→        </div>
+   972→      ) : (
+   973→        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+   974→          {/* Motifs de retrait */}
+   975→          <Card>
+   976→            <CardHeader>
+   977→              <CardTitle className="flex items-center gap-2 text-base">
+   978→                <Tags className="size-4 text-state-danger" aria-hidden />
+   979→                Motifs de retrait
+   980→              </CardTitle>
+   981→              <CardDescription>Les 8 motifs les plus fréquents (libellés officiels synthétisés)</CardDescription>
+   982→            </CardHeader>
+   983→            <CardContent>
+   984→              <ResponsiveContainer width="100%" height={340}>
+   985→                <BarChart data={reasonsData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 8 }}>
+   986→                  <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="4 4" />
+   987→                  <XAxis type="number" tick={axisTick} axisLine={false} tickLine={false} />
+   988→                  <YAxis
+   989→                    type="category"
+   990→                    dataKey="name"
+   991→                    width={200}
+   992→                    tick={axisTick}
+   993→                    axisLine={false}
+   994→                    tickLine={false}
+   995→                    tickFormatter={(v: string) => truncate(v, 30)}
+   996→                  />
+   997→                  <Tooltip
+   998→                    cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+   999→                    content={({ active, payload }) => (
+  1000→                      <ChartTip active={active} payload={payload as TipPayloadItem[] | undefined} />
+  1001→                    )}
+  1002→                  />
+  1003→                  <Bar dataKey="count" fill="var(--state-danger)" radius={[0, 4, 4, 0]} barSize={16} />
+  1004→                </BarChart>
+  1005→              </ResponsiveContainer>
+  1006→            </CardContent>
+  1007→          </Card>
+  1008→
+  1009→          {/* Retraits par année */}
+  1010→          <Card>
+  1011→            <CardHeader>
+  1012→              <CardTitle className="flex items-center gap-2 text-base">
+  1013→                <CalendarX2 className="size-4 text-state-warning" aria-hidden />
+  1014→                Retraits par année
+  1015→              </CardTitle>
+  1016→              <CardDescription>
+  1017→                Années de retrait documentées (les retraits sans date précise n&apos;apparaissent pas)
+  1018→              </CardDescription>
+  1019→            </CardHeader>
+  1020→            <CardContent>
+  1021→              <ResponsiveContainer width="100%" height={340}>
+  1022→                <BarChart data={yearsData} margin={{ left: 0, right: 16, top: 12, bottom: 8 }}>
+  1023→                  <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+  1024→                  <XAxis dataKey="name" tick={axisTick} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+  1025→                  <YAxis tick={axisTick} axisLine={false} tickLine={false} width={40} />
+  1026→                  <Tooltip
+  1027→                    cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+  1028→                    content={({ active, payload }) => (
+  1029→                      <ChartTip active={active} payload={payload as TipPayloadItem[] | undefined} />
+  1030→                    )}
+  1031→                  />
+  1032→                  <Bar dataKey="count" fill="var(--chart-5)" radius={[4, 4, 0, 0]} />
+  1033→                </BarChart>
+  1034→              </ResponsiveContainer>
+  1035→            </CardContent>
+  1036→          </Card>
+  1037→
+  1038→          {/* Derniers retraits */}
+  1039→          <Card className="lg:col-span-2">
+  1040→            <CardHeader>
+  1041→              <CardTitle className="flex items-center gap-2 text-base">
+  1042→                <History className="size-4 text-primary" aria-hidden />
+  1043→                Derniers retraits de marché
+  1044→              </CardTitle>
+  1045→              <CardDescription>
+  1046→                Les 30 retraits les plus récents datés — cliquez sur une ligne pour ouvrir la fiche
+  1047→                du médicament
+  1048→              </CardDescription>
+  1049→            </CardHeader>
+  1050→            <CardContent>
+  1051→              {data.recent.length === 0 ? (
+  1052→                <p className="py-6 text-center text-sm text-muted-foreground">
+  1053→                  Aucun retrait daté dans la nomenclature.
+  1054→                </p>
+  1055→              ) : (
+  1056→                <div className="scroll-thin max-h-72 overflow-y-auto rounded-lg border border-border/70">
+  1057→                  <table className="w-full text-sm">
+  1058→                    <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+  1059→                      <tr className="border-b border-border text-left text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+  1060→                        <th scope="col" className="px-3 py-2">Médicament</th>
+  1061→                        <th scope="col" className="px-3 py-2">Laboratoire</th>
+  1062→                        <th scope="col" className="px-3 py-2">Date</th>
+  1063→                        <th scope="col" className="px-3 py-2">Motif</th>
+  1064→                      </tr>
+  1065→                    </thead>
+  1066→                    <tbody>
+  1067→                      {data.recent.map((row) => (
+  1068→                        <tr
+  1069→                          key={row.id}
+  1070→                          className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
+  1071→                          onClick={() => openDrug(row.id)}
+  1072→                        >
+  1073→                          <td className="px-3 py-2.5">
+  1074→                            <span className="block font-semibold text-foreground">{row.brand}</span>
+  1075→                            {row.dci ? (
+  1076→                              <span className="block truncate text-xs text-muted-foreground">
+  1077→                                {row.dci}
+  1078→                              </span>
+  1079→                            ) : null}
+  1080→                          </td>
+  1081→                          <td className="max-w-40 px-3 py-2.5">
+  1082→                            <span className="block truncate text-xs text-muted-foreground">
+  1083→                              {row.lab || '—'}
+  1084→                            </span>
+  1085→                          </td>
+  1086→                          <td className="px-3 py-2.5 text-xs whitespace-nowrap text-foreground/90 tabular-nums">
+  1087→                            {formatDate(row.withdrawDate)}
+  1088→                          </td>
+  1089→                          <td className="px-3 py-2.5">
+  1090→                            <span
+  1091→                              className={`inline-flex max-w-52 items-center rounded-full border px-2 py-0.5 text-[10px] leading-tight font-medium whitespace-nowrap ${reasonBadgeClass(row.withdrawReason)}`}
+  1092→                              title={row.withdrawReason ?? 'Motif non communiqué'}
+  1093→                            >
+  1094→                              {reasonLabel(row.withdrawReason)}
+  1095→                            </span>
+  1096→                          </td>
+  1097→                        </tr>
+  1098→                      ))}
+  1099→                    </tbody>
+  1100→                  </table>
+  1101→                </div>
+  1102→              )}
+  1103→            </CardContent>
+  1104→          </Card>
+  1105→        </div>
+  1106→      )}
+  1107→    </section>
+  1108→  )
+  1109→}
+  1110→
+  1111→/* ------------------------------------------------------------------ */
+  1112→/* Section Insights automatiques                                       */
+  1113→/* ------------------------------------------------------------------ */
+  1114→
+  1115→const INSIGHT_ICONS: Record<string, LucideIcon> = {
+  1116→  factory: Factory,
+  1117→  building: Building2,
+  1118→  activity: Activity,
+  1119→  check: BadgeCheck,
+  1120→  chart: BarChart3,
+  1121→  pill: Pill,
+  1122→  trophy: Trophy,
+  1123→  calendar: CalendarClock,
+  1124→  sparkles: Sparkles,
+  1125→  trending: TrendingUp,
+  1126→}
+  1127→
+  1128→const INSIGHT_TONES: Record<InsightItem['tone'], { icon: string; value: string }> = {
+  1129→  positive: { icon: 'text-state-safe bg-state-safe/10', value: 'text-state-safe' },
+  1130→  neutral: { icon: 'text-primary bg-primary/10', value: 'text-foreground' },
+  1131→  warning: { icon: 'text-state-warning bg-state-warning/10', value: 'text-state-warning' },
+  1132→}
+  1133→
+  1134→function InsightsSection() {
+  1135→  const { data, isLoading } = useQuery({
+  1136→    queryKey: ['timeline'],
+  1137→    queryFn: ({ signal }) => fetchTimeline(signal),
+  1138→    staleTime: 30 * 60 * 1000,
+  1139→  })
+  1140→
+  1141→  return (
+  1142→    <section aria-label="Insights automatiques" className="mt-10">
+  1143→      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+  1144→        <div>
+  1145→          <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+  1146→            <span
+  1147→              className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/20"
+  1148→              aria-hidden
+  1149→            >
+  1150→              <Sparkles className="size-4.5 text-primary-foreground" />
+  1151→            </span>
+  1152→            Insights automatiques
+  1153→          </h2>
+  1154→          <p className="mt-1 text-sm text-muted-foreground">
+  1155→            Chiffres clés dérivés en direct de la nomenclature — calculs automatiques, sans
+  1156→            estimation.
+  1157→          </p>
+  1158→        </div>
+  1159→      </div>
+  1160→
+  1161→      {isLoading || !data || data.insights.length === 0 ? (
+  1162→        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+  1163→          {Array.from({ length: 8 }).map((_, i) => (
+  1164→            <Skeleton key={i} className="h-32 rounded-xl" />
+  1165→          ))}
+  1166→        </div>
+  1167→      ) : (
+  1168→        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+  1169→          {data.insights.map((insight) => {
+  1170→            const Icon = INSIGHT_ICONS[insight.icon] ?? Sparkles
+  1171→            const tone = INSIGHT_TONES[insight.tone]
+  1172→            const body = (
+  1173→              <CardContent className="flex h-full items-start gap-3 p-4">
+  1174→                <span
+  1175→                  className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${tone.icon}`}
+  1176→                  aria-hidden
+  1177→                >
+  1178→                  <Icon className="size-4.5" />
+  1179→                </span>
+  1180→                <div className="min-w-0">
+  1181→                  <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+  1182→                    {insight.label}
+  1183→                  </p>
+  1184→                  <p className={`text-xl font-bold tracking-tight tabular-nums sm:text-2xl ${tone.value}`}>
+  1185→                    {insight.value}
+  1186→                  </p>
+  1187→                  <p className="mt-0.5 line-clamp-3 text-[11px] leading-snug text-muted-foreground">
+  1188→                    {insight.text}
+  1189→                  </p>
+  1190→                </div>
+  1191→              </CardContent>
+  1192→            )
+  1193→            return insight.tone === 'positive' ? (
+  1194→              <div
+  1195→                key={insight.label}
+  1196→                className="h-full rounded-xl bg-gradient-to-br from-state-safe/50 via-chifa/30 to-primary/20 p-px transition-transform hover:-translate-y-0.5"
+  1197→              >
+  1198→                <Card className="h-full rounded-[11px] border-0 shadow-none">{body}</Card>
+  1199→              </div>
+  1200→            ) : (
+  1201→              <Card key={insight.label} className="h-full transition-colors hover:border-primary/40">
+  1202→                {body}
+  1203→              </Card>
+  1204→            )
+  1205→          })}
+  1206→        </div>
+  1207→      )}
+  1208→    </section>
+  1209→  )
+  1210→}
+  1211→
+  1212→/* ------------------------------------------------------------------ */
+  1213→/* Section Chronologie des enregistrements (30 ans)                    */
+  1214→/* ------------------------------------------------------------------ */
+  1215→
+  1216→type TimelineMode = 'annee' | 'cumule' | 'statut'
+  1217→
+  1218→const TIMELINE_MODES: Array<{ id: TimelineMode; label: string }> = [
+  1219→  { id: 'annee', label: 'Par année' },
+  1220→  { id: 'cumule', label: 'Cumulé' },
+  1221→  { id: 'statut', label: 'Par statut' },
+  1222→]
+  1223→
+  1224→const TIMELINE_STATUS_COLORS = {
+  1225→  actifs: 'var(--state-safe)',
+  1226→  nonRenouveles: 'var(--state-warning)',
+  1227→  retires: 'var(--state-danger)',
+  1228→} as const
+  1229→
+  1230→interface TimelineTipItem {
+  1231→  dataKey?: string | number
+  1232→  name?: string
+  1233→  value?: string | number
+  1234→  color?: string
+  1235→}
+  1236→
+  1237→/** Tooltip chronologie : année + ventilation par statut + total. */
+  1238→function TimelineTip({
+  1239→  active,
+  1240→  payload,
+  1241→  label,
+  1242→}: {
+  1243→  active?: boolean
+  1244→  payload?: TimelineTipItem[]
+  1245→  label?: string | number
+  1246→}) {
+  1247→  if (!active || !payload || payload.length === 0) return null
+  1248→  const total = payload.reduce((sum, p) => sum + (Number(p.value) || 0), 0)
+  1249→  return (
+  1250→    <div className="rounded-lg border border-border bg-popover px-3 py-2 shadow-xl">
+  1251→      <p className="text-xs font-semibold text-foreground tabular-nums">{label}</p>
+  1252→      <ul className="mt-1 space-y-0.5">
+  1253→        {payload.map((p) => (
+  1254→          <li key={String(p.dataKey)} className="flex items-center gap-2 text-xs">
+  1255→            <span
+  1256→              className="size-2 shrink-0 rounded-full"
+  1257→              style={{ background: p.color }}
+  1258→              aria-hidden
+  1259→            />
+  1260→            <span className="text-muted-foreground">{p.name}</span>
+  1261→            <span className="ml-auto font-semibold text-foreground tabular-nums">
+  1262→              {formatNumber(Number(p.value))}
+  1263→            </span>
+  1264→          </li>
+  1265→        ))}
+  1266→      </ul>
+  1267→      <p className="mt-1 border-t border-border pt-1 text-xs text-muted-foreground">
+  1268→        Total :{' '}
+  1269→        <span className="font-semibold text-foreground tabular-nums">{formatNumber(total)}</span>
+  1270→      </p>
+  1271→    </div>
+  1272→  )
+  1273→}
+  1274→
+  1275→function TimelineSection() {
+  1276→  const [mode, setMode] = useState<TimelineMode>('annee')
+  1277→  const { data, isLoading } = useQuery({
+  1278→    queryKey: ['timeline'],
+  1279→    queryFn: ({ signal }) => fetchTimeline(signal),
+  1280→    staleTime: 30 * 60 * 1000,
+  1281→  })
+  1282→
+  1283→  const chartData = useMemo(() => data?.years.map((y) => ({ ...y, name: String(y.year) })) ?? [], [data])
+  1284→  const cumulativeData = useMemo(() => {
+  1285→    let actifs = 0
+  1286→    let nonRenouveles = 0
+  1287→    let retires = 0
+  1288→    return (
+  1289→      data?.years.map((y) => {
+  1290→        actifs += y.actifs
+  1291→        nonRenouveles += y.nonRenouveles
+  1292→        retires += y.retires
+  1293→        return { year: y.year, name: String(y.year), actifs, nonRenouveles, retires }
+  1294→      }) ?? []
+  1295→    )
+  1296→  }, [data])
+  1297→
+  1298→  // Honest caption figures derived from the payload itself
+  1299→  const caption = useMemo(() => {
+  1300→    if (!data || data.years.length === 0) return null
+  1301→    const sumTotal = data.years.reduce((s, y) => s + y.total, 0)
+  1302→    const peak = data.years.reduce((best, y) => (y.total > best.total ? y : best), data.years[0])
+  1303→    const before2010 = data.years
+  1304→      .filter((y) => y.year < 2010)
+  1305→      .reduce((s, y) => s + y.total, 0)
+  1306→    const before2010Pct = sumTotal > 0 ? Math.round((before2010 / sumTotal) * 100) : 0
+  1307→    const lastDecade = data.years.filter((y) => y.year > data.lastYear - 10)
+  1308→    const prevDecade = data.years.filter(
+  1309→      (y) => y.year > data.lastYear - 20 && y.year <= data.lastYear - 10
+  1310→    )
+  1311→    const lastSum = lastDecade.reduce((s, y) => s + y.total, 0)
+  1312→    const prevSum = prevDecade.reduce((s, y) => s + y.total, 0)
+  1313→    const growth = prevSum > 0 ? Math.round(((lastSum - prevSum) / prevSum) * 100) : null
+  1314→    return {
+  1315→      peak,
+  1316→      before2010Pct,
+  1317→      growth,
+  1318→      prevDecadeRange:
+  1319→        prevDecade.length > 0 ? `${prevDecade[0].year}–${prevDecade[prevDecade.length - 1].year}` : null,
+  1320→      lastDecadeRange:
+  1321→        lastDecade.length > 0
+  1322→          ? `${lastDecade[0].year}–${lastDecade[lastDecade.length - 1].year}`
+  1323→          : null,
+  1324→    }
+  1325→  }, [data])
+  1326→
+  1327→  return (
+  1328→    <section aria-label="Chronologie des enregistrements" className="mt-10">
+  1329→      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+  1330→        <div>
+  1331→          <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+  1332→            <span
+  1333→              className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-chifa to-chifa/60 shadow-lg shadow-chifa/20"
+  1334→              aria-hidden
+  1335→            >
+  1336→              <History className="size-4.5 text-white" />
+  1337→            </span>
+  1338→            Chronologie des enregistrements (30 ans)
+  1339→          </h2>
+  1340→          <p className="mt-1 text-sm text-muted-foreground">
+  1341→            {data
+  1342→              ? `Enregistrements par année initiale ${data.firstYear}–${data.lastYear} — date disponible pour ${formatNumber(data.dated)} des ${formatNumber(data.totalDrugs)} produits.`
+  1343→              : 'Enregistrements par année initiale (date d&apos;enregistrement)'}
+  1344→          </p>
+  1345→        </div>
+  1346→        <div
+  1347→          className="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-muted/40 p-1"
+  1348→          role="group"
+  1349→          aria-label="Mode d'affichage de la chronologie"
+  1350→        >
+  1351→          {TIMELINE_MODES.map((m) => (
+  1352→            <button
+  1353→              key={m.id}
+  1354→              type="button"
+  1355→              onClick={() => setMode(m.id)}
+  1356→              aria-pressed={mode === m.id}
+  1357→              className={cn(
+  1358→                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+  1359→                mode === m.id
+  1360→                  ? 'bg-primary text-primary-foreground shadow-sm'
+  1361→                  : 'text-muted-foreground hover:text-foreground'
+  1362→              )}
+  1363→            >
+  1364→              {m.label}
+  1365→            </button>
+  1366→          ))}
+  1367→        </div>
+  1368→      </div>
+  1369→
+  1370→      {isLoading || !data || chartData.length === 0 ? (
+  1371→        <Skeleton className="h-96 rounded-xl" />
+  1372→      ) : (
+  1373→        <Card>
+  1374→          <CardHeader>
+  1375→            <CardTitle className="flex items-center gap-2 text-base">
+  1376→              <CalendarX2 className="size-4 text-chifa" aria-hidden />
+  1377→              {mode === 'annee'
+  1378→                ? 'Enregistrements par année et par statut'
+  1379→                : mode === 'cumule'
+  1380→                  ? 'Croissance cumulée du registre'
+  1381→                  : 'Évolution annuelle par statut'}
+  1382→            </CardTitle>
+  1383→            <CardDescription>
+  1384→              {mode === 'annee'
+  1385→                ? 'Chaque barre empile les enregistrements attribués cette année-là, par statut actuel'
+  1386→                : mode === 'cumule'
+  1387→                  ? 'Total cumulé des enregistrements depuis la première année'
+  1388→                  : 'Une ligne par statut — lecture des dynamiques annuelles'}
+  1389→            </CardDescription>
+  1390→          </CardHeader>
+  1391→          <CardContent>
+  1392→            <div className="h-64 sm:h-80 lg:h-96">
+  1393→              <ResponsiveContainer width="100%" height="100%">
+  1394→                {mode === 'annee' ? (
+  1395→                  <BarChart data={chartData} margin={{ left: 0, right: 12, top: 12, bottom: 4 }}>
+  1396→                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+  1397→                    <XAxis
+  1398→                      dataKey="name"
+  1399→                      tick={axisTick}
+  1400→                      axisLine={false}
+  1401→                      tickLine={false}
+  1402→                      interval="preserveStartEnd"
+  1403→                      minTickGap={20}
+  1404→                    />
+  1405→                    <YAxis tick={axisTick} axisLine={false} tickLine={false} width={44} />
+  1406→                    <Tooltip
+  1407→                      cursor={{ fill: 'var(--muted)', fillOpacity: 0.5 }}
+  1408→                      content={({ active, payload, label }) => (
+  1409→                        <TimelineTip
+  1410→                          active={active}
+  1411→                          payload={payload as TimelineTipItem[] | undefined}
+  1412→                          label={label}
+  1413→                        />
+  1414→                      )}
+  1415→                    />
+  1416→                    <Bar
+  1417→                      dataKey="actifs"
+  1418→                      stackId="t"
+  1419→                      name="Actifs"
+  1420→                      fill={TIMELINE_STATUS_COLORS.actifs}
+  1421→                    />
+  1422→                    <Bar
+  1423→                      dataKey="nonRenouveles"
+  1424→                      stackId="t"
+  1425→                      name="Non renouvelés"
+  1426→                      fill={TIMELINE_STATUS_COLORS.nonRenouveles}
+  1427→                    />
+  1428→                    <Bar
+  1429→                      dataKey="retires"
+  1430→                      stackId="t"
+  1431→                      name="Retirés"
+  1432→                      fill={TIMELINE_STATUS_COLORS.retires}
+  1433→                      radius={[4, 4, 0, 0]}
+  1434→                    />
+  1435→                  </BarChart>
+  1436→                ) : mode === 'cumule' ? (
+  1437→                  <AreaChart data={cumulativeData} margin={{ left: 0, right: 12, top: 12, bottom: 4 }}>
+  1438→                    <defs>
+  1439→                      <linearGradient id="cumActifs" x1="0" y1="0" x2="0" y2="1">
+  1440→                        <stop offset="0%" stopColor={TIMELINE_STATUS_COLORS.actifs} stopOpacity={0.45} />
+  1441→                        <stop offset="100%" stopColor={TIMELINE_STATUS_COLORS.actifs} stopOpacity={0.05} />
+  1442→                      </linearGradient>
+  1443→                      <linearGradient id="cumNr" x1="0" y1="0" x2="0" y2="1">
+  1444→                        <stop offset="0%" stopColor={TIMELINE_STATUS_COLORS.nonRenouveles} stopOpacity={0.45} />
+  1445→                        <stop offset="100%" stopColor={TIMELINE_STATUS_COLORS.nonRenouveles} stopOpacity={0.05} />
+  1446→                      </linearGradient>
+  1447→                      <linearGradient id="cumRet" x1="0" y1="0" x2="0" y2="1">
+  1448→                        <stop offset="0%" stopColor={TIMELINE_STATUS_COLORS.retires} stopOpacity={0.45} />
+  1449→                        <stop offset="100%" stopColor={TIMELINE_STATUS_COLORS.retires} stopOpacity={0.05} />
+  1450→                      </linearGradient>
+  1451→                    </defs>
+  1452→                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+  1453→                    <XAxis
+  1454→                      dataKey="name"
+  1455→                      tick={axisTick}
+  1456→                      axisLine={false}
+  1457→                      tickLine={false}
+  1458→                      interval="preserveStartEnd"
+  1459→                      minTickGap={20}
+  1460→                    />
+  1461→                    <YAxis tick={axisTick} axisLine={false} tickLine={false} width={52} />
+  1462→                    <Tooltip
+  1463→                      content={({ active, payload, label }) => (
+  1464→                        <TimelineTip
+  1465→                          active={active}
+  1466→                          payload={payload as TimelineTipItem[] | undefined}
+  1467→                          label={label}
+  1468→                        />
+  1469→                      )}
+  1470→                    />
+  1471→                    <Area
+  1472→                      type="monotone"
+  1473→                      dataKey="actifs"
+  1474→                      stackId="1"
+  1475→                      name="Actifs"
+  1476→                      stroke={TIMELINE_STATUS_COLORS.actifs}
+  1477→                      strokeWidth={2}
+  1478→                      fill="url(#cumActifs)"
+  1479→                    />
+  1480→                    <Area
+  1481→                      type="monotone"
+  1482→                      dataKey="nonRenouveles"
+  1483→                      stackId="1"
+  1484→                      name="Non renouvelés"
+  1485→                      stroke={TIMELINE_STATUS_COLORS.nonRenouveles}
+  1486→                      strokeWidth={2}
+  1487→                      fill="url(#cumNr)"
+  1488→                    />
+  1489→                    <Area
+  1490→                      type="monotone"
+  1491→                      dataKey="retires"
+  1492→                      stackId="1"
+  1493→                      name="Retirés"
+  1494→                      stroke={TIMELINE_STATUS_COLORS.retires}
+  1495→                      strokeWidth={2}
+  1496→                      fill="url(#cumRet)"
+  1497→                    />
+  1498→                  </AreaChart>
+  1499→                ) : (
+  1500→                  <LineChart data={chartData} margin={{ left: 0, right: 12, top: 12, bottom: 4 }}>
+  1501→                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+  1502→                    <XAxis
+  1503→                      dataKey="name"
+  1504→                      tick={axisTick}
+  1505→                      axisLine={false}
+  1506→                      tickLine={false}
+  1507→                      interval="preserveStartEnd"
+  1508→                      minTickGap={20}
+  1509→                    />
+  1510→                    <YAxis tick={axisTick} axisLine={false} tickLine={false} width={44} />
+  1511→                    <Tooltip
+  1512→                      cursor={{ stroke: 'var(--muted-foreground)', strokeDasharray: '4 4' }}
+  1513→                      content={({ active, payload, label }) => (
+  1514→                        <TimelineTip
+  1515→                          active={active}
+  1516→                          payload={payload as TimelineTipItem[] | undefined}
+  1517→                          label={label}
+  1518→                        />
+  1519→                      )}
+  1520→                    />
+  1521→                    <Line
+  1522→                      type="monotone"
+  1523→                      dataKey="actifs"
+  1524→                      name="Actifs"
+  1525→                      stroke={TIMELINE_STATUS_COLORS.actifs}
+  1526→                      strokeWidth={2}
+  1527→                      dot={false}
+  1528→                    />
+  1529→                    <Line
+  1530→                      type="monotone"
+  1531→                      dataKey="nonRenouveles"
+  1532→                      name="Non renouvelés"
+  1533→                      stroke={TIMELINE_STATUS_COLORS.nonRenouveles}
+  1534→                      strokeWidth={2}
+  1535→                      dot={false}
+  1536→                    />
+  1537→                    <Line
+  1538→                      type="monotone"
+  1539→                      dataKey="retires"
+  1540→                      name="Retirés"
+  1541→                      stroke={TIMELINE_STATUS_COLORS.retires}
+  1542→                      strokeWidth={2}
+  1543→                      dot={false}
+  1544→                    />
+  1545→                  </LineChart>
+  1546→                )}
+  1547→              </ResponsiveContainer>
+  1548→            </div>
+  1549→
+  1550→            {/* Légende (wraps on mobile) */}
+  1551→            <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+  1552→              {(
+  1553→                [
+  1554→                  { name: 'Actifs', color: 'bg-state-safe' },
+  1555→                  { name: 'Non renouvelés', color: 'bg-state-warning' },
+  1556→                  { name: 'Retirés', color: 'bg-state-danger' },
+  1557→                ] as const
+  1558→              ).map((item) => (
+  1559→                <li key={item.name} className="flex items-center gap-2 text-sm">
+  1560→                  <span className={`size-2.5 shrink-0 rounded-full ${item.color}`} aria-hidden />
+  1561→                  <span className="text-muted-foreground">{item.name}</span>
+  1562→                </li>
+  1563→              ))}
+  1564→            </ul>
+  1565→
+  1566→            {/* Légende de lecture — chiffres honnêtes issus des données */}
+  1567→            {caption ? (
+  1568→              <p className="mt-4 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+  1569→                <span className="font-semibold text-foreground">Lecture :</span> pic d&apos;activité
+  1570→                en{' '}
+  1571→                <span className="font-semibold text-foreground tabular-nums">
+  1572→                  {caption.peak.year}
+  1573→                </span>{' '}
+  1574→                avec{' '}
+  1575→                <span className="font-semibold text-foreground tabular-nums">
+  1576→                  {formatNumber(caption.peak.total)}
+  1577→                </span>{' '}
+  1578→                enregistrements ·{' '}
+  1579→                <span className="font-semibold text-foreground tabular-nums">
+  1580→                  {caption.before2010Pct}&nbsp;%
+  1581→                </span>{' '}
+  1582→                des enregistrements datés sont antérieurs à 2010{caption.growth !== null && caption.prevDecadeRange && caption.lastDecadeRange ? (
+  1583→                  <>
+  1584→                    {' '}
+  1585→                    · dernière décennie ({caption.lastDecadeRange}) :{' '}
+  1586→                    <span
+  1587→                      className={cn(
+  1588→                        'font-semibold tabular-nums',
+  1589→                        caption.growth >= 0 ? 'text-state-safe' : 'text-state-danger'
+  1590→                      )}
+  1591→                    >
+  1592→                      {caption.growth >= 0 ? '+' : '−'}
+  1593→                      {Math.abs(caption.growth)}&nbsp;%
+  1594→                    </span>{' '}
+  1595→                    par rapport à {caption.prevDecadeRange}
+  1596→                  </>
+  1597→                ) : null}
+  1598→                .
+  1599→              </p>
+  1600→            ) : null}
+  1601→          </CardContent>
+  1602→        </Card>
+  1603→      )}
+  1604→    </section>
+  1605→  )
+  1606→}
+  1607→
+  1608→/* ------------------------------------------------------------------ */
+  1609→/* Section Annuaire des laboratoires                                   */
+  1610→/* ------------------------------------------------------------------ */
+  1611→
+  1612→function labPageList(page: number, totalPages: number): (number | '…')[] {
+  1613→  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+  1614→  const items: (number | '…')[] = [1]
+  1615→  const start = Math.max(2, page - 1)
+  1616→  const end = Math.min(totalPages - 1, page + 1)
+  1617→  if (start > 2) items.push('…')
+  1618→  for (let i = start; i <= end; i++) items.push(i)
+  1619→  if (end < totalPages - 1) items.push('…')
+  1620→  items.push(totalPages)
+  1621→  return items
+  1622→}
+  1623→
+  1624→/** "FRANCE" → "France", "PAYS BAS" → "Pays Bas", "ALGERIE" → "Algérie". */
+  1625→function countryLabel(country: string): string {
+  1626→  if (country === 'ALGERIE') return 'Algérie'
+  1627→  return country
+  1628→    .toLowerCase()
+  1629→    .replace(/(^|\s)\S/g, (m) => m.toUpperCase())
+  1630→}
+  1631→
+  1632→function LabsDirectorySection() {
+  1633→  const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+  1634→  const [searchInput, setSearchInput] = useState('')
+  1635→  const [debouncedSearch, setDebouncedSearch] = useState('')
+  1636→  const [page, setPage] = useState(1)
+  1637→
+  1638→  // Recherche débouncée — repart à la page 1 quand la requête change
+  1639→  useEffect(() => {
+  1640→    const t = setTimeout(() => {
+  1641→      setDebouncedSearch(searchInput.trim())
+  1642→      setPage(1)
+  1643→    }, 300)
+  1644→    return () => clearTimeout(t)
+  1645→  }, [searchInput])
+  1646→
+  1647→  const { data, isLoading, isError } = useQuery({
+  1648→    queryKey: ['labs', debouncedSearch, page],
+  1649→    queryFn: ({ signal }) =>
+  1650→      fetchLabs({ q: debouncedSearch, page, pageSize: 20 }, signal),
+  1651→    placeholderData: (prev) => prev,
+  1652→    staleTime: 10 * 60 * 1000,
+  1653→  })
+  1654→
+  1655→  const labs = data?.labs ?? []
+  1656→  const total = data?.total ?? 0
+  1657→  const totalPages = data?.totalPages ?? 1
+  1658→  const maxProducts = data?.topLabsQuick[0]?.totalProducts ?? 1
+  1659→  const pagination = labPageList(page, Math.max(totalPages, 1))
+  1660→
+  1661→  return (
+  1662→    <section aria-label="Annuaire des laboratoires" className="mt-10">
+  1663→      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+  1664→        <div>
+  1665→          <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground">
+  1666→            <span
+  1667→              className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-chifa to-chifa/60 shadow-lg shadow-chifa/20"
+  1668→              aria-hidden
+  1669→            >
+  1670→              <Building2 className="size-4.5 text-white" />
+  1671→            </span>
+  1672→            Annuaire des laboratoires
+  1673→          </h2>
+  1674→          <p className="mt-1 text-sm text-muted-foreground">
+  1675→            Détenteurs de l&apos;ensemble de la nomenclature — cliquez sur une ligne pour filtrer le
+  1676→            répertoire.
+  1677→          </p>
+  1678→        </div>
+  1679→      </div>
+  1680→
+  1681→      <Card>
+  1682→        <CardContent className="space-y-3 p-4">
+  1683→          {/* Recherche + stats row */}
+  1684→          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+  1685→            <div className="relative flex-1">
+  1686→              <Search
+  1687→                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+  1688→                aria-hidden
+  1689→              />
+  1690→              <Input
+  1691→                type="search"
+  1692→                value={searchInput}
+  1693→                onChange={(e) => setSearchInput(e.target.value)}
+  1694→                placeholder="Rechercher un laboratoire (ex. SAIDAL, BIOPHARM…) — insensible aux accents"
+  1695→                aria-label="Rechercher un laboratoire"
+  1696→                className="h-10 border-border bg-background pl-9"
+  1697→              />
+  1698→            </div>
+  1699→            <p
+  1700→              className="text-xs leading-snug text-muted-foreground sm:min-w-64 sm:text-right"
+  1701→              aria-live="polite"
+  1702→            >
+  1703→              {isLoading ? (
+  1704→                'Chargement de l&apos;annuaire…'
+  1705→              ) : isError ? (
+  1706→                'Erreur de chargement'
+  1707→              ) : (
+  1708→                <>
+  1709→                  <span className="font-semibold text-foreground tabular-nums">
+  1710→                    {formatNumber(total)}
+  1711→                  </span>{' '}
+  1712→                  laboratoire{total !== 1 ? 's' : ''}
+  1713→                  {data?.topFiltered ? (
+  1714→                    <>
+  1715→                      {' '}·{' '}
+  1716→                      <span className="font-semibold text-foreground">
+  1717→                        {data.topFiltered.lab}
+  1718→                      </span>{' '}
+  1719→                      en tête avec{' '}
+  1720→                      <span className="font-semibold text-foreground tabular-nums">
+  1721→                        {formatNumber(data.topFiltered.totalProducts)}
+  1722→                      </span>{' '}
+  1723→                      produits
+  1724→                    </>
+  1725→                  ) : null}
+  1726→                </>
+  1727→              )}
+  1728→            </p>
+  1729→          </div>
+  1730→
+  1731→          {/* Table */}
+  1732→          {isLoading && !data ? (
+  1733→            <Skeleton className="h-96 w-full rounded-lg" />
+  1734→          ) : isError ? (
+  1735→            <p className="py-10 text-center text-sm text-muted-foreground">
+  1736→              Impossible de charger l&apos;annuaire — réessayez dans un instant.
+  1737→            </p>
+  1738→          ) : labs.length === 0 ? (
+  1739→            <p className="py-10 text-center text-sm text-muted-foreground">
+  1740→              Aucun laboratoire ne correspond à «&nbsp;{debouncedSearch}&nbsp;».
+  1741→            </p>
+  1742→          ) : (
+  1743→            <div className="scroll-thin max-h-96 overflow-y-auto rounded-lg border border-border/70">
+  1744→              <table className="w-full text-sm">
+  1745→                <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+  1746→                  <tr className="border-b border-border text-left text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+  1747→                    <th scope="col" className="px-3 py-2">
+  1748→                      Laboratoire
+  1749→                    </th>
+  1750→                    <th scope="col" className="px-3 py-2">
+  1751→                      Produits
+  1752→                    </th>
+  1753→                    <th scope="col" className="px-3 py-2">
+  1754→                      Actifs / Retirés
+  1755→                    </th>
+  1756→                    <th scope="col" className="px-3 py-2">
+  1757→                      Origine
+  1758→                    </th>
+  1759→                    <th scope="col" className="hidden px-3 py-2 md:table-cell">
+  1760→                      Domaine principal
+  1761→                    </th>
+  1762→                  </tr>
+  1763→                </thead>
+  1764→                <tbody>
+  1765→                  {labs.map((row) => (
+  1766→                    <tr
+  1767→                      key={row.lab}
+  1768→                      className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
+  1769→                      onClick={() => gotoDirectory({ lab: row.lab })}
+  1770→                      title={`Voir les produits de ${row.lab} dans le répertoire — ${formatNumber(row.actifs)} actifs, ${formatNumber(row.nonRenouveles)} non renouvelés, ${formatNumber(row.retraites)} retirés`}
+  1771→                    >
+  1772→                      <td className="max-w-44 px-3 py-2.5">
+  1773→                        <span className="block truncate font-semibold text-foreground">
+  1774→                          {row.lab}
+  1775→                        </span>
+  1776→                      </td>
+  1777→                      <td className="px-3 py-2.5">
+  1778→                        <span className="flex items-center gap-2">
+  1779→                          <span className="w-10 shrink-0 text-right font-semibold text-foreground tabular-nums">
+  1780→                            {formatNumber(row.totalProducts)}
+  1781→                          </span>
+  1782→                          <span className="hidden h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-muted sm:block">
+  1783→                            <span
+  1784→                              className="block h-full rounded-full bg-gradient-to-r from-primary/70 to-primary"
+  1785→                              style={{
+  1786→                                width: `${Math.max(3, (row.totalProducts / Math.max(maxProducts, 1)) * 100)}%`,
+  1787→                              }}
+  1788→                            />
+  1789→                          </span>
+  1790→                        </span>
+  1791→                      </td>
+  1792→                      <td className="px-3 py-2.5 whitespace-nowrap">
+  1793→                        <span className="font-semibold text-state-safe tabular-nums">
+  1794→                          {formatNumber(row.actifs)}
+  1795→                        </span>
+  1796→                        <span className="text-muted-foreground"> / </span>
+  1797→                        <span className="font-semibold text-state-danger tabular-nums">
+  1798→                          {formatNumber(row.retraites)}
+  1799→                        </span>
+  1800→                      </td>
+  1801→                      <td className="max-w-40 px-3 py-2.5">
+  1802→                        <span className="flex flex-wrap gap-1">
+  1803→                          {row.countries.map((c) => (
+  1804→                            <span
+  1805→                              key={c}
+  1806→                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] leading-tight font-medium whitespace-nowrap ${
+  1807→                                c === 'ALGERIE'
+  1808→                                  ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
+  1809→                                  : 'border-border bg-muted/60 text-muted-foreground'
+  1810→                              }`}
+  1811→                              title={
+  1812→                                c === 'ALGERIE'
+  1813→                                  ? `${formatNumber(row.localShare)} produits fabriqués en Algérie`
+  1814→                                  : c
+  1815→                              }
+  1816→                            >
+  1817→                              {countryLabel(c)}
+  1818→                            </span>
+  1819→                          ))}
+  1820→                        </span>
+  1821→                      </td>
+  1822→                      <td className="hidden max-w-40 px-3 py-2.5 md:table-cell">
+  1823→                        <span className="block truncate text-xs text-muted-foreground">
+  1824→                          {row.topDomain ?? '—'}
+  1825→                        </span>
+  1826→                      </td>
+  1827→                    </tr>
+  1828→                  ))}
+  1829→                </tbody>
+  1830→              </table>
+  1831→            </div>
+  1832→          )}
+  1833→
+  1834→          {/* Pagination compacte */}
+  1835→          {totalPages > 1 ? (
+  1836→            <div className="flex flex-wrap items-center justify-between gap-3">
+  1837→              <p className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
+  1838→                Page {page} sur {formatNumber(totalPages)}
+  1839→                {debouncedSearch ? ` — recherche « ${debouncedSearch} »` : ''}
+  1840→              </p>
+  1841→              <nav aria-label="Pagination annuaire des laboratoires" className="flex items-center gap-1">
+  1842→                <Button
+  1843→                  variant="outline"
+  1844→                  size="icon"
+  1845→                  className="size-8"
+  1846→                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+  1847→                  disabled={page <= 1}
+  1848→                  aria-label="Page précédente"
+  1849→                >
+  1850→                  <ChevronLeft className="size-4" />
+  1851→                </Button>
+  1852→                {pagination.map((p, i) =>
+  1853→                  p === '…' ? (
+  1854→                    <span
+  1855→                      key={`ellipsis-${i}`}
+  1856→                      className="px-1 text-sm text-muted-foreground"
+  1857→                      aria-hidden
+  1858→                    >
+  1859→                      …
+  1860→                    </span>
+  1861→                  ) : (
+  1862→                    <Button
+  1863→                      key={p}
+  1864→                      variant={p === page ? 'default' : 'ghost'}
+  1865→                      size="icon"
+  1866→                      className={cn('size-8 text-sm tabular-nums', p === page && 'font-semibold')}
+  1867→                      onClick={() => setPage(p)}
+  1868→                      aria-label={`Page ${p}`}
+  1869→                      aria-current={p === page ? 'page' : undefined}
+  1870→                    >
+  1871→                      {p}
+  1872→                    </Button>
+  1873→                  )
+  1874→                )}
+  1875→                <Button
+  1876→                  variant="outline"
+  1877→                  size="icon"
+  1878→                  className="size-8"
+  1879→                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+  1880→                  disabled={page >= totalPages}
+  1881→                  aria-label="Page suivante"
+  1882→                >
+  1883→                  <ChevronRight className="size-4" />
+  1884→                </Button>
+  1885→              </nav>
+  1886→            </div>
+  1887→          ) : null}
+  1888→        </CardContent>
+  1889→      </Card>
+  1890→    </section>
+  1891→  )
+  1892→}
+  1893→

@@ -191,7 +191,7 @@ function anchorDoseLine(drug: PediatricDosing, weightKg: number, ageMonths: numb
 
 /**
  * POST /api/ai/chat — DzPharm Copilote Clinique
- * Body: { messages: [{ role: 'user'|'assistant', content: string }], mode?: 'pro' | 'patient' }
+ * Body: { messages: [{ role: 'user'|'assistant', content: string }], mode?: 'pro' | 'patient' | 'enfant' }
  * The assistant is grounded with live registry data (matching drugs from SQLite)
  * and a pediatric anchor computed over the WHOLE conversation (F1-bis) with
  * brand-status verification from the registry (F1-ter).
@@ -210,7 +210,12 @@ export async function POST(req: NextRequest) {
     const messages: { role: string; content: string }[] = Array.isArray(body?.messages)
       ? body.messages.filter((m: { role?: string; content?: string }) => m?.content)
       : [];
-    const mode: "pro" | "patient" = body?.mode === "patient" ? "patient" : "pro";
+    const mode: "pro" | "patient" | "enfant" =
+      body?.mode === "patient"
+        ? "patient"
+        : body?.mode === "enfant"
+          ? "enfant"
+          : "pro";
 
     if (messages.length === 0) {
       return NextResponse.json({ error: "Aucun message fourni" }, { status: 400 });
@@ -368,6 +373,21 @@ export async function POST(req: NextRequest) {
       console.error("[ai/chat] registry lookup failed", e);
     }
 
+    /* 24-c — MODE ENFANT : change uniquement le STYLE d'explication.
+       Les faits cliniques (doses, CI, mises en garde, ancre pédiatrique) et
+       toutes les RÈGLES ci-dessous restent strictement inchangées. */
+    const enfantPrompt =
+      mode === "enfant"
+        ? `\n\nMODE ENFANT : explique comme à un enfant de 6-8 ans — phrases courtes, mots simples, comparaisons du quotidien, maximum 4 phrases. TOUJOURS terminer par : 'Demande toujours à un adulte de vérifier tes médicaments.' Ne JAMAIS modifier les doses, CI ou données cliniques — même style plus simple, faits identiques. Les avertissements de sécurité restent obligatoires (simplifiés en langage enfant mais présents).`
+        : "";
+
+    // En mode enfant, la base reste le mode patient (public profane + rappel
+    // de consulter un professionnel) — le bloc ENFANT précise le style.
+    const baseModePrompt =
+      mode === "pro"
+        ? `MODE PRO: Réponds avec la densité technique attendue d'un professionnel (posologies, CI, interactions, surveillance biologique, recommandations ESC/OMS quand pertinent).`
+        : `MODE PATIENT: Réponds en langage simple et accessible, évite le jargon technique, utilise des phrases courtes et rassurantes. Rappelle toujours de consulter un médecin ou pharmacien.`;
+
     const systemPrompt = `Tu es le Copilote Clinique de DzPharm, plateforme de référence pharmaceutique algérienne.
 
 CONTEXTE: Tu assistes les professionnels de santé algériens (pharmaciens, médecins, étudiants) et les patients. Tu maîtrises:
@@ -377,7 +397,7 @@ CONTEXTE: Tu assistes les professionnels de santé algériens (pharmaciens, méd
 - Le système de remboursement Chifa / CNAS / CASNOS
 - Les 58 wilayas et les réalités cliniques algériennes
 
-${mode === "patient" ? `MODE PATIENT: Réponds en langage simple et accessible, évite le jargon technique, utilise des phrases courtes et rassurantes. Rappelle toujours de consulter un médecin ou pharmacien.` : `MODE PRO: Réponds avec la densité technique attendue d'un professionnel (posologies, CI, interactions, surveillance biologique, recommandations ESC/OMS quand pertinent).`}
+${baseModePrompt}${enfantPrompt}
 
 LANGUES: Réponds dans la langue de l'utilisateur (français, arabe standard, darija algérienne ou anglais). Si la question est en darija ("شكون الدوا تاع السكر؟"), réponds en arabe/darija clair.
 

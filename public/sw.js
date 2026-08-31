@@ -14,7 +14,7 @@
  *  - Nettoyage des anciens caches à l'activation + message SKIP_WAITING.
  */
 
-const VERSION = 'dzpharm-v6';
+const VERSION = 'dzpharm-v7';
 const SHELL_CACHE = `${VERSION}-shell`;
 const API_CACHE = `${VERSION}-api`;
 const MAX_API_ENTRIES = 220;

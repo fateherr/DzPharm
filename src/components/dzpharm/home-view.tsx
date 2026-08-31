@@ -11,6 +11,7 @@ import {
   Brain,
   Bug,
   Building2,
+  Calculator,
   Clock,
   CreditCard,
   Droplet,
@@ -24,6 +25,7 @@ import {
   Flame,
   GitCompareArrows,
   Heart,
+  HeartHandshake,
   HeartPulse,
   History,
   Layers,
@@ -35,12 +37,14 @@ import {
   Pill,
   ShieldAlert,
   ShieldPlus,
+  Siren,
   Soup,
   Sparkles,
   Star,
   Stethoscope,
   Store,
   TrendingUp,
+  TriangleAlert,
   Users,
   Waves,
   Wind,
@@ -186,6 +190,140 @@ const TOOL_CARDS: Array<{
 ]
 
 /* ------------------------------------------------------------------ */
+/* Accès rapide — cartes par mode d'usage (audit 1.3 / P10 / P14)       */
+/* ------------------------------------------------------------------ */
+
+interface QuickAccessCard {
+  icon: LucideIcon
+  title: string
+  desc: string
+  view: ViewId
+  /** Lien externe direct (ex : tel:14 pour le SAMU) — sinon navigation interne. */
+  href?: string
+  accent: 'primary' | 'chifa' | 'danger'
+}
+
+const PRO_QUICK_ACCESS: QuickAccessCard[] = [
+  {
+    icon: BookOpen,
+    title: 'Répertoire',
+    desc: 'Rechercher un médicament par marque, DCI, laboratoire ou n° AMM.',
+    view: 'repertoire',
+    accent: 'primary',
+  },
+  {
+    icon: ShieldAlert,
+    title: 'Contrôle d’interactions',
+    desc: 'Vérifier les associations médicamenteuses avant dispensation.',
+    view: 'interactions',
+    accent: 'danger',
+  },
+  {
+    icon: Library,
+    title: 'RCP & monographies',
+    desc: '911 monographies DCI issues des livres techniques de pharmacologie.',
+    view: 'bibliotheque',
+    accent: 'primary',
+  },
+  {
+    icon: Calculator,
+    title: 'Calculs cliniques',
+    desc: 'Posologies pédiatriques, fonction rénale, grossesse, Chifa, Ramadan.',
+    view: 'outils',
+    accent: 'chifa',
+  },
+  {
+    icon: Sparkles,
+    title: 'Copilote IA',
+    desc: 'Assistant clinique en français, arabe et darija.',
+    view: 'copilote',
+    accent: 'primary',
+  },
+]
+
+const FAMILLE_QUICK_ACCESS: QuickAccessCard[] = [
+  {
+    icon: Users,
+    title: 'Armoire familiale',
+    desc: 'Les médicaments de la maison : péremptions, alertes, contrôles.',
+    view: 'armoire',
+    accent: 'primary',
+  },
+  {
+    icon: TriangleAlert,
+    title: 'Pénuries & disponibilité',
+    desc: 'Signalements communautaires de rupture de stock (Outils → Pénuries).',
+    view: 'outils',
+    accent: 'chifa',
+  },
+  {
+    icon: Baby,
+    title: 'Posologies enfant',
+    desc: 'Dose en mg/kg convertie en mL selon le poids de l’enfant.',
+    view: 'outils',
+    accent: 'primary',
+  },
+  {
+    icon: Siren,
+    title: 'Urgences — SAMU 14',
+    desc: 'Appeler immédiatement le SAMU (14) en cas d’urgence médicale.',
+    view: 'accueil',
+    href: 'tel:14',
+    accent: 'danger',
+  },
+  {
+    icon: Sparkles,
+    title: 'Copilote IA',
+    desc: 'Poser vos questions santé en français, arabe ou darija (mode patient).',
+    view: 'copilote',
+    accent: 'primary',
+  },
+]
+
+function QuickAccessGrid({ cards }: { cards: QuickAccessCard[] }) {
+  const setView = useDzPharm((s) => s.setView)
+  return (
+    <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 lg:grid-cols-5">
+      {cards.map((card) => {
+        const cardClass =
+          'group relative w-56 shrink-0 overflow-hidden rounded-xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:w-auto'
+        const accentClass =
+          card.accent === 'chifa'
+            ? 'bg-chifa/10 text-chifa'
+            : card.accent === 'danger'
+              ? 'bg-state-danger/10 text-state-danger'
+              : 'bg-primary/10 text-primary'
+        const content = (
+          <>
+            <span
+              className={cn('flex size-9 items-center justify-center rounded-lg', accentClass)}
+              aria-hidden
+            >
+              <card.icon className="size-4.5" />
+            </span>
+            <span className="mt-2.5 block text-sm leading-snug font-semibold text-foreground">
+              {card.title}
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+              {card.desc}
+            </span>
+          </>
+        )
+        return card.href ? (
+          <a key={card.title} href={card.href} className={cardClass}>
+            {content}
+          </a>
+        ) : (
+          <button key={card.title} type="button" onClick={() => setView(card.view)} className={cardClass}>
+            {content}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /* Compteur animé                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -325,6 +463,8 @@ export function HomeView() {
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
   const openDrug = useDzPharm((s) => s.openDrug)
   const setView = useDzPharm((s) => s.setView)
+  const audience = useDzPharm((s) => s.audience)
+  const setAudience = useDzPharm((s) => s.setAudience)
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const recentlyViewed = useDzPharm((s) => s.recentlyViewed)
@@ -365,6 +505,33 @@ export function HomeView() {
 
   return (
     <div>
+      {/* ------------- Bandeau Mode famille (audit 1.3 / P14) ------------- */}
+      {audience === 'famille' ? (
+        <div
+          role="note"
+          aria-label="Mode famille — contenus grand public"
+          className="border-b border-primary/20 bg-primary/5 print:hidden"
+        >
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1.5 px-4 py-2.5 text-xs sm:px-6">
+            <span className="flex min-w-0 items-center gap-1.5 leading-snug text-foreground">
+              <HeartHandshake className="size-3.5 shrink-0 text-primary" aria-hidden />
+              <span>
+                <strong className="font-semibold">Mode famille</strong> — contenus grand public.
+                Pour un usage professionnel, basculez en Mode professionnel.
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setAudience('pro')}
+              className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-background px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <Stethoscope className="size-3.5" aria-hidden />
+              Mode professionnel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {/* ------------------------------ Hero ------------------------------ */}
       <section className="hero-glow relative overflow-hidden border-b border-border/60">
         <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden />
@@ -453,6 +620,32 @@ export function HomeView() {
             </div>
           </motion.div>
         </div>
+      </section>
+
+      {/* ---------------------- Accès rapide (P10/P14) -------------------- */}
+      <section
+        aria-labelledby="quick-access-title"
+        className="mx-auto max-w-7xl px-4 pt-10 pb-6 sm:px-6"
+      >
+        <div className="mb-3.5 flex items-center justify-between gap-4">
+          <h2
+            id="quick-access-title"
+            className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground"
+          >
+            {audience === 'famille' ? (
+              <HeartHandshake className="size-4.5 text-primary" aria-hidden />
+            ) : (
+              <Stethoscope className="size-4.5 text-primary" aria-hidden />
+            )}
+            Accès rapide
+          </h2>
+          <span className="hidden text-xs text-muted-foreground sm:block">
+            {audience === 'famille'
+              ? 'Sélection adaptée au mode famille'
+              : 'Sélection adaptée au mode professionnel'}
+          </span>
+        </div>
+        <QuickAccessGrid cards={audience === 'famille' ? FAMILLE_QUICK_ACCESS : PRO_QUICK_ACCESS} />
       </section>
 
       {/* ------------------------------ KPI ------------------------------- */}
@@ -777,7 +970,7 @@ export function HomeView() {
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <h2 id="outils-title" className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              Outils cliniques
+              Tous les outils
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Aides à la dispensation adaptées aux spécificités algériennes

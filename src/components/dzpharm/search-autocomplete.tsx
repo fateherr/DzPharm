@@ -275,7 +275,9 @@ export function SearchAutocomplete({
           spellCheck={false}
           className={cn(
             'w-full bg-transparent outline-none placeholder:text-muted-foreground/70',
-            hero ? 'text-base md:text-lg' : 'text-sm'
+            // Cible tactile ≥ 44 px : l'input remplit la hauteur du conteneur
+            // (P6 — recherche immédiatement tapable sur mobile, sans découverte clavier)
+            hero ? 'min-h-14 text-base md:text-lg' : 'min-h-11 text-sm'
           )}
         />
         {isFetching && isOpen ? (

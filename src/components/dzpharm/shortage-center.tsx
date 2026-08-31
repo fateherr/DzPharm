@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
   Activity,
+  Bell,
+  BellOff,
   Clock3,
   Loader2,
   MapPin,
@@ -126,6 +128,65 @@ const STATUS_DOT: Record<string, string> = {
   ACTIF: 'bg-state-safe',
   NON_RENOUVELE: 'bg-state-warning',
   RETRIE: 'bg-state-danger',
+}
+
+/* ------------------------------------------------------------------ */
+/* Surveillances locales (audit 4.4) — localStorage uniquement         */
+/* ------------------------------------------------------------------ */
+
+/** Clé de persistance : liste des signalements surveillés + snapshot. */
+const WATCH_KEY = 'shortage.watch.v1'
+
+interface WatchEntry {
+  /** Identifiant du signalement ("report-123"). */
+  key: string
+  reportId: number
+  drugId: number | null
+  brand: string
+  dci: string | null
+  /** Snapshot du statut lors de la dernière comparaison (VISITE). */
+  status: string
+  /** Date de création de la surveillance (ISO). */
+  watchedAt: string
+}
+
+function loadWatch(): WatchEntry[] {
+  try {
+    const raw = localStorage.getItem(WATCH_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (e): e is WatchEntry =>
+        !!e &&
+        typeof (e as WatchEntry).key === 'string' &&
+        typeof (e as WatchEntry).reportId === 'number' &&
+        typeof (e as WatchEntry).status === 'string' &&
+        typeof (e as WatchEntry).watchedAt === 'string'
+    )
+  } catch {
+    return []
+  }
+}
+
+function persistWatch(entries: WatchEntry[]): void {
+  try {
+    localStorage.setItem(WATCH_KEY, JSON.stringify(entries))
+  } catch {
+    /* quota / navigation privée — la surveillance reste en mémoire */
+  }
+}
+
+function toWatchEntry(r: ShortageReportDto): WatchEntry {
+  return {
+    key: `report-${r.id}`,
+    reportId: r.id,
+    drugId: r.drugId,
+    brand: r.brand,
+    dci: r.dci,
+    status: r.status,
+    watchedAt: new Date().toISOString(),
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -300,6 +361,10 @@ export function ShortageCenter() {
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Surveillances locales — état composant + localStorage uniquement.
+  const [watch, setWatch] = useState<WatchEntry[]>([])
+  const [changed, setChanged] = useState<string[]>([])
+
   const { data, isLoading } = useQuery({
     queryKey: ['shortages'],
     queryFn: ({ signal }) => fetchShortages(signal),
@@ -307,6 +372,55 @@ export function ShortageCenter() {
 
   const stats = data?.stats
   const reports = data?.reports ?? []
+
+  // Chargement initial des surveillances persistées.
+  useEffect(() => {
+    setWatch(loadWatch())
+  }, [])
+
+  // Détection de changement : à chaque chargement du flux, on compare le
+  // statut actuel de chaque signalement surveillé au snapshot précédent.
+  // Aucune notification push — la comparaison a lieu à la visite de la page.
+  useEffect(() => {
+    if (!data || watch.length === 0) return
+    const byId = new Map(data.reports.map((r) => [r.id, r]))
+    const changedKeys: string[] = []
+    let mutated = false
+    const next = watch.map((w) => {
+      const current = byId.get(w.reportId)
+      if (current && current.status !== w.status) {
+        mutated = true
+        changedKeys.push(w.key)
+        return { ...w, status: current.status }
+      }
+      return w
+    })
+    if (mutated) {
+      persistWatch(next)
+      setWatch(next)
+      setChanged((prev) => [...new Set([...prev, ...changedKeys])])
+    }
+  }, [data, watch])
+
+  const watchedIds = useMemo(() => new Set(watch.map((w) => w.reportId)), [watch])
+
+  /** Surveillances dont le signalement n'apparaît plus dans le flux récent. */
+  const missingWatches = useMemo(() => {
+    if (!data) return []
+    const byId = new Set(data.reports.map((r) => r.id))
+    return watch.filter((w) => !byId.has(w.reportId))
+  }, [data, watch])
+
+  function toggleWatch(r: ShortageReportDto) {
+    const key = `report-${r.id}`
+    setChanged((prev) => prev.filter((k) => k !== key))
+    setWatch((prev) => {
+      const exists = prev.some((w) => w.key === key)
+      const next = exists ? prev.filter((w) => w.key !== key) : [...prev, toWatchEntry(r)]
+      persistWatch(next)
+      return next
+    })
+  }
 
   const noteCount = useMemo(() => note.length, [note])
 
@@ -355,20 +469,35 @@ export function ShortageCenter() {
       {/* En-tête */}
       <Card className="border-state-warning/30 bg-gradient-to-br from-state-warning/10 via-state-warning/5 to-transparent">
         <CardHeader className="p-5 pb-4 sm:p-6 sm:pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-foreground">
-            <span
-              className="flex size-9 items-center justify-center rounded-xl bg-state-warning/15"
-              aria-hidden
-            >
-              <TriangleAlert className="size-5 text-state-warning" />
+          <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-lg font-bold tracking-tight text-foreground">
+            <span className="flex items-center gap-2.5">
+              <span
+                className="flex size-9 items-center justify-center rounded-xl bg-state-warning/15"
+                aria-hidden
+              >
+                <TriangleAlert className="size-5 text-state-warning" />
+              </span>
+              Centre de signalement des pénuries
             </span>
-            Centre de signalement des pénuries
+            {watch.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary tabular-nums">
+                <Bell className="size-3.5" aria-hidden />
+                {watch.length} surveillance{watch.length > 1 ? 's' : ''} active
+                {watch.length > 1 ? 's' : ''}
+              </span>
+            ) : null}
           </CardTitle>
           <CardDescription className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Les tensions d&apos;approvisionnement sont une réalité nationale. Signalez un médicament
             introuvable en officine et consultez les signalements de la communauté DzPharm pour
             anticiper vos recherches. Chaque signalement aide les patients et les professionnels à
             trouver des alternatives (équivalents génériques, même DCI).
+            {watch.length > 0 ? (
+              <span className="mt-2 block text-xs text-muted-foreground/90">
+                Surveillance locale : la comparaison se fait à chaque visite de cette page (aucune
+                notification push).
+              </span>
+            ) : null}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -583,10 +712,16 @@ export function ShortageCenter() {
                 </div>
               ) : (
                 <ul className="scroll-thin max-h-96 space-y-2.5 overflow-y-auto pr-1" aria-label="Liste des derniers signalements de pénurie">
-                  {reports.map((r) => (
+                  {reports.map((r) => {
+                    const isWatched = watchedIds.has(r.id)
+                    const hasChanged = changed.includes(`report-${r.id}`)
+                    return (
                     <li
                       key={r.id}
-                      className="rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/30"
+                      className={cn(
+                        'rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/30',
+                        isWatched && 'border-primary/30'
+                      )}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         {r.drugId ? (
@@ -601,17 +736,60 @@ export function ShortageCenter() {
                         ) : (
                           <span className="text-sm font-semibold text-foreground">{r.brand}</span>
                         )}
-                        <span
-                          className={cn(
-                            'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
-                            r.status === 'RESOLUE'
-                              ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
-                              : 'border-state-warning/30 bg-state-warning/10 text-state-warning'
-                          )}
-                        >
-                          {r.status === 'RESOLUE' ? 'Résolue' : 'Signalée'}
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span
+                            className={cn(
+                              'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                              r.status === 'RESOLUE'
+                                ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
+                                : 'border-state-warning/30 bg-state-warning/10 text-state-warning'
+                            )}
+                          >
+                            {r.status === 'RESOLUE' ? 'Résolue' : 'Signalée'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleWatch(r)}
+                            aria-pressed={isWatched}
+                            aria-label={
+                              isWatched
+                                ? `Ne plus surveiller le signalement ${r.brand}`
+                                : `Surveiller le signalement ${r.brand}`
+                            }
+                            title={
+                              isWatched
+                                ? 'Surveillance active — retirer'
+                                : 'Surveiller ce signalement (comparaison à chaque visite)'
+                            }
+                            className={cn(
+                              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                              isWatched
+                                ? 'border-primary/40 bg-primary/10 text-primary'
+                                : 'border-border bg-muted/60 text-muted-foreground hover:border-primary/40 hover:text-primary'
+                            )}
+                          >
+                            {isWatched ? (
+                              <BellOff className="size-3.5" aria-hidden />
+                            ) : (
+                              <Bell className="size-3.5" aria-hidden />
+                            )}
+                            {isWatched ? 'Surveillé' : 'Surveiller'}
+                          </button>
                         </span>
                       </div>
+                      {hasChanged ? (
+                        <p
+                          role="status"
+                          className="mt-2 flex items-center gap-1.5 rounded-lg border border-state-safe/40 bg-state-safe/10 px-2.5 py-1.5 text-[11px] font-medium text-state-safe"
+                        >
+                          <Activity className="size-3.5 shrink-0" aria-hidden />
+                          Changement détecté depuis votre dernière visite
+                          {r.status === 'RESOLUE'
+                            ? ' — signalement marqué résolu'
+                            : ' — signalement de nouveau actif'}
+                          .
+                        </p>
+                      ) : null}
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         {r.dci ? <span className="truncate">{r.dci}</span> : null}
                         {r.wilaya ? (
@@ -628,11 +806,101 @@ export function ShortageCenter() {
                         </p>
                       ) : null}
                     </li>
-                  ))}
+                    )
+                  })}
                 </ul>
               )}
             </CardContent>
           </Card>
+
+          {/* Surveillances locales (audit 4.4) */}
+          {watch.length > 0 ? (
+            <Card>
+              <CardHeader className="p-5 pb-4 sm:p-6 sm:pb-4">
+                <CardTitle className="flex items-center justify-between text-base font-semibold text-foreground">
+                  <span className="flex items-center gap-2">
+                    <Bell className="size-4 text-primary" aria-hidden />
+                    Surveillances
+                  </span>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary tabular-nums">
+                    {watch.length}
+                  </span>
+                </CardTitle>
+                <CardDescription>
+                  Surveillance locale : la comparaison se fait à chaque visite de cette page (aucune
+                  notification push).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
+                {missingWatches.length === 0 ? (
+                  <p className="rounded-lg border border-border/70 bg-muted/40 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                    Toutes vos surveillances sont présentes dans le flux récent des signalements —
+                    aucun changement de statut détecté depuis votre dernière visite.
+                  </p>
+                ) : (
+                  <ul className="space-y-2" aria-label="Surveillances hors du flux récent">
+                    {missingWatches.map((w) => (
+                      <li
+                        key={w.key}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-foreground">
+                            {w.brand}
+                            <span className="ml-2 text-[11px] font-medium text-muted-foreground">
+                              plus listé dans le flux — vérifiez la disponibilité
+                            </span>
+                          </span>
+                          {w.dci ? (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {w.dci}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            Dernier statut :{' '}
+                            {w.status === 'RESOLUE' ? 'résolue' : 'signalée'}
+                          </span>
+                          {w.drugId ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => openDrug(w.drugId as number)}
+                              aria-label={`Ouvrir la fiche de ${w.brand}`}
+                            >
+                              Fiche
+                            </Button>
+                          ) : null}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-muted-foreground hover:text-state-danger"
+                            onClick={() =>
+                              setWatch((prev) => {
+                                const next = prev.filter((x) => x.key !== w.key)
+                                persistWatch(next)
+                                return next
+                              })
+                            }
+                            aria-label={`Retirer la surveillance de ${w.brand}`}
+                          >
+                            <X className="size-3.5" aria-hidden />
+                          </Button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                  La comparaison couvre les 60 signalements les plus récents du flux communautaire.
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Les plus signalés */}
           <Card>

@@ -5,13 +5,18 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertTriangle,
   Baby,
+  BriefcaseMedical,
   CalendarClock,
   Check,
+  ChevronDown,
+  Coins,
   Copy,
+  Download,
   FileSearch,
   HeartPulse,
   History,
   Info,
+  KeyRound,
   Lightbulb,
   Loader2,
   Lock,
@@ -56,6 +61,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -64,6 +70,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { useToast } from '@/hooks/use-toast'
 import { checkPregnancy, postLocalInteractions } from './api'
 import type {
@@ -125,6 +137,77 @@ function initials(name: string): string {
 function ageLabel(years: number): string {
   if (years <= 0) return 'moins d’un an'
   return `${years} ${years > 1 ? 'ans' : 'an'}`
+}
+
+/* ------------------------------------------------------------------ */
+/* Confidentialité, PIN & trousse de secours (audit 3.6 / 4.1)         */
+/* ------------------------------------------------------------------ */
+
+/** Consentement première utilisation — valeur = date ISO d'acceptation. */
+const CONSENT_KEY = 'armoire.consent.v1'
+/** Code PIN (verrou de confort local, 4 chiffres, non chiffré). */
+const PIN_KEY = 'armoire.pin.v1'
+/** Trousse de secours — liste d'identifiants d'articles cochés. */
+const FIRST_AID_KEY = 'armoire.firstAid.v1'
+/** Clé du store persisté (zustand) — seul le bloc « armoire » est exporté/effacé. */
+const STORE_KEY = 'dzpharm-store'
+
+const STORE_ARMOIRE_FIELDS = [
+  'armoireProfiles',
+  'armoireItems',
+  'activeArmoireProfileId',
+  'armoireJournal',
+] as const
+
+/** Trousse de secours — objets domestiques hors médicaments (aucune donnée clinique). */
+const FIRST_AID_ITEMS: { id: string; label: string }[] = [
+  { id: 'pansements', label: 'Pansements adhésifs (tailles variées)' },
+  { id: 'compresses', label: 'Compresses stériles' },
+  { id: 'antiseptique-cutane', label: 'Antiseptique cutané' },
+  { id: 'serum-physiologique', label: 'Sérum physiologique' },
+  { id: 'thermometre', label: 'Thermomètre' },
+  { id: 'ciseaux', label: 'Ciseaux à bouts ronds' },
+  { id: 'pince-echardes', label: 'Pince à épiler / échardes' },
+  { id: 'gants', label: 'Gants jetables' },
+  { id: 'bande-contention', label: 'Bande de contention' },
+  { id: 'couverture-survie', label: 'Couverture de survie' },
+  { id: 'antiseptique-plaies', label: 'Solution antiseptique pour plaies' },
+  { id: 'sac-hermetique', label: 'Sac plastique hermétique' },
+]
+
+function readFirstAidChecked(): string[] {
+  try {
+    const raw = localStorage.getItem(FIRST_AID_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((x): x is string => typeof x === 'string')
+  } catch {
+    return []
+  }
+}
+
+/** Bloc « armoire » du store persisté (les autres vues ne sont pas exportées). */
+function readStoredArmoire(): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  try {
+    const raw = localStorage.getItem(STORE_KEY)
+    if (!raw) return out
+    const state = (JSON.parse(raw) as { state?: Record<string, unknown> })?.state
+    if (!state) return out
+    for (const key of STORE_ARMOIRE_FIELDS) {
+      if (key in state) out[key] = state[key]
+    }
+  } catch {
+    /* stockage illisible — export du bloc vide */
+  }
+  return out
+}
+
+function formatConsentDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 const SEVERITY_ORDER: InteractionSeverity[] = ['CONTRE-INDIQUE', 'MAJEURE', 'MODEREE', 'MINEURE']
@@ -893,6 +976,335 @@ function ArmoirePrintSummary({
 }
 
 /* ------------------------------------------------------------------ */
+/* Écran de verrouillage PIN (verrou de confort — audit 3.6)           */
+/* ------------------------------------------------------------------ */
+
+function PinLockScreen({
+  onUnlock,
+  onRequestWipe,
+}: {
+  onUnlock: () => void
+  onRequestWipe: () => void
+}) {
+  const [pin, setPin] = useState('')
+  const [attempts, setAttempts] = useState(0)
+  const fid = useId()
+
+  function tryUnlock() {
+    if (pin.length !== 4) return
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(PIN_KEY)
+    } catch {
+      /* stockage indisponible */
+    }
+    if (stored !== null && pin === stored) {
+      onUnlock()
+      return
+    }
+    setAttempts((a) => a + 1)
+    setPin('')
+  }
+
+  const exhausted = attempts >= 3
+
+  return (
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 py-10 print:hidden">
+      <Card className="w-full">
+        <CardHeader className="pb-3 text-center">
+          <span
+            className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"
+            aria-hidden
+          >
+            <Lock className="size-6" />
+          </span>
+          <h1 className="mt-2 text-lg font-semibold text-foreground">Armoire verrouillée</h1>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Saisissez le code à 4 chiffres pour accéder à l’armoire familiale de cet appareil.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor={`${fid}-pin`}>Code à 4 chiffres</Label>
+            <Input
+              id={`${fid}-pin`}
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={4}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') tryUnlock()
+              }}
+              className="h-11 text-center text-lg tracking-[0.4em]"
+              autoFocus
+              aria-invalid={attempts > 0}
+            />
+          </div>
+          {attempts > 0 ? (
+            <p role="alert" className="text-center text-xs font-medium text-state-danger">
+              Code incorrect — tentative {Math.min(attempts, 3)}/3.
+            </p>
+          ) : null}
+          <Button onClick={tryUnlock} disabled={pin.length !== 4} className="w-full">
+            Déverrouiller
+          </Button>
+          {exhausted ? (
+            <button
+              type="button"
+              onClick={onRequestWipe}
+              className="w-full rounded-lg border border-state-danger/40 bg-state-danger/5 px-3 py-2.5 text-xs font-medium text-state-danger transition-colors hover:bg-state-danger/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              Réinitialiser l’armoire (efface tout)
+            </button>
+          ) : null}
+          <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+            Verrou de confort local — ne remplace pas une sécurité forte.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Trousse de secours — checklist domestique hors médicaments (4.1)    */
+/* ------------------------------------------------------------------ */
+
+function FirstAidCard({
+  checked,
+  onToggle,
+}: {
+  checked: string[]
+  onToggle: (id: string) => void
+}) {
+  const fid = useId()
+  const total = FIRST_AID_ITEMS.length
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <h2 className="flex flex-wrap items-center justify-between gap-2 text-base font-semibold text-foreground">
+          <span className="flex items-center gap-2">
+            <BriefcaseMedical className="size-5 text-primary" aria-hidden />
+            Trousse de secours
+          </span>
+          <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+            {checked.length}/{total}
+          </span>
+        </h2>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Liste de contrôle des premiers secours pour la maison — objets domestiques, hors
+          médicaments.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Progress
+          value={Math.round((checked.length / total) * 100)}
+          aria-label={`${checked.length} article(s) sur ${total} présents dans la trousse de secours`}
+        />
+        <ul className="grid gap-1.5 sm:grid-cols-2">
+          {FIRST_AID_ITEMS.map((item) => (
+            <li key={item.id}>
+              <div
+                className={cn(
+                  'flex items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors',
+                  checked.includes(item.id)
+                    ? 'border-primary/40 bg-primary/5'
+                    : 'border-border bg-muted/30 hover:bg-muted/60'
+                )}
+              >
+                <Checkbox
+                  id={`${fid}-fa-${item.id}`}
+                  checked={checked.includes(item.id)}
+                  onCheckedChange={() => onToggle(item.id)}
+                  aria-label={item.label}
+                />
+                <Label
+                  htmlFor={`${fid}-fa-${item.id}`}
+                  className="cursor-pointer text-xs leading-snug font-medium text-foreground"
+                >
+                  {item.label}
+                </Label>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          Liste indicative à adapter — suivez les recommandations officielles (Ministère de la
+          Santé). DzPharm ne vend ni ne recommande de marques.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Carte « Confidentialité & données » (audit 3.6)                     */
+/* ------------------------------------------------------------------ */
+
+function ConfidentialityCard({
+  pinEnabled,
+  onEnablePin,
+  onDisablePin,
+  onExport,
+  onWipe,
+}: {
+  pinEnabled: boolean
+  onEnablePin: (pin: string) => void
+  onDisablePin: () => void
+  onExport: () => void
+  onWipe: () => void
+}) {
+  const [pinMode, setPinMode] = useState<'none' | 'edit'>('none')
+  const [pinDraft, setPinDraft] = useState('')
+  const [pinError, setPinError] = useState<string | null>(null)
+  const fid = useId()
+
+  function savePin() {
+    if (!/^\d{4}$/.test(pinDraft)) {
+      setPinError('Le code doit contenir exactement 4 chiffres.')
+      return
+    }
+    setPinError(null)
+    onEnablePin(pinDraft)
+    setPinMode('none')
+    setPinDraft('')
+  }
+
+  function startEdit() {
+    setPinMode('edit')
+    setPinDraft('')
+    setPinError(null)
+  }
+
+  function cancelEdit() {
+    setPinMode('none')
+    setPinDraft('')
+    setPinError(null)
+  }
+
+  return (
+    <Collapsible>
+      <Card className="overflow-hidden">
+        <CollapsibleTrigger
+          className="group flex w-full items-center justify-between gap-3 p-4 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+          aria-label="Réglages de confidentialité de l’armoire"
+        >
+          <span className="flex items-center gap-2 text-base font-semibold text-foreground">
+            <Lock className="size-5 text-primary" aria-hidden />
+            Confidentialité &amp; données
+          </span>
+          <ChevronDown
+            className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+            aria-hidden
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="space-y-4 border-t border-border p-4">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Les profils, médicaments et péremptions de l’armoire sont enregistrés uniquement
+              dans le stockage local de ce navigateur (localStorage) — jamais sur un serveur. Les
+              données de santé sont des données sensibles (esprit de la loi algérienne n° 18-07
+              relative à la protection des données à caractère personnel) : DzPharm les garde sur
+              votre appareil, avec export et effacement complets à tout moment.
+            </p>
+
+            {/* Code PIN */}
+            <div className="space-y-2.5 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label
+                  htmlFor={`${fid}-pin-switch`}
+                  className="flex cursor-pointer items-center gap-1.5 text-sm font-medium"
+                >
+                  <KeyRound className="size-4 text-primary" aria-hidden />
+                  Verrouiller l’armoire par code (PIN)
+                </Label>
+                <Switch
+                  id={`${fid}-pin-switch`}
+                  checked={pinEnabled}
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      startEdit()
+                    } else {
+                      cancelEdit()
+                      onDisablePin()
+                    }
+                  }}
+                  aria-label="Activer le verrouillage par code PIN"
+                />
+              </div>
+
+              {pinMode === 'edit' ? (
+                <div className="grid gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      maxLength={4}
+                      value={pinDraft}
+                      onChange={(e) => {
+                        setPinDraft(e.target.value.replace(/\D/g, '').slice(0, 4))
+                        setPinError(null)
+                      }}
+                      placeholder={pinEnabled ? 'Nouveau code à 4 chiffres' : 'Code à 4 chiffres'}
+                      aria-label="Code PIN à 4 chiffres"
+                      className="h-9 w-36 tracking-[0.3em]"
+                    />
+                    <Button size="sm" onClick={savePin} disabled={pinDraft.length !== 4}>
+                      {pinEnabled ? 'Mettre à jour' : 'Enregistrer le code'}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={cancelEdit}>
+                      Annuler
+                    </Button>
+                  </div>
+                  {pinError ? (
+                    <p role="alert" className="text-xs font-medium text-state-danger">
+                      {pinError}
+                    </p>
+                  ) : null}
+                </div>
+              ) : pinEnabled ? (
+                <button
+                  type="button"
+                  onClick={startEdit}
+                  className="text-xs font-medium text-primary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  Modifier le code
+                </button>
+              ) : null}
+
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Verrou de confort local — ne remplace pas une sécurité forte (code stocké en clair
+                sur cet appareil).
+              </p>
+            </div>
+
+            {/* Export & effacement */}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={onExport} className="gap-1.5">
+                <Download className="size-3.5" aria-hidden />
+                Exporter les données (JSON)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onWipe}
+                className="gap-1.5 border-state-danger/40 text-state-danger hover:bg-state-danger/10 hover:text-state-danger"
+              >
+                <Trash2 className="size-3.5" aria-hidden />
+                Tout effacer
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /* Vue Armoire                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -919,6 +1331,32 @@ export function ArmoireView() {
   const [editingProfile, setEditingProfile] = useState<ArmoireProfile | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ArmoireProfile | null>(null)
   const [clearTarget, setClearTarget] = useState<ArmoireProfile | null>(null)
+
+  /* ------------- Confidentialité (audit 3.6 / 4.1) --------------- */
+
+  /** Verrou PIN : « checking » pendant l'hydratation, « locked » si un code est défini. */
+  const [gate, setGate] = useState<'checking' | 'locked' | 'open'>('checking')
+  const [consentOpen, setConsentOpen] = useState(false)
+  const [consentAt, setConsentAt] = useState<string | null>(null)
+  const [pinEnabled, setPinEnabled] = useState(false)
+  const [firstAidChecked, setFirstAidChecked] = useState<string[]>([])
+  const [wipeConfirmOpen, setWipeConfirmOpen] = useState(false)
+
+  // Hydratation locale (uniquement côté client — aucune lecture pendant le SSR) :
+  // consentement première utilisation, code PIN éventuel, trousse de secours.
+  useEffect(() => {
+    try {
+      const consent = localStorage.getItem(CONSENT_KEY)
+      setConsentAt(consent)
+      if (!consent) setConsentOpen(true)
+      const hasPin = localStorage.getItem(PIN_KEY) !== null
+      setPinEnabled(hasPin)
+      setFirstAidChecked(readFirstAidChecked())
+      setGate(hasPin ? 'locked' : 'open')
+    } catch {
+      setGate('open')
+    }
+  }, [])
 
   const seasonal = useMemo(() => getSeasonalTips(new Date()), [])
 
@@ -1081,10 +1519,123 @@ export function ArmoireView() {
     toast({ title: 'Armoire vidée', description: `Tous les médicaments de ${name} ont été retirés.` })
   }
 
+  /* ------------- Confidentialité : actions (audit 3.6) ------------- */
+
+  function acceptConsent() {
+    const iso = new Date().toISOString()
+    try {
+      localStorage.setItem(CONSENT_KEY, iso)
+    } catch {
+      /* stockage indisponible — le consentement sera redemandé */
+    }
+    setConsentAt(iso)
+    setConsentOpen(false)
+  }
+
+  function toggleFirstAid(id: string) {
+    const next = firstAidChecked.includes(id)
+      ? firstAidChecked.filter((x) => x !== id)
+      : [...firstAidChecked, id]
+    try {
+      localStorage.setItem(FIRST_AID_KEY, JSON.stringify(next))
+    } catch {
+      /* ignore */
+    }
+    setFirstAidChecked(next)
+  }
+
+  function enablePin(pin: string) {
+    try {
+      localStorage.setItem(PIN_KEY, pin)
+    } catch {
+      /* ignore */
+    }
+    setPinEnabled(true)
+    toast({
+      title: 'Code PIN activé',
+      description: 'Il sera demandé à chaque ouverture de l’armoire sur cet appareil.',
+    })
+  }
+
+  function disablePin() {
+    try {
+      localStorage.removeItem(PIN_KEY)
+    } catch {
+      /* ignore */
+    }
+    setPinEnabled(false)
+    toast({ title: 'Code PIN désactivé', description: 'L’armoire s’ouvre désormais sans code.' })
+  }
+
+  /** Export JSON complet des données locales de l'armoire (droit d'accès). */
+  function exportArmoireData() {
+    try {
+      const payload = {
+        format: 'dzpharm-armoire-export-v1',
+        app: 'DzPharm',
+        exportedAt: new Date().toISOString(),
+        armoire: readStoredArmoire(),
+        trousseSecours: { key: FIRST_AID_KEY, checked: firstAidChecked },
+        confidentialite: {
+          consentementAccepteLe: consentAt,
+          pinActif: pinEnabled,
+          note: 'Le code PIN n’est volontairement pas inclus dans l’export.',
+        },
+        note: 'Données enregistrées uniquement sur cet appareil (localStorage) — aucun envoi en ligne.',
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dzpharm-armoire-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast({
+        title: 'Export JSON généré',
+        description: 'Toutes les données locales de l’armoire ont été téléchargées.',
+      })
+    } catch {
+      toast({
+        title: 'Échec de l’export',
+        description: 'Une erreur est survenue lors de la génération du fichier JSON.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  /** Effacement définitif de toutes les données locales de l'armoire (droit d'effacement). */
+  function wipeArmoire() {
+    setWipeConfirmOpen(false)
+    try {
+      // 1. Bloc armoire du store persisté via ses actions publiques —
+      //    favoris, historique et panier Chifa des autres vues sont préservés.
+      for (const p of profiles) deleteProfile(p.id)
+      clearJournal()
+      // 2. Clés locales propres à l'armoire (PIN, trousse, consentement).
+      localStorage.removeItem(PIN_KEY)
+      localStorage.removeItem(FIRST_AID_KEY)
+      localStorage.removeItem(CONSENT_KEY)
+    } catch {
+      /* ignore */
+    }
+    window.location.reload()
+  }
+
   /* --------------------------- Rendu ------------------------------- */
+
+  if (gate === 'checking') return null
 
   return (
     <div className="pb-10">
+      {gate === 'locked' ? (
+        <PinLockScreen
+          onUnlock={() => setGate('open')}
+          onRequestWipe={() => setWipeConfirmOpen(true)}
+        />
+      ) : (
+        <>
       {/* En-tête */}
       <section aria-labelledby="armoire-title" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 print:hidden">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1389,6 +1940,13 @@ export function ArmoireView() {
                             onOpenSheet={() => openDrug(item.drugId)}
                             onUpdate={(patch) => updateItem(active.id, item.uid, patch)}
                             onRemove={() => removeItem(active.id, item.uid)}
+                            onSeePrice={() => {
+                              // Restock (plan 3.4.14) : ouvre le Catalogue & prix,
+                              // avec la fiche du produit (PPA + équivalents génériques)
+                              // affichée par-dessus — recherche inutile.
+                              setView('catalogue')
+                              openDrug(item.drugId)
+                            }}
                           />
                         ))}
                       </ul>
@@ -1577,6 +2135,18 @@ export function ArmoireView() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Trousse de secours & confidentialité (audit 3.6 / 4.1) — niveau foyer */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <FirstAidCard checked={firstAidChecked} onToggle={toggleFirstAid} />
+          <ConfidentialityCard
+            pinEnabled={pinEnabled}
+            onEnablePin={enablePin}
+            onDisablePin={disablePin}
+            onExport={exportArmoireData}
+            onWipe={() => setWipeConfirmOpen(true)}
+          />
+        </div>
       </section>
 
       {/* Résumé imprimable (visible uniquement à l'impression) */}
@@ -1591,7 +2161,18 @@ export function ArmoireView() {
           l’armoire ne quittent jamais votre navigateur ; seuls les noms de médicaments sont
           transmis lors d’une analyse.
         </p>
+        <p className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11px] leading-relaxed text-muted-foreground">
+          {consentAt ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="size-3.5 shrink-0 text-state-safe" aria-hidden />
+              Consentement enregistré le {formatConsentDate(consentAt)}
+            </span>
+          ) : null}
+          <span>Aucune donnée de santé n’est utilisée à des fins d’analyse ou de publicité.</span>
+        </p>
       </div>
+        </>
+      )}
 
       {/* Dialogues */}
       <ProfileDialog
@@ -1647,6 +2228,60 @@ export function ArmoireView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Effacement complet des données locales (audit 3.6 — droit d'effacement) */}
+      <AlertDialog open={wipeConfirmOpen} onOpenChange={setWipeConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réinitialiser l’armoire ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tous les profils, médicaments, péremptions, le journal des contrôles, la trousse de
+              secours et le code PIN seront définitivement effacés de cet appareil. Cette action est
+              irréversible — pensez à exporter vos données avant.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-state-danger text-white hover:bg-state-danger/90"
+              onClick={wipeArmoire}
+            >
+              Tout effacer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Consentement première utilisation (audit 3.6) */}
+      <Dialog open={consentOpen && gate !== 'locked'} onOpenChange={setConsentOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="size-5 text-primary" aria-hidden />
+              Confidentialité de l’armoire familiale
+            </DialogTitle>
+            <DialogDescription>
+              Avant d’utiliser l’armoire, prenez connaissance du traitement de vos données.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2.5 text-sm leading-relaxed text-foreground/90">
+            {[
+              'Les données de l’armoire (profils, médicaments, péremptions) sont enregistrées uniquement sur cet appareil, dans le stockage local de votre navigateur (localStorage).',
+              'Aucune donnée nominative n’est envoyée en ligne : seuls les noms de médicaments sont transmis au moteur lors d’une analyse d’interactions.',
+              'Aucune analyse d’audience ni publicité liée à vos médicaments.',
+              'Les données de santé sont des données sensibles (esprit de la loi algérienne n° 18-07 relative à la protection des données à caractère personnel) : c’est pourquoi tout reste sur votre appareil, avec export et effacement possibles à tout moment.',
+            ].map((line) => (
+              <li key={line} className="flex items-start gap-2.5">
+                <Check className="mt-0.5 size-4 shrink-0 text-state-safe" aria-hidden />
+                {line}
+              </li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <Button onClick={acceptConsent}>J’ai compris et j’accepte</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1658,11 +2293,14 @@ export function ArmoireView() {
 function ItemRow({
   item,
   onOpenSheet,
+  onSeePrice,
   onUpdate,
   onRemove,
 }: {
   item: ArmoireItem
   onOpenSheet: () => void
+  /** Ouvre le Catalogue & prix avec la fiche produit (restock — plan 3.4.14). */
+  onSeePrice: () => void
   onUpdate: (patch: Partial<Pick<ArmoireItem, 'quantity' | 'expiry'>>) => void
   onRemove: () => void
 }) {
@@ -1810,6 +2448,18 @@ function ItemRow({
           <FileSearch className="size-3.5" aria-hidden />
           Voir la fiche
         </button>
+        {/* Restock (plan 3.4.14) : visible sur les lignes expirées / péremption proche */}
+        {expired || urgent || expiringSoon ? (
+          <button
+            type="button"
+            onClick={onSeePrice}
+            aria-label={`Voir les prix et génériques de ${item.brand} dans le catalogue`}
+            className="flex items-center gap-1 text-[11px] font-medium text-chifa underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <Coins className="size-3.5" aria-hidden />
+            Voir prix &amp; génériques
+          </button>
+        ) : null}
       </div>
     </motion.li>
   )

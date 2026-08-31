@@ -759,6 +759,9 @@ export function StatsView() {
         total={stats.total}
       />
 
+      {/* ------------------------ Nouveautés nomenclature ------------------------ */}
+      <NoveltySection />
+
       {/* ------------------------ Chronologie des enregistrements ------------------------ */}
       <TimelineSection />
 
@@ -1104,6 +1107,142 @@ function WithdrawalsSection({
           </Card>
         </div>
       )}
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Section Nouveautés — enregistrements récents (audit 4.5)           */
+/* ------------------------------------------------------------------ */
+
+interface NoveltyRow {
+  id: number
+  brand: string
+  dci: string | null
+  form: string | null
+  dosage: string | null
+  lab: string | null
+  country: string | null
+  regNumber: string | null
+  regDateInitial: string | null
+}
+
+interface NoveltyResponse {
+  recent: NoveltyRow[]
+  totalDated: number
+  limit: number
+  generatedAt: string
+}
+
+async function fetchNovelty(signal?: AbortSignal): Promise<NoveltyResponse> {
+  const res = await fetch('/api/novelty?limit=15', { signal })
+  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+  return (await res.json()) as NoveltyResponse
+}
+
+function NoveltySection() {
+  const openDrug = useDzPharm((s) => s.openDrug)
+  const { data, isLoading } = useQuery({
+    queryKey: ['novelty'],
+    queryFn: ({ signal }) => fetchNovelty(signal),
+    staleTime: 30 * 60 * 1000,
+  })
+
+  return (
+    <section aria-label="Nouveautés de la nomenclature" className="mt-10">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h2 className="text-lg font-bold tracking-tight text-foreground">
+            Nouveautés — enregistrements récents
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Basé sur les dates d&apos;enregistrement initial de la nomenclature officielle — dernière
+            vérification Juin 2026.
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="size-4 text-primary" aria-hidden />
+            Derniers enregistrements (AMM actives)
+          </CardTitle>
+          <CardDescription>
+            Les {data?.limit ?? 15} médicaments actifs les plus récemment enregistrés — cliquez sur
+            une ligne pour ouvrir la fiche du médicament
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-lg" />
+              ))}
+            </div>
+          ) : !data || data.recent.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Aucun enregistrement daté dans la nomenclature.
+            </p>
+          ) : (
+            <>
+              <div className="scroll-thin max-h-80 overflow-y-auto rounded-lg border border-border/70">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+                    <tr className="border-b border-border text-left text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                      <th scope="col" className="px-3 py-2">Médicament</th>
+                      <th scope="col" className="px-3 py-2">Forme · dosage</th>
+                      <th scope="col" className="px-3 py-2">Laboratoire</th>
+                      <th scope="col" className="px-3 py-2">Date initiale</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.recent.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
+                        onClick={() => openDrug(row.id)}
+                      >
+                        <td className="px-3 py-2.5">
+                          <span className="block font-semibold text-foreground">{row.brand}</span>
+                          {row.dci ? (
+                            <span className="block max-w-72 truncate text-xs text-muted-foreground">
+                              {row.dci}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {row.form || '—'}
+                          </span>
+                          {row.dosage ? (
+                            <span className="block truncate text-xs text-muted-foreground/80">
+                              {row.dosage}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="max-w-44 px-3 py-2.5">
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {row.lab || '—'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-xs whitespace-nowrap text-foreground/90 tabular-nums">
+                          {formatDate(row.regDateInitial)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                Dates d&apos;enregistrement initial telles que publiées dans la nomenclature (sans date
+                devinée) — {formatNumber(data.totalDated)} médicaments actifs portent une date
+                initiale documentée.
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </section>
   )
 }

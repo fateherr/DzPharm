@@ -14,6 +14,7 @@ import {
   TriangleAlert,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { OrdonnanceCheck } from './ordonnance-check'
 import { PediatricCalculator } from './pediatric-calculator'
 import { ChifaSimulator } from './chifa-simulator'
 import { RamadanAdapter } from './ramadan-adapter'
@@ -39,6 +40,16 @@ export function ToolsView() {
           remboursement Chifa, adaptation Ramadan et comparateur de médicaments.
         </p>
       </div>
+
+      {/* Vérification d'ordonnance — outil phare en pleine largeur (audit 4.3) */}
+      <motion.div
+        className="mb-6 w-full"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <OrdonnanceCheck />
+      </motion.div>
 
       <Tabs value={tab} onValueChange={setTab} className="gap-6">
         <TabsList className="scroll-thin h-12 w-full justify-start gap-1 overflow-x-auto rounded-xl p-1.5 sm:w-auto">

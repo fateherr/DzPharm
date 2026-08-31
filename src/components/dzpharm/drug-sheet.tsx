@@ -13,6 +13,7 @@ import {
   CalendarX2,
   Coins,
   Eye,
+  FileText,
   FlaskConical,
   Info,
   Library,
@@ -175,6 +176,12 @@ export function DrugSheet() {
   const drug = data?.drug
   const equivalents = data?.equivalents ?? []
   const isFav = drug ? favorites.some((f) => f.id === drug.id) : false
+
+  // Complétude des données (audit 1.2 / P9) — réutilise strictement les
+  // conditions des sections existantes : monographie livre (lien RCP/DCI)
+  // et section « Prix public — officine ».
+  const sheetHasMonograph = drug?.rcpSource === 'BOOK' && Boolean(drug?.dciKey)
+  const sheetHasPrice = (drug?.pharmacy?.length ?? 0) > 0
 
   // Comparateur de prix sur les équivalents référencés en officine
   const pricedEquivalents = equivalents.filter((e) => e.price != null)
@@ -435,6 +442,43 @@ export function DrugSheet() {
                   </span>
                 ) : null}
               </div>
+
+              {/* Complétude des données — audit 1.2 / P9 */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                  Complétude
+                </span>
+                {sheetHasMonograph ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-state-safe/30 bg-state-safe/10 px-2 py-0.5 text-xs font-medium text-state-safe"
+                    title="Monographie DCI complète issue des livres techniques DzPharm"
+                  >
+                    <BadgeCheck className="size-3" aria-hidden />
+                    Fiche complète
+                  </span>
+                ) : null}
+                {sheetHasPrice ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-chifa/30 bg-chifa/10 px-2 py-0.5 text-xs font-medium text-chifa"
+                    title="Prix public PPA référencé en officine (DA)"
+                  >
+                    <Coins className="size-3" aria-hidden />
+                    Prix PPA public
+                  </span>
+                ) : null}
+                {!sheetHasMonograph && !sheetHasPrice ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                    title="Inscription à la nomenclature sans monographie ni prix référencé"
+                  >
+                    <FileText className="size-3" aria-hidden />
+                    Inscription simple
+                  </span>
+                ) : null}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Niveau de complétude des données pour ce médicament
+              </p>
             </SheetHeader>
 
             <Tabs

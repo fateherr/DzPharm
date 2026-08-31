@@ -7,6 +7,7 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  Ambulance,
   Ban,
   Check,
   FlaskConical,
@@ -18,11 +19,13 @@ import {
   Plus,
   ShieldAlert,
   ShieldCheck,
+  Siren,
   Stethoscope,
   Trash2,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -503,6 +506,45 @@ function VerifierPanel() {
                 </CardContent>
               </Card>
             ) : null}
+
+            {/* Urgences + rappel professionnel au point d'usage (audit 1.9) */}
+            <Alert
+              variant="default"
+              className="border-state-danger/40 bg-state-danger/5 text-state-danger"
+              role="note"
+              aria-label="En cas d'urgence"
+            >
+              <Siren className="size-4 shrink-0" aria-hidden />
+              <AlertTitle className="text-sm font-semibold">En cas d&apos;urgence</AlertTitle>
+              <AlertDescription className="text-xs leading-relaxed text-foreground/90">
+                <p>
+                  Réaction grave (allergie, surdosage, malaise)&nbsp;: appelez immédiatement le{' '}
+                  <a
+                    href="tel:14"
+                    className="font-semibold text-state-danger underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    SAMU&nbsp;<strong className="font-bold">14</strong>
+                  </a>{' '}
+                  ou le{' '}
+                  <a
+                    href="tel:021713042"
+                    className="font-semibold text-state-danger underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      <Ambulance className="size-3.5 shrink-0" aria-hidden />
+                      Centre Anti-Poison (Alger)
+                    </span>{' '}
+                    <strong className="font-bold">021&nbsp;71&nbsp;30&nbsp;42</strong>
+                  </a>
+                  .
+                </p>
+              </AlertDescription>
+            </Alert>
+
+            <p className="text-xs text-muted-foreground">
+              Usage professionnel — vérifiez toujours les RCP officiels avant toute décision
+              clinique.
+            </p>
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />

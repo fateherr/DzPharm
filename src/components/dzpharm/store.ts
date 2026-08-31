@@ -16,6 +16,12 @@ export type ViewId =
   | 'stats'
   | 'apropos'
 
+/**
+ * Mode d'usage de l'application (audit 1.3 / P14) :
+ * 'pro' = professionnel de santé, 'famille' = grand public.
+ */
+export type Audience = 'pro' | 'famille'
+
 export interface DirectoryFilters {
   q: string
   status: string
@@ -126,6 +132,10 @@ interface DzPharmStore {
   view: ViewId
   setView: (view: ViewId) => void
 
+  /** Mode d'usage (professionnel vs famille) — persisté. */
+  audience: Audience
+  setAudience: (audience: Audience) => void
+
   filters: DirectoryFilters
   setFilters: (patch: Partial<DirectoryFilters>) => void
   resetFilters: () => void
@@ -194,6 +204,9 @@ export const useDzPharm = create<DzPharmStore>()(
     (set, get) => ({
       view: 'accueil',
       setView: (view) => set({ view }),
+
+      audience: 'pro',
+      setAudience: (audience) => set({ audience }),
 
       filters: { ...EMPTY_FILTERS },
       setFilters: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })),
@@ -365,9 +378,10 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      // Persiste favoris + historique récent + armoire + journal + panier Chifa
-      // — l'état de navigation reste éphémère
+      // Persiste mode d'usage + favoris + historique récent + armoire + journal
+      // + panier Chifa — l'état de navigation reste éphémère
       partialize: (state) => ({
+        audience: state.audience,
         favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,
         armoireProfiles: state.armoireProfiles,

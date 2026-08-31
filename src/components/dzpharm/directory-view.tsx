@@ -5,9 +5,11 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ArrowUp,
   ArrowUpDown,
+  BadgeCheck,
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  Coins,
   Download,
   FileX2,
   Loader2,
@@ -504,7 +506,7 @@ export function DirectoryView() {
                     aria-label={`Ouvrir la fiche de ${drug.brand}`}
                   >
                     <td className="px-3 py-3">
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex flex-wrap items-center gap-1.5">
                         <span className="block font-semibold text-foreground">{drug.brand}</span>
                         {drug.hasBookRcp ? (
                           <span
@@ -513,6 +515,24 @@ export function DirectoryView() {
                           >
                             <BookOpen className="size-2.5" aria-hidden />
                             RCP
+                          </span>
+                        ) : null}
+                        {drug.hasBookRcp ? (
+                          <span
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-state-safe/30 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
+                            title="Monographie DCI complète issue des livres techniques DzPharm"
+                          >
+                            <BadgeCheck className="size-2.5" aria-hidden />
+                            Fiche complète
+                          </span>
+                        ) : null}
+                        {drug.price != null ? (
+                          <span
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-chifa/30 bg-chifa/10 px-1.5 py-0.5 text-[9px] font-bold text-chifa"
+                            title="Prix public PPA référencé en officine (DA)"
+                          >
+                            <Coins className="size-2.5" aria-hidden />
+                            Prix PPA
                           </span>
                         ) : null}
                       </span>
