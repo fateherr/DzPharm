@@ -417,6 +417,14 @@ export const PREGNANCY_RULES: PregnancyRule[] = [
     breastfeedingNote: 'Compatible avec l’allaitement.',
   },
   {
+    // C20 (audit) : le registre algérien nomme la molécule « ENOXAPARINE SODIQUE » —
+    // la clé courte couvre aussi la forme salifiée via stripSaltsKey.
+    dciKey: 'ENOXAPARINE', dci: 'Énoxaparine (HBPM — Lovenox®)',
+    pregnancy: 'SURE', breastfeeding: 'SURE',
+    pregnancyNote: 'HBPM de référence pendant la grossesse (ne traverse pas le placenta) — posologie préventive ou curative selon l’indication, en unités anti-Xa.',
+    breastfeedingNote: 'Compatible avec l’allaitement (poids moléculaire élevé, passage lacté négligeable).',
+  },
+  {
     dciKey: 'FER', dci: 'Sels de fer',
     pregnancy: 'SURE', breastfeeding: 'SURE',
     pregnancyNote: 'Supplémentation recommandée pendant la grossesse (prévention de l’anémie).',

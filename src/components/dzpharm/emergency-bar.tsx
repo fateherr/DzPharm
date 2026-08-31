@@ -12,7 +12,7 @@ export function EmergencyBar() {
     <div
       role="note"
       aria-label="Numéros d'urgence médicale en Algérie"
-      className="sticky top-0 z-50 w-full border-b border-red-950/40 bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white shadow-md shadow-red-950/20 dark:from-red-900 dark:via-red-800 dark:to-red-900"
+      className="sticky top-0 z-50 w-full border-b border-red-950/40 print:hidden bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white shadow-md shadow-red-950/20 dark:from-red-900 dark:via-red-800 dark:to-red-900"
     >
       <div className="mx-auto flex h-9 max-w-7xl items-center justify-center gap-2 overflow-x-auto px-3 text-[11px] font-semibold tracking-wide sm:gap-3 sm:text-xs no-scrollbar">
         <span className="flex shrink-0 items-center gap-1.5">

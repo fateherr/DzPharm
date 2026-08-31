@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { ChifaCardType, ChifaLine } from './types'
+
+export const MAX_CHIFA_LINES = 15
 
 export type ViewId =
   | 'accueil'
@@ -91,6 +94,25 @@ export interface ArmoireItem {
 export type ArmoireItemInput = Omit<ArmoireItem, 'uid' | 'addedAt' | 'quantity' | 'expiry'> &
   Partial<Pick<ArmoireItem, 'quantity' | 'expiry'>>
 
+/**
+ * Journal des contrôles de l'armoire — historique local des analyses
+ * effectuées (interactions, grossesse/allaitement, alertes armoire).
+ * Aucune donnée clinique nominative ne quitte le navigateur.
+ */
+export interface ArmoireJournalEntry {
+  id: string
+  at: number
+  profileId: string
+  profileName: string
+  itemsCount: number
+  interactions: number
+  maxSeverity: string | null
+  pregnancyAlerts: number
+  cabinetAlerts: number
+}
+
+export const MAX_JOURNAL_ENTRIES = 20
+
 export const MAX_PROFILES = 8
 export const MAX_ITEMS_PER_PROFILE = 30
 
@@ -151,6 +173,20 @@ interface DzPharmStore {
   ) => void
   removeArmoireItem: (profileId: string, uid: string) => void
   clearArmoireProfile: (profileId: string) => void
+
+  /** Journal des contrôles (20 dernières analyses, persisté). */
+  armoireJournal: ArmoireJournalEntry[]
+  addArmoireJournalEntry: (entry: Omit<ArmoireJournalEntry, 'id' | 'at'>) => void
+  clearArmoireJournal: () => void
+
+  /** Panier d'ordonnance Chifa persistant (Q4 — budget patient). */
+  chifaCardType: ChifaCardType
+  chifaLines: ChifaLine[]
+  setChifaCardType: (t: ChifaCardType) => void
+  addChifaLine: (line: ChifaLine) => AddResult
+  updateChifaLine: (uid: string, patch: Partial<Omit<ChifaLine, 'uid'>>) => void
+  removeChifaLine: (uid: string) => void
+  clearChifaLines: () => void
 }
 
 export const useDzPharm = create<DzPharmStore>()(
@@ -294,16 +330,52 @@ export const useDzPharm = create<DzPharmStore>()(
         set((s) => ({
           armoireItems: { ...s.armoireItems, [profileId]: [] },
         })),
+
+      armoireJournal: [],
+      addArmoireJournalEntry: (entry) =>
+        set((s) => ({
+          armoireJournal: [
+            {
+              ...entry,
+              id: `aj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+              at: Date.now(),
+            },
+            ...s.armoireJournal,
+          ].slice(0, MAX_JOURNAL_ENTRIES),
+        })),
+      clearArmoireJournal: () => set({ armoireJournal: [] }),
+
+      chifaCardType: 'standard',
+      chifaLines: [],
+      setChifaCardType: (t) => set({ chifaCardType: t }),
+      addChifaLine: (line) => {
+        const { chifaLines } = get()
+        if (chifaLines.some((l) => l.brand === line.brand)) return 'duplicate'
+        if (chifaLines.length >= MAX_CHIFA_LINES) return 'full'
+        set({ chifaLines: [...chifaLines, line] })
+        return 'added'
+      },
+      updateChifaLine: (uid, patch) =>
+        set((s) => ({
+          chifaLines: s.chifaLines.map((l) => (l.uid === uid ? { ...l, ...patch } : l)),
+        })),
+      removeChifaLine: (uid) =>
+        set((s) => ({ chifaLines: s.chifaLines.filter((l) => l.uid !== uid) })),
+      clearChifaLines: () => set({ chifaLines: [] }),
     }),
     {
       name: 'dzpharm-store',
-      // Persiste favoris + historique récent + armoire — l'état de navigation reste éphémère
+      // Persiste favoris + historique récent + armoire + journal + panier Chifa
+      // — l'état de navigation reste éphémère
       partialize: (state) => ({
         favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,
         armoireProfiles: state.armoireProfiles,
         armoireItems: state.armoireItems,
         activeArmoireProfileId: state.activeArmoireProfileId,
+        armoireJournal: state.armoireJournal,
+        chifaCardType: state.chifaCardType,
+        chifaLines: state.chifaLines,
       }),
     }
   )

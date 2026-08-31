@@ -10,6 +10,7 @@ import {
   Copy,
   FileSearch,
   HeartPulse,
+  History,
   Info,
   Lightbulb,
   Loader2,
@@ -19,10 +20,13 @@ import {
   Pencil,
   PersonStanding,
   Plus,
+  Printer,
   RefreshCw,
+  Scale,
   ShieldAlert,
   ShieldCheck,
   Stethoscope,
+  Sun,
   Trash2,
   UserRoundPlus,
   Users,
@@ -68,13 +72,16 @@ import type {
   InteractionsResponse,
   PregnancyCheckResponse,
   PregnancyRisk,
+  PediatricDosing,
 } from './types'
+import { PEDIATRIC_DRUGS, computeDose, type DoseResult } from '@/lib/pediatric-dosing'
 import { RISK_META, SeverityBadge, StatusBadge } from './status-badge'
 import {
   MAX_ITEMS_PER_PROFILE,
   MAX_PROFILES,
   useDzPharm,
   type ArmoireItem,
+  type ArmoireJournalEntry,
   type ArmoireProfile,
   type ArmoireRelation,
 } from './store'
@@ -162,7 +169,7 @@ const PREG_RISK_META_ALLAITEMENT: Record<string, { label: string; className: str
 /* Alertes calculées de l'armoire                                      */
 /* ------------------------------------------------------------------ */
 
-type AlertKind = 'expired' | 'expiring' | 'withdrawn' | 'duplicate'
+type AlertKind = 'expired' | 'expiring7' | 'expiring' | 'withdrawn' | 'duplicate'
 
 interface CabinetAlert {
   kind: AlertKind
@@ -173,6 +180,10 @@ interface CabinetAlert {
 const ALERT_KIND_META: Record<AlertKind, { label: string; className: string }> = {
   expired: {
     label: 'Périmé',
+    className: 'border-state-danger/40 bg-state-danger/10 text-state-danger',
+  },
+  expiring7: {
+    label: 'Péremption ≤ 7 j',
     className: 'border-state-danger/40 bg-state-danger/10 text-state-danger',
   },
   expiring: {
@@ -206,6 +217,12 @@ export function computeCabinetAlerts(items: ArmoireItem[]): CabinetAlert[] {
         brand: item.brand,
         message: `${item.brand} est périmé depuis ${Math.abs(d)} jour(s) — à rapporter à votre pharmacien pour destruction, ne pas jeter à la poubelle.`,
       })
+    } else if (d !== null && d <= 7) {
+      alerts.push({
+        kind: 'expiring7',
+        brand: item.brand,
+        message: `${item.brand} expire dans ${d} jour(s) — renouvelez-le dès cette semaine.`,
+      })
     } else if (d !== null && d <= 30) {
       alerts.push({
         kind: 'expiring',
@@ -236,7 +253,7 @@ export function computeCabinetAlerts(items: ArmoireItem[]): CabinetAlert[] {
       })
     }
   }
-  const order: AlertKind[] = ['expired', 'withdrawn', 'duplicate', 'expiring']
+  const order: AlertKind[] = ['expired', 'withdrawn', 'expiring7', 'duplicate', 'expiring']
   return alerts.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind))
 }
 
@@ -518,6 +535,364 @@ function buildPregnancyAlerts(
 }
 
 /* ------------------------------------------------------------------ */
+/* Rappels saisonniers (conseils d'organisation — éducation seule)     */
+/* ------------------------------------------------------------------ */
+
+function getSeasonalTips(date: Date): { season: string; tips: string[] } {
+  const m = date.getMonth() // 0-11
+  const tips: string[] = []
+  let season = ''
+  if (m >= 5 && m <= 7) {
+    season = 'Été'
+    tips.push(
+      'Chaleur : conservez les médicaments à l’abri de la chaleur (souvent < 25 °C, voir notice) — jamais dans une voiture.',
+      'Suspensions reconstituées : respectez la durée de conservation de la notice (souvent 7-14 jours au réfrigérateur) puis jetez-les.'
+    )
+  } else if (m >= 8 && m <= 9) {
+    season = 'Rentrée scolaire'
+    tips.push(
+      'Pédiculose : si l’école signale des poux, vérifiez les cheveux des enfants avant de traiter (shampooing/peigne fin selon avis pharmacien).',
+      'Mettez à jour le carnet de vaccination avant la rentrée.'
+    )
+  } else if (m >= 2 && m <= 4) {
+    season = 'Printemps'
+    tips.push(
+      'Allergies pollinaires : vérifiez que vos antihistaminiques ne sont pas périmés (cétirizine, loratadine…).'
+    )
+  } else {
+    season = 'Automne / Hiver'
+    tips.push(
+      'Saison grippale : vérifiez paracétamol et thermomètre dans l’armoire.',
+      'Sirops « ouverts » depuis plus d’un mois : à jeter (la durée après ouverture figure sur la notice).'
+    )
+  }
+  // Fenêtre Ramadan (février–mars) : rappel chronopharmacologie
+  if (m >= 1 && m <= 2) {
+    tips.push(
+      'Ramadan : les horaires des traitements chroniques (diabète, tension) doivent être adaptés avec votre médecin ou pharmacien avant le début du jeûne.'
+    )
+  }
+  return { season, tips }
+}
+
+/* ------------------------------------------------------------------ */
+/* Posologies pédiatriques adaptées au profil (armoire → poids)        */
+/* ------------------------------------------------------------------ */
+
+interface PediMatch {
+  item: ArmoireItem
+  drug: PediatricDosing
+  formIndex: number
+  formLabel: string
+  result: DoseResult
+}
+
+/** Choisit la forme du référentiel correspondant au dosage de la boîte. */
+function pickPediatricForm(drug: PediatricDosing, item: ArmoireItem): number {
+  const dosageKey = normKey(item.dosage).replace(/ /g, '')
+  if (dosageKey.length >= 4) {
+    const idx = drug.forms.findIndex((f) =>
+      normKey(f.label).replace(/ /g, '').includes(dosageKey)
+    )
+    if (idx >= 0) return idx
+  }
+  const liquid = drug.forms.findIndex((f) => f.perVolumeMl > 0)
+  return liquid >= 0 ? liquid : 0
+}
+
+function matchPediatricItems(
+  items: ArmoireItem[],
+  weightKg: number,
+  ageYears: number
+): PediMatch[] {
+  const matches: PediMatch[] = []
+  for (const item of items) {
+    const key = item.dciKey || normKey(item.dci)
+    const drug = PEDIATRIC_DRUGS.find((d) => d.dciKey === key)
+    if (!drug) continue
+    const formIndex = pickPediatricForm(drug, item)
+    const result = computeDose(drug, weightKg, Math.max(0, Math.round(ageYears * 12)), formIndex)
+    matches.push({ item, drug, formIndex, formLabel: drug.forms[formIndex].label, result })
+  }
+  return matches
+}
+
+function PediatricDoseCard({
+  matches,
+  profile,
+  onOpenTools,
+}: {
+  matches: PediMatch[]
+  profile: ArmoireProfile
+  onOpenTools: () => void
+}) {
+  return (
+    <Card className="border-primary/30">
+      <CardHeader className="pb-3">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <Scale className="size-5 text-primary" aria-hidden />
+          Posologies adaptées au poids
+        </h2>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Calcul déterministe (référentiel pédiatrique DzPharm) pour les médicaments de
+          l’armoire de {profile.name} — profil {profile.relation === 'bebe' ? 'bébé' : 'enfant'} de{' '}
+          {profile.weightKg} kg. Le volume en mL dépend de la forme choisie.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {profile.relation === 'bebe' && profile.ageYears < 2 ? (
+          <p className="rounded-lg border border-state-warning/40 bg-state-warning/10 p-2.5 text-[11px] leading-relaxed text-state-warning">
+            Âge saisi en années : pour un bébé, confirmez l’âge exact en mois — certaines
+            contre-indications (ex. ibuprofène &lt; 3 mois) s’apprécient en mois révolus.
+          </p>
+        ) : null}
+        <ul className="scroll-thin max-h-80 space-y-2.5 overflow-y-auto pr-1">
+          {matches.map((m) => (
+            <li key={m.item.uid} className="rounded-xl border border-border bg-muted/30 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-foreground">{m.item.brand}</p>
+                <Badge variant="outline" className="border-primary/25 bg-primary/5 text-[10px] text-primary">
+                  {m.drug.category}
+                </Badge>
+              </div>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {cleanDciLabel(m.item.dci)} · {m.formLabel}
+              </p>
+
+              {m.result.blockers.length > 0 ? (
+                <ul className="mt-2 space-y-1">
+                  {m.result.blockers.map((b, i) => (
+                    <li
+                      key={i}
+                      className="rounded-lg border border-state-danger/40 bg-state-danger/10 p-2 text-[11px] leading-relaxed text-state-danger"
+                      role="alert"
+                    >
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-2 grid gap-1.5 text-xs leading-relaxed text-foreground/90">
+                  <p>
+                    <span className="font-semibold">Par prise : </span>
+                    {m.result.doseMg != null ? `${m.result.doseMg} mg` : '—'}
+                    {m.result.capped ? ' (plafond adulte atteint)' : ''}
+                    {m.result.volumeMl != null && m.result.doseMg != null
+                      ? ` ≈ ${m.result.volumeMl} mL`
+                      : ''}
+                  </p>
+                  {m.drug.intervalH ? (
+                    <p>
+                      <span className="font-semibold">Espacement : </span>toutes les{' '}
+                      {m.drug.intervalH} h
+                    </p>
+                  ) : null}
+                  <p>
+                    <span className="font-semibold">Maximum / 24 h : </span>
+                    {m.result.maxDailyMg > 0 ? `${m.result.maxDailyMg} mg` : '—'}
+                  </p>
+                  {m.result.bandLabel ? (
+                    <p className="text-muted-foreground">{m.result.bandLabel}</p>
+                  ) : null}
+                </div>
+              )}
+
+              {m.drug.warnings.length > 0 ? (
+                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                  ⚠️ {m.drug.warnings[0]}
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Button variant="outline" size="sm" onClick={onOpenTools}>
+            <Scale className="size-3.5" aria-hidden />
+            Calculateur pédiatrique
+          </Button>
+          <p className="text-[10px] leading-relaxed text-muted-foreground">
+            Aide au calcul — ne remplace pas l’ordonnance ni l’avis du pédiatre/pharmacien.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Journal des contrôles                                               */
+/* ------------------------------------------------------------------ */
+
+function ArmoireJournalCard({
+  journal,
+  onClear,
+}: {
+  journal: ArmoireJournalEntry[]
+  onClear: () => void
+}) {
+  if (journal.length === 0) return null
+  const fmt = (at: number) =>
+    new Date(at).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-3">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <History className="size-5 text-primary" aria-hidden />
+          Journal des contrôles
+        </h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs text-muted-foreground"
+          onClick={onClear}
+        >
+          Vider
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <ul className="scroll-thin max-h-64 space-y-2 overflow-y-auto pr-1">
+          {journal.slice(0, 5).map((e) => (
+            <li key={e.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/30 p-2.5">
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-foreground">
+                  {e.profileName} · {e.itemsCount} médicament{e.itemsCount > 1 ? 's' : ''}
+                </p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  {e.interactions} interaction{e.interactions > 1 ? 's' : ''}
+                  {e.maxSeverity ? ` (${e.maxSeverity})` : ''}
+                  {e.pregnancyAlerts > 0
+                    ? ` · ${e.pregnancyAlerts} alerte(s) grossesse/allaitement`
+                    : ''}
+                  {e.cabinetAlerts > 0 ? ` · ${e.cabinetAlerts} alerte(s) armoire` : ''}
+                </p>
+              </div>
+              <time className="shrink-0 text-[10px] text-muted-foreground" dateTime={new Date(e.at).toISOString()}>
+                {fmt(e.at)}
+              </time>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Résumé imprimable (export PDF via window.print)                     */
+/* ------------------------------------------------------------------ */
+
+function ArmoirePrintSummary({
+  profiles,
+  itemsMap,
+  journal,
+}: {
+  profiles: ArmoireProfile[]
+  itemsMap: Record<string, ArmoireItem[]>
+  journal: ArmoireJournalEntry[]
+}) {
+  const now = new Date().toLocaleString('fr-FR', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  })
+  return (
+    <div className="hidden print:block print:text-black">
+      <h1 className="text-xl font-bold">DzPharm — Armoire familiale</h1>
+      <p className="mt-1 text-xs">Édition du {now} · données 100 % locales (navigateur)</p>
+
+      {profiles.map((p) => {
+        const items = itemsMap[p.id] ?? []
+        const alerts = computeCabinetAlerts(items)
+        return (
+          <section key={p.id} className="mt-5 break-inside-avoid">
+            <h2 className="text-base font-bold">
+              {p.name} — {RELATION_META[p.relation].label} · {ageLabel(p.ageYears)}
+              {p.weightKg != null ? ` · ${p.weightKg} kg` : ''}
+              {p.pregnant ? ' · grossesse' : ''}
+              {p.breastfeeding ? ' · allaitement' : ''}
+            </h2>
+            {items.length === 0 ? (
+              <p className="mt-1 text-xs italic">Aucun médicament enregistré.</p>
+            ) : (
+              <table className="mt-2 w-full border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-black/40 text-left">
+                    <th className="py-1 pr-2 font-semibold">Médicament</th>
+                    <th className="py-1 pr-2 font-semibold">DCI · dosage</th>
+                    <th className="py-1 pr-2 font-semibold">Péremption</th>
+                    <th className="py-1 pr-2 font-semibold">Boîtes</th>
+                    <th className="py-1 font-semibold">Statut registre</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((i) => {
+                    const d = daysUntil(i.expiry)
+                    return (
+                      <tr key={i.uid} className="border-b border-black/15 align-top">
+                        <td className="py-1 pr-2 font-medium">{i.brand}</td>
+                        <td className="py-1 pr-2">
+                          {cleanDciLabel(i.dci)}
+                          {i.dosage ? ` · ${i.dosage}` : ''}
+                        </td>
+                        <td className="py-1 pr-2">
+                          {i.expiry
+                            ? `${i.expiry}${d !== null ? (d < 0 ? ' (PÉRIMÉ)' : d <= 30 ? ` (J-${d})` : '') : ''}`
+                            : '—'}
+                        </td>
+                        <td className="py-1 pr-2">{i.quantity}</td>
+                        <td className="py-1">{i.status}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+            {alerts.length > 0 ? (
+              <ul className="mt-2 space-y-1 text-[11px]">
+                {alerts.map((a, idx) => (
+                  <li key={`${a.kind}-${idx}`}>
+                    <span className="font-bold">[{ALERT_KIND_META[a.kind].label}]</span>{' '}
+                    {a.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        )
+      })}
+
+      {journal.length > 0 ? (
+        <section className="mt-5 break-inside-avoid">
+          <h2 className="text-base font-bold">Derniers contrôles</h2>
+          <ul className="mt-2 space-y-1 text-[11px]">
+            {journal.slice(0, 5).map((e) => (
+              <li key={e.id}>
+                {new Date(e.at).toLocaleString('fr-FR')} — {e.profileName} :{' '}
+                {e.interactions} interaction(s)
+                {e.maxSeverity ? ` (${e.maxSeverity})` : ''}
+                {e.pregnancyAlerts > 0 ? `, ${e.pregnancyAlerts} alerte(s) grossesse` : ''}
+                {e.cabinetAlerts > 0 ? `, ${e.cabinetAlerts} alerte(s) armoire` : ''}.
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <footer className="mt-6 border-t border-black/30 pt-2 text-[10px] leading-relaxed">
+        Aide à l’organisation domestique — ne remplace ni l’avis du pharmacien, ni l’ordonnance,
+        ni la notice. Sources : nomenclature algérienne (Juin 2026) · liste des prix PPA (Août
+        2026). Document généré localement — aucune donnée de santé transmise.
+      </footer>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /* Vue Armoire                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -535,11 +910,17 @@ export function ArmoireView() {
   const removeItem = useDzPharm((s) => s.removeArmoireItem)
   const clearProfile = useDzPharm((s) => s.clearArmoireProfile)
   const openDrug = useDzPharm((s) => s.openDrug)
+  const journal = useDzPharm((s) => s.armoireJournal)
+  const addJournalEntry = useDzPharm((s) => s.addArmoireJournalEntry)
+  const clearJournal = useDzPharm((s) => s.clearArmoireJournal)
+  const setView = useDzPharm((s) => s.setView)
 
   const [profileDialogOpen, setProfileDialogOpen] = useState(false)
   const [editingProfile, setEditingProfile] = useState<ArmoireProfile | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ArmoireProfile | null>(null)
   const [clearTarget, setClearTarget] = useState<ArmoireProfile | null>(null)
+
+  const seasonal = useMemo(() => getSeasonalTips(new Date()), [])
 
   const active = useMemo(
     () => profiles.find((p) => p.id === activeId) ?? profiles[0] ?? null,
@@ -550,6 +931,13 @@ export function ArmoireView() {
     [itemsMap, active]
   )
   const alerts = useMemo(() => computeCabinetAlerts(items), [items])
+  const pediMatches = useMemo(
+    () =>
+      active && active.relation !== 'adulte' && active.weightKg != null && items.length > 0
+        ? matchPediatricItems(items, active.weightKg, active.ageYears)
+        : [],
+    [active, items]
+  )
 
   /* --------------------------- Analyse ----------------------------- */
 
@@ -582,11 +970,27 @@ export function ArmoireView() {
           ? Promise.all(items.map((i) => checkPregnancy(i.brand).catch(() => null)))
           : Promise.resolve([] as (PregnancyCheckResponse | null)[]),
       ])
+      const pregAlerts = buildPregnancyAlerts(preg, active)
       setAnalysisState({
         key: analysisKey,
         result: inter,
-        pregnancyAlerts: buildPregnancyAlerts(preg, active),
+        pregnancyAlerts: pregAlerts,
         error: false,
+      })
+      // Journal des contrôles (local, 20 dernières entrées)
+      const pairs = inter?.pairs ?? []
+      const maxSeverity =
+        pairs.length > 0
+          ? SEVERITY_ORDER.slice().reverse().find((sev) => pairs.some((p) => p.severity === sev)) ?? null
+          : null
+      addJournalEntry({
+        profileId: active.id,
+        profileName: active.name,
+        itemsCount: items.length,
+        interactions: pairs.length,
+        maxSeverity,
+        pregnancyAlerts: pregAlerts.length,
+        cabinetAlerts: alerts.length,
       })
     } catch {
       setAnalysisState({
@@ -682,7 +1086,7 @@ export function ArmoireView() {
   return (
     <div className="pb-10">
       {/* En-tête */}
-      <section aria-labelledby="armoire-title" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
+      <section aria-labelledby="armoire-title" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 print:hidden">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1
@@ -703,20 +1107,32 @@ export function ArmoireView() {
               grossesse et allaitement quand c’est pertinent.
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className="gap-1.5 border-primary/25 bg-primary/5 text-primary"
-          >
-            <Lock className="size-3" aria-hidden />
-            Données stockées dans votre navigateur
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              disabled={profiles.length === 0}
+              className="gap-1.5"
+            >
+              <Printer className="size-3.5" aria-hidden />
+              Exporter (PDF)
+            </Button>
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-primary/25 bg-primary/5 text-primary"
+            >
+              <Lock className="size-3" aria-hidden />
+              Données stockées dans votre navigateur
+            </Badge>
+          </div>
         </div>
       </section>
 
       {/* Barre des profils */}
       <section
         aria-label="Profils de la famille"
-        className="mx-auto max-w-7xl px-4 pt-6 sm:px-6"
+        className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 print:hidden"
       >
         <div className="no-scrollbar flex items-stretch gap-3 overflow-x-auto pb-2">
           {profiles.map((p) => {
@@ -822,7 +1238,7 @@ export function ArmoireView() {
       </section>
 
       {/* Contenu principal */}
-      <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 print:hidden">
         <AnimatePresence mode="wait">
           {!active ? (
             /* -------- État vide : aucun profil -------- */
@@ -1099,28 +1515,75 @@ export function ArmoireView() {
                   </CardContent>
                 </Card>
 
-                {/* Note enfant → calculateur pédiatrique */}
-                {active.relation !== 'adulte' && items.length > 0 ? (
+                {/* Note enfant → calculateur pédiatrique (si poids non saisi) */}
+                {active.relation !== 'adulte' && items.length > 0 && pediMatches.length === 0 ? (
                   <Card className="border-primary/30 bg-primary/5">
                     <CardContent className="flex items-start gap-3 py-4">
                       <Info className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
                       <p className="text-xs leading-relaxed text-foreground/90">
                         <strong className="text-foreground">Profil {active.relation === 'bebe' ? 'bébé' : 'enfant'} :</strong>{' '}
-                        les doses doivent être adaptées au poids. Utilisez le calculateur de
-                        posologies pédiatriques (Outils cliniques) pour convertir mg/kg → mL avec
-                        les formes locales.
+                        {active.weightKg == null
+                          ? 'saisissez le poids dans le profil pour calculer automatiquement les posologies mg/kg des médicaments de cette armoire.'
+                          : 'aucun médicament de cette armoire ne figure au référentiel pédiatrique (15 molécules).'}{' '}
+                        Le calculateur de posologies pédiatriques (Outils cliniques) reste
+                        disponible pour toutes les molécules.
                       </p>
                     </CardContent>
                   </Card>
                 ) : null}
+
+                {/* Posologies pédiatriques adaptées au poids du profil */}
+                {pediMatches.length > 0 ? (
+                  <PediatricDoseCard
+                    matches={pediMatches}
+                    profile={active}
+                    onOpenTools={() => setView('outils')}
+                  />
+                ) : null}
+
+                {/* Rappels saisonniers */}
+                {seasonal.tips.length > 0 ? (
+                  <Card className="border-chifa/30 bg-chifa/5">
+                    <CardHeader className="pb-3">
+                      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <Sun className="size-4 text-chifa" aria-hidden />
+                        Rappels saisonniers — {seasonal.season}
+                      </h2>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-1.5">
+                        {seasonal.tips.map((t, i) => (
+                          <li key={i} className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground">
+                            <Check className="mt-0.5 size-3.5 shrink-0 text-chifa" aria-hidden />
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 h-8 gap-1.5 px-2 text-xs text-chifa"
+                        onClick={() => setView('outils')}
+                      >
+                        Adaptateur Ramadan & outils
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : null}
+
+                {/* Journal des contrôles */}
+                <ArmoireJournalCard journal={journal} onClear={clearJournal} />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </section>
 
+      {/* Résumé imprimable (visible uniquement à l'impression) */}
+      <ArmoirePrintSummary profiles={profiles} itemsMap={itemsMap} journal={journal} />
+
       {/* Pied de vue */}
-      <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 print:hidden">
         <p className="rounded-xl border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
           L’armoire familiale est une aide à l’organisation domestique : elle ne remplace ni
           l’avis d’un pharmacien, ni une ordonnance, ni la lecture de la notice. En cas de doute
@@ -1205,6 +1668,7 @@ function ItemRow({
 }) {
   const d = daysUntil(item.expiry)
   const expired = d !== null && d < 0
+  const urgent = d !== null && d >= 0 && d <= 7
   const expiringSoon = d !== null && d >= 0 && d <= 30
   const fid = useId()
 
@@ -1216,7 +1680,7 @@ function ItemRow({
       exit={{ opacity: 0 }}
       className={cn(
         'rounded-xl border bg-card p-3.5 transition-colors',
-        expired
+        expired || urgent
           ? 'border-state-danger/50'
           : item.status === 'RETRIE'
             ? 'border-state-danger/40'
@@ -1242,6 +1706,13 @@ function ItemRow({
                 className="shrink-0 border-transparent bg-state-danger px-1.5 text-[10px] text-white"
               >
                 Périmé
+              </Badge>
+            ) : urgent ? (
+              <Badge
+                variant="outline"
+                className="shrink-0 border-state-danger/40 bg-state-danger/10 px-1.5 text-[10px] text-state-danger"
+              >
+                {d === 0 ? 'Expire aujourd’hui' : `Expire dans ${d} j`}
               </Badge>
             ) : expiringSoon ? (
               <Badge

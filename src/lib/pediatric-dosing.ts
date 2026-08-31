@@ -5,6 +5,12 @@ import type { PediatricDosing } from '@/components/dzpharm/types'
  * en Algérie (nomenclature officielle). Sources : référentiels usuels
  * (OMS, dictionnaires de posologie pédiatrique) adaptés aux spécialités
  * locales. Outil d'aide — ne remplace pas la validation médicale.
+ *
+ * NOTE D'INTÉGRITÉ (alignement registre, session 2026-09) : les listes de
+ * marques par forme ont été re-vérifiées ligne à ligne contre la base
+ * nomenclature (statut ACTIF) ; les marques retirées / non renouvelées sont
+ * isolées dans `withdrawnBrands`. AUCUNE valeur clinique (mg/kg, intervalles,
+ * plafonds, âges minimaux) n'a été modifiée lors de cet alignement.
  */
 export const PEDIATRIC_DRUGS: PediatricDosing[] = [
   {
@@ -19,13 +25,28 @@ export const PEDIATRIC_DRUGS: PediatricDosing[] = [
     minAgeMonths: 1,
     minWeightKg: 3,
     forms: [
-      { label: 'Suspension buvable 120 mg/5 mL (2,4 %)', mg: 120, perVolumeMl: 5, brands: 'PARALGAN, DOLIPRANE pédiatrique' },
+      {
+        label: 'Suspension buvable 120 mg/5 mL (2,4 %)',
+        mg: 120,
+        perVolumeMl: 5,
+        brands: 'DOLIBON, DOLIPRANE 2,4 %, DOLYMEX, MIGRAMOL pédiatrique, PARALGAN',
+      },
       { label: 'Solution buvable 100 mg/5 mL', mg: 100, perVolumeMl: 5, brands: 'ISOMOL' },
-      { label: 'Sachet 100 mg (poudre pour solution buvable)', mg: 100, perVolumeMl: 0, brands: 'EXPANDOL, SAPRAMOL, PARALGAN' },
-      { label: 'Sachet 150 mg', mg: 150, perVolumeMl: 0, brands: 'PARACETAMOL BIOCARE, EXPANDOL' },
-      { label: 'Suppositoire 100 mg', mg: 100, perVolumeMl: 0, brands: 'DOLIPRANE suppositoires' },
-      { label: 'Suppositoire 150 mg', mg: 150, perVolumeMl: 0, brands: 'PARALGAN suppositoires' },
-      { label: 'Suppositoire 200 mg', mg: 200, perVolumeMl: 0, brands: 'PARALGAN suppositoires' },
+      {
+        label: 'Sachet 100 mg (poudre pour solution buvable)',
+        mg: 100,
+        perVolumeMl: 0,
+        brands: 'EXPANDOL, SAPRAMOL, PARALGAN, PARACETAMOL PHYSIOPHARM',
+      },
+      {
+        label: 'Sachet 150 mg',
+        mg: 150,
+        perVolumeMl: 0,
+        brands: 'EXPANDOL, PARACETAMOL BIOCARE, SAPRAMOL, PARACETAMOL PHYSIOPHARM',
+      },
+      { label: 'Suppositoire 100 mg', mg: 100, perVolumeMl: 0, brands: 'DOLIPRANE, DOLYMEX, PAROL, SUPPFADOL 100' },
+      { label: 'Suppositoire 150 mg', mg: 150, perVolumeMl: 0, brands: 'DOLIPRANE, PARACETAMOL DBF, SUPPFADOL 150' },
+      { label: 'Suppositoire 200 mg', mg: 200, perVolumeMl: 0, brands: 'DOLIPRANE, DOLYMEX, PAROL, SUPPFADOL 200' },
     ],
     warnings: [
       'Prise maximale : 4 prises par 24 h (espacement ≥ 6 h, 4 h possible exceptionnellement).',
@@ -46,7 +67,19 @@ export const PEDIATRIC_DRUGS: PediatricDosing[] = [
     minAgeMonths: 3,
     minWeightKg: 6,
     forms: [
-      { label: 'Suspension buvable 100 mg/5 mL (20 mg/mL)', mg: 100, perVolumeMl: 5, brands: 'ADVIFEN, ANTALFEN, CALMOFEN, ALGIFEN' },
+      {
+        label: 'Suspension buvable 100 mg/5 mL (20 mg/mL)',
+        mg: 100,
+        perVolumeMl: 5,
+        brands:
+          'ADVIFEN, ALGIFEN, ANTALFEN, ARDIL, CALMOFEN, IBUFEN, LAMIFENE, NARUFENE 2 %, NEUPREN, PACIFENE, POLYPHENE, RUMIFEN, XYDOL enfants et nourrissons',
+      },
+    ],
+    withdrawnBrands: [
+      'BRUFEN (sirop 100 mg/5 mL — non renouvelé)',
+      'ADVIL (sirop — retiré)',
+      'SAPOFEN JUNIOR (sirop 100 mg/5 mL — retiré)',
+      'DOLORAZ (suspension 100 mg/5 mL — retirée)',
     ],
     warnings: [
       'Contre-indiqué avant 3 mois (et si poids < 6 kg).',
@@ -54,7 +87,7 @@ export const PEDIATRIC_DRUGS: PediatricDosing[] = [
       'Ne pas associer à un autre AINS ni à l\'aspirine ; prendre pendant le repas.',
       'Arrêt et avis médical si douleur abdominale ou urines foncées.',
     ],
-    note: 'Alternative au paracétamol après 3 mois ; durée maximale 3 jours en antipyrétique.',
+    note: 'Alternative au paracétamol après 3 mois ; durée maximale 3 jours en antipyrétique. Attention : ANTALFEN GYN (comprimé 100 mg) est du FLURBIPROFÈNE gynécologique, sans rapport avec le sirop ANTALFEN ibuprofène enfants.',
   },
   {
     dci: 'Amoxicilline',

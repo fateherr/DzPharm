@@ -263,6 +263,13 @@ export interface PediatricDosing {
   forms: PediatricForm[]
   warnings: string[]
   note?: string
+  /**
+   * Marques pédiatriques de cette molécule retirées du marché ou non
+   * renouvelées dans le registre algérien (vérifiées en base). Permet
+   * d'alerter l'utilisateur qui les cite encore (ex. BRUFEN sirop).
+   * Données de nomenclature — aucun impact sur les valeurs cliniques.
+   */
+  withdrawnBrands?: string[]
 }
 
 export interface PediatricBand {
@@ -285,6 +292,8 @@ export interface ChifaLine {
   uid: string
   brand: string
   dci: string
+  /** Clé DCI normalisée — détection de doublons dans le panier. */
+  dciKey?: string
   price: number
   /** Taux de remboursement applicable au produit (0, 40, 80, 100 %). */
   rate: number

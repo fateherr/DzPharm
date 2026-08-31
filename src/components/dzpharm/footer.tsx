@@ -7,7 +7,7 @@ import { useDzPharm } from './store'
 export function Footer() {
   const setView = useDzPharm((s) => s.setView)
   return (
-    <footer className="mt-auto w-full border-t border-border/70 bg-card/40">
+    <footer className="mt-auto w-full border-t border-border/70 bg-card/40 print:hidden">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-xs text-muted-foreground sm:flex-row sm:px-6">
         <p className="flex items-center gap-1.5 text-center sm:text-left">
           <Database className="size-3.5 shrink-0" aria-hidden />

@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
+  AlertTriangle,
   BadgeCheck,
   BadgeDollarSign,
   Calculator,
   CircleDollarSign,
+  Copy,
   CreditCard,
   HeartPulse,
   Info,
@@ -28,20 +30,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import type { ChifaCardType } from './types'
+import type { ChifaCardType, ChifaLine } from './types'
 import { SearchAutocomplete } from './search-autocomplete'
 import { fetchDrugDetail } from './api'
 import { formatPrice } from './status-badge'
 import { useToast } from '@/hooks/use-toast'
 import { SafetyNote } from './safety-note'
-
-interface Line {
-  uid: string
-  brand: string
-  dci: string
-  price: number
-  rate: number
-}
+import { MAX_CHIFA_LINES, useDzPharm } from './store'
 
 const CARD_TYPES: Record<
   ChifaCardType,
@@ -87,11 +82,13 @@ function fmtDA(n: number): string {
 
 export function ChifaSimulator() {
   const { toast } = useToast()
-  const [cardType, setCardType] = useState<ChifaCardType>('standard')
-  const [lines, setLines] = useState<Line[]>([
-    { uid: 'demo-1', brand: 'GLUCOPHAGE 850 mg', dci: 'METFORMINE', price: 442.8, rate: 80 },
-    { uid: 'demo-2', brand: 'PARALGAN 500 mg (boîte de 20)', dci: 'PARACETAMOL', price: 96.19, rate: 80 },
-  ])
+  const cardType = useDzPharm((s) => s.chifaCardType)
+  const setCardType = useDzPharm((s) => s.setChifaCardType)
+  const lines = useDzPharm((s) => s.chifaLines)
+  const addLineStore = useDzPharm((s) => s.addChifaLine)
+  const updateLineStore = useDzPharm((s) => s.updateChifaLine)
+  const removeLineStore = useDzPharm((s) => s.removeChifaLine)
+  const clearLines = useDzPharm((s) => s.clearChifaLines)
 
   /** Taux de la carte plafonne le taux du produit : min(taux produit, taux carte). */
   const cardRate = cardType === 'ald' ? 100 : cardType === 'aucune' ? 0 : cardType === 'standard' || cardType === 'casnos' ? 80 : 0
@@ -110,18 +107,49 @@ export function ChifaSimulator() {
     }
   }, [lines, cardRate])
 
-  async function addLine(drug: { id: number; brand: string; dci: string }) {
+  /** Détection de doublons de DCI (risque de surdosage par redondance). */
+  const duplicateGroups = useMemo(() => {
+    const keyOf = (l: ChifaLine) =>
+      (l.dciKey ?? l.dci)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/\*+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    const groups = new Map<string, ChifaLine[]>()
+    for (const l of lines) {
+      const k = keyOf(l)
+      if (!k || k === 'ASSOCIATION') continue
+      groups.set(k, [...(groups.get(k) ?? []), l])
+    }
+    return [...groups.entries()]
+      .filter(([, ls]) => ls.length >= 2)
+      .map(([dci, ls]) => ({ dci, lines: ls }))
+  }, [lines])
+
+  async function addLine(drug: { id: number; brand: string; dci: string; dciKey?: string }) {
     const uid = `${drug.id}-${Date.now()}`
-    let added = false
-    setLines((prev) => {
-      if (prev.some((l) => l.brand === drug.brand)) {
-        toast({ title: 'Déjà présent', description: `${drug.brand} figure déjà dans l'ordonnance.` })
-        return prev
-      }
-      added = true
-      return [...prev, { uid, brand: drug.brand, dci: drug.dci, price: 100, rate: 80 }]
+    const result = addLineStore({
+      uid,
+      brand: drug.brand,
+      dci: drug.dci,
+      dciKey: drug.dciKey,
+      price: 100,
+      rate: 80,
     })
-    if (!added) return
+    if (result === 'duplicate') {
+      toast({ title: 'Déjà présent', description: `${drug.brand} figure déjà dans l'ordonnance.` })
+      return
+    }
+    if (result === 'full') {
+      toast({
+        title: 'Ordonnance complète',
+        description: `Maximum ${MAX_CHIFA_LINES} lignes par simulation.`,
+        variant: 'destructive',
+      })
+      return
+    }
     // Récupère le prix public réel (liste officine) pour ce médicament
     try {
       const res = await fetchDrugDetail(drug.id)
@@ -129,11 +157,7 @@ export function ChifaSimulator() {
       if (ph && ph.ppa != null) {
         const realPrice = Math.round(ph.ppa * 100) / 100
         const rate = ph.refundable ? 80 : 0
-        setLines((prev) =>
-          prev.map((l) =>
-            l.uid === uid ? { ...l, price: realPrice, rate } : l
-          )
-        )
+        updateLineStore(uid, { price: realPrice, rate })
         toast({
           title: 'Prix réel appliqué',
           description: `${drug.brand} : ${formatPrice(realPrice)}${
@@ -146,12 +170,43 @@ export function ChifaSimulator() {
     }
   }
 
-  function updateLine(uid: string, patch: Partial<Line>) {
-    setLines((prev) => prev.map((l) => (l.uid === uid ? { ...l, ...patch } : l)))
+  function updateLine(uid: string, patch: Partial<Omit<ChifaLine, 'uid'>>) {
+    updateLineStore(uid, patch)
   }
 
   function removeLine(uid: string) {
-    setLines((prev) => prev.filter((l) => l.uid !== uid))
+    removeLineStore(uid)
+  }
+
+  /** Export : copie le récapitulatif texte (presse-papiers). */
+  async function copySummary() {
+    const linesText = lines
+      .map(
+        (l, i) =>
+          `${i + 1}. ${l.brand} (${l.dci}) — ${fmtDA(l.price)} · taux produit ${l.rate} % → remboursé ${fmtDA(
+            (l.price * Math.min(l.rate, cardRate)) / 100
+          )}`
+      )
+      .join('\n')
+    const text =
+      `DzPharm — Ordonnance Chifa (simulation)\n` +
+      `Carte : ${CARD_TYPES[cardType].label}\n\n` +
+      `${linesText}\n\n` +
+      `Total : ${fmtDA(totals.total)}\nRemboursé : ${fmtDA(totals.reimbursed)}\nReste à charge : ${fmtDA(totals.patientPays)} (taux effectif ${totals.effectiveRate} %)\n\n` +
+      `Simulation indicative — tarifs de référence CNAS ; prix PPA à ajuster selon la pharmacie.`
+    try {
+      await navigator.clipboard.writeText(text)
+      toast({
+        title: 'Récapitulatif copié',
+        description: `${lines.length} ligne(s) collables dans un message ou un document.`,
+      })
+    } catch {
+      toast({
+        title: 'Copie impossible',
+        description: "Votre navigateur a refusé l'accès au presse-papiers.",
+        variant: 'destructive',
+      })
+    }
   }
 
   const CardIcon = CARD_TYPES[cardType].icon
@@ -200,15 +255,26 @@ export function ChifaSimulator() {
                 Ordonnance simulée
               </span>
               {lines.length > 0 ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-muted-foreground hover:text-state-danger"
-                  onClick={() => setLines([])}
-                  aria-label="Vider l'ordonnance"
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
+                <span className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2 text-xs text-primary"
+                    onClick={() => void copySummary()}
+                  >
+                    <Copy className="size-3.5" aria-hidden />
+                    Copier
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-muted-foreground hover:text-state-danger"
+                    onClick={() => clearLines()}
+                    aria-label="Vider l'ordonnance"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </span>
               ) : null}
             </CardTitle>
           </CardHeader>
@@ -232,8 +298,17 @@ export function ChifaSimulator() {
                 {lines.map((l) => {
                   const applied = Math.min(l.rate, cardRate)
                   const remb = (l.price * applied) / 100
+                  const isDuplicate = duplicateGroups.some((g) =>
+                    g.lines.some((gl) => gl.uid === l.uid)
+                  )
                   return (
-                    <li key={l.uid} className="rounded-lg border border-border bg-card p-3">
+                    <li
+                      key={l.uid}
+                      className={cn(
+                        'rounded-lg border bg-card p-3',
+                        isDuplicate ? 'border-state-warning/50 bg-state-warning/5' : 'border-border'
+                      )}
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-foreground">
@@ -322,6 +397,26 @@ export function ChifaSimulator() {
                 })}
               </ul>
             )}
+
+            {/* Doublons de DCI dans l'ordonnance */}
+            {duplicateGroups.length > 0 ? (
+              <div
+                role="alert"
+                className="space-y-1.5 rounded-lg border border-state-warning/40 bg-state-warning/10 p-3"
+              >
+                <p className="flex items-center gap-1.5 text-xs font-bold text-state-warning">
+                  <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+                  Doublon de DCI dans l’ordonnance
+                </p>
+                {duplicateGroups.map((g) => (
+                  <p key={g.dci} className="text-[11px] leading-relaxed text-foreground/85">
+                    <span className="font-semibold">{g.dci.toLowerCase()}</span> est présent(e)
+                    dans {g.lines.length} produits ({g.lines.map((l) => l.brand).join(' + ')}) —
+                    risque de dépassement de la dose maximale ; à valider avec le prescripteur.
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

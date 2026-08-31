@@ -476,9 +476,18 @@ export function DrugSheet() {
                       <p className="mt-1.5 text-3xl font-bold tracking-tight text-foreground tabular-nums">
                         {formatPrice(drug.pharmacy[0].ppa)}
                       </p>
-                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {drug.pharmacy[0].name}
-                        {drug.pharmacy[0].lab ? ` · ${drug.pharmacy[0].lab}` : ''}
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-relaxed text-muted-foreground">
+                        <span>
+                          {drug.pharmacy[0].name}
+                          {drug.pharmacy[0].lab ? ` · ${drug.pharmacy[0].lab}` : ''}
+                        </span>
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-card/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                          title="Date de la liste des prix utilisée comme source"
+                        >
+                          <CalendarClock className="size-3" aria-hidden />
+                          Dernière vérification : Août 2026
+                        </span>
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
@@ -705,6 +714,14 @@ export function DrugSheet() {
                   <Metric label="Enregistré le" value={formatDate(drug.regDateInitial)} icon={CalendarClock} />
                   <Metric label="Expire le" value={formatDate(drug.regDateFinal)} icon={CalendarX2} />
                 </div>
+                <p
+                  className="mt-2.5 flex items-center gap-1.5 text-[10px] text-muted-foreground"
+                  title="Édition de la nomenclature officielle utilisée comme source"
+                >
+                  <CalendarClock className="size-3" aria-hidden />
+                  Données d'enregistrement : nomenclature officielle — dernière vérification Juin
+                  2026
+                </p>
                 {drug.obs ? (
                   <div className="mt-2.5 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground/90">
                     <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
