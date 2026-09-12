@@ -82,6 +82,14 @@ export const MAX_RECENT = 8
 interface DzPharmStore {
   view: ViewId
   setView: (view: ViewId) => void
+  /**
+   * Ouvre la vue Outils en pré-sélectionnant un onglet spécifique.
+   * Utilisé par les raccourcis Hub (Armoire → Calculateurs).
+   * Valeurs : 'pediatrie' | 'renale' | 'grossesse' | 'chifa' | …
+   */
+  toolsTab: string | null
+  openTool: (tab: string) => void
+  clearToolsTab: () => void
 
   /** Mode d'usage (professionnel vs famille) — persisté. */
   audience: Audience
@@ -159,6 +167,10 @@ export const useDzPharm = create<DzPharmStore>()(
     (set, get) => ({
       view: 'accueil',
       setView: (view) => set({ view }),
+
+      toolsTab: null,
+      openTool: (tab) => set({ view: 'outils', toolsTab: tab }),
+      clearToolsTab: () => set({ toolsTab: null }),
 
       audience: 'pro',
       setAudience: (audience) => set({ audience }),
@@ -272,6 +284,7 @@ export const useDzPharm = create<DzPharmStore>()(
           quantity: 1,
           expiry: '',
           openedAt: '',
+          duree_pao_jours: null,
           purchasedAt: '',
           kits: [],
           memberIds: [],
@@ -331,13 +344,15 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      version: 1,
+      version: 2,
       /**
        * Migration v0 → v1 : ancien modèle (profils × items imbriqués) vers
        * le modèle du plan (membres + entrées assignables/partagées).
-       * Les données existantes sont conservées au maximum.
+       * Migration v1 → v2 : nouveaux champs ArmoireMember (sexe, taille_cm,
+       * maladies, memberNotes) et ArmoireEntry (duree_pao_jours) — defaults
+       * backward-compatibles, aucune donnée perdue.
        */
-      migrate: (persisted, _version) => {
+      migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown> & {
           armoireProfiles?: {
             id: string
@@ -377,18 +392,24 @@ export const useDzPharm = create<DzPharmStore>()(
           }[]
         }
         const next: Record<string, unknown> = { ...state }
+
+        // v0 → v1: migrate old armoireProfiles + armoireItems model
         if (Array.isArray(state.armoireProfiles)) {
           next.armoireMembers = state.armoireProfiles.map((p, i) => ({
             id: p.id,
             name: p.name,
             relation: p.relation,
+            sexe: undefined,
             ageYears: p.ageYears,
             weightKg: p.weightKg,
+            taille_cm: null,
             color: MEMBER_COLORS[i % MEMBER_COLORS.length].id,
             pregnant: p.pregnant,
             breastfeeding: p.breastfeeding,
             renal: false,
             allergies: [],
+            maladies: [],
+            memberNotes: '',
             restricted: false,
             createdAt: p.createdAt,
           }))
@@ -408,6 +429,7 @@ export const useDzPharm = create<DzPharmStore>()(
                 quantity: it.quantity,
                 expiry: it.expiry,
                 openedAt: '',
+                duree_pao_jours: null,
                 purchasedAt: '',
                 kits: [],
                 memberIds: [profileId],
@@ -421,7 +443,6 @@ export const useDzPharm = create<DzPharmStore>()(
             }
           }
           next.armoireEntries = entries
-          // Journal v0 → v1 (scope textuel).
           if (Array.isArray(state.armoireJournal)) {
             next.armoireJournal = state.armoireJournal.map((j) => ({
               id: j.id,
@@ -438,6 +459,26 @@ export const useDzPharm = create<DzPharmStore>()(
         delete next.armoireProfiles
         delete next.armoireItems
         delete next.activeArmoireProfileId
+
+        // v1 → v2: fill new ArmoireMember and ArmoireEntry fields with safe defaults
+        if (version <= 1) {
+          if (Array.isArray(next.armoireMembers)) {
+            next.armoireMembers = (next.armoireMembers as Record<string, unknown>[]).map((m) => ({
+              maladies: [],
+              memberNotes: '',
+              taille_cm: null,
+              sexe: undefined,
+              ...m,
+            })) as unknown as ArmoireMember[]
+          }
+          if (Array.isArray(next.armoireEntries)) {
+            next.armoireEntries = (next.armoireEntries as Record<string, unknown>[]).map((e) => ({
+              duree_pao_jours: null,
+              ...e,
+            })) as unknown as ArmoireEntry[]
+          }
+        }
+
         return next as unknown as DzPharmStore
       },
       // Persiste mode d'usage + favoris + historique récent + armoire v2

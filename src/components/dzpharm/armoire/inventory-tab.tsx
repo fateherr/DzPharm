@@ -39,7 +39,7 @@ import {
 import type { AlertKind, ArmoireCategory, ArmoireEntry, ArmoireKit, ArmoireMember } from './types'
 import { CATEGORY_META, CATEGORY_ORDER, KIT_META, memberColor } from './constants'
 import type { EntryGroup, GroupAxis } from './utils'
-import { alertsByEntry, daysUntil, entryMatchesQuery, groupEntries, initials } from './utils'
+import { alertsByEntry, daysUntil, effectiveExpiry, entryMatchesQuery, groupEntries, initials } from './utils'
 import { EntryCard } from './entry-card'
 
 export interface InventoryTabProps {
@@ -51,6 +51,8 @@ export interface InventoryTabProps {
   onOpenSheet: (drugId: number) => void
   onRestock: (entry: ArmoireEntry) => void
   onManageMembers: () => void
+  /** "Marquer comme ouvert aujourd'hui" (plan 2.6 — PAO). */
+  onMarkOpened: (uid: string) => void
 }
 
 /* ------------------------------------------------------------------ */
@@ -74,8 +76,8 @@ function sortEntries(list: ArmoireEntry[], mode: SortMode): ArmoireEntry[] {
   const copy = [...list]
   if (mode === 'peremption') {
     copy.sort((a, b) => {
-      const da = daysUntil(a.expiry)
-      const db = daysUntil(b.expiry)
+      const da = daysUntil(effectiveExpiry(a))
+      const db = daysUntil(effectiveExpiry(b))
       if (da == null && db == null) return a.brand.localeCompare(b.brand, 'fr')
       if (da == null) return 1
       if (db == null) return -1
@@ -103,6 +105,7 @@ export function InventoryTab({
   onOpenSheet,
   onRestock,
   onManageMembers,
+  onMarkOpened,
 }: InventoryTabProps) {
   /* ------------- Contrôles ----------------------------------------- */
   const [query, setQuery] = useState('')
@@ -117,8 +120,13 @@ export function InventoryTab({
   /* ------------- Filtres ------------------------------------------- */
   const filtered = useMemo(() => {
     const q = query.trim()
+    // Build a name lookup for member-name search
+    const memberNameById = new Map(members.map((m) => [m.id, m.name]))
     return entries.filter((e) => {
-      if (q && !entryMatchesQuery(e, q)) return false
+      if (q) {
+        const memberNames = e.memberIds.map((id) => memberNameById.get(id) ?? '')
+        if (!entryMatchesQuery(e, q, memberNames)) return false
+      }
       if (memberFilter !== 'all' && !e.memberIds.includes(memberFilter)) return false
       if (statusFilter === 'alertes') {
         const list = perEntry.get(e.uid)
@@ -127,7 +135,7 @@ export function InventoryTab({
       }
       return true
     })
-  }, [entries, query, memberFilter, statusFilter, perEntry])
+  }, [entries, query, memberFilter, statusFilter, perEntry, members])
 
   /* ------------- Groupes + tri intra-groupe ------------------------ */
   const groups = useMemo(() => {
@@ -180,7 +188,10 @@ export function InventoryTab({
   )
 
   const hasExpiredVisible = useMemo(
-    () => filtered.some((e) => daysUntil(e.expiry) != null && (daysUntil(e.expiry) as number) < 0),
+    () => filtered.some((e) => {
+      const d = daysUntil(effectiveExpiry(e))
+      return d != null && d < 0
+    }),
     [filtered]
   )
 
@@ -485,6 +496,7 @@ export function InventoryTab({
                     onRemove={onRemove}
                     onOpenSheet={onOpenSheet}
                     onRestock={onRestock}
+                    onMarkOpened={onMarkOpened}
                   />
                 ))}
               </div>

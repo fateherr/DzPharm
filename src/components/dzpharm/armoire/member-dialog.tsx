@@ -1,25 +1,23 @@
 'use client'
 
 /**
- * Armoire — dialogue de création/édition d'un membre du foyer (plan 3.3).
+ * Armoire — dialogue de création/édition d'un membre du foyer.
  *
- * Champs : identité (nom, relation, âge, poids, couleur d'avatar), drapeaux
- * cliniques (grossesse/allaitement → CRAT, fonction rénale → outil dédié),
- * allergies connues et visibilité restreinte (verrou PIN de l'armoire).
+ * Phase 1 du plan d'amélioration :
+ * - Sexe (Homme/Femme, optionnel) — masque Grossesse/Allaitement pour les
+ *   membres masculins IMMÉDIATEMENT sans rechargement, sans détruire les
+ *   données déjà saisies.
+ * - Taille (cm, optionnel 30-250)
+ * - Maladies / antécédents (multi-select domaines DzPharm + texte libre)
+ *   visually distinct de Allergies (warning-colored)
+ * - Notes par membre (max 1000 chars)
  *
- * Le formulaire vit DANS le DialogContent : Radix démonte le contenu à la
- * fermeture, donc chaque ouverture repart d'un état vierce pré-rempli depuis
- * `editing` (le parent définit `editing` AVANT d'ouvrir) — aucun reset par
- * effet n'est nécessaire.
- *
- * Aucune donnée clinique n'est inventée ici : les drapeaux sont de simples
- * déclarations utilisateur qui alimentent les outils existants (Analyse,
- * CRAT, fonction rénale) — jamais de posologie ni de contre-indication
- * fabriquées.
+ * Comportement héritage : membres existants sans `sexe` → affichent les
+ * champs Grossesse/Allaitement par défaut (safe direction).
  */
 
 import { useState } from 'react'
-import { Activity, Baby, HeartPulse, Lock, Plus, Trash2, X } from 'lucide-react'
+import { Activity, Baby, HeartPulse, Lock, Plus, Ruler, Stethoscope, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,8 +33,18 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import type { ArmoireMember, ArmoireMemberInput, ArmoireRelation } from './types'
-import { ALLERGY_PRESETS, MAX_ALLERGIES, MEMBER_COLORS, RELATION_META } from './constants'
+import { Textarea } from '@/components/ui/textarea'
+import type { ArmoireMember, ArmoireMemberInput, ArmoireRelation, ArmoireSexe } from './types'
+import {
+  ALLERGY_PRESETS,
+  MALADIES_PRESETS,
+  MAX_ALLERGIES,
+  MAX_MALADIES,
+  MAX_MEMBER_NOTES_CHARS,
+  MEMBER_COLORS,
+  RELATION_META,
+  SEXE_META,
+} from './constants'
 
 export interface MemberDialogProps {
   open: boolean
@@ -47,9 +55,17 @@ export interface MemberDialogProps {
 }
 
 const RELATIONS: ArmoireRelation[] = ['adulte', 'enfant', 'bebe']
+const SEXES: ArmoireSexe[] = ['homme', 'femme']
 
 /** Poids saisi « 62,5 » → 62.5 (null si vide, NaN si invalide). */
 function parseWeight(raw: string): number | null | typeof NaN {
+  const t = raw.trim()
+  if (!t) return null
+  return Number(t.replace(',', '.'))
+}
+
+/** Taille saisie → number | null | NaN */
+function parseTaille(raw: string): number | null | typeof NaN {
   const t = raw.trim()
   if (!t) return null
   return Number(t.replace(',', '.'))
@@ -69,29 +85,45 @@ interface MemberFormProps {
 function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberFormProps) {
   const [name, setName] = useState(() => editing?.name ?? '')
   const [relation, setRelation] = useState<ArmoireRelation>(() => editing?.relation ?? 'adulte')
+  // sexe is optional; undefined = unset (legacy members default to showing pregnancy fields)
+  const [sexe, setSexe] = useState<ArmoireSexe | undefined>(() => editing?.sexe)
   const [age, setAge] = useState(() => (editing ? String(editing.ageYears) : '30'))
   const [weight, setWeight] = useState(() =>
     editing?.weightKg != null ? String(editing.weightKg).replace('.', ',') : ''
   )
+  const [taille, setTaille] = useState(() =>
+    editing?.taille_cm != null ? String(editing.taille_cm) : ''
+  )
   const [color, setColor] = useState(() => editing?.color ?? MEMBER_COLORS[0].id)
+  // Keep pregnancy/breastfeeding data even when sexe=homme (hide-don't-delete rule)
   const [pregnant, setPregnant] = useState(() => editing?.pregnant ?? false)
   const [breastfeeding, setBreastfeeding] = useState(() => editing?.breastfeeding ?? false)
   const [renal, setRenal] = useState(() => editing?.renal ?? false)
   const [allergies, setAllergies] = useState<string[]>(() => editing?.allergies ?? [])
   const [allergyInput, setAllergyInput] = useState('')
+  const [maladies, setMaladies] = useState<string[]>(() => editing?.maladies ?? [])
+  const [maladieInput, setMaladieInput] = useState('')
+  const [memberNotes, setMemberNotes] = useState(() => editing?.memberNotes ?? '')
   const [restricted, setRestricted] = useState(() => editing?.restricted ?? false)
+
+  // Validation errors
   const [nameError, setNameError] = useState('')
   const [ageError, setAgeError] = useState('')
   const [weightError, setWeightError] = useState('')
+  const [tailleError, setTailleError] = useState('')
 
   const isAdult = relation === 'adulte'
+  // Show Grossesse/Allaitement when:
+  //   - sexe is unset (legacy default = show)
+  //   - sexe is 'femme'
+  //   - relation is 'adulte' (non-adults never needed them)
+  const showPregnancyFields = isAdult && sexe !== 'homme'
 
   function switchRelation(next: string) {
     const r = next as ArmoireRelation
     setRelation(r)
     if (r !== 'adulte') {
-      setPregnant(false)
-      setBreastfeeding(false)
+      // Don't destroy data; the submit() will clear the flags for non-adults
     }
   }
 
@@ -112,11 +144,29 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
     }
   }
 
+  function addMaladie(value: string) {
+    const t = value.trim()
+    if (!t) return
+    setMaladieInput('')
+    if (maladies.length >= MAX_MALADIES) return
+    if (maladies.some((m) => m.toLowerCase() === t.toLowerCase())) return
+    setMaladies((prev) => [...prev, t.slice(0, 60)])
+  }
+
+  function toggleMaladie(preset: string) {
+    if (maladies.includes(preset)) {
+      setMaladies((prev) => prev.filter((m) => m !== preset))
+    } else if (maladies.length < MAX_MALADIES) {
+      setMaladies((prev) => [...prev, preset])
+    }
+  }
+
   function submit() {
     const nameTrim = name.trim()
     setNameError('')
     setAgeError('')
     setWeightError('')
+    setTailleError('')
 
     let valid = true
     if (!nameTrim) {
@@ -141,18 +191,37 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
       }
     }
 
+    const tailleNum = parseTaille(taille)
+    let taille_cm: number | null = null
+    if (tailleNum != null) {
+      if (Number.isNaN(tailleNum) || tailleNum < 30 || tailleNum > 250) {
+        setTailleError('Taille invalide — entre 30 et 250 cm (ou laissez vide).')
+        valid = false
+      } else {
+        taille_cm = Math.round(tailleNum)
+      }
+    }
+
     if (!valid) return
+
+    // Hide-but-preserve rule: Grossesse/Allaitement data kept for homme members
+    const effectivePregnant = isAdult && showPregnancyFields ? pregnant : (editing?.pregnant ?? false)
+    const effectiveBreastfeeding = isAdult && showPregnancyFields ? breastfeeding : (editing?.breastfeeding ?? false)
 
     onSubmit({
       name: nameTrim.slice(0, 40),
       relation,
+      sexe,
       ageYears: ageNum,
       weightKg,
+      taille_cm,
       color,
-      pregnant: isAdult && pregnant,
-      breastfeeding: isAdult && breastfeeding,
+      pregnant: effectivePregnant,
+      breastfeeding: effectiveBreastfeeding,
       renal,
       allergies: allergies.slice(0, MAX_ALLERGIES),
+      maladies: maladies.slice(0, MAX_MALADIES),
+      memberNotes: memberNotes.slice(0, MAX_MEMBER_NOTES_CHARS),
       restricted,
     })
   }
@@ -160,7 +229,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
   return (
     <>
       <div className="space-y-4">
-        {/* Identité */}
+        {/* ── Identité ── */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="member-name">
@@ -184,6 +253,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
             ) : null}
           </div>
 
+          {/* Relation */}
           <div className="space-y-2 sm:col-span-2">
             <Label>Relation au foyer</Label>
             <RadioGroup
@@ -212,6 +282,38 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
             </RadioGroup>
           </div>
 
+          {/* Sexe (plan 2.1) */}
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Sexe <span className="text-xs font-normal text-muted-foreground">(optionnel)</span></Label>
+            <div className="grid grid-cols-2 gap-2">
+              {SEXES.map((s) => {
+                const meta = SEXE_META[s]
+                const Icon = meta.icon
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-pressed={sexe === s}
+                    onClick={() => setSexe(sexe === s ? undefined : s)}
+                    className={cn(
+                      'flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors',
+                      sexe === s
+                        ? 'border-primary/50 bg-primary/10 text-primary'
+                        : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/30 hover:text-foreground'
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" aria-hidden />
+                    <span>{meta.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Conditionne l&apos;affichage des champs Grossesse/Allaitement. Non obligatoire.
+            </p>
+          </div>
+
+          {/* Âge */}
           <div className="space-y-2">
             <Label htmlFor="member-age">
               Âge (années) <span className="text-state-danger">*</span>
@@ -236,6 +338,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
             ) : null}
           </div>
 
+          {/* Poids */}
           <div className="space-y-2">
             <Label htmlFor="member-weight">Poids (kg, optionnel)</Label>
             <Input
@@ -253,16 +356,48 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
               </p>
             ) : (
               <p className="text-[11px] text-muted-foreground">
-                Sert aux calculs pédiatriques (outil Posologies enfant).
+                Pour les calculs pédiatriques et rénaux.
+              </p>
+            )}
+          </div>
+
+          {/* Taille (plan 2.2) */}
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="member-taille">
+              <span className="flex items-center gap-1.5">
+                <Ruler className="size-3.5 text-muted-foreground" aria-hidden />
+                Taille (cm, optionnel)
+              </span>
+            </Label>
+            <Input
+              id="member-taille"
+              type="number"
+              inputMode="numeric"
+              min={30}
+              max={250}
+              step={1}
+              placeholder="Ex. : 170"
+              value={taille}
+              onChange={(e) => setTaille(e.target.value)}
+              aria-invalid={tailleError ? true : undefined}
+              className="h-11"
+            />
+            {tailleError ? (
+              <p role="alert" className="text-xs text-state-danger">
+                {tailleError}
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Utilisée avec le poids pour les calculateurs (posologie / fonction rénale).
               </p>
             )}
           </div>
         </div>
 
-        {/* Couleur d'avatar */}
+        {/* ── Couleur d'avatar ── */}
         <div className="space-y-2">
           <Label>Couleur d&apos;avatar</Label>
-          <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Couleur d’avatar">
+          <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Couleur d'avatar">
             {MEMBER_COLORS.map((c) => (
               <button
                 key={c.id}
@@ -285,13 +420,14 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
           </div>
         </div>
 
-        {/* Drapeaux cliniques */}
+        {/* ── Drapeaux cliniques ── */}
         <div className="space-y-2">
           <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
             Drapeaux cliniques
           </p>
 
-          {isAdult ? (
+          {/* Grossesse / Allaitement — visibles seulement si sexe ≠ homme (plan 2.1) */}
+          {showPregnancyFields ? (
             <div className="grid gap-2 sm:grid-cols-2">
               <label
                 htmlFor="member-pregnant"
@@ -303,14 +439,16 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
                     Grossesse
                   </span>
                   <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
-                    Le contrôle grossesse/allaitement (CRAT) sera appliqué à ses médicaments
-                    dans l&apos;Analyse.
+                    Contrôle CRAT sur les médicaments de ce membre.
                   </span>
                 </span>
                 <Switch
                   id="member-pregnant"
                   checked={pregnant}
-                  onCheckedChange={setPregnant}
+                  onCheckedChange={(v) => {
+                    setPregnant(v)
+                    if (v) setBreastfeeding(false)
+                  }}
                   aria-label="Grossesse"
                 />
               </label>
@@ -324,20 +462,28 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
                     Allaitement
                   </span>
                   <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
-                    Le contrôle grossesse/allaitement (CRAT) sera appliqué à ses médicaments
-                    dans l&apos;Analyse.
+                    Contrôle CRAT (volet allaitement) sur ses médicaments.
                   </span>
                 </span>
                 <Switch
                   id="member-breastfeeding"
                   checked={breastfeeding}
-                  onCheckedChange={setBreastfeeding}
+                  onCheckedChange={(v) => {
+                    setBreastfeeding(v)
+                    if (v) setPregnant(false)
+                  }}
                   aria-label="Allaitement"
                 />
               </label>
             </div>
+          ) : sexe === 'homme' ? (
+            <p className="text-[11px] text-muted-foreground rounded-lg border border-border bg-muted/20 px-3 py-2">
+              Grossesse / Allaitement masqués pour ce membre (sexe : Homme).
+              Les données précédemment enregistrées sont préservées.
+            </p>
           ) : null}
 
+          {/* Fonction rénale */}
           <label
             htmlFor="member-renal"
             className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
@@ -348,8 +494,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
                 Fonction rénale à surveiller
               </span>
               <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
-                L&apos;Analyse rappellera de vérifier l&apos;adaptation des posologies (outil
-                Fonction rénale).
+                L&apos;Analyse rappellera de vérifier l&apos;adaptation des posologies.
               </span>
             </span>
             <Switch
@@ -361,12 +506,14 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
           </label>
         </div>
 
-        {/* Allergies */}
+        {/* ── Allergies (warning-colored) ── */}
         <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-2">
-            <Label>Allergies connues</Label>
+            <Label className="text-state-danger">
+              ⚠ Allergies connues
+            </Label>
             <p aria-live="polite" className="text-[11px] tabular-nums text-muted-foreground">
-              {allergies.length}/{MAX_ALLERGIES} allergie{allergies.length > 1 ? 's' : ''}
+              {allergies.length}/{MAX_ALLERGIES}
             </p>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -382,7 +529,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
                     'inline-flex min-h-9 items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                     active
                       ? 'border-state-danger/40 bg-state-danger/10 text-state-danger'
-                      : 'border-border bg-muted/40 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      : 'border-border bg-muted/40 text-muted-foreground hover:border-state-danger/40 hover:text-foreground'
                   )}
                 >
                   {preset}
@@ -400,7 +547,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
                   {a}
                   <button
                     type="button"
-                    aria-label={`Retirer l’allergie ${a}`}
+                    aria-label={`Retirer l'allergie ${a}`}
                     onClick={() => setAllergies((prev) => prev.filter((x) => x !== a))}
                     className="flex size-6 items-center justify-center rounded-full transition-colors hover:bg-state-danger/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
@@ -430,7 +577,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
               variant="outline"
               size="icon"
               className="size-11 shrink-0"
-              aria-label="Ajouter l’allergie saisie"
+              aria-label="Ajouter l'allergie saisie"
               disabled={allergies.length >= MAX_ALLERGIES || !allergyInput.trim()}
               onClick={() => addAllergy(allergyInput)}
             >
@@ -439,7 +586,106 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
           </div>
         </div>
 
-        {/* Visibilité restreinte */}
+        {/* ── Maladies / antécédents (plan 2.3) — distinct des allergies ── */}
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <Label className="flex items-center gap-1.5">
+              <Stethoscope className="size-3.5 text-primary" aria-hidden />
+              Maladies / antécédents
+            </Label>
+            <p aria-live="polite" className="text-[11px] tabular-nums text-muted-foreground">
+              {maladies.length}/{MAX_MALADIES}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {MALADIES_PRESETS.map((preset) => {
+              const active = maladies.includes(preset)
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleMaladie(preset)}
+                  className={cn(
+                    'inline-flex min-h-9 items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                    active
+                      ? 'border-primary/40 bg-primary/10 text-primary'
+                      : 'border-border bg-muted/40 text-muted-foreground hover:border-primary/30 hover:text-foreground'
+                  )}
+                >
+                  {preset}
+                </button>
+              )
+            })}
+          </div>
+          {maladies.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {maladies.map((m) => (
+                <span
+                  key={m}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 py-0.5 pr-1 pl-2.5 text-xs text-primary"
+                >
+                  {m}
+                  <button
+                    type="button"
+                    aria-label={`Retirer ${m}`}
+                    onClick={() => setMaladies((prev) => prev.filter((x) => x !== m))}
+                    className="flex size-6 items-center justify-center rounded-full transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    <X className="size-3" aria-hidden />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="flex gap-2">
+            <Input
+              value={maladieInput}
+              onChange={(e) => setMaladieInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addMaladie(maladieInput)
+                }
+              }}
+              placeholder="Autre maladie… (Entrée pour ajouter)"
+              aria-label="Ajouter une autre maladie"
+              className="h-11"
+              maxLength={60}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-11 shrink-0"
+              aria-label="Ajouter la maladie saisie"
+              disabled={maladies.length >= MAX_MALADIES || !maladieInput.trim()}
+              onClick={() => addMaladie(maladieInput)}
+            >
+              <Plus className="size-4" aria-hidden />
+            </Button>
+          </div>
+        </div>
+
+        {/* ── Notes par membre (plan 2.4) ── */}
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="member-notes">Notes / remarques</Label>
+            <p aria-live="polite" className="text-[11px] tabular-nums text-muted-foreground">
+              {memberNotes.length}/{MAX_MEMBER_NOTES_CHARS}
+            </p>
+          </div>
+          <Textarea
+            id="member-notes"
+            value={memberNotes}
+            onChange={(e) => setMemberNotes(e.target.value.slice(0, MAX_MEMBER_NOTES_CHARS))}
+            placeholder="Notes générales sur ce membre (traitements en cours, remarques…)"
+            className="min-h-20 resize-none"
+            rows={3}
+          />
+        </div>
+
+        {/* ── Visibilité restreinte ── */}
         <label
           htmlFor="member-restricted"
           className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
@@ -450,12 +696,10 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
               Visibilité restreinte
             </span>
             <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
-              Entrées masquées par défaut — nécessitent le code PIN de l&apos;armoire pour
-              être consultées.
+              Entrées masquées par défaut — nécessitent le code PIN de l&apos;armoire.
             </span>
             <span className="mt-1 block text-[11px] leading-snug text-muted-foreground/80">
-              Restriction effective uniquement si un code PIN est défini (Réglages de
-              l&apos;armoire).
+              Effective uniquement si un PIN est défini (Réglages de l&apos;armoire).
             </span>
           </span>
           <Switch
@@ -474,7 +718,7 @@ function MemberDialogForm({ editing, onOpenChange, onSubmit, onDelete }: MemberF
         <Button onClick={submit}>{editing ? 'Enregistrer' : 'Ajouter le membre'}</Button>
       </DialogFooter>
 
-      {/* Zone destructive — la confirmation est gérée par le parent. */}
+      {/* Zone destructive */}
       {editing && onDelete ? (
         <>
           <Separator />

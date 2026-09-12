@@ -19,9 +19,10 @@ import {
   Backpack,
   Baby,
   User,
+  User2,
   type LucideIcon,
 } from 'lucide-react'
-import type { ArmoireCategory, ArmoireKit, ArmoireRelation, ExpiryReminders } from './types'
+import type { ArmoireCategory, ArmoireKit, ArmoireRelation, ArmoireSexe, ExpiryReminders } from './types'
 
 /* ------------------------------------------------------------------ */
 /* Limites garde-fous                                                  */
@@ -30,7 +31,9 @@ import type { ArmoireCategory, ArmoireKit, ArmoireRelation, ExpiryReminders } fr
 export const MAX_MEMBERS = 8
 export const MAX_ENTRIES = 80
 export const MAX_ALLERGIES = 8
+export const MAX_MALADIES = 10
 export const MAX_NOTES_CHARS = 200
+export const MAX_MEMBER_NOTES_CHARS = 1000
 export const MAX_JOURNAL = 20
 
 /** Clés localStorage propres à l'armoire (hors store persisté). */
@@ -40,6 +43,98 @@ export const FIRST_AID_KEY = 'armoire.firstAid.v1'
 export const REMINDERS_KEY = 'armoire.remind.v1'
 
 export const DEFAULT_REMINDERS: ExpiryReminders = { d7: true, d30: true, d90: false }
+
+/* ------------------------------------------------------------------ */
+/* Sexe (plan 2.1)                                                     */
+/* ------------------------------------------------------------------ */
+
+export const SEXE_META: Record<ArmoireSexe, { label: string; icon: LucideIcon; hint: string }> = {
+  homme: { label: 'Homme', icon: User, hint: 'Grossesse/Allaitement non affichés.' },
+  femme: { label: 'Femme', icon: User2, hint: 'Grossesse et Allaitement disponibles.' },
+}
+
+/* ------------------------------------------------------------------ */
+/* Maladies / antécédents — liste de départ (plan 2.3)                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Liste de départ issue des 24 domaines thérapeutiques DzPharm.
+ * Texte libre toujours autorisé en supplément.
+ */
+export const MALADIES_PRESETS: string[] = [
+  'Diabète',
+  'Hypertension',
+  'Cardiovasculaire',
+  'Asthme / BPCO',
+  'Allergies respiratoires',
+  'Épilepsie',
+  'Dépression / Anxiété',
+  'Psychose / Schizophrénie',
+  'Cancer',
+  'Insuffisance rénale',
+  'Insuffisance hépatique',
+  'Hypothyroïdie',
+  'Dyslipidémie / Hypercholestérolémie',
+  'Douleur chronique',
+  'Arthrose / Rhumatisme',
+  'Ostéoporose',
+  'Maladie auto-immune',
+  'Transplantation',
+  'Infection chronique (VIH, hépatites…)',
+  'Anémie',
+  'Trouble de la coagulation',
+  'Reflux / Gastro-entérologie',
+  'Dermatologie chronique',
+  'Ophtalmologie chronique',
+]
+
+/* ------------------------------------------------------------------ */
+/* PAO — Période après ouverture (plan 2.6)                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Valeurs PAO suggérées (en jours) selon la forme galénique.
+ * Ces valeurs sont générales — l'utilisateur doit toujours
+ * vérifier la notice spécifique du produit.
+ * Source : bonnes pratiques officinales / plan armoire-enhancement-plan.md §2.6.
+ */
+export const PAO_DEFAULTS: { pattern: RegExp; jours: number; note: string }[] = [
+  {
+    pattern: /collyre|eye drop|ophtalmique/i,
+    jours: 28,
+    note: 'Collyres : 28 jours après ouverture (vérifiez la notice).',
+  },
+  {
+    pattern: /insuline|insulin/i,
+    jours: 28,
+    note: 'Insuline en stylo/flacon : 28 jours en général (vérifiez la notice).',
+  },
+  {
+    pattern: /sirop|suspension|reconstitu/i,
+    jours: 10,
+    note: 'Sirops reconstitués : 7–14 jours ; respectez la notice.',
+  },
+  {
+    pattern: /creme|pommade|gel|lotion|emulsion/i,
+    jours: 90,
+    note: 'Crèmes/pommades : 3–6 mois en général (vérifiez la notice).',
+  },
+  {
+    pattern: /spray nasal|spray buccal|aerosolther/i,
+    jours: 30,
+    note: 'Sprays nasaux : quelques semaines à 3 mois (vérifiez la notice).',
+  },
+]
+
+/**
+ * Retourne la PAO suggérée en jours pour une forme galénique donnée,
+ * ou null si aucun patron ne correspond (comprimés, gélules…).
+ */
+export function suggestPao(form: string): { jours: number; note: string } | null {
+  const match = PAO_DEFAULTS.find((p) => p.pattern.test(form))
+  return match ? { jours: match.jours, note: match.note } : null
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Catégories (plan 3.3)                                               */

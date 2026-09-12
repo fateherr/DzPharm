@@ -76,8 +76,9 @@ const ALERT_PRIORITY: Record<AlertKind, number> = {
   lowStock: 4,
   duplicate: 5,
   expiring30: 6,
-  controle: 7,
-  opened: 8,
+  pao: 7,
+  controle: 8,
+  opened: 9,
 }
 
 export const ALERT_KIND_META: Record<
@@ -129,16 +130,21 @@ export const ALERT_KIND_META: Record<
     short: 'Ouvert',
     className: 'border-border bg-muted/60 text-muted-foreground',
   },
+  pao: {
+    label: 'Durée après ouverture',
+    short: 'PAO',
+    className: 'border-chifa/40 bg-chifa/10 text-chifa',
+  },
 }
 
 /**
  * Calcule les alertes d'inventaire d'une liste d'entrées.
- * - Péremption (seuils configurables 7/30/90 j)
+ * - Péremption effective (PAO-aware, seuils configurables 7/30/90 j)
  * - Statuts registre (retiré / non renouvelé)
  * - Stock faible (traitements chroniques, estimation déclarée)
  * - Entrée contrôlée (toujours signalée en zone sécurité)
  * - Doublons de DCI pour un même membre
- * - Suspension/flacon ouvert (rappel notice — sans durée inventée)
+ * - PAO dépassée ou en cours (flacon ouvert)
  */
 export function computeCabinetAlerts(
   entries: ArmoireEntry[],
@@ -150,24 +156,42 @@ export function computeCabinetAlerts(
   const seen = new Map<string, Set<string>>() // dciKey -> memberIds
 
   for (const e of entries) {
-    const d = daysUntil(e.expiry)
+    const eff = effectiveExpiry(e)
+    const d = daysUntil(eff)
+    const paoDriven = isPaoDriven(e)
+
     if (d != null) {
       if (d < 0) {
-        alerts.push({ kind: 'expired', uid: e.uid, message: `${e.brand} est périmé.` })
+        const reason = paoDriven ? 'périmé (durée après ouverture dépassée)' : 'périmé'
+        alerts.push({ kind: 'expired', uid: e.uid, message: `${e.brand} est ${reason}.` })
       } else if (d <= 7) {
-        alerts.push({
-          kind: 'expiring7',
-          uid: e.uid,
-          message: `${e.brand} expire dans ${d} jour${d > 1 ? 's' : ''}.`,
-        })
+        const reason = paoDriven ? `expire dans ${d} jour${d > 1 ? 's' : ''} (durée après ouverture)` : `expire dans ${d} jour${d > 1 ? 's' : ''}`
+        alerts.push({ kind: 'expiring7', uid: e.uid, message: `${e.brand} ${reason}.` })
       } else if (d <= 30 && reminders.d30) {
         alerts.push({
           kind: 'expiring30',
           uid: e.uid,
-          message: `${e.brand} expire dans ${d} jours.`,
+          message: `${e.brand} expire dans ${d} jours${paoDriven ? ' (durée après ouverture)' : ''}.`,
         })
       }
     }
+
+    // Alerte PAO spécifique : ouvert et PAO connue mais non encore dépassée
+    if (e.openedAt && e.duree_pao_jours != null && d != null && d >= 0 && !paoDriven) {
+      // PAO ne limite pas ici (expiry imprimée est plus proche), mais signal l'ouverture
+      const openD = daysUntil(e.openedAt)
+      if (openD != null && openD <= 0) {
+        const isLiquid = /sirop|suspension|solution|goutte|collyre|buvable|ophtalmique/i.test(e.form)
+        if (isLiquid) {
+          alerts.push({
+            kind: 'pao',
+            uid: e.uid,
+            message: `${e.brand} est ouvert depuis le ${fmtDate(e.openedAt)} — durée max après ouverture : ${e.duree_pao_jours} j (respectez la notice).`,
+          })
+        }
+      }
+    }
+
     if (e.status === 'RETRIE') {
       alerts.push({
         kind: 'withdrawn',
@@ -195,7 +219,7 @@ export function computeCabinetAlerts(
         message: `${e.brand} figure sur une liste contrôlée — conserver sous accès restreint.`,
       })
     }
-    if (e.openedAt) {
+    if (e.openedAt && !e.duree_pao_jours) {
       const openD = daysUntil(e.openedAt)
       if (openD != null && openD >= 0) {
         const isLiquid = /sirop|suspension|solution|goutte|collyre|buvable/i.test(e.form)
@@ -346,8 +370,49 @@ export function groupEntries(
   return memberGroups
 }
 
+
 /* ------------------------------------------------------------------ */
-/* Échéancier de péremption (90 jours)                                 */
+/* PAO — Expiration effective (plan 2.6)                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Calcule la date d'expiration effective en tenant compte de la PAO.
+ * - Si openedAt et duree_pao_jours sont renseignés :
+ *   effectiveExpiry = min(expiry, openedAt + duree_pao_jours)
+ * - Sinon : effectiveExpiry = expiry
+ * Retourne une date ISO 'YYYY-MM-DD' ou '' si aucune date disponible.
+ */
+export function effectiveExpiry(entry: {
+  expiry: string
+  openedAt: string
+  duree_pao_jours?: number | null
+}): string {
+  const { expiry, openedAt, duree_pao_jours } = entry
+  if (openedAt && duree_pao_jours != null && duree_pao_jours > 0) {
+    const openDate = new Date(`${openedAt}T00:00:00`)
+    if (!Number.isNaN(openDate.getTime())) {
+      const paoDate = new Date(openDate)
+      paoDate.setDate(paoDate.getDate() + duree_pao_jours)
+      const paoIso = paoDate.toISOString().slice(0, 10)
+      if (!expiry) return paoIso
+      return paoIso < expiry ? paoIso : expiry
+    }
+  }
+  return expiry
+}
+
+/** Whether the effective expiry is driven by the PAO (not the printed date). */
+export function isPaoDriven(entry: {
+  expiry: string
+  openedAt: string
+  duree_pao_jours?: number | null
+}): boolean {
+  const eff = effectiveExpiry(entry)
+  return eff !== entry.expiry && eff !== ''
+}
+
+/* ------------------------------------------------------------------ */
+/* Échéancier de péremption (90 jours) — PAO-aware                     */
 /* ------------------------------------------------------------------ */
 
 export interface ExpiryBucket {
@@ -355,7 +420,7 @@ export interface ExpiryBucket {
   entries: ArmoireEntry[]
 }
 
-/** Regroupe les entrées par période de péremption : périmé, J-7, J-30, J-90, plus tard. */
+/** Regroupe les entrées par période de péremption effective (PAO-aware) : périmé, J-7, J-30, J-90, plus tard. */
 export function expiryTimeline(entries: ArmoireEntry[]): ExpiryBucket[] {
   const buckets: { label: string; test: (d: number) => boolean; entries: ArmoireEntry[] }[] = [
     { label: 'Périmés', test: (d) => d < 0, entries: [] },
@@ -365,7 +430,8 @@ export function expiryTimeline(entries: ArmoireEntry[]): ExpiryBucket[] {
     { label: 'Plus de 90 jours', test: (d) => d > 90, entries: [] },
   ]
   for (const e of entries) {
-    const d = daysUntil(e.expiry)
+    const eff = effectiveExpiry(e)
+    const d = daysUntil(eff)
     if (d == null) continue
     const b = buckets.find((x) => x.test(d))
     if (b) b.entries.push(e)
@@ -373,20 +439,68 @@ export function expiryTimeline(entries: ArmoireEntry[]): ExpiryBucket[] {
   return buckets.filter((b) => b.entries.length > 0).map(({ label, entries }) => ({ label, entries }))
 }
 
+
 /* ------------------------------------------------------------------ */
 /* Recherche locale (filtre texte insensible aux accents)              */
 /* ------------------------------------------------------------------ */
 
-export function entryMatchesQuery(e: ArmoireEntry, q: string): boolean {
+/**
+ * Vérifie si une entrée correspond à une requête de recherche.
+ * - Insensible aux accents/casse (via normKey)
+ * - Multi-champs : marque, DCI, dciKey, forme, dosage, notes, catégorie
+ * - Tolérance fautes 1 car. (Levenshtein ≤1) sur les tokens ≥4 chars
+ */
+export function entryMatchesQuery(
+  e: ArmoireEntry,
+  q: string,
+  memberNames?: string[]
+): boolean {
   const t = normKey(q)
   if (!t) return true
-  return (
-    normKey(e.brand).includes(t) ||
-    normKey(e.dci).includes(t) ||
-    normKey(e.form).includes(t) ||
-    normKey(e.dosage).includes(t) ||
-    normKey(e.notes).includes(t)
+
+  // Champs concaténés pour la recherche
+  const fields = [
+    normKey(e.brand),
+    normKey(e.dci),
+    normKey(e.dciKey),
+    normKey(e.form),
+    normKey(e.dosage),
+    normKey(e.notes),
+    normKey(e.category),
+    ...(memberNames ?? []).map(normKey),
+  ]
+
+  // Correspondance exacte d'abord
+  if (fields.some((f) => f.includes(t))) return true
+
+  // Tolérance fautes 1 char sur chaque token de la requête (min 4 chars)
+  const tokens = t.split(/\s+/).filter((x) => x.length >= 4)
+  if (tokens.length === 0) return false
+  return tokens.every((tok) =>
+    fields.some((f) => {
+      if (f.includes(tok)) return true
+      // Levenshtein ≤ 1 sur chaque mot du champ
+      return f.split(/\s+/).some((word) => levenshtein(word, tok) <= 1)
+    })
   )
+}
+
+/** Levenshtein distance (capped at 2 for performance). */
+function levenshtein(a: string, b: string): number {
+  if (Math.abs(a.length - b.length) > 2) return 99
+  const m = a.length, n = b.length
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (__, j) => (i === 0 ? j : j === 0 ? i : 0))
+  )
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+      if (dp[i][j] > 2) return dp[i][j] // early exit
+    }
+  }
+  return dp[m][n]
 }
 
 /* ------------------------------------------------------------------ */

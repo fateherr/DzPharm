@@ -3,21 +3,19 @@
 /**
  * Armoire — carte d'inventaire d'une entrée (onglet Inventaire).
  *
- * Accent gauche et badges selon les alertes calculées localement
- * (ALERT_KIND_META : texte + couleur, jamais la couleur seule).
- * Aucune donnée clinique inventée : seuls les champs déclarés de
- * l'entrée (dates, quantité, jours restants) sont affichés, avec
- * renvoi vers la fiche du répertoire et le réassort (prix & génériques).
+ * Phase 4 (PAO) : affiche la date d'expiration EFFECTIVE (min(expiry, PAO)),
+ * badge PAO quand la limite est imposée par l'ouverture du flacon, et
+ * bouton "Ouvrir aujourd'hui" quand le flacon n'est pas encore marqué ouvert.
  */
 
-import { BookOpen, CalendarClock, Droplets, Pencil, ShoppingBag, Trash2, Users } from 'lucide-react'
+import { BookOpen, CalendarClock, Droplets, FlaskConical, Pencil, ShoppingBag, Trash2, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { AlertKind, ArmoireEntry, ArmoireMember, CabinetAlert } from './types'
 import { CATEGORY_META, KIT_META, memberColor } from './constants'
-import { ALERT_KIND_META, daysUntil, fmtDate, initials } from './utils'
+import { ALERT_KIND_META, daysUntil, effectiveExpiry, fmtDate, initials, isPaoDriven } from './utils'
 
 export interface EntryCardProps {
   entry: ArmoireEntry
@@ -28,6 +26,8 @@ export interface EntryCardProps {
   onRemove: (uid: string) => void
   onOpenSheet: (drugId: number) => void
   onRestock: (entry: ArmoireEntry) => void
+  /** Action "Marquer comme ouvert aujourd'hui" (plan 2.6). */
+  onMarkOpened?: (uid: string) => void
 }
 
 /** Alertes qui justifient un réassort (lien prix & génériques — plan 3.4.14). */
@@ -60,14 +60,14 @@ const REGISTRY_BADGE: Record<string, { label: string; className: string }> = {
 }
 
 /** Formes liquides — même détection que computeCabinetAlerts (utils). */
-const LIQUID_FORM = /sirop|suspension|solution|goutte|collyre|buvable/i
+const LIQUID_FORM = /sirop|suspension|solution|goutte|collyre|buvable|ophtalmique/i
 
 /** DCI « nettoyée » : retire les marqueurs d'association «**». */
 function cleanDci(dci: string): string {
   return dci.replace(/\*\*/g, '').trim()
 }
 
-export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenSheet, onRestock }: EntryCardProps) {
+export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenSheet, onRestock, onMarkOpened }: EntryCardProps) {
   const kinds = alerts.map((a) => a.kind)
 
   const hasDanger = kinds.some((k) => DANGER_KINDS.includes(k))
@@ -84,10 +84,19 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
       className: 'border-border bg-muted/60 text-muted-foreground',
     } : null
 
-  /* ----- Péremption / stock ----- */
-  const expiryDays = daysUntil(entry.expiry)
+  /* ----- Péremption PAO-aware ----- */
+  const effExpiry = effectiveExpiry(entry)
+  const expiryDays = daysUntil(effExpiry)
   const isExpired = expiryDays != null && expiryDays < 0
+  const paoDriven = isPaoDriven(entry)
   const isLiquid = LIQUID_FORM.test(entry.form)
+
+  // "Ouvrir aujourd'hui" button — shown when entry has PAO configured but not yet opened
+  const showOpenBtn =
+    onMarkOpened &&
+    !entry.openedAt &&
+    entry.duree_pao_jours != null &&
+    isLiquid
 
   const visibleAlerts = alerts.slice(0, 2)
   const hiddenAlerts = alerts.slice(2)
@@ -124,6 +133,12 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
                 <CatIcon className="size-3" aria-hidden />
                 {catMeta.label}
               </Badge>
+              {paoDriven ? (
+                <Badge variant="outline" className="gap-1 border-chifa/40 bg-chifa/10 text-chifa" title="Expiration limitée par la durée après ouverture (PAO)">
+                  <FlaskConical className="size-3" aria-hidden />
+                  PAO
+                </Badge>
+              ) : null}
               {visibleAlerts.map((a) => {
                 const meta = ALERT_KIND_META[a.kind]
                 return (
@@ -223,13 +238,13 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
               <span className="font-medium tabular-nums">×{entry.quantity}</span>
             </div>
 
-            {/* Ligne 4 — péremption / stock / ouverture */}
+            {/* Ligne 4 — péremption effective / PAO / stock / ouverture */}
             {isExpired || expiryDays != null || (entry.category === 'chronique' && entry.daysLeft != null) || (entry.openedAt && isLiquid) ? (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                 {isExpired ? (
                   <span className="flex items-center gap-1 font-semibold text-state-danger">
                     <CalendarClock className="size-3.5" aria-hidden />
-                    Périmé depuis {-expiryDays} j
+                    {paoDriven ? 'Périmé (PAO)' : 'Périmé'} depuis {Math.abs(expiryDays!)} j
                   </span>
                 ) : expiryDays != null ? (
                   <span
@@ -243,7 +258,7 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
                     )}
                   >
                     <CalendarClock className="size-3.5" aria-hidden />
-                    Expire : {fmtDate(entry.expiry)}
+                    {paoDriven ? 'PAO' : 'Expire'} : {fmtDate(effExpiry)}
                     <span className="font-semibold tabular-nums">J-{expiryDays}</span>
                   </span>
                 ) : null}
@@ -262,12 +277,25 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Droplets className="size-3.5" aria-hidden />
                     Ouvert le {fmtDate(entry.openedAt)}
+                    {entry.duree_pao_jours ? ` · PAO ${entry.duree_pao_jours} j` : ''}
                   </span>
                 ) : null}
               </div>
             ) : null}
 
-            {/* Ligne 5 — notes */}
+            {/* Ligne 5 — "Ouvrir aujourd'hui" (plan 2.6) */}
+            {showOpenBtn ? (
+              <button
+                type="button"
+                className="flex items-center gap-1 text-xs text-chifa underline underline-offset-2 hover:text-chifa/80"
+                onClick={() => onMarkOpened!(entry.uid)}
+              >
+                <Droplets className="size-3" aria-hidden />
+                Marquer comme ouvert aujourd&apos;hui
+              </button>
+            ) : null}
+
+            {/* Ligne 6 — notes */}
             {entry.notes ? (
               <p
                 className="line-clamp-2 text-xs italic text-muted-foreground/90"
@@ -284,7 +312,7 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
               variant="ghost"
               size="icon"
               className="size-11"
-              aria-label={`Modifier l’entrée ${entry.brand}`}
+              aria-label={`Modifier l'entrée ${entry.brand}`}
               title="Modifier"
               onClick={() => onEdit(entry)}
             >
@@ -318,8 +346,8 @@ export function EntryCard({ entry, members, alerts, onEdit, onRemove, onOpenShee
               variant="ghost"
               size="icon"
               className="size-11 text-state-danger hover:bg-state-danger/10 hover:text-state-danger"
-              aria-label={`Retirer ${entry.brand} de l’armoire`}
-              title="Retirer de l’armoire"
+              aria-label={`Retirer ${entry.brand} de l'armoire`}
+              title="Retirer de l'armoire"
               onClick={() => onRemove(entry.uid)}
             >
               <Trash2 className="size-4" aria-hidden />

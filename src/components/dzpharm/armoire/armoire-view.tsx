@@ -354,6 +354,20 @@ export function ArmoireView() {
     [entries, removeEntry]
   )
 
+  /** Plan 2.6 — PAO : marque un flacon/sachet comme ouvert aujourd'hui. */
+  const handleMarkOpened = useCallback(
+    (uid: string) => {
+      const today = new Date().toISOString().slice(0, 10)
+      updateEntry(uid, { openedAt: today })
+      const entry = entries.find((e) => e.uid === uid)
+      toast({
+        title: 'Flacon marqué comme ouvert',
+        description: `${entry?.brand ?? 'Médicament'} — ouvert le ${today}. La durée après ouverture (PAO) est maintenant suivie.`,
+      })
+    },
+    [entries, updateEntry]
+  )
+
   const handleOpenSheet = useCallback(
     (drugId: number) => {
       openDrug(drugId)
@@ -651,6 +665,7 @@ export function ArmoireView() {
               onOpenSheet={handleOpenSheet}
               onRestock={handleRestock}
               onManageMembers={handleAddMember}
+              onMarkOpened={handleMarkOpened}
             />
           </motion.div>
         </TabsContent>

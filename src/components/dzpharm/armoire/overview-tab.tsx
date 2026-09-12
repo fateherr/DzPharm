@@ -21,17 +21,21 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronRight,
+  Droplets,
   HeartPulse,
   Leaf,
   Lock,
+  MessageSquare,
   Plus,
   ShieldAlert,
   Snowflake,
+  Sparkles,
   Sprout,
   Sun,
   UserPlus,
   Users,
   XCircle,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -56,6 +60,7 @@ import {
 } from './utils'
 import { SeverityBadge } from '../status-badge'
 import type { InteractionSeverity } from '../types'
+import { useDzPharm } from '../store'
 
 export interface OverviewTabProps {
   members: ArmoireMember[]
@@ -247,8 +252,32 @@ export function OverviewTab({
   const seasonal = getSeasonalTips(new Date())
   const SeasonIcon = SEASON_ICON[seasonal.season] ?? Sun
 
+  const openTool = useDzPharm((s) => s.openTool)
+  const setView = useDzPharm((s) => s.setView)
+  const addToBasket = useDzPharm((s) => s.addToBasket)
+  const clearBasket = useDzPharm((s) => s.clearBasket)
+
   const isEmpty = members.length === 0
   const showStats = members.length > 0 || entries.length > 0
+
+  /** Hub shortcuts contextuels selon les profils des membres. */
+  const hasChildren = members.some((m) => m.relation === 'enfant' || m.relation === 'bebe')
+  const hasRenal = members.some((m) => m.renal)
+  const hasPregnant = members.some((m) => m.pregnant || m.breastfeeding)
+  const hasEntries = entries.length > 0
+
+  /** Navigue vers Interactions en pré-remplissant le panier avec tous les médicaments du foyer. */
+  function handleOpenInteractions() {
+    clearBasket()
+    let added = 0
+    for (const e of entries) {
+      if (e.drugId != null && added < 8) {
+        addToBasket({ id: e.drugId, brand: e.brand, dci: e.dci, status: e.status || 'ACTIF' })
+        added++
+      }
+    }
+    setView('interactions')
+  }
 
   return (
     <div className="space-y-6">
@@ -805,6 +834,93 @@ export function OverviewTab({
                 )
               })}
             </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+      {/* ---------------- Hub Raccourcis DzPharm ---------------- */}
+      {(hasEntries || members.length > 0) ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Zap className="size-4 text-primary" aria-hidden />
+              Raccourcis DzPharm
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {/* Interactions — always shown if there are entries with linked drugs */}
+            {hasEntries ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={handleOpenInteractions}
+                title="Pré-remplit le vérificateur avec les médicaments du foyer"
+              >
+                <ShieldAlert className="size-3.5" aria-hidden />
+                Vérifier les interactions du foyer
+              </Button>
+            ) : null}
+
+            {/* Pédiatrie — shown if there are children members */}
+            {hasChildren ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={() => openTool('pediatrie')}
+              >
+                <Baby className="size-3.5" aria-hidden />
+                Posologies pédiatriques
+              </Button>
+            ) : null}
+
+            {/* Fonction rénale — shown if a member has renal flag */}
+            {hasRenal ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={() => openTool('renal')}
+              >
+                <Droplets className="size-3.5" aria-hidden />
+                Adapter la dose (insuffisance rénale)
+              </Button>
+            ) : null}
+
+            {/* Grossesse/Allaitement — shown if a member is pregnant or breastfeeding */}
+            {hasPregnant ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs"
+                onClick={() => openTool('grossesse')}
+              >
+                <HeartPulse className="size-3.5" aria-hidden />
+                Contrôle grossesse & allaitement
+              </Button>
+            ) : null}
+
+            {/* Copilote — always available */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 text-xs"
+              onClick={() => setView('copilote')}
+            >
+              <Sparkles className="size-3.5 text-primary" aria-hidden />
+              Demander au Copilote
+            </Button>
+
+            {/* Interactions analyse full */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 gap-1.5 text-xs text-muted-foreground"
+              onClick={() => onGoTab('analyse')}
+            >
+              <MessageSquare className="size-3.5" aria-hidden />
+              Analyse complète du foyer
+            </Button>
           </CardContent>
         </Card>
       ) : null}

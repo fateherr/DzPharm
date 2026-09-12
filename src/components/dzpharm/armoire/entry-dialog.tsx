@@ -69,6 +69,7 @@ import {
   KIT_ORDER,
   MAX_NOTES_CHARS,
   memberColor,
+  suggestPao,
 } from './constants'
 import { initials, normKey } from './utils'
 
@@ -138,6 +139,9 @@ function EntryDialogForm({
   const [qtyText, setQtyText] = useState(() => String(editing?.quantity ?? 1))
   const [expiry, setExpiry] = useState(() => editing?.expiry ?? '')
   const [openedAt, setOpenedAt] = useState(() => editing?.openedAt ?? '')
+  const [duree_pao_jours, setDureePaoJours] = useState<string>(() =>
+    editing?.duree_pao_jours != null ? String(editing.duree_pao_jours) : ''
+  )
   const [purchasedAt, setPurchasedAt] = useState(() => editing?.purchasedAt ?? '')
   const [batch, setBatch] = useState(() => editing?.batch ?? '')
   const [prescription, setPrescription] = useState(() => editing?.prescription ?? '')
@@ -172,6 +176,11 @@ function EntryDialogForm({
     setLinkedDrugId(drug.id)
     setRegistryStatus(drug.status)
     setError('')
+    // Auto-suggest PAO if the form matches a known pattern and user hasn't set one yet
+    if (!duree_pao_jours) {
+      const pao = suggestPao(drug.form)
+      if (pao) setDureePaoJours(String(pao.jours))
+    }
   }
 
   /** Crayon : passe en saisie manuelle (le lien répertoire est retiré). */
@@ -255,6 +264,7 @@ function EntryDialogForm({
       quantity: qty,
       expiry,
       openedAt,
+      duree_pao_jours: duree_pao_jours.trim() ? (Number.isFinite(Number(duree_pao_jours)) ? Math.max(1, Math.floor(Number(duree_pao_jours))) : null) : null,
       purchasedAt,
       kits,
       memberIds,
@@ -667,7 +677,7 @@ function EntryDialogForm({
               </div>
             </div>
 
-            {/* Quantité + dates */}
+            {/* Quantité + dates + PAO */}
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="entry-quantity">Quantité restante</Label>
@@ -723,17 +733,71 @@ function EntryDialogForm({
 
               <div className="space-y-2">
                 <Label htmlFor="entry-opened">Date d&apos;ouverture</Label>
-                <Input
-                  id="entry-opened"
-                  type="date"
-                  value={openedAt}
-                  onChange={(e) => setOpenedAt(e.target.value)}
-                  className="h-11"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="entry-opened"
+                    type="date"
+                    value={openedAt}
+                    onChange={(e) => setOpenedAt(e.target.value)}
+                    className="h-11"
+                  />
+                  {!openedAt ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 shrink-0 px-2.5 text-xs"
+                      title="Marquer comme ouvert aujourd'hui"
+                      onClick={() => setOpenedAt(new Date().toISOString().slice(0, 10))}
+                    >
+                      Aujourd&apos;hui
+                    </Button>
+                  ) : null}
+                </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Sirops/suspensions : respectez la durée après ouverture de la notice.
+                  Premier emploi — déclenche le suivi PAO.
                 </p>
               </div>
+            </div>
+
+            {/* PAO — Durée après ouverture (plan 2.6) */}
+            <div className="space-y-2">
+              <Label htmlFor="entry-pao">
+                Durée après ouverture (PAO, en jours)
+                <span className="ml-1 text-xs font-normal text-muted-foreground">— optionnel</span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="entry-pao"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={365}
+                  step={1}
+                  placeholder="Ex. : 28"
+                  value={duree_pao_jours}
+                  onChange={(e) => setDureePaoJours(e.target.value)}
+                  className="h-11 max-w-[140px]"
+                />
+                {duree_pao_jours ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-11 px-3 text-xs text-muted-foreground"
+                    onClick={() => setDureePaoJours('')}
+                  >
+                    Effacer
+                  </Button>
+                ) : null}
+              </div>
+              {duree_pao_jours ? (
+                <p className="text-[11px] text-primary">
+                  L&apos;expiration effective sera calculée : min(date d&apos;expiration imprimée, date d&apos;ouverture + {duree_pao_jours} j).
+                </p>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Sirops reconstitués : ~10 j · Collyres : ~28 j · Insuline : ~28 j · Crèmes : ~90 j. Vérifiez toujours la notice.
+                </p>
+              )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
