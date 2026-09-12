@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./prisma/custom.db", "./db/custom.db"],
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
