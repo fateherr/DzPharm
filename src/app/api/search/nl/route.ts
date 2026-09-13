@@ -105,7 +105,8 @@ const DOMAIN_SYNONYMS: Array<{ domain: string; syn: string }> = [
 
 /** Formes galéniques → valeur « contains » du registre. */
 const FORM_SYNONYMS: Array<{ form: string; syn: string }> = [
-  { form: "SIROP", syn: "sirop | sirops" },
+  // "sirop" couvre aussi les suspensions buvables (BUVABLE, SUSP) — forme réelle en Algérie
+  { form: "SIROP", syn: "sirop | sirops | liquide | oral" },
   { form: "BUVABLE", syn: "buvable | buvables | suspension | susp" },
   { form: "GOUTTE", syn: "goutte | gouttes | gtt" },
   { form: "COMP", syn: "comprime | comprimes | tablette | tablettes | cp | cpr | cps | cachet | cachets" },
@@ -288,7 +289,26 @@ export async function GET(req: NextRequest) {
     const where: Prisma.DrugWhereInput = {};
 
     if (interpreted.domain) where.domain = interpreted.domain;
-    if (interpreted.form) where.form = { contains: interpreted.form };
+    // Form filter: sirop maps to SIROP|BUVABLE|SUSP since Algerian oral suspensions
+    // are stored as "POUDRE POUR SUSPENSION BUVABLE" not literally "SIROP"
+    if (interpreted.form) {
+      const ORAL_LIQUID_FORMS = ["SIROP", "BUVABLE"];
+      if (ORAL_LIQUID_FORMS.includes(interpreted.form)) {
+        const existingAnd3 = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+        where.AND = [
+          ...existingAnd3,
+          {
+            OR: [
+              { form: { contains: "SIROP" } },
+              { form: { contains: "BUVABLE" } },
+              { form: { contains: "SUSP" } },
+            ],
+          },
+        ];
+      } else {
+        where.form = { contains: interpreted.form };
+      }
+    }
     if (interpreted.status) where.status = interpreted.status;
     if (interpreted.p1) where.p1 = { contains: interpreted.p1 };
     if (interpreted.refundableOnly) {

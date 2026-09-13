@@ -193,28 +193,30 @@ function parseDosageFromQuery(q: string): ParsedDosage | null {
 /* Form-in-main-search parser                                          */
 /* ------------------------------------------------------------------ */
 
-/** Maps a phrase found in the search bar to a `form` contains key. */
-const FORM_TOKENS: Array<{ tokens: string[]; formKey: string }> = [
-  { tokens: ["sirop", "sirops"], formKey: "SIROP" },
-  { tokens: ["buvable", "buvables", "suspension", "susp"], formKey: "BUVABLE" },
-  { tokens: ["goutte", "gouttes", "gtt"], formKey: "GOUTTE" },
-  { tokens: ["comprime", "comprimes", "cp", "cpr", "tablette", "tablettes"], formKey: "COMP" },
-  { tokens: ["gelule", "gelules", "capsule", "capsules", "gel"], formKey: "GELULE" },
+/** Maps a phrase found in the search bar to one or more `form` contains keys (OR logic). */
+const FORM_TOKENS: Array<{ tokens: string[]; formKeys: string[] }> = [
+  // "sirop" in Algeria = any oral liquid: SIROP, BUVABLE (suspension buvable), SUSP
+  { tokens: ["sirop", "sirops", "liquide", "oral"], formKeys: ["SIROP", "BUVABLE", "SUSP"] },
+  { tokens: ["buvable", "buvables", "suspension", "susp"], formKeys: ["BUVABLE", "SIROP", "SUSP"] },
+  { tokens: ["goutte", "gouttes", "gtt"], formKeys: ["GOUTTE"] },
+  { tokens: ["comprime", "comprimes", "cp", "cpr", "tablette", "tablettes", "cachet", "cachets"], formKeys: ["COMP"] },
+  { tokens: ["gelule", "gelules", "capsule", "capsules"], formKeys: ["GELULE", "GLES", "GLE"] },
   {
     tokens: ["injectable", "injection", "injections", "ampoule", "ampoules", "perfusion", "iv", "im", "inj"],
-    formKey: "INJ",
+    formKeys: ["INJ", "PDRE.SOL.INJ", "PDRE. SOL.INJ", "PERF"],
   },
-  { tokens: ["pommade", "pommades"], formKey: "POMMADE" },
-  { tokens: ["creme", "cremes", "topique", "dermique"], formKey: "CREME" },
-  { tokens: ["collyre", "collyres"], formKey: "COLLYRE" },
-  { tokens: ["suppositoire", "suppositoires", "suppo"], formKey: "SUPPO" },
-  { tokens: ["sachet", "sachets", "granule", "granules"], formKey: "SACHET" },
-  { tokens: ["spray", "aerosol", "aerosols", "inhalateur"], formKey: "SPRAY" },
-  { tokens: ["patch", "dispositif", "timbre"], formKey: "PATCH" },
+  { tokens: ["pommade", "pommades"], formKeys: ["POMMADE"] },
+  { tokens: ["creme", "cremes", "topique", "dermique"], formKeys: ["CREME"] },
+  { tokens: ["collyre", "collyres"], formKeys: ["COLLYRE"] },
+  { tokens: ["suppositoire", "suppositoires", "suppo"], formKeys: ["SUPPO"] },
+  { tokens: ["sachet", "sachets", "granule", "granules"], formKeys: ["SACHET", "SACHET DOSE"] },
+  { tokens: ["spray", "aerosol", "aerosols", "inhalateur"], formKeys: ["SPRAY", "AEROSOL"] },
+  { tokens: ["patch", "dispositif", "timbre"], formKeys: ["PATCH"] },
 ];
 
 interface ParsedForm {
-  formKey: string;
+  /** All form keys to match (OR logic) */
+  formKeys: string[];
   matchedToken: string;
 }
 
@@ -224,7 +226,7 @@ function parseFormFromQuery(key: string): ParsedForm | null {
   for (const entry of FORM_TOKENS) {
     for (const token of entry.tokens) {
       if (words.includes(token)) {
-        return { formKey: entry.formKey, matchedToken: token.toUpperCase() };
+        return { formKeys: entry.formKeys, matchedToken: token.toUpperCase() };
       }
     }
   }
@@ -351,9 +353,17 @@ export async function GET(req: NextRequest) {
         formHint = parseFormFromQuery(workingKey);
         if (formHint) {
           workingKey = stripMetaTokens(workingKey, [formHint.matchedToken.toUpperCase()]);
-          // Apply form filter from the query itself
-          form = formHint.formKey;
-          where.form = { contains: formHint.formKey };
+          // Apply form filter — OR across all form keys (e.g. sirop → SIROP | BUVABLE | SUSP)
+          if (formHint.formKeys.length === 1) {
+            where.form = { contains: formHint.formKeys[0] };
+          } else {
+            // Multiple form keys: use AND [{ OR [form contains X, form contains Y, ...] }]
+            const formOr: Prisma.DrugWhereInput[] = formHint.formKeys.map((fk) => ({
+              form: { contains: fk },
+            }));
+            const existingAnd2 = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+            where.AND = [...existingAnd2, { OR: formOr }];
+          }
         }
       }
 
@@ -441,7 +451,7 @@ export async function GET(req: NextRequest) {
         // Try relaxing dosage constraint first
         if (dosageHint) {
           const relaxedWhere: Prisma.DrugWhereInput = { ...baseWhere };
-          if (formHint) relaxedWhere.form = { contains: formHint.formKey };
+          if (formHint) relaxedWhere.form = { contains: formHint.formKeys[0] };
           const ors: Prisma.DrugWhereInput[] = [
             { dciKey: { contains: searchKey } },
             { brandKey: { contains: searchKey } },
@@ -581,7 +591,7 @@ export async function GET(req: NextRequest) {
             arabicMapped,
             cleanKey,
             dosageHint: dosageHint ? { raw: dosageHint.raw, valueMg: dosageHint.valueMg } : null,
-            formHint: formHint ? formHint.formKey : null,
+            formHint: formHint ? formHint.formKeys.join("|") : null,
           }
         : undefined,
     });
