@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
+import { callGeminiChat, GeminiError, GEMINI_MODEL_PRO } from "@/lib/gemini";
 import { clientIpFrom, rateLimit } from "@/lib/rate-limit";
 import { PEDIATRIC_DRUGS, computeDose } from "@/lib/pediatric-dosing";
 import type { PediatricDosing } from "@/components/dzpharm/types";
 
 export const maxDuration = 120;
 
-/** Garde anti-abus : 20 requêtes / minute / IP (coût + stabilité du service). */
+/** Garde anti-abus : 20 requêtes / minute / IP */
 const RATE_LIMIT = 20;
 const RATE_WINDOW_MS = 60_000;
 
@@ -15,7 +15,6 @@ const RATE_WINDOW_MS = 60_000;
 /* F1-bis / F1-ter — ancre pédiatrique multi-tours + registre marques  */
 /* ------------------------------------------------------------------ */
 
-/** Normalisation accent/casse/majuscules pour la détection. */
 function normText(s: string): string {
   return s
     .normalize("NFD")
@@ -32,22 +31,14 @@ interface PediatricAnchor {
   ageLabel: string;
   isBabyContext: boolean;
   matchedDrugs: PediatricDosing[];
-  /** Marques pédiatriques citées et leur statut réel en base (F1-ter). */
   brandStatuses: { brand: string; status: string; dciKey: string }[];
-  /** Marque citée appartenant à `withdrawnBrands` de la molécule. */
   withdrawnHits: { brand: string; dci: string }[];
   antalfenGynConfusion: boolean;
 }
 
-/**
- * Détection du contexte pédiatrique sur l'ENSEMBLE des messages de
- * l'utilisateur (F1-bis) : poids, âge, mots-clés bébé/enfant, molécules et
- * marques du référentiel pédiatrique (y compris marques retirées — F1-ter).
- */
 function detectPediatricAnchor(allUserText: string): PediatricAnchor {
   const norm = normText(allUserText);
 
-  // --- Poids : « 8 kg », « 8.5 kg », darija « 8 كيلو » ---
   let weightKg: number | null = null;
   const wFr = allUserText.match(
     /(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:kg|kgs|kilo|kilos)\b/i
@@ -59,7 +50,6 @@ function detectPediatricAnchor(allUserText: string): PediatricAnchor {
     if (v > 0 && v <= 150) weightKg = v;
   }
 
-  // --- Âge : mois / ans (fr + arabe) ---
   let ageMonths: number | null = null;
   const mFr = allUserText.match(/(\d{1,2})\s*mois\b/i);
   const mAr = allUserText.match(/(\d{1,2})\s*شهر/);
@@ -82,17 +72,13 @@ function detectPediatricAnchor(allUserText: string): PediatricAnchor {
     /\b(BEBE|NOURRISSON|ENFANT|PEDIATRI\w*|TOUT PETIT|BB)\b/.test(norm) ||
     /طفل|رضيع|بيبي|نونو/.test(allUserText);
 
-  // --- ANTALFEN GYN (flurbiprofène) ≠ ANTALFEN sirop (ibuprofène) ---
   const antalfenGynConfusion = /\bANTALFEN GYN\b/.test(norm);
 
-  // --- Molécules & marques du référentiel pédiatrique ---
   const matchedDrugs: PediatricDosing[] = [];
   const mentionedBrands = new Map<string, PediatricDosing>();
   for (const drug of PEDIATRIC_DRUGS) {
-    // DCI (jetons du dciKey : PARACETAMOL, IBUPROFENE, AMOXICILLINE ACIDE CLAVULANIQUE…)
     const dciTokens = drug.dciKey.split(/\s+/).filter((t) => t.length >= 6);
     const dciHit = dciTokens.some((t) => new RegExp(`\\b${t}\\b`).test(norm));
-    // Marques actives de chaque forme
     const activeBrandWords = new Set<string>();
     for (const f of drug.forms) {
       for (const b of f.brands.split(",")) {
@@ -100,16 +86,13 @@ function detectPediatricAnchor(allUserText: string): PediatricAnchor {
         if (word.length >= 4) activeBrandWords.add(word);
       }
     }
-    // Marques retirées/non renouvelées (F1-ter)
     const withdrawnBrandWords = new Set<string>();
     for (const w of drug.withdrawnBrands ?? []) {
       const word = normText(w).split(" ")[0];
       if (word.length >= 4) withdrawnBrandWords.add(word);
     }
-    // ANTALFEN : ignorer la confusion GYN pour l'ibuprofène
     const brandHit = [...activeBrandWords].some((w) => {
       if (drug.dciKey === "IBUPROFENE" && w === "ANTALFEN" && antalfenGynConfusion) {
-        // « ANTALFEN GYN » cité : vérifier si le sirop ANTALFEN (sans GYN) l'est aussi
         return new RegExp(`\\bANTALFEN\\b(?!\\s*GYN)`).test(norm);
       }
       return new RegExp(`\\b${w}\\b`).test(norm);
@@ -146,7 +129,6 @@ function detectPediatricAnchor(allUserText: string): PediatricAnchor {
   };
 }
 
-/** Dose calculée par prise pour l'ancre (mg/kg → mg, plafonnée) + CI + mises en garde. */
 function anchorDoseLine(drug: PediatricDosing, weightKg: number, ageMonths: number): string {
   const lines: string[] = [];
   if (drug.mgPerKgPerDose != null) {
@@ -179,7 +161,6 @@ function anchorDoseLine(drug: PediatricDosing, weightKg: number, ageMonths: numb
   } else {
     lines.push("posologie fixe par tranche d'âge — voir bandes du référentiel");
   }
-  // Limites d'âge/poids du référentiel (CI officielles)
   const ageLimit =
     drug.minAgeMonths != null ? `âge minimum ${drug.minAgeMonths} mois` : null;
   const weightLimit =
@@ -190,11 +171,7 @@ function anchorDoseLine(drug: PediatricDosing, weightKg: number, ageMonths: numb
 }
 
 /**
- * POST /api/ai/chat — DzPharm Copilote Clinique
- * Body: { messages: [{ role: 'user'|'assistant', content: string }], mode?: 'pro' | 'patient' | 'enfant' }
- * The assistant is grounded with live registry data (matching drugs from SQLite)
- * and a pediatric anchor computed over the WHOLE conversation (F1-bis) with
- * brand-status verification from the registry (F1-ter).
+ * POST /api/ai/chat — DzPharm Copilote Clinique (powered by Google Gemini)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -220,18 +197,18 @@ export async function POST(req: NextRequest) {
     if (messages.length === 0) {
       return NextResponse.json({ error: "Aucun message fourni" }, { status: 400 });
     }
-    // keep last 16 messages for context
+
     const history = messages.slice(-16);
     const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
 
-    /* ---------------- F1-bis : ancre pédiatrique multi-tours --------------- */
+    /* ---------------- Ancre pédiatrique multi-tours --------------- */
     const allUserText = history
       .filter((m) => m.role === "user")
       .map((m) => String(m.content))
       .join("\n");
     const anchor = detectPediatricAnchor(allUserText);
 
-    // F1-ter : vérification du statut réel des marques citées en base
+    // Vérification du statut réel des marques citées en base
     if (anchor.matchedDrugs.length > 0) {
       try {
         const brandWords = new Set<string>();
@@ -264,7 +241,6 @@ export async function POST(req: NextRequest) {
             status: r.status,
             dciKey: r.dciKey ?? "",
           }));
-          // marques retirées / non renouvelées citées par l'utilisateur
           for (const drug of anchor.matchedDrugs) {
             for (const wb of drug.withdrawnBrands ?? []) {
               const w = normText(wb).split(" ")[0];
@@ -335,7 +311,7 @@ export async function POST(req: NextRequest) {
         `\nUtilise ces valeurs pour chaque réponse ; ne recalcule qu'en cas de NOUVEAU poids/âge fourni.`;
     }
 
-    // --- ground with registry data: search drugs matching the query
+    // Grounding avec données du registre
     let registryContext = "";
     try {
       const key = lastUser
@@ -373,16 +349,11 @@ export async function POST(req: NextRequest) {
       console.error("[ai/chat] registry lookup failed", e);
     }
 
-    /* 24-c — MODE ENFANT : change uniquement le STYLE d'explication.
-       Les faits cliniques (doses, CI, mises en garde, ancre pédiatrique) et
-       toutes les RÈGLES ci-dessous restent strictement inchangées. */
     const enfantPrompt =
       mode === "enfant"
         ? `\n\nMODE ENFANT : explique comme à un enfant de 6-8 ans — phrases courtes, mots simples, comparaisons du quotidien, maximum 4 phrases. TOUJOURS terminer par : 'Demande toujours à un adulte de vérifier tes médicaments.' Ne JAMAIS modifier les doses, CI ou données cliniques — même style plus simple, faits identiques. Les avertissements de sécurité restent obligatoires (simplifiés en langage enfant mais présents).`
         : "";
 
-    // En mode enfant, la base reste le mode patient (public profane + rappel
-    // de consulter un professionnel) — le bloc ENFANT précise le style.
     const baseModePrompt =
       mode === "pro"
         ? `MODE PRO: Réponds avec la densité technique attendue d'un professionnel (posologies, CI, interactions, surveillance biologique, recommandations ESC/OMS quand pertinent).`
@@ -399,7 +370,7 @@ CONTEXTE: Tu assistes les professionnels de santé algériens (pharmaciens, méd
 
 ${baseModePrompt}${enfantPrompt}
 
-LANGUES: Réponds dans la langue de l'utilisateur (français, arabe standard, darija algérienne ou anglais). Si la question est en darija ("شكون الدوا تاع السكر؟"), réponds en arabe/darija clair.
+LANGUES: Réponds dans la langue de l'utilisateur (français, arabe standard, darija algérienne ou anglais). Si la question est en darija (\"شكون الدوا تاع السكر؟\"), réponds en arabe/darija clair.
 
 RÈGLES:
 1. Sois précis, structuré et concis. Utilise le format Markdown (titres, listes, gras).
@@ -411,29 +382,30 @@ RÈGLES:
 7. En pédiatrie, toute dose doit être exprimée en mg/kg puis convertie seulement si la concentration est fournie par l'utilisateur ou par l'ANCRE PÉDIATRIQUE.
 8. Si une ANCRE PÉDIATRIQUE est fournie, ses valeurs priment : réutilise-les sur les questions de relance (« et en sirop ? », « combien de mL ? ») SANS redemander le poids déjà donné plus haut dans la conversation.${pediatricAnchorBlock}${registryContext}`;
 
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
-      messages: [
-        { role: "assistant" as const, content: systemPrompt },
-        ...history.map((m) => ({
-          role: (m.role === "assistant" ? "assistant" : "user") as "assistant" | "user",
-          content: String(m.content).slice(0, 8000),
-        })),
-      ],
-      thinking: { type: "disabled" },
-    });
+    // Convert history to Gemini format (user/assistant alternation)
+    const geminiHistory = history.map((m) => ({
+      role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
+      content: String(m.content).slice(0, 8000),
+    }));
 
-    const content = completion.choices?.[0]?.message?.content;
-    if (!content || !content.trim()) {
-      return NextResponse.json(
-        { error: "Le copilote n'a pas pu générer de réponse. Réessayez." },
-        { status: 502 }
-      );
-    }
+    const content = await callGeminiChat(systemPrompt, geminiHistory, {
+      temperature: 0.2,
+      maxOutputTokens: 2048,
+      model: GEMINI_MODEL_PRO,
+    });
 
     return NextResponse.json({ response: content, mode });
   } catch (error) {
     console.error("[api/ai/chat]", error);
+    if (error instanceof GeminiError && error.message.includes("GEMINI_API_KEY")) {
+      return NextResponse.json(
+        {
+          error:
+            "Le copilote IA n'est pas configuré. Ajoutez GEMINI_API_KEY dans les variables d'environnement Vercel.",
+        },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Erreur du service IA. Réessayez dans un instant." },
       { status: 500 }

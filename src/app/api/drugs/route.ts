@@ -68,7 +68,7 @@ const ARABIC_SEARCH_MAP: Record<string, string> = {
   "\u0627\u0644\u0631\u0628\u0648\u0629": "SALBUTAMOL",
   "\u0641\u064a\u0646\u062a\u0648\u0644\u064a\u0646": "SALBUTAMOL", // Ventoline (darija)
   "\u0641\u0646\u062a\u0648\u0644\u064a\u0646": "SALBUTAMOL",
-  "\u0627\u0644\u0633\u0639\u0627\u0644": "CARBOCISTEINE", // la toux (→ expectorant, PAS un antibiotique)
+  "\u0627\u0644\u0633\u0639\u0627\u0644": "CARBOCISTEINE", // la toux (→ expectorant)
   "\u0627\u0644\u0643\u062d\u0629": "CARBOCISTEINE",
   "\u0643\u062d\u0629": "CARBOCISTEINE",
   "\u0631\u0634\u062d": "PSEUDOEPHEDRINE", // rhume
@@ -99,23 +99,33 @@ const ARABIC_SEARCH_MAP: Record<string, string> = {
 };
 
 function hasArabic(s: string): boolean {
-  return /[\u0600-\u06FF]/.test(s)
+  return /[\u0600-\u06FF]/.test(s);
 }
 
-/** Traduit la requête arabe en mot-clé français si possible. */
 function mapArabicQuery(q: string): string | null {
-  const trimmed = q.trim()
-  if (trimmed in ARABIC_SEARCH_MAP) return ARABIC_SEARCH_MAP[trimmed]
-  // tolérance : recherche par inclusion de clé
+  const trimmed = q.trim();
+  if (trimmed in ARABIC_SEARCH_MAP) return ARABIC_SEARCH_MAP[trimmed];
   for (const [ar, fr] of Object.entries(ARABIC_SEARCH_MAP)) {
-    if (trimmed.includes(ar) || ar.includes(trimmed)) return fr
+    if (trimmed.includes(ar) || ar.includes(trimmed)) return fr;
   }
-  return null
+  return null;
 }
 
 /**
- * Distance de Levenshtein avec coupe précoce (bande à 2 lignes).
- * Utilisée uniquement comme repli « aucune réponse exacte ».
+ * Normalize to search key: uppercase, strip accents & non-alphanumerics.
+ */
+function toKey(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Distance de Levenshtein avec coupe précoce.
  */
 function levenshtein(a: string, b: string, max = 2): number {
   if (a === b) return 0;
@@ -140,10 +150,137 @@ function levenshtein(a: string, b: string, max = 2): number {
   return prev[n];
 }
 
+/* ------------------------------------------------------------------ */
+/* Dosage parser                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Common unit aliases normalized to their base string for DB matching.
+ * E.g. "1g" → "1000 mg", "500mg" → "500 mg", "250mg/5ml" → "250 mg/5 ml"
+ */
+interface ParsedDosage {
+  /** The normalized numeric value in mg (if convertible) or null */
+  valueMg: number | null;
+  /** Original dosage token for string-based DB contains match */
+  raw: string;
+  /** True when parsed as grams (1g → 1000mg) */
+  fromGrams: boolean;
+}
+
+const DOSAGE_RE =
+  /\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|µg|ui|iu|ml|mcu)\b(?:\/\s*(\d{1,3})\s*ml)?/i;
+
+function parseDosageFromQuery(q: string): ParsedDosage | null {
+  const m = q.match(DOSAGE_RE);
+  if (!m) return null;
+  const num = parseFloat(m[1].replace(",", "."));
+  const unit = m[2].toLowerCase();
+  let valueMg: number | null = null;
+  let fromGrams = false;
+  if (unit === "mg") {
+    valueMg = num;
+  } else if (unit === "g") {
+    valueMg = num * 1000;
+    fromGrams = true;
+  } else if (unit === "mcg" || unit === "µg") {
+    valueMg = num / 1000;
+  }
+  // strip dosage token from raw for a cleaner "drug name" leftover
+  return { valueMg, raw: m[0], fromGrams };
+}
+
+/* ------------------------------------------------------------------ */
+/* Form-in-main-search parser                                          */
+/* ------------------------------------------------------------------ */
+
+/** Maps a phrase found in the search bar to a `form` contains key. */
+const FORM_TOKENS: Array<{ tokens: string[]; formKey: string }> = [
+  { tokens: ["sirop", "sirops"], formKey: "SIROP" },
+  { tokens: ["buvable", "buvables", "suspension", "susp"], formKey: "BUVABLE" },
+  { tokens: ["goutte", "gouttes", "gtt"], formKey: "GOUTTE" },
+  { tokens: ["comprime", "comprimes", "cp", "cpr", "tablette", "tablettes"], formKey: "COMP" },
+  { tokens: ["gelule", "gelules", "capsule", "capsules", "gel"], formKey: "GELULE" },
+  {
+    tokens: ["injectable", "injection", "injections", "ampoule", "ampoules", "perfusion", "iv", "im", "inj"],
+    formKey: "INJ",
+  },
+  { tokens: ["pommade", "pommades"], formKey: "POMMADE" },
+  { tokens: ["creme", "cremes", "topique", "dermique"], formKey: "CREME" },
+  { tokens: ["collyre", "collyres"], formKey: "COLLYRE" },
+  { tokens: ["suppositoire", "suppositoires", "suppo"], formKey: "SUPPO" },
+  { tokens: ["sachet", "sachets", "granule", "granules"], formKey: "SACHET" },
+  { tokens: ["spray", "aerosol", "aerosols", "inhalateur"], formKey: "SPRAY" },
+  { tokens: ["patch", "dispositif", "timbre"], formKey: "PATCH" },
+];
+
+interface ParsedForm {
+  formKey: string;
+  matchedToken: string;
+}
+
+function parseFormFromQuery(key: string): ParsedForm | null {
+  // key may be uppercased (from toKey), so lowercase for comparison
+  const words = key.toLowerCase().split(" ");
+  for (const entry of FORM_TOKENS) {
+    for (const token of entry.tokens) {
+      if (words.includes(token)) {
+        return { formKey: entry.formKey, matchedToken: token.toUpperCase() };
+      }
+    }
+  }
+  return null;
+}
+
+/** Strip matched form token and dosage token from the key. */
+function stripMetaTokens(key: string, toRemove: string[]): string {
+  let result = key;
+  for (const t of toRemove) {
+    result = result.replace(new RegExp(`\\b${t}\\b`, "gi"), " ");
+  }
+  return result.replace(/\s+/g, " ").trim();
+}
+
+/* ------------------------------------------------------------------ */
+/* N-gram / token-start scoring                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Returns a relevance score for a drug against the query key.
+ * Lower = more relevant.
+ *   0 — exact word-start match on brand or DCI key
+ *   1 — all query tokens appear as word-starts in brand or DCI key
+ *   2 — contains match
+ *   3 — fuzzy match
+ */
+function scoreResult(
+  dciKey: string | null,
+  brandKey: string | null,
+  queryKey: string
+): number {
+  const dk = dciKey ?? "";
+  const bk = brandKey ?? "";
+  const tokens = queryKey.split(" ").filter((t) => t.length >= 2);
+
+  // Exact word-start
+  if (dk.startsWith(queryKey) || bk.startsWith(queryKey)) return 0;
+
+  // All tokens appear as word starts
+  const allTokenStart = tokens.every(
+    (t) =>
+      new RegExp(`\\b${t}`).test(dk) || new RegExp(`\\b${t}`).test(bk)
+  );
+  if (allTokenStart) return 1;
+
+  // Contains match
+  if (dk.includes(queryKey) || bk.includes(queryKey)) return 2;
+
+  return 3;
+}
+
 /**
  * GET /api/drugs
  * Query params:
- *   q        — free text search (DCI, brand, lab, AMM) — accent/case-insensitive
+ *   q        — free text search (DCI, brand, lab, AMM, dosage, form) — accent/case-insensitive
  *   status   — ACTIF | NON_RENOUVELE | RETRIE (comma-separated)
  *   domain   — therapeutic domain (exact)
  *   form     — pharmaceutical form (contains)
@@ -158,6 +295,7 @@ export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams;
     let q = (sp.get("q") || "").trim();
+
     // Recherche arabe : traduire vers le mot-clé français si reconnu
     let arabicMapped = false;
     if (q && hasArabic(q)) {
@@ -167,11 +305,12 @@ export async function GET(req: NextRequest) {
         arabicMapped = true;
       }
     }
+
     const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
     const pageSize = Math.min(100, Math.max(1, parseInt(sp.get("pageSize") || "20", 10) || 20));
     const status = sp.get("status") || "";
     const domain = sp.get("domain") || "";
-    const form = sp.get("form") || "";
+    let form = sp.get("form") || "";
     const liste = sp.get("liste") || "";
     const country = sp.get("country") || "";
     const lab = (sp.get("lab") || "").trim();
@@ -189,30 +328,72 @@ export async function GET(req: NextRequest) {
     if (country) where.country = country;
     if (lab) where.lab = { contains: lab };
 
-    // Base (sans la clause q) — réutilisée par le repli flou
     const baseWhere: Prisma.DrugWhereInput = { ...where };
 
+    // ── Enhanced query parsing ──────────────────────────────────────────
+    let dosageHint: ParsedDosage | null = null;
+    let formHint: ParsedForm | null = null;
+    let cleanKey = "";
+
     if (q) {
-      // normalize query the same way dciKey/brandKey were normalized:
-      // uppercase, strip accents & non-alphanumerics
-      const key = q
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toUpperCase()
-        .replace(/[^A-Z0-9 ]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      const ors: Prisma.DrugWhereInput[] = [];
-      if (key) {
-        ors.push({ dciKey: { contains: key } });
-        ors.push({ brandKey: { contains: key } });
+      const rawKey = toKey(q);
+
+      // 1. Extract dosage (e.g. "500mg", "1g", "250mg/5ml")
+      dosageHint = parseDosageFromQuery(rawKey);
+      let workingKey = rawKey;
+
+      if (dosageHint) {
+        workingKey = stripMetaTokens(workingKey, [toKey(dosageHint.raw)]);
       }
+
+      // 2. Extract form (only if no explicit form filter set)
+      if (!form) {
+        formHint = parseFormFromQuery(workingKey);
+        if (formHint) {
+          workingKey = stripMetaTokens(workingKey, [formHint.matchedToken.toUpperCase()]);
+          // Apply form filter from the query itself
+          form = formHint.formKey;
+          where.form = { contains: formHint.formKey };
+        }
+      }
+
+      cleanKey = workingKey;
+
+      // 3. Build search OR clauses on the cleaned drug name key
+      const ors: Prisma.DrugWhereInput[] = [];
+      if (cleanKey) {
+        ors.push({ dciKey: { contains: cleanKey } });
+        ors.push({ brandKey: { contains: cleanKey } });
+      }
+      // Also search original q (with accents) for DCI/brand display fields
       ors.push({ dci: { contains: q } });
       ors.push({ brand: { contains: q } });
       ors.push({ lab: { contains: q } });
       ors.push({ regNumber: { contains: q } });
+
       const and = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
       where.AND = [...and, { OR: ors }];
+
+      // 4. Apply dosage filter (additively — AND dosage contains "500")
+      if (dosageHint) {
+        // Try exact mg value first (e.g. "1000" for 1g), then raw token
+        const dosageTokens: Prisma.DrugWhereInput[] = [];
+        if (dosageHint.valueMg != null) {
+          const mgStr = dosageHint.valueMg % 1 === 0
+            ? String(Math.round(dosageHint.valueMg))
+            : String(dosageHint.valueMg);
+          dosageTokens.push({ dosage: { contains: mgStr } });
+        }
+        // Also try original token (e.g. "1G" or "500MG")
+        const rawDosageKey = toKey(dosageHint.raw).split("/")[0].trim();
+        if (rawDosageKey) {
+          dosageTokens.push({ dosage: { contains: rawDosageKey } });
+        }
+        if (dosageTokens.length > 0) {
+          const existingAnd = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+          where.AND = [...existingAnd, { OR: dosageTokens }];
+        }
+      }
     }
 
     const orderBy: Prisma.DrugOrderByWithRelationInput[] =
@@ -245,82 +426,121 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    /* ---------- Repli flou (tolérance aux fautes de frappe) ----------
-     * Si la recherche exacte ne renvoie rien et que la requête est assez
-     * longue, on cherche les clés de marque/DCI les plus proches
-     * (distance de Levenshtein ≤ 2) et on relance une recherche « contains »
-     * sur les meilleures candidates. */
+    /* ── Fuzzy fallback ──────────────────────────────────────────────
+     * If exact search returns 0 results and the query has enough length,
+     * use Levenshtein on brand/DCI keys to find close matches.
+     * Threshold: max=1 for short queries (4-6 chars), max=2 for longer.
+     * Also retry without the dosage constraint if it was too restrictive. */
     let fuzzyApplied = false;
     let fuzzyTotal = total;
     let fuzzyDrugs = drugs;
-    if (total === 0 && q.length >= 5) {
-      const key = q
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toUpperCase()
-        .replace(/[^A-Z0-9 ]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      if (key.length >= 5) {
-        const candidates = await db.drug.findMany({
-          where: { status: "ACTIF" },
-          select: { brandKey: true, dciKey: true },
-          distinct: undefined,
-        });
-        const seen = new Set<string>();
-        for (const c of candidates) {
-          if (c.brandKey) seen.add(c.brandKey);
-          if (c.dciKey) seen.add(c.dciKey);
-        }
-        const maxDist = key.length <= 7 ? 1 : 2;
-        const scored: { k: string; d: number }[] = [];
-        for (const k of seen) {
-          // comparaison sur des tronçons : début de clé ou mots complets
-          const words = k.split(" ");
-          for (const w of [k, ...words]) {
-            if (Math.abs(w.length - key.length) > maxDist) continue;
-            const d = levenshtein(w, key, maxDist);
-            if (d <= maxDist) {
-              scored.push({ k, d: d + (w === k ? 0 : 1) });
-              break;
-            }
-          }
-        }
-        scored.sort((a, b) => a.d - b.d);
-        const best = scored.slice(0, 3).map((s) => s.k);
-        if (best.length > 0) {
-          const fuzzyWhere: Prisma.DrugWhereInput = {
-            ...baseWhere,
-            OR: [{ brandKey: { in: best } }, { dciKey: { in: best } }],
-          };
-          const [ft, fd] = await Promise.all([
-            db.drug.count({ where: fuzzyWhere }),
+
+    if (total === 0 && cleanKey.length >= 4) {
+      const searchKey = cleanKey || toKey(q);
+      if (searchKey.length >= 4) {
+        // Try relaxing dosage constraint first
+        if (dosageHint) {
+          const relaxedWhere: Prisma.DrugWhereInput = { ...baseWhere };
+          if (formHint) relaxedWhere.form = { contains: formHint.formKey };
+          const ors: Prisma.DrugWhereInput[] = [
+            { dciKey: { contains: searchKey } },
+            { brandKey: { contains: searchKey } },
+            { dci: { contains: q } },
+            { brand: { contains: q } },
+          ];
+          relaxedWhere.AND = [{ OR: ors }];
+          const [rt, rd] = await Promise.all([
+            db.drug.count({ where: relaxedWhere }),
             db.drug.findMany({
-              where: fuzzyWhere,
+              where: relaxedWhere,
               orderBy: [{ status: "asc" }, { dciKey: "asc" }],
               skip: (page - 1) * pageSize,
               take: pageSize,
               include: {
-                pharmacyProducts: {
-                  orderBy: [{ ppa: "asc" }],
-                  take: 1,
-                  select: { ppa: true, cnasId: true },
-                },
+                pharmacyProducts: { orderBy: [{ ppa: "asc" }], take: 1, select: { ppa: true, cnasId: true } },
               },
             }),
           ]);
-          if (ft > 0) {
+          if (rt > 0) {
             fuzzyApplied = true;
-            fuzzyTotal = ft;
-            fuzzyDrugs = fd;
+            fuzzyTotal = rt;
+            fuzzyDrugs = rd;
+          }
+        }
+
+        // Full fuzzy Levenshtein if still 0
+        if (!fuzzyApplied) {
+          const candidates = await db.drug.findMany({
+            where: { status: "ACTIF" },
+            select: { brandKey: true, dciKey: true },
+          });
+          const seen = new Set<string>();
+          for (const c of candidates) {
+            if (c.brandKey) seen.add(c.brandKey);
+            if (c.dciKey) seen.add(c.dciKey);
+          }
+          // Adaptive max distance: 1 for ≤6 chars, 2 for longer
+          const maxDist = searchKey.length <= 6 ? 1 : 2;
+          const scored: { k: string; d: number }[] = [];
+          for (const k of seen) {
+            const words = k.split(" ");
+            for (const w of [k, ...words]) {
+              if (Math.abs(w.length - searchKey.length) > maxDist) continue;
+              const d = levenshtein(w, searchKey, maxDist);
+              if (d <= maxDist) {
+                scored.push({ k, d: d + (w === k ? 0 : 1) });
+                break;
+              }
+            }
+          }
+          scored.sort((a, b) => a.d - b.d);
+          const best = scored.slice(0, 5).map((s) => s.k);
+          if (best.length > 0) {
+            const fuzzyWhere: Prisma.DrugWhereInput = {
+              ...baseWhere,
+              OR: [{ brandKey: { in: best } }, { dciKey: { in: best } }],
+            };
+            const [ft, fd] = await Promise.all([
+              db.drug.count({ where: fuzzyWhere }),
+              db.drug.findMany({
+                where: fuzzyWhere,
+                orderBy: [{ status: "asc" }, { dciKey: "asc" }],
+                skip: (page - 1) * pageSize,
+                take: pageSize,
+                include: {
+                  pharmacyProducts: {
+                    orderBy: [{ ppa: "asc" }],
+                    take: 1,
+                    select: { ppa: true, cnasId: true },
+                  },
+                },
+              }),
+            ]);
+            if (ft > 0) {
+              fuzzyApplied = true;
+              fuzzyTotal = ft;
+              fuzzyDrugs = fd;
+            }
           }
         }
       }
     }
 
+    /* ── Token-start relevance re-ranking (only for relevance sort) ── */
+    const finalDrugs = fuzzyApplied ? fuzzyDrugs : drugs;
+    const rankingKey = cleanKey || toKey(q);
+    const ranked =
+      sort === "relevance" && rankingKey
+        ? [...finalDrugs].sort(
+            (a, b) =>
+              scoreResult(a.dciKey, a.brandKey, rankingKey) -
+              scoreResult(b.dciKey, b.brandKey, rankingKey)
+          )
+        : finalDrugs;
+
     const index = await getMonoIndex();
 
-    const items = (fuzzyApplied ? fuzzyDrugs : drugs).map((d) => ({
+    const items = ranked.map((d) => ({
       id: d.id,
       regNumber: d.regNumber,
       dci: d.dci,
@@ -340,11 +560,8 @@ export async function GET(req: NextRequest) {
       domains: d.domains ? (JSON.parse(d.domains) as string[]) : [],
       regDateInitial: d.regDateInitial,
       regDateFinal: d.regDateFinal,
-      /** Prix public (PPA, DA) du produit d'officine correspondant — plus bas si plusieurs. */
       price: d.pharmacyProducts[0]?.ppa ?? null,
-      /** Présent sur la liste CNAS => remboursable. */
       refundable: d.pharmacyProducts[0]?.cnasId != null,
-      /** RCP issu des livres techniques disponible pour cette DCI. */
       hasBookRcp: index ? matchMonograph(index, d.dciKey ?? d.dci) !== null : false,
     }));
 
@@ -357,8 +574,16 @@ export async function GET(req: NextRequest) {
         1,
         Math.ceil((fuzzyApplied ? fuzzyTotal : total) / pageSize)
       ),
-      /** true si les résultats viennent du repli flou (tolérance aux fautes). */
       fuzzy: fuzzyApplied,
+      /** Parsed dosage hint — for UI debugging */
+      _meta: q
+        ? {
+            arabicMapped,
+            cleanKey,
+            dosageHint: dosageHint ? { raw: dosageHint.raw, valueMg: dosageHint.valueMg } : null,
+            formHint: formHint ? formHint.formKey : null,
+          }
+        : undefined,
     });
   } catch (error) {
     console.error("[api/drugs]", error);

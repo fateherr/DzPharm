@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ZAI from "z-ai-web-dev-sdk";
+import { callGemini, GeminiError } from "@/lib/gemini";
 import { db } from "@/lib/db";
 import { clientIpFrom, rateLimit } from "@/lib/rate-limit";
 import { normalizeKey } from "@/lib/dci-normalizer";
@@ -262,20 +262,14 @@ N'inclus que les paires ayant une interaction cliniquement pertinente, en utilis
     let aiOk = false;
 
     try {
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({
-        messages: [
-          {
-            role: "assistant",
-            content:
-              "Tu es un pharmacien clinicien expert en interactions médicamenteuses, spécialisé sur le marché pharmaceutique algérien. Tu réponds uniquement en JSON valide. Tu travailles exclusivement sur les DCI fournies, sans jamais inventer de molécule.",
-          },
-          { role: "user", content: userPrompt },
-        ],
-        thinking: { type: "disabled" },
-      });
+      const systemInstruction =
+        "Tu es un pharmacien clinicien expert en interactions médicamenteuses, spécialisé sur le marché pharmaceutique algérien. Tu réponds uniquement en JSON valide. Tu travailles exclusivement sur les DCI fournies, sans jamais inventer de molécule.";
 
-      const raw = completion.choices?.[0]?.message?.content ?? "";
+      const raw = await callGemini(
+        systemInstruction,
+        [{ role: "user", parts: [{ text: userPrompt }] }],
+        { temperature: 0.1, maxOutputTokens: 1500 }
+      );
       let parsed: { pairs?: InteractionPair[]; advice?: string[]; monitoring?: string[] } | null =
         null;
       try {
@@ -330,7 +324,11 @@ N'inclus que les paires ayant une interaction cliniquement pertinente, en utilis
         });
       }
     } catch (aiError) {
-      console.error("[api/ai/interactions] LLM indisponible, repli local :", aiError);
+      if (aiError instanceof GeminiError) {
+        console.error("[api/ai/interactions] Gemini indisponible, repli local :", aiError.message);
+      } else {
+        console.error("[api/ai/interactions] LLM indisponible, repli local :", aiError);
+      }
     }
 
     // --- 5. Fusion + sorties déterministes

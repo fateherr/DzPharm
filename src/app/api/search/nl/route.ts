@@ -106,15 +106,19 @@ const DOMAIN_SYNONYMS: Array<{ domain: string; syn: string }> = [
 /** Formes galéniques → valeur « contains » du registre. */
 const FORM_SYNONYMS: Array<{ form: string; syn: string }> = [
   { form: "SIROP", syn: "sirop | sirops" },
-  { form: "BUVABLE", syn: "buvable | buvables | suspension" },
-  { form: "GOUTTE", syn: "goutte | gouttes" },
-  { form: "COMP", syn: "comprime | comprimes | tablette | tablettes | cp" },
+  { form: "BUVABLE", syn: "buvable | buvables | suspension | susp" },
+  { form: "GOUTTE", syn: "goutte | gouttes | gtt" },
+  { form: "COMP", syn: "comprime | comprimes | tablette | tablettes | cp | cpr | cps | cachet | cachets" },
   { form: "GELULE", syn: "gelule | gelules | capsule | capsules" },
-  { form: "INJ", syn: "injectable | injection | injections | ampoule | ampoules | perfusion | iv | im" },
+  { form: "INJ", syn: "injectable | injection | injections | ampoule | ampoules | perfusion | iv | im | inj" },
   { form: "POMMADE", syn: "pommade | pommades" },
-  { form: "CREME", syn: "creme | cremes | topique | topiques | dermique" },
-  { form: "COLLYRE", syn: "collyre | collyres" },
+  { form: "CREME", syn: "creme | cremes | topique | topiques | dermique | gel topique" },
+  { form: "COLLYRE", syn: "collyre | collyres | oculaire" },
   { form: "SUPPO", syn: "suppositoire | suppositoires | suppo" },
+  { form: "SACHET", syn: "sachet | sachets | granule | granules | poudre" },
+  { form: "SPRAY", syn: "spray | sprays | aerosol | aerosols | inhalateur | vaporisateur | nebuliseur" },
+  { form: "PATCH", syn: "patch | patches | dispositif | timbre | adhesif" },
+  { form: "GEL", syn: "gel | gels" },
 ]
 
 /** Mots outils ignorés (début de phrase type « médicament pour le … »). */
@@ -127,6 +131,21 @@ const STOPWORDS = new Set([
   "avez", "vous", "faut", "il", "elle", "besoin", "voudrais", "souhaite", "donner",
   "donnez", "prendre", "prend", "pas", "plus", "moins", "trop",
 ]);
+
+/* Dosage patterns in NL queries: "500mg", "1g", "250 mg", "0.5 g" */
+const NL_DOSAGE_RE =
+  /\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|µg|ui|iu|ml)\b/i;
+
+function extractDosageToken(normed: string): { token: string; valueMg: number | null } | null {
+  const m = normed.match(NL_DOSAGE_RE);
+  if (!m) return null;
+  const num = parseFloat(m[1].replace(",", "."));
+  const unit = m[2].toLowerCase();
+  let valueMg: number | null = null;
+  if (unit === "mg") valueMg = num;
+  else if (unit === "g") valueMg = num * 1000;
+  return { token: m[0], valueMg };
+}
 
 /* ------------------------------------------------------------------ */
 /* Parseur heuristique                                                 */
@@ -143,6 +162,8 @@ interface Interpreted {
   p1?: string;
   /** Contexte pédiatrique détecté (enfant, nourrisson…). */
   pediatric?: boolean;
+  /** Dosage extracted from query (e.g. "500mg" → "500") */
+  dosage?: string;
 }
 
 function parseQuery(raw: string): Interpreted {
@@ -208,7 +229,29 @@ function parseQuery(raw: string): Interpreted {
     () => (interpreted.pediatric = true)
   );
 
-  // 5. Texte libre restant (hors mots outils)
+  // 5. Dosage extraction (e.g. "500mg", "1g", "250 mg")
+  const normedRaw = norm(raw);
+  const dosageToken = extractDosageToken(normedRaw);
+  if (dosageToken) {
+    // Mark dosage tokens as consumed (remove from free text)
+    const dosageWords = norm(dosageToken.token).split(" ");
+    for (let i = 0; i < tokens.length; i++) {
+      if (consumed.has(i)) continue;
+      if (dosageWords[0] && tokens[i].startsWith(dosageWords[0].replace(/[^a-z0-9]/g, ""))) {
+        consumed.add(i);
+      }
+    }
+    if (dosageToken.valueMg != null) {
+      interpreted.dosage =
+        dosageToken.valueMg % 1 === 0
+          ? String(Math.round(dosageToken.valueMg))
+          : String(dosageToken.valueMg);
+    } else {
+      interpreted.dosage = norm(dosageToken.token);
+    }
+  }
+
+  // 6. Texte libre restant (hors mots outils)
   const free = tokens
     .filter((_, i) => !consumed.has(i) && !STOPWORDS.has(tokens[i]))
     .join(" ")
@@ -262,8 +305,25 @@ export async function GET(req: NextRequest) {
       ors.push({ brand: { contains: interpreted.q } });
       where.AND = [{ OR: ors }];
     }
+    // Apply dosage filter if extracted — use OR to match both converted mg value
+    // and original token (e.g. "1000" OR "1G" for a 1g query)
+    if (interpreted.dosage) {
+      const dosageOrs: Prisma.DrugWhereInput[] = [
+        { dosage: { contains: interpreted.dosage } },
+      ];
+      // Also try the original raw dosage text from the query (e.g. "1G", "500MG")
+      const rawDosageMatch = norm(raw).match(/\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|ui|ml)\b/i);
+      if (rawDosageMatch) {
+        const rawToken = (rawDosageMatch[1] + rawDosageMatch[2]).toUpperCase().replace(",", ".");
+        if (rawToken !== interpreted.dosage) {
+          dosageOrs.push({ dosage: { contains: rawToken } });
+        }
+      }
+      const existingAnd = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+      where.AND = [...existingAnd, { OR: dosageOrs }];
+    }
 
-    const [total, drugs] = await Promise.all([
+    let [total, drugs] = await Promise.all([
       db.drug.count({ where }),
       db.drug.findMany({
         where,
@@ -278,6 +338,33 @@ export async function GET(req: NextRequest) {
         },
       }),
     ]);
+
+    // Domain relaxation fallback: if domain filter returns 0, retry without domain.
+    // This covers cases like "antibiotique" (maps to "Antibiotiques") but AUGMENTIN
+    // is in "Anti-infectieux" — keeping other filters (form, dosage) intact.
+    if (total === 0 && interpreted.domain) {
+      const relaxedWhere = { ...where };
+      delete relaxedWhere.domain;
+      const [rt, rd] = await Promise.all([
+        db.drug.count({ where: relaxedWhere }),
+        db.drug.findMany({
+          where: relaxedWhere,
+          orderBy: [{ status: "asc" }, { dciKey: "asc" }],
+          take: 40,
+          include: {
+            pharmacyProducts: {
+              orderBy: [{ ppa: "asc" }],
+              take: 1,
+              select: { ppa: true, cnasId: true },
+            },
+          },
+        }),
+      ]);
+      if (rt > 0) {
+        total = rt;
+        drugs = rd;
+      }
+    }
 
     // Contexte pédiatrique : privilégier les spécialités « ENFANT / PEDIATRIQUE »
     let ranked = drugs;
