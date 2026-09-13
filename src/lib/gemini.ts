@@ -7,11 +7,11 @@
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
-/** Default model — fast & free */
-export const GEMINI_MODEL = "gemini-2.0-flash-lite";
+/** Default model */
+export const GEMINI_MODEL = "gemini-3.6-flash";
 
-/** Pro model — use for complex multi-step reasoning when needed */
-export const GEMINI_MODEL_PRO = "gemini-2.0-flash";
+/** Pro model — same model for this API tier */
+export const GEMINI_MODEL_PRO = "gemini-3.6-flash";
 
 export interface GeminiMessage {
   role: "user" | "model";
