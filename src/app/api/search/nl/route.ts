@@ -139,13 +139,29 @@ const NL_DOSAGE_RE =
 
 function extractDosageToken(normed: string): { token: string; valueMg: number | null } | null {
   const m = normed.match(NL_DOSAGE_RE);
-  if (!m) return null;
-  const num = parseFloat(m[1].replace(",", "."));
-  const unit = m[2].toLowerCase();
-  let valueMg: number | null = null;
-  if (unit === "mg") valueMg = num;
-  else if (unit === "g") valueMg = num * 1000;
-  return { token: m[0], valueMg };
+  if (m) {
+    const num = parseFloat(m[1].replace(",", "."));
+    const unit = m[2].toLowerCase();
+    let valueMg: number | null = null;
+    if (unit === "mg") valueMg = num;
+    else if (unit === "g") valueMg = num * 1000;
+    return { token: m[0], valueMg };
+  }
+
+  // Bare number check in multi-word queries (e.g. "doliprane 500", "amoxicilline 1000")
+  const words = normed.split(" ").filter(Boolean);
+  if (words.length >= 2) {
+    for (const w of words) {
+      if (/^\d{1,5}(?:[.,]\d{1,2})?$/.test(w)) {
+        const numVal = parseFloat(w.replace(",", "."));
+        if (numVal >= 0.25 && numVal <= 5000) {
+          return { token: w, valueMg: numVal === 1 || numVal === 2 ? numVal * 1000 : numVal };
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 /* ------------------------------------------------------------------ */

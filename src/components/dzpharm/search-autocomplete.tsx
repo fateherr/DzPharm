@@ -2,12 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Coins, CornerDownLeft, Loader2, Pill, Search, Sparkles, X } from 'lucide-react'
+import {
+  Clock,
+  Coins,
+  CornerDownLeft,
+  Flame,
+  History,
+  Loader2,
+  Pill,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchDrugs } from './api'
 import type { Drug } from './types'
 import { StatusBadge, formatPrice } from './status-badge'
 import { useDzPharm } from './store'
+
+const RECENT_SEARCHES_KEY = 'dzpharm_recent_searches'
+const POPULAR_SEARCHES = [
+  'Doliprane 1000',
+  'Amoxicilline 500',
+  'Augmentin 1g',
+  'Spasfon',
+  'Flagyl 500',
+  'Aspegic 100',
+]
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -151,6 +172,49 @@ export function SearchAutocomplete({
   const debounced = useDebounce(value, 260)
   const trimmed = debounced.trim()
 
+  // Recent searches state persisted in localStorage
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_SEARCHES_KEY)
+      if (stored) setRecentSearches(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  function addRecentSearch(query: string) {
+    const q = query.trim()
+    if (!q) return
+    setRecentSearches((prev) => {
+      const next = [q, ...prev.filter((item) => item.toLowerCase() !== q.toLowerCase())].slice(0, 6)
+      try {
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  }
+
+  function clearRecentSearches() {
+    setRecentSearches([])
+    try {
+      localStorage.removeItem(RECENT_SEARCHES_KEY)
+    } catch {}
+  }
+
+  // Live detection of dosage in query
+  const detectedDosage = useMemo(() => {
+    const m = trimmed.match(/\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|µg|ui|iu|ml)\b/i)
+    if (m) return m[0].toUpperCase()
+    const words = trimmed.split(/\s+/)
+    if (words.length >= 2) {
+      for (const w of words) {
+        if (/^\d{1,4}$/.test(w) && Number(w) >= 1 && Number(w) <= 5000) {
+          return `${w} mg`
+        }
+      }
+    }
+    return null
+  }, [trimmed])
+
   // Dynamic cycling placeholder for hero
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   useEffect(() => {
@@ -201,6 +265,7 @@ export function SearchAutocomplete({
   const rowCount = results.length + (nlActive ? 1 : 0)
 
   function select(drug: Drug) {
+    if (drug.brand) addRecentSearch(drug.brand)
     onSelect(drug)
     setValue('')
     setOpen(false)
@@ -216,6 +281,7 @@ export function SearchAutocomplete({
   function runSmartSearch() {
     const interp = nlData?.interpreted
     if (!interp) return
+    if (trimmed) addRecentSearch(trimmed)
     gotoDirectory({
       q: interp.q ?? '',
       domain: interp.domain ?? '',
@@ -325,6 +391,71 @@ export function SearchAutocomplete({
         )}
       </div>
 
+      {/* Popover for Recent & Popular searches when input is focused and empty */}
+      {open && value.trim().length === 0 && (
+        <div
+          role="region"
+          aria-label="Recherches récentes et suggestions"
+          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[26rem] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl"
+        >
+          {recentSearches.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center justify-between px-1 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="size-3 text-primary" />
+                  <span>Recherches Récentes</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={clearRecentSearches}
+                  className="text-[10px] text-muted-foreground hover:text-destructive transition-colors lowercase"
+                >
+                  effacer
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {recentSearches.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setValue(item)
+                      setOpen(true)
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-muted/50 px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary/40 hover:bg-card transition-all"
+                  >
+                    <History className="size-3 text-muted-foreground" />
+                    <span>{item}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center gap-1.5 px-1 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <Flame className="size-3 text-amber-500" />
+              <span>Médicaments Fréquents</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {POPULAR_SEARCHES.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => {
+                    setValue(item)
+                    setOpen(true)
+                  }}
+                  className="rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-all"
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isOpen && (
         <div
           id={id ? `${id}-listbox` : undefined}
@@ -333,7 +464,14 @@ export function SearchAutocomplete({
         >
           {/* Header row in dropdown */}
           <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-            <span>Résultats ({results.length})</span>
+            <div className="flex items-center gap-1.5">
+              <span>Résultats ({results.length})</span>
+              {detectedDosage && (
+                <span className="rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold lowercase tracking-normal">
+                  dosage: {detectedDosage}
+                </span>
+              )}
+            </div>
             {data?.fuzzy && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                 Recherche tolérante
