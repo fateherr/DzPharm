@@ -336,10 +336,21 @@ export interface RcpSection {
   items: RcpItem[]
 }
 
+export interface RcpSafety {
+  pregnancy?: 'AUTORISE' | 'PRECAUTION' | 'DECONSEILLE' | 'CONTRE-INDIQUE' | string
+  pregnancyLabel?: string
+  breastfeeding?: 'COMPATIBLE' | 'SURVEILLANCE' | 'A_EVITER' | string
+  driving?: 0 | 1 | 2 | 3 | number
+  doping?: boolean
+  renalAlert?: boolean
+}
+
 export interface Rcp {
   source: RcpSource
   sourceLabel: string
   generatedAt: string
+  summary?: string
+  safety?: RcpSafety
   header: {
     denomination: string
     dci: string
@@ -392,6 +403,8 @@ export interface MonographDetail {
   book: string
   context: string | null
   alias: string | null
+  summary?: string
+  safety?: RcpSafety
   sections: {
     categories: MonoItem[]
     available: MonoItem[]

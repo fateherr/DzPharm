@@ -8,10 +8,10 @@ const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
 /** Default model */
-export const GEMINI_MODEL = "gemini-3.8-flash";
+export const GEMINI_MODEL = "gemini-3.6-flash";
 
 /** Pro model — same model for this API tier */
-export const GEMINI_MODEL_PRO = "gemini-3.8-flash";
+export const GEMINI_MODEL_PRO = "gemini-3.6-flash";
 
 export interface GeminiMessage {
   role: "user" | "model";
@@ -21,7 +21,7 @@ export interface GeminiMessage {
 export interface GeminiOptions {
   /** Sampling temperature (0 = deterministic). Default: 0.2 */
   temperature?: number;
-  /** Max output tokens. Default: 2048 */
+  /** Max output tokens. Default: 4096 */
   maxOutputTokens?: number;
   /** Model override. Default: GEMINI_MODEL */
   model?: string;
@@ -80,11 +80,21 @@ export async function callGemini(
     ],
   };
 
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+  if (!res.ok && (res.status === 503 || res.status === 429) && model !== "gemini-3.6-flash") {
+    // Retry once with fallback model gemini-3.6-flash during temporary spikes
+    const fallbackUrl = `${GEMINI_API_BASE}/gemini-3.6-flash:generateContent?key=${apiKey}`;
+    res = await fetch(fallbackUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
 
   if (!res.ok) {
     const errBody = await res.json().catch(() => null);

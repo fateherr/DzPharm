@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { extractBookSafetyAndSummary, type MonoContent } from "@/lib/rcp";
 
 /**
  * GET /api/monographs/[key] — fiche monographie complète (livre technique).
@@ -63,20 +64,34 @@ async function build(row: {
   book: string;
   content: string;
 }) {
-  let content: {
-    context?: string | null;
-    alias?: string | null;
-    domainsExtra?: string[];
-    keys?: string[];
-    sections?: Record<string, unknown>;
-  } = {};
+  let content: MonoContent = {
+    context: null,
+    alias: null,
+    domainsExtra: [],
+    keys: [],
+    sections: {
+      categories: [],
+      available: [],
+      mechanism: [],
+      profile: {},
+      interactions: [],
+      pregnancy: [],
+      posology: [],
+    },
+  };
   try {
     content = JSON.parse(row.content);
   } catch {
-    content = {};
+    // fallback
   }
-  const s = (content.sections ?? {}) as Record<string, unknown>;
+  const s = content.sections ?? {};
   const profile = (s.profile as Record<string, string[]> | undefined) ?? {};
+
+  // Extraction synthèse clinique et badges sécurité
+  const { safety, summary } = extractBookSafetyAndSummary({
+    domain: row.domain,
+    content,
+  });
 
   // Médicaments du registre pour cette DCI (clé exacte ou composante)
   const searchKeys = new Set<string>([row.dciKey, ...(content.keys ?? [])]);
@@ -103,6 +118,8 @@ async function build(row: {
     dciKey: row.dciKey,
     dci: row.dci,
     domain: row.domain,
+    summary,
+    safety,
     book: row.book
       .replace(/\.docx$/i, "")
       .replace(/_/g, " ")
@@ -121,7 +138,7 @@ async function build(row: {
       interactions: toItems(s.interactions as string[] | undefined),
       pregnancy: toItems(s.pregnancy as string[] | undefined),
       posology: toItems(s.posology as string[] | undefined),
-      galenic: toItems(s.galinic as string[] | undefined),
+      galenic: toItems(s.galenic as string[] | undefined),
       advice: toItems(s.advice as string[] | undefined),
       pk: toItems(s.pk as string[] | undefined),
       notes: toItems(s.notes as string[] | undefined),

@@ -5,16 +5,23 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import {
+  Activity,
+  AlertCircle,
+  AlertTriangle,
   Baby,
   BookMarked,
   BookOpen,
   Bone,
+  Car,
+  Check,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   CircleAlert,
   ClipboardList,
+  Copy,
   Droplets,
   Flower2,
   FlaskConical,
@@ -28,12 +35,15 @@ import {
   Pill as PillMeta,
   Printer,
   Search,
+  ShieldAlert,
+  ShieldCheck,
   ShieldPlus,
   Soup,
   Stethoscope,
   Syringe,
   Thermometer,
   Wind,
+  ZapOff,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -146,7 +156,7 @@ export function LibraryView() {
               Bibliothèque clinique
             </h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              911 monographies DCI extraites des 24 livres de pharmacologie clinique,
+              932 monographies DCI de référence (livres techniques &amp; synthèses cliniques),
               un glossaire de {GLOSSARY_TERMS.length} termes pharmaceutiques et{' '}
               {PATIENT_GUIDES.length} guides d&apos;éducation pour vos patients.
             </p>
@@ -901,6 +911,7 @@ function GuideReaderBody({
 function MonographReader({ dciKey, onClose }: { dciKey: string | null; onClose: () => void }) {
   const openDrug = useDzPharm((s) => s.openDrug)
   const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [copiedSummary, setCopiedSummary] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const { data, isLoading } = useQuery({
@@ -991,6 +1002,96 @@ function MonographReader({ dciKey, onClose }: { dciKey: string | null; onClose: 
                   </span>
                 )}
               </div>
+
+              {/* Badges de sécurité clinique */}
+              {data.safety && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/50">
+                  {data.safety.pregnancy && (
+                    <button
+                      type="button"
+                      onClick={() => goToSection('pregnancy')}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition hover:opacity-80',
+                        data.safety.pregnancy === 'AUTORISE'
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                          : data.safety.pregnancy === 'CONTRE-INDIQUE'
+                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 font-bold'
+                            : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                      )}
+                      title="Voir section Grossesse & Allaitement"
+                    >
+                      {data.safety.pregnancy === 'AUTORISE' ? (
+                        <CheckCircle2 className="size-3" />
+                      ) : (
+                        <AlertTriangle className="size-3" />
+                      )}
+                      Grossesse : {data.safety.pregnancyLabel || data.safety.pregnancy}
+                    </button>
+                  )}
+
+                  {data.safety.breastfeeding && (
+                    <button
+                      type="button"
+                      onClick={() => goToSection('pregnancy')}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold transition hover:opacity-80',
+                        data.safety.breastfeeding === 'COMPATIBLE'
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                          : data.safety.breastfeeding === 'A_EVITER'
+                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                            : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                      )}
+                      title="Voir section Grossesse & Allaitement"
+                    >
+                      <Baby className="size-3" />
+                      Allaitement : {data.safety.breastfeeding === 'COMPATIBLE' ? 'Compatible' : data.safety.breastfeeding === 'A_EVITER' ? 'À éviter' : 'Surveillance'}
+                    </button>
+                  )}
+
+                  {data.safety.driving !== undefined && (
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold',
+                        data.safety.driving === 0
+                          ? 'border-border bg-muted/60 text-muted-foreground'
+                          : data.safety.driving === 1
+                            ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
+                            : data.safety.driving === 2
+                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                              : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 font-bold'
+                      )}
+                    >
+                      <Car className="size-3" />
+                      Conduite : Niv. {data.safety.driving}
+                    </span>
+                  )}
+
+                  {data.safety.doping ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-300">
+                      <ZapOff className="size-3" />
+                      Dopage : Substance réglementée
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                      <ShieldCheck className="size-3" />
+                      Sport : Non dopant
+                    </span>
+                  )}
+
+                  {data.safety.renalAlert && (
+                    <button
+                      type="button"
+                      onClick={() => goToSection('posology')}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300 transition hover:opacity-80"
+                      title="Voir section Posologies pour adaptation"
+                    >
+                      <Activity className="size-3" />
+                      Adaptation DFG requise
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Navigation par sections */}
               <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto pt-1">
                 {visibleSections.map((s) => (
@@ -1017,6 +1118,47 @@ function MonographReader({ dciKey, onClose }: { dciKey: string | null; onClose: 
             {/* Corps */}
             <div ref={scrollRef} className="scroll-thin flex-1 overflow-y-auto">
               <div className="space-y-6 p-5">
+                {/* Flash Card Synthèse */}
+                {data.summary && (
+                  <div className="relative overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-2xs">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="flex size-6 items-center justify-center rounded-lg bg-primary/20 text-xs font-bold text-primary">
+                          ⚡
+                        </span>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
+                          Synthèse Clinique Rapide (30s)
+                        </h4>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1.5 px-2 text-xs text-primary hover:bg-primary/15"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`[SYNTHÈSE CLINIQUE DZPHARM - ${data.dci}]\n\n${data.summary}`)
+                          setCopiedSummary(true)
+                          setTimeout(() => setCopiedSummary(false), 2000)
+                        }}
+                        aria-label="Copier la synthèse clinique"
+                      >
+                        {copiedSummary ? (
+                          <>
+                            <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Copié !</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-3.5" />
+                            <span>Copier</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed font-medium text-foreground/90">
+                      {data.summary}
+                    </p>
+                  </div>
+                )}
                 {visibleSections.map((s) => (
                   <section
                     key={s.key}

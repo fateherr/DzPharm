@@ -58,10 +58,21 @@ export interface RcpSection {
   items: RcpItem[];
 }
 
+export interface RcpSafety {
+  pregnancy?: 'AUTORISE' | 'PRECAUTION' | 'DECONSEILLE' | 'CONTRE-INDIQUE' | string;
+  pregnancyLabel?: string;
+  breastfeeding?: 'COMPATIBLE' | 'SURVEILLANCE' | 'A_EVITER' | string;
+  driving?: 0 | 1 | 2 | 3 | number;
+  doping?: boolean;
+  renalAlert?: boolean;
+}
+
 export interface Rcp {
   source: RcpSource;
   sourceLabel: string;
   generatedAt: string;
+  summary?: string;
+  safety?: RcpSafety;
   header: {
     denomination: string;
     dci: string;
@@ -120,14 +131,7 @@ interface MonoIndexEntry {
   content: MonoContent;
 }
 
-interface MonoIndex {
-  byKey: Map<string, MonoIndexEntry>;
-  byWord: Map<string, MonoIndexEntry>;
-  loadedAt: number;
-}
 
-let monoIndex: MonoIndex | null = null;
-const MONO_INDEX_TTL = 10 * 60 * 1000; // 10 min
 
 export function normalizeKey(s: string | null | undefined): string {
   if (!s) return "";
@@ -140,10 +144,37 @@ export function normalizeKey(s: string | null | undefined): string {
     .trim();
 }
 
+export function phoneticKey(s: string | null | undefined): string {
+  if (!s) return "";
+  let k = normalizeKey(s);
+  k = k.replace(/PH/g, "F").replace(/Y/g, "I").replace(/TH/g, "T");
+  k = k.replace(/([BCDFGHJKLMNPQRSTVWXZ])\1+/g, "$1");
+  return k;
+}
+
 function stripSalts(k: string): string {
   const words = k.split(" ").filter((w) => !SALTS.has(w));
   return words.length ? words.join(" ") : k;
 }
+
+interface MonoIndexEntry {
+  dciKey: string;
+  dci: string;
+  domain: string;
+  book: string;
+  content: MonoContent;
+}
+
+interface MonoIndex {
+  byKey: Map<string, MonoIndexEntry>;
+  byPhonetic: Map<string, MonoIndexEntry>;
+  byWord: Map<string, MonoIndexEntry>;
+  byPhoneticWord: Map<string, MonoIndexEntry>;
+  loadedAt: number;
+}
+
+let monoIndex: MonoIndex | null = null;
+const MONO_INDEX_TTL = 10 * 60 * 1000; // 10 min
 
 export async function getMonoIndex(): Promise<MonoIndex | null> {
   if (monoIndex && Date.now() - monoIndex.loadedAt < MONO_INDEX_TTL) {
@@ -152,7 +183,10 @@ export async function getMonoIndex(): Promise<MonoIndex | null> {
   try {
     const rows = await db.monograph.findMany();
     const byKey = new Map<string, MonoIndexEntry>();
+    const byPhonetic = new Map<string, MonoIndexEntry>();
     const byWord = new Map<string, MonoIndexEntry>();
+    const byPhoneticWord = new Map<string, MonoIndexEntry>();
+
     for (const r of rows) {
       let content: MonoContent;
       try {
@@ -169,15 +203,27 @@ export async function getMonoIndex(): Promise<MonoIndex | null> {
       };
       const keys = new Set<string>([r.dciKey, ...(content.keys ?? [])]);
       for (const k of keys) {
-        if (k && k.length >= 3 && !byKey.has(k)) byKey.set(k, entry);
+        if (k && k.length >= 3) {
+          if (!byKey.has(k)) byKey.set(k, entry);
+          const pk = phoneticKey(k);
+          if (pk && !byPhonetic.has(pk)) byPhonetic.set(pk, entry);
+        }
         const s = stripSalts(k);
-        if (s && s !== k && !byKey.has(s)) byKey.set(s, entry);
+        if (s && s !== k) {
+          if (!byKey.has(s)) byKey.set(s, entry);
+          const ps = phoneticKey(s);
+          if (ps && !byPhonetic.has(ps)) byPhonetic.set(ps, entry);
+        }
       }
       for (const w of normalizeKey(r.dci).split(" ")) {
-        if (w.length >= 6 && !byWord.has(w)) byWord.set(w, entry);
+        if (w.length >= 6) {
+          if (!byWord.has(w)) byWord.set(w, entry);
+          const pw = phoneticKey(w);
+          if (pw.length >= 5 && !byPhoneticWord.has(pw)) byPhoneticWord.set(pw, entry);
+        }
       }
     }
-    monoIndex = { byKey, byWord, loadedAt: Date.now() };
+    monoIndex = { byKey, byPhonetic, byWord, byPhoneticWord, loadedAt: Date.now() };
     return monoIndex;
   } catch (e) {
     console.error("[rcp] mono index load failed", e);
@@ -192,27 +238,50 @@ export function matchMonograph(
 ): MonoIndexEntry | null {
   const k = normalizeKey(dciKey);
   if (!k) return null;
+
+  // 1) Clé directe & Clé sans sels
   const tryKeys = [k, stripSalts(k)];
   for (const t of tryKeys) {
     if (t && index.byKey.has(t)) return index.byKey.get(t)!;
   }
-  // « X CHLORHYDRATE EXPRIME EN X » → base
-  const m = k.match(/^(.*?)\s+EXPRIME\s+EN\s+(.*)$/);
-  if (m && index.byKey.has(m[2])) return index.byKey.get(m[2])!;
-  // associations fixes: chaque composante
+
+  // 2) Clé phonétique (résout CEFALEXINE -> CEPHALEXINE, CARBOCYSTEINE -> CARBOCISTEINE)
+  for (const t of tryKeys) {
+    const pt = phoneticKey(t);
+    if (pt && index.byPhonetic?.has(pt)) return index.byPhonetic.get(pt)!;
+  }
+
+  // 3) « X CHLORHYDRATE EXPRIME EN X » → base
+  const m = k.match(/^(.*?)\s+(?:EXPRIME\s+EN|SOUS\s+FORME\s+DE)\s+(.*)$/);
+  if (m) {
+    const target = m[2].trim();
+    if (index.byKey.has(target)) return index.byKey.get(target)!;
+    const pTarget = phoneticKey(target);
+    if (index.byPhonetic?.has(pTarget)) return index.byPhonetic.get(pTarget)!;
+  }
+
+  // 4) Associations fixes: chaque composante
   const parts = k.split(/\s*\+\s*|\s*\/\s*|\s+ET\s+/);
   for (const p of parts) {
     const ps = stripSalts(p.trim());
     if (ps && index.byKey.has(ps)) return index.byKey.get(ps)!;
+    const pps = phoneticKey(ps);
+    if (pps && index.byPhonetic?.has(pps)) return index.byPhonetic.get(pps)!;
+
     const words = ps.split(" ");
     for (let i = words.length - 1; i >= 0; i--) {
       const w = words[i];
       if (w.length >= 6 && index.byWord.has(w)) return index.byWord.get(w)!;
+      const pw = phoneticKey(w);
+      if (pw.length >= 5 && index.byPhoneticWord?.has(pw)) return index.byPhoneticWord.get(pw)!;
     }
   }
-  // dernier repli: mot long quelconque
+
+  // 5) Dernier repli: mot long quelconque
   for (const w of stripSalts(k).split(" ")) {
     if (w.length >= 7 && index.byWord.has(w)) return index.byWord.get(w)!;
+    const pw = phoneticKey(w);
+    if (pw.length >= 6 && index.byPhoneticWord?.has(pw)) return index.byPhoneticWord.get(pw)!;
   }
   return null;
 }
@@ -239,6 +308,82 @@ function fmtDate(d: string | null | undefined): string {
 
 const BOOK_LABEL = (book: string, domain: string) =>
   `Livre technique DzPharm — ${domain}`;
+
+export function extractBookSafetyAndSummary(
+  mono: { domain?: string; content: MonoContent },
+  drug?: Partial<DrugRow>
+) {
+  const s = mono.content.sections;
+  const prof = s.profile ?? {};
+
+  // Pregnancy assessment
+  const pregText = (s.pregnancy ?? []).join(" ").toLowerCase();
+  let pregnancy: RcpSafety["pregnancy"] = "PRECAUTION";
+  let pregnancyLabel = "Précautions requises";
+  if (/contre-indiqu|teratog|foetotox|malformation/i.test(pregText)) {
+    pregnancy = "CONTRE-INDIQUE";
+    pregnancyLabel = "Contre-indiqué (CRAT)";
+  } else if (/deconseill|eviter|prudence/i.test(pregText)) {
+    pregnancy = "DECONSEILLE";
+    pregnancyLabel = "Déconseillé (bénéfice/risque)";
+  } else if (/utilisable|possible|aucun effet malformatif|sans risque/i.test(pregText)) {
+    pregnancy = "AUTORISE";
+    pregnancyLabel = "Utilisable si nécessaire";
+  }
+
+  // Breastfeeding
+  let breastfeeding: RcpSafety["breastfeeding"] = "SURVEILLANCE";
+  if (/allaitement contre-indiqu|passage important|interrompre l'allaitement/i.test(pregText)) {
+    breastfeeding = "A_EVITER";
+  } else if (/compatible avec l'allaitement|faible passage/i.test(pregText)) {
+    breastfeeding = "COMPATIBLE";
+  }
+
+  // Driving & vigilance
+  const allText = (prof.adverse ?? []).concat(s.management ?? [], s.advice ?? []).join(" ").toLowerCase();
+  let driving: 0 | 1 | 2 | 3 = 0;
+  if (/somnolence severe|conduite dangereuse|sedation intense/i.test(allText)) {
+    driving = 3;
+  } else if (/somnolence|vertiges|baisse de vigilance|troubles visuels/i.test(allText)) {
+    driving = 2;
+  } else if (/etourdissements|fatigue/i.test(allText)) {
+    driving = 1;
+  }
+
+  // Renal alert
+  const renalText = (s.posology ?? []).concat(s.management ?? []).join(" ").toLowerCase();
+  const renalAlert = /clairance|creatinine|insuffisance renale|dfg/i.test(renalText);
+
+  // Doping
+  const domainAndClass = `${drug?.domain ?? ""} ${mono.domain ?? ""}`.toLowerCase();
+  const doping = /corticoide|diuretique|anabolisant|beta-bloquant|amphetamin|erythropoietine/i.test(domainAndClass);
+
+  // Summary (Executive 30-sec flash)
+  const firstIndication = (prof.indications ?? s.categories ?? [])[0] ?? "";
+  const firstPosology = (s.posology ?? [])[0] ?? "";
+  const firstContra = (prof.contraindications ?? [])[0] ?? "";
+
+  let summary = "";
+  if (firstIndication) {
+    summary = `Indication principale : ${firstIndication}.`;
+    if (firstPosology) summary += ` Posologie usuelle : ${firstPosology.slice(0, 140)}.`;
+    if (firstContra) summary += ` Contre-indication clé : ${firstContra.slice(0, 100)}.`;
+  } else if (s.advice?.[0]) {
+    summary = s.advice[0].slice(0, 260);
+  }
+
+  return {
+    summary: summary || undefined,
+    safety: {
+      pregnancy,
+      pregnancyLabel,
+      breastfeeding,
+      driving,
+      doping,
+      renalAlert,
+    },
+  };
+}
 
 export function buildBookRcp(drug: DrugRow, mono: MonoIndexEntry): Rcp {
   const s = mono.content.sections;
@@ -335,10 +480,14 @@ export function buildBookRcp(drug: DrugRow, mono: MonoIndexEntry): Rcp {
   push("B", "Annexe — Conseils au comptoir", s.advice, 10);
   push("C", "Annexe — Règles d'or & pièges au comptoir", s.notes, 12);
 
+  const { summary, safety } = extractBookSafetyAndSummary(mono, drug);
+
   return {
     source: "BOOK",
     sourceLabel: BOOK_LABEL(mono.book, mono.domain),
     generatedAt: new Date().toISOString(),
+    summary,
+    safety,
     header: {
       denomination: `${drug.brand ?? "—"}${drug.dosage ? ` ${drug.dosage}` : ""}`,
       dci: drug.dci ?? mono.dci,
@@ -398,6 +547,15 @@ export function buildRegistryRcp(drug: DrugRow, notice?: string): Rcp {
     source: "REGISTRY",
     sourceLabel: "Registre algérien des médicaments (nomenclature officielle)",
     generatedAt: new Date().toISOString(),
+    summary: `Médicament enregistré sous le numéro AMM ${drug.regNumber ?? "—"} (${drug.brand ?? "—"} - ${drug.dci ?? "—"}).`,
+    safety: {
+      pregnancy: "PRECAUTION",
+      pregnancyLabel: "Précautions requises",
+      breastfeeding: "SURVEILLANCE",
+      driving: 0,
+      doping: false,
+      renalAlert: false,
+    },
     header: {
       denomination: `${drug.brand ?? "—"}${drug.dosage ? ` ${drug.dosage}` : ""}`,
       dci: drug.dci ?? "—",
@@ -418,7 +576,12 @@ export function buildRegistryRcp(drug: DrugRow, notice?: string): Rcp {
 }
 
 /** Valide/normalise un RCP produit par le LLM et complète avec le registre. */
-export function buildAiRcp(drug: DrugRow, llmSections: unknown): Rcp | null {
+export function buildAiRcp(
+  drug: DrugRow,
+  llmSections: unknown,
+  llmSummary?: string,
+  llmSafety?: unknown
+): Rcp | null {
   if (!Array.isArray(llmSections)) return null;
   const clinical: RcpSection[] = [];
   for (const raw of llmSections) {
@@ -496,10 +659,17 @@ export function buildAiRcp(drug: DrugRow, llmSections: unknown): Rcp | null {
     return a.num.localeCompare(b.num);
   });
 
+  const safety: RcpSafety =
+    llmSafety && typeof llmSafety === "object"
+      ? (llmSafety as RcpSafety)
+      : { pregnancy: "PRECAUTION", breastfeeding: "SURVEILLANCE", driving: 1 };
+
   return {
     source: "AI",
-    sourceLabel: "RCP généré par IA (DzPharm Copilote) — à vérifier",
+    sourceLabel: "RCP officiel généré par IA (DzPharm Copilote) — à vérifier",
     generatedAt: new Date().toISOString(),
+    summary: typeof llmSummary === "string" && llmSummary.trim() ? llmSummary.trim() : undefined,
+    safety,
     header: {
       denomination: `${drug.brand ?? "—"}${drug.dosage ? ` ${drug.dosage}` : ""}`,
       dci: drug.dci ?? "—",
