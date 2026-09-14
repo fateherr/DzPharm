@@ -48,7 +48,11 @@ export async function GET(req: NextRequest) {
         .replace(/\s+/g, " ")
         .trim();
       const ors: Prisma.PharmacyProductWhereInput[] = [];
-      if (key) ors.push({ nameKey: { contains: key } });
+      if (key) {
+        ors.push({ nameKey: { contains: key } });
+        ors.push({ drug: { is: { dciKey: { contains: key } } } });
+        ors.push({ drug: { is: { brandKey: { contains: key } } } });
+      }
       ors.push({ name: { contains: q } });
       ors.push({ lab: { contains: q } });
       const and = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []

@@ -114,6 +114,7 @@ interface DzPharmStore {
   closeLibraryMonograph: () => void
 
   basket: BasketItem[]
+  setBasket: (items: BasketItem[]) => void
   addToBasket: (item: BasketItem) => AddResult
   removeFromBasket: (id: number) => void
   clearBasket: () => void
@@ -200,6 +201,7 @@ export const useDzPharm = create<DzPharmStore>()(
       closeLibraryMonograph: () => set({ libraryDciKey: null }),
 
       basket: [],
+      setBasket: (items) => set({ basket: items.slice(0, MAX_BASKET) }),
       addToBasket: (item) => {
         const { basket } = get()
         if (basket.some((b) => b.id === item.id)) return 'duplicate'

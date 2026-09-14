@@ -5,10 +5,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
+  Baby,
   BadgeCheck,
   Ban,
   BookOpen,
   Building2,
+  Calculator,
   CalendarClock,
   CalendarX2,
   Coins,
@@ -125,12 +127,219 @@ function Metric({
   )
 }
 
+function isPediatricCandidate(form?: string | null, dci?: string | null, brand?: string | null): boolean {
+  const text = `${form ?? ''} ${dci ?? ''} ${brand ?? ''}`.toUpperCase()
+  const terms = [
+    'SIROP', 'SUSP', 'SUSPENSION', 'GOUTTE', 'BUVABLE', 'SACHET', 'POUDRE',
+    'ENFANT', 'NOURRISSON', 'PED', 'PEDIATRIQUE', 'SUPPO', 'PARACETAMOL',
+    'AMOXICILLINE', 'IBUPROFENE', 'AZITHROMYCINE', 'CEFIXIME'
+  ]
+  return terms.some((t) => text.includes(t))
+}
+
+function ChifaCopayCalculator({ ppa }: { ppa: number }) {
+  const [regime, setRegime] = useState<'80' | '100'>('80')
+
+  const cnasRate = regime === '100' ? 1.0 : 0.8
+  const cnasCovered = Math.round(ppa * cnasRate)
+  const patientShare = Math.max(0, ppa - cnasCovered)
+
+  return (
+    <div className="mt-3.5 rounded-xl border border-chifa/30 bg-card/70 p-3.5 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          <BadgeCheck className="size-4 text-chifa" aria-hidden />
+          Décomposition Tiers-Payant CHIFA
+        </p>
+        <div className="inline-flex rounded-lg border border-border bg-muted/60 p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setRegime('80')}
+            className={cn(
+              'rounded-md px-2.5 py-0.5 font-semibold transition-all',
+              regime === '80'
+                ? 'bg-chifa text-white shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            80% Général
+          </button>
+          <button
+            type="button"
+            onClick={() => setRegime('100')}
+            className={cn(
+              'rounded-md px-2.5 py-0.5 font-semibold transition-all',
+              regime === '100'
+                ? 'bg-chifa text-white shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            100% ALD / Chronique
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+        <div className="rounded-lg border border-state-safe/30 bg-state-safe/10 p-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-state-safe">
+            Prise en charge CNAS ({regime}%)
+          </p>
+          <p className="mt-0.5 text-base font-bold text-state-safe tabular-nums">
+            {formatPrice(cnasCovered)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-muted/50 p-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Ticket modérateur (Reste à charge)
+          </p>
+          <p className="mt-0.5 text-base font-bold text-foreground tabular-nums">
+            {patientShare === 0 ? '0,00 DA (Pris à 100%)' : formatPrice(patientShare)}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2 text-[10px] text-muted-foreground text-center">
+        Tarif PPA officiel · Droit commun CNAS / CASNOS · Tiers-payant officine
+      </p>
+    </div>
+  )
+}
+
+function PediatricPosologyWidget({
+  form,
+  dci,
+  brand,
+  onOpenAdvanced,
+}: {
+  form?: string | null
+  dci?: string | null
+  brand?: string | null
+  onOpenAdvanced: () => void
+}) {
+  const [weight, setWeight] = useState(14)
+
+  const isPediatric = isPediatricCandidate(form, dci, brand)
+  if (!isPediatric) return null
+
+  const dciUpper = (dci || '').toUpperCase()
+  let dosePerKgPerDose = 15
+  let frequency = '4 prises par 24h (toutes les 6 heures)'
+  let totalPerKgPerDay = 60
+  let maxDay = 'Dose max : 80 mg/kg/j (max 3 000 mg/j)'
+
+  if (dciUpper.includes('PARACETAMOL')) {
+    dosePerKgPerDose = 15
+    totalPerKgPerDay = 60
+    frequency = '4 prises par jour (espacées de 4 à 6 heures)'
+    maxDay = 'Dose max : 80 mg/kg/jour sans dépasser 3 000 mg/j'
+  } else if (dciUpper.includes('IBUPROFENE')) {
+    dosePerKgPerDose = 10
+    totalPerKgPerDay = 30
+    frequency = '3 prises par jour (toutes les 8 heures aux repas)'
+    maxDay = 'Dose max : 30 mg/kg/jour'
+  } else if (dciUpper.includes('AMOXICILLINE')) {
+    dosePerKgPerDose = 25
+    totalPerKgPerDay = 75
+    frequency = '3 prises par jour (toutes les 8 heures)'
+    maxDay = 'Dose max : 100 mg/kg/jour'
+  } else if (dciUpper.includes('AZITHROMYCINE')) {
+    dosePerKgPerDose = 10
+    totalPerKgPerDay = 10
+    frequency = '1 prise unique par jour pendant 3 jours'
+    maxDay = 'Dose max : 500 mg/jour'
+  }
+
+  const dosePerDose = Math.round(weight * dosePerKgPerDose)
+  const doseTotalDay = Math.round(weight * totalPerKgPerDay)
+
+  return (
+    <section
+      aria-label="Calculateur posologique pédiatrique"
+      className="rounded-xl border border-primary/30 bg-primary/5 p-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider">
+          <Baby className="size-4" aria-hidden />
+          Calculateur Posologique Pédiatrique Rapide
+        </p>
+        <button
+          type="button"
+          onClick={onOpenAdvanced}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+        >
+          <Calculator className="size-3" aria-hidden />
+          Calculateur complet →
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <div className="flex justify-between items-center text-xs text-foreground mb-1.5 font-medium">
+            <span>Poids de l&apos;enfant :</span>
+            <span className="font-bold text-primary tabular-nums">{weight} kg</span>
+          </div>
+          <input
+            type="range"
+            min="3"
+            max="45"
+            step="1"
+            value={weight}
+            onChange={(e) => setWeight(Number(e.target.value))}
+            className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+            aria-label="Poids de l'enfant en kg"
+          />
+          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+            <span>Nourrisson (3 kg)</span>
+            <span>Enfant ({weight} kg)</span>
+            <span>Grand enfant (45 kg)</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-center pt-1">
+          <div className="rounded-lg border border-primary/20 bg-background/80 p-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Dose unitaire (par prise)
+            </p>
+            <p className="mt-0.5 text-lg font-bold text-primary tabular-nums">
+              {dosePerDose} mg
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              ~ {dosePerKgPerDose} mg/kg
+            </p>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-background/80 p-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Dose journalière totale
+            </p>
+            <p className="mt-0.5 text-lg font-bold text-foreground tabular-nums">
+              {doseTotalDay} mg/24h
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              ~ {totalPerKgPerDay} mg/kg/j
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-md bg-secondary/60 p-2 text-xs text-foreground/90 space-y-0.5">
+          <p className="font-medium flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-primary" />
+            Rythme : {frequency}
+          </p>
+          <p className="text-[11px] text-muted-foreground pl-3">
+            {maxDay}
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function DrugSheet() {
   const sheetDrugId = useDzPharm((s) => s.sheetDrugId)
   const closeDrug = useDzPharm((s) => s.closeDrug)
   const openDrug = useDzPharm((s) => s.openDrug)
   const addToBasket = useDzPharm((s) => s.addToBasket)
   const setView = useDzPharm((s) => s.setView)
+  const openTool = useDzPharm((s) => s.openTool)
   const openLibraryMonograph = useDzPharm((s) => s.openLibraryMonograph)
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
@@ -569,6 +778,9 @@ export function DrugSheet() {
                       </span>
                     </p>
                   ) : null}
+                  {drug.pharmacy[0].refundable && drug.pharmacy[0].ppa ? (
+                    <ChifaCopayCalculator ppa={drug.pharmacy[0].ppa} />
+                  ) : null}
                 </section>
               ) : null}
 
@@ -773,6 +985,18 @@ export function DrugSheet() {
                   </div>
                 ) : null}
               </section>
+
+              {/* Calculateur Posologique Pédiatrique Rapide */}
+              <PediatricPosologyWidget
+                form={drug.form}
+                dci={drug.dci}
+                brand={drug.brand}
+                onOpenAdvanced={() => {
+                  closeDrug()
+                  openTool('pediatrie')
+                  setView('outils')
+                }}
+              />
 
               {/* Équivalents */}
               {equivalents.length > 0 && (

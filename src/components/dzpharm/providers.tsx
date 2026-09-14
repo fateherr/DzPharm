@@ -28,8 +28,9 @@ export function Providers({ children }: { children: ReactNode }) {
         enableSystem={false}
         disableTransitionOnChange
       >
-        <SessionGuard />
-        {children}
+        <SessionGuard>
+          {children}
+        </SessionGuard>
       </ThemeProvider>
     </QueryClientProvider>
   )

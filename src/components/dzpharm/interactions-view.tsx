@@ -10,6 +10,7 @@ import {
   Ambulance,
   Ban,
   Check,
+  Flame,
   FlaskConical,
   Grid3x3,
   Info,
@@ -135,12 +136,61 @@ export function InteractionsView() {
   )
 }
 
+const HIGH_RISK_PRESETS = [
+  {
+    label: 'AINS + AVK',
+    shortDesc: 'Hémorragie sévère',
+    severity: 'CONTRE-INDIQUE' as const,
+    drugs: [
+      { id: 9953, brand: 'PROFENID', dci: 'KETOPROFENE', status: 'ACTIF' },
+      { id: 12118, brand: 'SINTROM', dci: 'ACENOCOUMAROL', status: 'ACTIF' },
+    ],
+  },
+  {
+    label: 'Méthotrexate + AINS',
+    shortDesc: 'Aplasie médullaire',
+    severity: 'CONTRE-INDIQUE' as const,
+    drugs: [
+      { id: 10134, brand: 'IMETH', dci: 'METHOTREXATE', status: 'ACTIF' },
+      { id: 9953, brand: 'PROFENID', dci: 'KETOPROFENE', status: 'ACTIF' },
+    ],
+  },
+  {
+    label: 'Doublon Paracétamol',
+    shortDesc: 'Hépatotoxicité',
+    severity: 'MAJEURE' as const,
+    drugs: [
+      { id: 9775, brand: 'DOLIPRANE', dci: 'PARACETAMOL', status: 'ACTIF' },
+      { id: 9761, brand: 'EFFERALGAN', dci: 'PARACETAMOL', status: 'ACTIF' },
+    ],
+  },
+  {
+    label: 'Statine + Macrolide',
+    shortDesc: 'Rhabdomyolyse',
+    severity: 'MAJEURE' as const,
+    drugs: [
+      { id: 11194, brand: 'TAHOR', dci: 'ATORVASTATINE CALCIUM', status: 'ACTIF' },
+      { id: 12547, brand: 'ORADRO', dci: 'CLARITHROMYCINE', status: 'ACTIF' },
+    ],
+  },
+  {
+    label: 'IEC + Spironolactone',
+    shortDesc: 'Hyperkaliémie',
+    severity: 'MAJEURE' as const,
+    drugs: [
+      { id: 10640, brand: 'TRIATEC', dci: 'RAMIPRIL', status: 'ACTIF' },
+      { id: 11122, brand: 'ALDACTONE', dci: 'SPIRONOLACTONE MICRONISEE', status: 'ACTIF' },
+    ],
+  },
+]
+
 /* ------------------------------------------------------------------ */
 /* Onglet 1 — Vérificateur (liste des paires détectées)                */
 /* ------------------------------------------------------------------ */
 
 function VerifierPanel() {
   const basket = useDzPharm((s) => s.basket)
+  const setBasket = useDzPharm((s) => s.setBasket)
   const addToBasket = useDzPharm((s) => s.addToBasket)
   const removeFromBasket = useDzPharm((s) => s.removeFromBasket)
   const clearBasket = useDzPharm((s) => s.clearBasket)
@@ -157,18 +207,18 @@ function VerifierPanel() {
     [basket]
   )
 
-  async function analyze() {
-    if (items.length < 2) return
+  async function runAnalysisFor(targetItems: { name: string; dci: string }[], idsStr: string) {
+    if (targetItems.length < 2) return
     setPending(true)
     try {
       // Vérification instantanée (moteur de règles, déterministe) puis
       // analyse approfondie — le verdict des paires couvertes par la base
       // de référence est identique dans les deux cas (arbitrage serveur).
-      const local = await postLocalInteractions(items)
+      const local = await postLocalInteractions(targetItems)
       setResult(local)
-      setAnalyzedIds(basket.map((b) => b.id).join(','))
+      setAnalyzedIds(idsStr)
 
-      const ai = await postInteractions(items, patientContext)
+      const ai = await postInteractions(targetItems, patientContext)
       if (ai) setResult(ai)
     } catch {
       // le résultat local instantané reste affiché s'il est disponible
@@ -176,6 +226,22 @@ function VerifierPanel() {
       setPending(false)
     }
   }
+
+  function analyze() {
+    return runAnalysisFor(items, basket.map((b) => b.id).join(','))
+  }
+
+  function handleApplyPreset(preset: (typeof HIGH_RISK_PRESETS)[number]) {
+    setBasket(preset.drugs)
+    toast({
+      title: `Cas clinique : ${preset.label}`,
+      description: `${preset.drugs.map((d) => d.brand).join(' + ')} (${preset.shortDesc}) chargé. Analyse lancée.`,
+    })
+    const targetItems = preset.drugs.map((b) => ({ name: b.brand, dci: b.dci }))
+    const idsStr = preset.drugs.map((b) => b.id).join(',')
+    void runAnalysisFor(targetItems, idsStr)
+  }
+
   const stale =
     result !== null && analyzedIds !== basket.map((b) => b.id).join(',')
 
@@ -232,6 +298,44 @@ function VerifierPanel() {
                 <Plus className="size-4 shrink-0 text-muted-foreground/50" aria-hidden />
               }
             />
+
+            {/* Prescriptions à haut risque / 1-Clic Presets */}
+            <div className="space-y-2 rounded-xl border border-border/70 bg-card/40 p-3">
+              <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                <span className="flex items-center gap-1.5 text-foreground">
+                  <Flame className="size-3.5 text-state-danger" aria-hidden />
+                  Cas cliniques fréquents (1-clic)
+                </span>
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  Associations à risque
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {HIGH_RISK_PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => handleApplyPreset(p)}
+                    className="group flex items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1 text-left text-xs transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-[0.98]"
+                    title={`${p.label} : ${p.shortDesc}`}
+                  >
+                    <span
+                      className={cn(
+                        'size-1.5 shrink-0 rounded-full',
+                        p.severity === 'CONTRE-INDIQUE' ? 'bg-state-danger' : 'bg-state-warning'
+                      )}
+                      aria-hidden
+                    />
+                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {p.label}
+                    </span>
+                    <span className="hidden text-[10px] text-muted-foreground sm:inline">
+                      · {p.shortDesc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {basket.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">

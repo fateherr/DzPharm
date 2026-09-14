@@ -8,10 +8,10 @@ const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
 /** Default model */
-export const GEMINI_MODEL = "gemini-3.6-flash";
+export const GEMINI_MODEL = "gemini-3.8-flash";
 
 /** Pro model — same model for this API tier */
-export const GEMINI_MODEL_PRO = "gemini-3.6-flash";
+export const GEMINI_MODEL_PRO = "gemini-3.8-flash";
 
 export interface GeminiMessage {
   role: "user" | "model";
