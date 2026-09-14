@@ -6,6 +6,8 @@ import Markdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
   Baby,
+  Check,
+  Copy,
   Info,
   Loader2,
   Mic,
@@ -134,8 +136,16 @@ export function CopilotView() {
   /* 24-c b) Lecture à voix haute — /api/ai/tts, audio mis en cache par message */
   const [playingId, setPlayingId] = useState<number | null>(null)
   const [ttsLoadingId, setTtsLoadingId] = useState<number | null>(null)
+  const [copiedId, setCopiedId] = useState<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ttsCacheRef = useRef(new Map<number, string>())
+
+  function copyToClipboard(id: number, text: string) {
+    void navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    toast({ title: 'Réponse copiée', description: 'Le texte a été copié dans votre presse-papier.' })
+    setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 2200)
+  }
 
   const mutation = useMutation({
     // 24-c : postChat (api.ts, hors périmètre de la tâche) type le mode
@@ -375,7 +385,16 @@ export function CopilotView() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Copilote IA</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Copilote IA</h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-state-safe/30 bg-state-safe/10 px-2.5 py-0.5 text-[11px] font-semibold text-state-safe">
+              <span className="relative flex size-2">
+                <span className="beacon-ping absolute inline-flex h-full w-full rounded-full bg-state-safe opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-state-safe" />
+              </span>
+              Gemini 3.6 Flash · En ligne
+            </span>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Votre assistant pharmaceutique, ancré sur la nomenclature algérienne.
           </p>
@@ -564,36 +583,53 @@ export function CopilotView() {
                               l&apos;avis d&apos;un professionnel de santé.
                             </span>
                           </p>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => toggleSpeak(i, message.content)}
-                            disabled={ttsDisabled || isTtsLoading}
-                            title={
-                              ttsDisabled
-                                ? 'Message trop long pour la lecture audio (plus de 1 500 caractères)'
-                                : isPlaying
-                                  ? 'Arrêter la lecture'
-                                  : 'Écouter cette réponse'
-                            }
-                            aria-label={
-                              ttsDisabled
-                                ? 'Lecture audio indisponible — message trop long'
-                                : isPlaying
-                                  ? 'Arrêter la lecture de la réponse'
-                                  : 'Écouter la réponse à voix haute'
-                            }
-                            className="size-7 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                          >
-                            {isTtsLoading ? (
-                              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                            ) : isPlaying ? (
-                              <VolumeX className="size-3.5" aria-hidden />
-                            ) : (
-                              <Volume2 className="size-3.5" aria-hidden />
-                            )}
-                          </Button>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard(i, message.content)}
+                              title={copiedId === i ? 'Copié !' : 'Copier la réponse'}
+                              aria-label="Copier la réponse"
+                              className="size-7 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                            >
+                              {copiedId === i ? (
+                                <Check className="size-3.5 text-state-safe" aria-hidden />
+                              ) : (
+                                <Copy className="size-3.5" aria-hidden />
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => toggleSpeak(i, message.content)}
+                              disabled={ttsDisabled || isTtsLoading}
+                              title={
+                                ttsDisabled
+                                  ? 'Message trop long pour la lecture audio (plus de 1 500 caractères)'
+                                  : isPlaying
+                                    ? 'Arrêter la lecture'
+                                    : 'Écouter cette réponse'
+                              }
+                              aria-label={
+                                ttsDisabled
+                                  ? 'Lecture audio indisponible — message trop long'
+                                  : isPlaying
+                                    ? 'Arrêter la lecture de la réponse'
+                                    : 'Écouter la réponse à voix haute'
+                              }
+                              className="size-7 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                            >
+                              {isTtsLoading ? (
+                                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                              ) : isPlaying ? (
+                                <VolumeX className="size-3.5" aria-hidden />
+                              ) : (
+                                <Volume2 className="size-3.5" aria-hidden />
+                              )}
+                            </Button>
+                          </div>
                         </footer>
                       </>
                     ) : (

@@ -51,7 +51,7 @@
 
 /* Light theme — clinical, cool slate surfaces with medical cyan */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --background: #f8fafc;
   --foreground: #0b1220;
   --card: #ffffff;
@@ -60,20 +60,20 @@
   --popover-foreground: #0b1220;
   --primary: #0284c7;
   --primary-foreground: #ffffff;
-  --secondary: #e8eef5;
+  --secondary: #eef2f7;
   --secondary-foreground: #0b1220;
-  --muted: #eef2f7;
+  --muted: #f1f5f9;
   --muted-foreground: #5b6b82;
-  --accent: #e8eef5;
+  --accent: #e8eef6;
   --accent-foreground: #0b1220;
   --destructive: #dc2626;
-  --border: #dfe6ef;
-  --input: #cbd6e4;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
   --ring: #0284c7;
   --chifa: #ea580c;
   --chifa-foreground: #ffffff;
   --state-safe: #059669;
-  --state-warning: #b45309;
+  --state-warning: #d97706;
   --state-danger: #b91c1c;
   --chart-1: #0284c7;
   --chart-2: #059669;
@@ -84,50 +84,51 @@
   --sidebar-foreground: #0b1220;
   --sidebar-primary: #0284c7;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8eef5;
+  --sidebar-accent: #e8eef6;
   --sidebar-accent-foreground: #0b1220;
-  --sidebar-border: #dfe6ef;
+  --sidebar-border: #e2e8f0;
   --sidebar-ring: #0284c7;
 }
 
-/* Dark theme — deep navy console, neon cyan brand */
+/* Dark theme — executive obsidian slate & radiant medical cyan */
 .dark {
-  --background: #090d16;
-  --foreground: #e6edf7;
-  --card: #101827;
-  --card-foreground: #e6edf7;
-  --popover: #0c1322;
-  --popover-foreground: #e6edf7;
-  --primary: #00e9ff;
-  --primary-foreground: #051019;
-  --secondary: #182136;
-  --secondary-foreground: #e6edf7;
-  --muted: #131b2c;
-  --muted-foreground: #8b99b0;
-  --accent: #182136;
-  --accent-foreground: #e6edf7;
+  --radius: 0.75rem;
+  --background: #080d1a;
+  --foreground: #f1f5f9;
+  --card: #0e172a;
+  --card-foreground: #f1f5f9;
+  --popover: #0f1930;
+  --popover-foreground: #f1f5f9;
+  --primary: #38bdf8;
+  --primary-foreground: #04121e;
+  --secondary: #162238;
+  --secondary-foreground: #f1f5f9;
+  --muted: #131d31;
+  --muted-foreground: #94a3b8;
+  --accent: #192742;
+  --accent-foreground: #f1f5f9;
   --destructive: #ef4444;
-  --border: #1d2840;
-  --input: #243350;
-  --ring: #00e9ff;
-  --chifa: #ff6a00;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #38bdf8;
+  --chifa: #f97316;
   --chifa-foreground: #ffffff;
   --state-safe: #10b981;
   --state-warning: #f59e0b;
   --state-danger: #ef4444;
-  --chart-1: #00e9ff;
+  --chart-1: #38bdf8;
   --chart-2: #10b981;
-  --chart-3: #ff6a00;
+  --chart-3: #f97316;
   --chart-4: #f59e0b;
   --chart-5: #94a3b8;
-  --sidebar: #0c1322;
-  --sidebar-foreground: #e6edf7;
-  --sidebar-primary: #00e9ff;
-  --sidebar-primary-foreground: #051019;
-  --sidebar-accent: #182136;
-  --sidebar-accent-foreground: #e6edf7;
-  --sidebar-border: #1d2840;
-  --sidebar-ring: #00e9ff;
+  --sidebar: #0a1122;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #04121e;
+  --sidebar-accent: #162238;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #38bdf8;
 }
 
 @layer base {
@@ -136,6 +137,9 @@
   }
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   body {
     @apply bg-background text-foreground;
@@ -146,7 +150,39 @@
   }
 }
 
-/* Thin elegant scrollbars for long lists / tables */
+/* Glassmorphic card surface with subtle specular border */
+.glass-panel {
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+/* Pulse status beacon for active live indicators */
+@keyframes beacon-ping {
+  0% { transform: scale(1); opacity: 0.8; }
+  70%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.beacon-ping {
+  animation: beacon-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
 .scroll-thin {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent) transparent;

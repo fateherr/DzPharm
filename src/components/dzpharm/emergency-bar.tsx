@@ -1,66 +1,76 @@
 'use client'
 
-import { Ambulance, Siren } from 'lucide-react'
+import { Ambulance, PhoneCall, Siren } from 'lucide-react'
 
 /**
- * Bandeau permanent des numéros d'urgence (P0 — plan d'amélioration).
- * Toujours visible en haut de chaque vue : SAMU, Protection Civile,
- * Police et Centre Anti-Poison (CHU Alger).
+ * Bandeau permanent des numéros d'urgence médicale en Algérie.
+ * SAMU (14), Protection Civile (102), Police (17) et Centre Anti-Poison (021 71 30 42).
+ * Design médical épuré avec balise pulsante et puces interactives.
  */
 export function EmergencyBar() {
   return (
-    <div
-      role="note"
+    <aside
+      role="region"
       aria-label="Numéros d'urgence médicale en Algérie"
-      className="sticky top-0 z-50 w-full border-b border-red-950/40 print:hidden bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white shadow-md shadow-red-950/20 dark:from-red-900 dark:via-red-800 dark:to-red-900"
+      className="sticky top-0 z-50 w-full border-b border-rose-900/30 bg-gradient-to-r from-red-900 via-rose-800 to-red-950 text-white shadow-sm shadow-red-950/20 backdrop-blur-md print:hidden"
     >
-      <div className="mx-auto flex h-9 max-w-7xl items-center justify-center gap-2 overflow-x-auto px-3 text-[11px] font-semibold tracking-wide sm:gap-3 sm:text-xs no-scrollbar">
-        <span className="flex shrink-0 items-center gap-1.5">
-          <Siren className="size-3.5 shrink-0" aria-hidden />
-          <span className="hidden uppercase sm:inline">Urgences</span>
+      <div className="mx-auto flex h-8.5 max-w-7xl items-center justify-center gap-1.5 overflow-x-auto px-3 text-[11px] font-medium tracking-wide sm:gap-2.5 sm:text-xs no-scrollbar">
+        {/* Pulsing alert beacon */}
+        <span className="flex shrink-0 items-center gap-1.5 font-semibold uppercase tracking-wider text-rose-200">
+          <span className="relative flex size-2 shrink-0">
+            <span className="beacon-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+            <span className="relative inline-flex size-2 rounded-full bg-rose-300" />
+          </span>
+          <Siren className="size-3.5 shrink-0 text-rose-200" aria-hidden />
+          <span className="hidden sm:inline">Urgences 24/7</span>
         </span>
-        <span aria-hidden className="text-white/40">
-          |
-        </span>
+
+        <span aria-hidden className="text-white/25">|</span>
+
+        {/* SAMU 14 */}
         <a
           href="tel:14"
-          className="shrink-0 rounded px-1 py-0.5 underline-offset-2 transition-colors hover:bg-white/15 hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+          title="Appeler le SAMU (14)"
+          className="group flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-white transition-all hover:bg-white/20 hover:shadow-xs focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
         >
-          SAMU <strong className="font-bold">14</strong>
+          <PhoneCall className="size-3 shrink-0 opacity-75 group-hover:opacity-100" aria-hidden />
+          <span>SAMU <strong className="font-bold text-white">14</strong></span>
         </a>
-        <span aria-hidden className="text-white/40">
-          ·
-        </span>
+
+        {/* Protection Civile 102 */}
         <a
           href="tel:102"
-          className="shrink-0 rounded px-1 py-0.5 underline-offset-2 transition-colors hover:bg-white/15 hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+          title="Appeler la Protection Civile (102)"
+          className="group flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-white transition-all hover:bg-white/20 hover:shadow-xs focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
         >
-          <span className="hidden sm:inline">Protection Civile </span>
-          <span className="sm:hidden">Prot. Civile </span>
-          <strong className="font-bold">102</strong>
+          <span className="hidden md:inline text-rose-100/90">Prot. Civile</span>
+          <strong className="font-bold text-white">102</strong>
         </a>
-        <span aria-hidden className="text-white/40">
-          ·
-        </span>
+
+        {/* Police 17 */}
         <a
           href="tel:17"
-          className="shrink-0 rounded px-1 py-0.5 underline-offset-2 transition-colors hover:bg-white/15 hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+          title="Appeler la Police (17)"
+          className="group flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-white transition-all hover:bg-white/20 hover:shadow-xs focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
         >
-          Police <strong className="font-bold">17</strong>
+          <span className="hidden md:inline text-rose-100/90">Police</span>
+          <strong className="font-bold text-white">17</strong>
         </a>
-        <span aria-hidden className="text-white/40">
-          ·
-        </span>
+
+        <span aria-hidden className="text-white/25">·</span>
+
+        {/* Centre Anti-Poison Alger */}
         <a
           href="tel:021713042"
-          className="flex shrink-0 items-center gap-1 rounded px-1 py-0.5 underline-offset-2 transition-colors hover:bg-white/15 hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+          title="Appeler le Centre Anti-Poison CHU Alger (021 71 30 42)"
+          className="group flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-white transition-all hover:bg-white/20 hover:shadow-xs focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
         >
-          <Ambulance className="size-3.5 shrink-0" aria-hidden />
-          <span className="hidden md:inline">Centre Anti-Poison (Alger)</span>
-          <span className="md:hidden">Anti-Poison</span>{' '}
-          <strong className="font-bold">021 71 30 42</strong>
+          <Ambulance className="size-3.5 shrink-0 text-rose-200" aria-hidden />
+          <span className="hidden sm:inline text-rose-100/90">Anti-Poison Alger</span>
+          <span className="sm:hidden text-rose-100/90">Anti-Poison</span>
+          <strong className="font-bold text-white">021 71 30 42</strong>
         </a>
       </div>
-    </div>
+    </aside>
   )
 }

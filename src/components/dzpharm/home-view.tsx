@@ -377,40 +377,65 @@ function KpiCard({
 }) {
   const count = useCountUp(value)
   const accent = KPI_ACCENTS[accentKey]
+  const pct = suffix?.includes('%') ? parseInt(suffix, 10) : null
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
     >
-      <Card className="group relative overflow-hidden transition-colors hover:border-primary/40">
+      <Card className="card-lift glass-card group relative overflow-hidden rounded-2xl border border-border/80 shadow-xs">
         <div
           className={cn(
-            'absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
+            'absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent to-transparent',
             accent.gradient
           )}
           aria-hidden
         />
-        <CardContent className="flex items-start justify-between gap-3 p-5">
-          <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              {label}
-            </p>
-            <p className="mt-1.5 text-3xl font-bold tracking-tight text-foreground tabular-nums">
-              {formatNumber(count)}
-              {suffix ? <span className={cn('ml-1 text-lg font-semibold', accent.text)}>{suffix}</span> : null}
-            </p>
-            {hint ? <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p> : null}
+        <CardContent className="flex flex-col justify-between p-5.5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                {label}
+              </p>
+              <p className="mt-1.5 text-3xl font-extrabold tracking-tight text-foreground tabular-nums sm:text-4xl">
+                {formatNumber(count)}
+                {suffix ? (
+                  <span className={cn('ml-1.5 text-lg font-bold', accent.text)}>
+                    {suffix}
+                  </span>
+                ) : null}
+              </p>
+            </div>
+            <span
+              className={cn(
+                'flex size-11 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 shadow-xs',
+                accent.bg
+              )}
+              aria-hidden
+            >
+              <Icon className={cn('size-5.5', accent.text)} />
+            </span>
           </div>
-          <span
-            className={cn(
-              'flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105',
-              accent.bg
-            )}
-            aria-hidden
-          >
-            <Icon className={cn('size-5', accent.text)} />
-          </span>
+
+          {/* Micro-progress bar for percentages */}
+          {pct !== null && (
+            <div className="mt-3.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.8, delay: delay + 0.2 }}
+                className={cn('h-full rounded-full', accent.text.replace('text-', 'bg-'))}
+              />
+            </div>
+          )}
+
+          {hint ? (
+            <p className="mt-2.5 text-xs font-medium text-muted-foreground">
+              {hint}
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     </motion.div>
@@ -554,29 +579,26 @@ export function HomeView() {
               Le référentiel national des médicaments enrichi par l&apos;IA : recherche
               sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
             </p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
+            <div className="mx-auto mt-6 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
                 <BookOpen className="size-3.5 text-primary" aria-hidden />
-                24 livres de pharmacologie clinique
+                <span className="font-semibold text-foreground">24 livres</span> pharmacologie
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
                 <FileText className="size-3.5 text-primary" aria-hidden />
-                {stats?.monographs ? formatNumber(stats.monographs) : '911'} monographies DCI
+                <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/5 px-3 py-1 text-chifa">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-2xs backdrop-blur-md">
                 <Store className="size-3.5" aria-hidden />
-                {stats?.prices?.productsTotal
-                  ? formatNumber(stats.prices.productsTotal)
-                  : '1 791'}{' '}
-                prix d&apos;officine (PPA)
+                <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
                 <FileCheck className="size-3.5 text-primary" aria-hidden />
-                RCP au format ANSM pour chaque produit
+                RCP ANSM officiel
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/50 bg-pink-50 px-3 py-1 text-pink-700 dark:border-pink-500/30 dark:bg-pink-950/30 dark:text-pink-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/40 bg-pink-500/10 px-3.5 py-1.5 text-pink-700 shadow-2xs backdrop-blur-md dark:text-pink-300">
                 <HeartPulse className="size-3.5" aria-hidden />
-                Grossesse &amp; allaitement (CRAT)
+                Grossesse CRAT
               </span>
             </div>
           </motion.div>
@@ -596,23 +618,25 @@ export function HomeView() {
               onSubmitQuery={(q) => gotoDirectory({ q })}
               rightHint={
                 <span className="hidden shrink-0 items-center gap-1.5 sm:flex" aria-hidden>
-                  <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Cmd K
+                  <kbd className="rounded-md border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-2xs">
+                    ⌘K
                   </kbd>
-                  <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <kbd className="rounded-md border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-2xs">
                     Entrée ⏎
                   </kbd>
                 </span>
               }
             />
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground/80 mr-1 hidden sm:inline">Suggestions fréquentes :</span>
               {QUICK_CHIPS.map((chip) => (
                 <button
                   key={chip}
                   type="button"
                   onClick={() => gotoDirectory({ q: chip })}
-                  className="rounded-full border border-border bg-card/60 px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="group flex items-center gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-primary hover:shadow-xs focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 >
+                  <span className="size-1 rounded-full bg-primary/60 group-hover:bg-primary transition-colors" />
                   {chip}
                 </button>
               ))}
