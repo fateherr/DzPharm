@@ -471,6 +471,32 @@ function domainIcon(domain: string): LucideIcon {
   return DOMAIN_ICONS[domain] ?? Stethoscope
 }
 
+const DOMAIN_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  Cardiologie: { bg: 'bg-rose-500/10 dark:bg-rose-500/15', text: 'text-rose-600 dark:text-rose-400', border: 'hover:border-rose-500/40 hover:shadow-rose-500/5' },
+  'Antalgiques & Anti-inflammatoires': { bg: 'bg-amber-500/10 dark:bg-amber-500/15', text: 'text-amber-600 dark:text-amber-400', border: 'hover:border-amber-500/40 hover:shadow-amber-500/5' },
+  Oncologie: { bg: 'bg-purple-500/10 dark:bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400', border: 'hover:border-purple-500/40 hover:shadow-purple-500/5' },
+  'Anti-infectieux': { bg: 'bg-emerald-500/10 dark:bg-emerald-500/15', text: 'text-emerald-600 dark:text-emerald-400', border: 'hover:border-emerald-500/40 hover:shadow-emerald-500/5' },
+  'Gastro-entérologie': { bg: 'bg-orange-500/10 dark:bg-orange-500/15', text: 'text-orange-600 dark:text-orange-400', border: 'hover:border-orange-500/40 hover:shadow-orange-500/5' },
+  'Vitamines & Minéraux': { bg: 'bg-lime-500/10 dark:bg-lime-500/15', text: 'text-lime-600 dark:text-lime-400', border: 'hover:border-lime-500/40 hover:shadow-lime-500/5' },
+  'Psychiatrie & Psychotropes': { bg: 'bg-indigo-500/10 dark:bg-indigo-500/15', text: 'text-indigo-600 dark:text-indigo-400', border: 'hover:border-indigo-500/40 hover:shadow-indigo-500/5' },
+  'Diabétologie & Endocrinologie': { bg: 'bg-sky-500/10 dark:bg-sky-500/15', text: 'text-sky-600 dark:text-sky-400', border: 'hover:border-sky-500/40 hover:shadow-sky-500/5' },
+  'Neurologie & Antiépileptiques': { bg: 'bg-violet-500/10 dark:bg-violet-500/15', text: 'text-violet-600 dark:text-violet-400', border: 'hover:border-violet-500/40 hover:shadow-violet-500/5' },
+  'Pneumologie & Antiasthmatiques': { bg: 'bg-teal-500/10 dark:bg-teal-500/15', text: 'text-teal-600 dark:text-teal-400', border: 'hover:border-teal-500/40 hover:shadow-teal-500/5' },
+  Antibiotiques: { bg: 'bg-emerald-500/10 dark:bg-emerald-500/15', text: 'text-emerald-600 dark:text-emerald-400', border: 'hover:border-emerald-500/40 hover:shadow-emerald-500/5' },
+  ORL: { bg: 'bg-cyan-500/10 dark:bg-cyan-500/15', text: 'text-cyan-600 dark:text-cyan-400', border: 'hover:border-cyan-500/40 hover:shadow-cyan-500/5' },
+  Urologie: { bg: 'bg-blue-500/10 dark:bg-blue-500/15', text: 'text-blue-600 dark:text-blue-400', border: 'hover:border-blue-500/40 hover:shadow-blue-500/5' },
+  Dermatologie: { bg: 'bg-pink-500/10 dark:bg-pink-500/15', text: 'text-pink-600 dark:text-pink-400', border: 'hover:border-pink-500/40 hover:shadow-pink-500/5' },
+  Ophtalmologie: { bg: 'bg-teal-500/10 dark:bg-teal-500/15', text: 'text-teal-600 dark:text-teal-400', border: 'hover:border-teal-500/40 hover:shadow-teal-500/5' },
+}
+
+function domainStyle(domain: string) {
+  return DOMAIN_STYLES[domain] ?? {
+    bg: 'bg-primary/10 text-primary',
+    text: 'text-primary',
+    border: 'hover:border-primary/40 hover:shadow-primary/5',
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Vue Accueil                                                         */
 /* ------------------------------------------------------------------ */
@@ -1077,6 +1103,7 @@ export function HomeView() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {domains.map((domain, i) => {
               const Icon = domainIcon(domain.key)
+              const style = domainStyle(domain.key)
               return (
                 <motion.button
                   key={domain.key}
@@ -1085,22 +1112,28 @@ export function HomeView() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3) }}
                   onClick={() => gotoDirectory({ domain: domain.key })}
-                  className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className={cn(
+                    'card-lift glass-card group flex items-center gap-3.5 rounded-2xl border border-border/80 p-4 text-left shadow-xs focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                    style.border
+                  )}
                 >
                   <span
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15"
+                    className={cn(
+                      'flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110 shadow-2xs',
+                      style.bg
+                    )}
                     aria-hidden
                   >
-                    <Icon className="size-5" />
+                    <Icon className={cn('size-5.5', style.text)} />
                   </span>
-                  <span className="min-w-0">
+                  <span className="min-w-0 flex-1">
                     <span
-                      className="line-clamp-2 text-sm leading-snug font-semibold text-foreground"
+                      className="line-clamp-2 text-sm leading-snug font-bold text-foreground group-hover:text-primary transition-colors"
                       title={domain.key}
                     >
                       {domain.key}
                     </span>
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="mt-0.5 block text-xs font-medium text-muted-foreground tabular-nums">
                       {formatNumber(domain.count)} références
                     </span>
                   </span>

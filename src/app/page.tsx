@@ -15,6 +15,7 @@ import { ToolsView } from '@/components/dzpharm/tools-view'
 import { StatsView } from '@/components/dzpharm/stats-view'
 import { AboutView } from '@/components/dzpharm/about-view'
 import { DrugSheet } from '@/components/dzpharm/drug-sheet'
+import { CommandPalette } from '@/components/dzpharm/command-palette'
 import { useDzPharm } from '@/components/dzpharm/store'
 
 export default function Page() {
@@ -49,6 +50,8 @@ export default function Page() {
       <Footer />
       {/* Fiche médicament — accessible depuis toutes les vues */}
       <DrugSheet />
+      {/* Palette de commande universelle (Cmd+K) */}
+      <CommandPalette />
     </div>
   )
 }

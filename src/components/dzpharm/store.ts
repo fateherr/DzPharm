@@ -101,6 +101,9 @@ interface DzPharmStore {
   /** Navigue vers le répertoire en appliquant des filtres (remplace les filtres fournis). */
   gotoDirectory: (patch?: Partial<DirectoryFilters>) => void
 
+  commandOpen: boolean
+  setCommandOpen: (open: boolean) => void
+
   sheetDrugId: number | null
   openDrug: (id: number) => void
   closeDrug: () => void
@@ -183,6 +186,9 @@ export const useDzPharm = create<DzPharmStore>()(
           view: 'repertoire',
           filters: { ...EMPTY_FILTERS, ...s.filters, ...patch },
         })),
+
+      commandOpen: false,
+      setCommandOpen: (commandOpen) => set({ commandOpen }),
 
       sheetDrugId: null,
       openDrug: (id) => set({ sheetDrugId: id }),

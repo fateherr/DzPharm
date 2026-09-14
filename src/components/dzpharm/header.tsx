@@ -120,6 +120,7 @@ export function Header() {
   const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+  const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
 
   const { data: stats } = useQuery({
     queryKey: ['stats'],
@@ -129,6 +130,9 @@ export function Header() {
 
   async function handleLogout() {
     try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('dzpharm_session')
+      }
       await fetch('/api/logout', { method: 'POST' })
     } catch {
       // Continue redirect even if offline
@@ -197,22 +201,20 @@ export function Header() {
 
           {/* Quick Actions Right */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick search shortcut if away from accueil */}
-            {view !== 'accueil' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => gotoDirectory({})}
-                className="hidden h-8 items-center gap-2 border-border/80 bg-card/60 px-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground md:inline-flex"
-                title="Rechercher un médicament (Cmd+K)"
-              >
-                <Search className="size-3.5 text-muted-foreground" aria-hidden />
-                <span className="hidden lg:inline">Rechercher</span>
-                <kbd className="rounded border border-border bg-muted px-1 text-[10px] font-semibold text-muted-foreground">
-                  ⌘K
-                </kbd>
-              </Button>
-            )}
+            {/* Quick search shortcut trigger */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCommandOpen(true)}
+              className="h-8 items-center gap-2 rounded-lg border-border/80 bg-card/60 px-2.5 text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground flex"
+              title="Recherche universelle (Cmd+K)"
+            >
+              <Search className="size-3.5 text-primary" aria-hidden />
+              <span className="hidden sm:inline">Rechercher…</span>
+              <kbd className="hidden rounded border border-border bg-muted px-1 text-[10px] font-semibold text-muted-foreground md:inline-block">
+                ⌘K
+              </kbd>
+            </Button>
 
             {/* Total AMM count pill */}
             {stats ? (

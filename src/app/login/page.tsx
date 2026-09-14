@@ -27,6 +27,10 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
+        // Active la session dans sessionStorage pour la durée de vie de l'onglet
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("dzpharm_session", "active");
+        }
         router.replace("/");
         router.refresh();
       } else {
