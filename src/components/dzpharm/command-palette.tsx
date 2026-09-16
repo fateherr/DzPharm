@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import {
@@ -41,9 +41,10 @@ import {
   CommandShortcut,
 } from '@/components/ui/command'
 import { fetchDrugs } from './api'
-import { StatusBadge, formatPrice } from './status-badge'
+import { StatusBadge, formatPrice, isLocal } from './status-badge'
 import { useDzPharm, type ViewId } from './store'
 import { terminateSession } from './session-guard'
+import { cn } from '@/lib/utils'
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -69,6 +70,18 @@ export function CommandPalette() {
   const [query, setQuery] = useState('')
   const debounced = useDebounce(query.trim(), 200)
 
+  // Analyse des préfixes (@ pour DCI, # pour Laboratoire)
+  const { cleanQuery, scopePrefix } = useMemo(() => {
+    const raw = debounced.trim()
+    if (raw.startsWith('@')) {
+      return { cleanQuery: raw.slice(1).trim(), scopePrefix: 'dci' as const }
+    }
+    if (raw.startsWith('#')) {
+      return { cleanQuery: raw.slice(1).trim(), scopePrefix: 'lab' as const }
+    }
+    return { cleanQuery: raw, scopePrefix: undefined }
+  }, [debounced])
+
   // Écouteur global pour Cmd+K / Ctrl+K (recherche) et Ctrl+I (interactions)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -87,10 +100,10 @@ export function CommandPalette() {
 
   // Recherche en direct des médicaments
   const { data: drugResults, isLoading: drugsLoading } = useQuery({
-    queryKey: ['command-drugs', debounced],
+    queryKey: ['command-drugs', cleanQuery, scopePrefix],
     queryFn: ({ signal }) =>
-      fetchDrugs({ q: debounced, pageSize: 6, sort: 'relevance' }, signal),
-    enabled: debounced.length >= 2,
+      fetchDrugs({ q: cleanQuery, pageSize: 6, sort: 'relevance', scope: scopePrefix }, signal),
+    enabled: cleanQuery.length >= 2,
     staleTime: 30 * 1000,
   })
 
@@ -127,7 +140,7 @@ export function CommandPalette() {
       className="rounded-2xl border border-border/80 bg-popover/95 p-0 shadow-2xl backdrop-blur-2xl sm:max-w-2xl"
     >
       <CommandInput
-        placeholder="Rechercher médicament (DCI, marque, dosage), outil, action…"
+        placeholder="Rechercher médicament (DCI, marque, dosage), outil… (@dci, #labo)"
         value={query}
         onValueChange={setQuery}
         className="text-base"
@@ -137,8 +150,26 @@ export function CommandPalette() {
           {drugsLoading ? (
             <span>Recherche dans les 9&nbsp;555 AMM…</span>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p>Aucun résultat exact trouvé pour «&nbsp;{query}&nbsp;».</p>
+              {drugResults?.suggestion && (
+                <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
+                  <p className="flex items-center justify-center gap-1.5 font-medium">
+                    <Sparkles className="size-3.5 text-primary" />
+                    <span>
+                      Vouliez-vous dire :{' '}
+                      <strong className="text-foreground">{drugResults.suggestion}</strong> ?
+                    </span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setQuery(drugResults.suggestion!)}
+                    className="mt-2 rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    Chercher « {drugResults.suggestion} »
+                  </button>
+                </div>
+              )}
               {query.length >= 2 && (
                 <button
                   type="button"
@@ -157,11 +188,11 @@ export function CommandPalette() {
         {debounced.length >= 2 && (
           <CommandGroup heading="Action de recherche">
             <CommandItem
-              onSelect={() => handleSearchInDirectory(debounced)}
+              onSelect={() => handleSearchInDirectory(cleanQuery || debounced)}
               className="flex items-center gap-2.5 rounded-xl px-3 py-2 cursor-pointer bg-primary/5 text-primary hover:bg-primary/10"
             >
               <Search className="size-4 text-primary" />
-              <span className="font-semibold">Ouvrir « {debounced} » dans le Répertoire complet</span>
+              <span className="font-semibold">Ouvrir « {cleanQuery || debounced} » dans le Répertoire complet</span>
               <CommandShortcut>⏎</CommandShortcut>
             </CommandItem>
           </CommandGroup>
@@ -173,7 +204,7 @@ export function CommandPalette() {
             {drugResults.drugs.map((drug) => (
               <CommandItem
                 key={drug.id}
-                value={`${drug.brand} ${drug.dci} ${drug.dosage ?? ''}`}
+                value={`${drug.brand} ${drug.dci} ${drug.dosage ?? ''} ${drug.lab ?? ''}`}
                 onSelect={() => handleSelectDrug(drug.id)}
                 className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 cursor-pointer"
               >
@@ -182,13 +213,28 @@ export function CommandPalette() {
                     <Pill className="size-4" />
                   </span>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="truncate font-semibold text-foreground">
                         {drug.brand}
                       </span>
                       {drug.dosage && (
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/80">
+                        <span className="rounded bg-muted px-1.5 py-0.2 text-[10px] font-medium text-foreground/80">
                           {drug.dosage}
+                        </span>
+                      )}
+                      {drug.form && (
+                        <span className="hidden sm:inline-block rounded border border-border/80 px-1 py-0.2 text-[9px] text-muted-foreground">
+                          {drug.form}
+                        </span>
+                      )}
+                      {drug.country && (
+                        <span
+                          className={cn(
+                            'rounded px-1.5 py-0.2 text-[9px] font-semibold',
+                            isLocal(drug.country) ? 'bg-state-safe/10 text-state-safe' : 'bg-chifa/10 text-chifa'
+                          )}
+                        >
+                          {isLocal(drug.country) ? 'Local' : 'Importé'}
                         </span>
                       )}
                       {drug.hasBookRcp && (
@@ -197,7 +243,10 @@ export function CommandPalette() {
                         </span>
                       )}
                     </div>
-                    <p className="truncate text-xs text-muted-foreground">{drug.dci}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {drug.dci}
+                      {drug.lab ? ` · ${drug.lab}` : ''}
+                    </p>
                   </div>
                 </div>
 

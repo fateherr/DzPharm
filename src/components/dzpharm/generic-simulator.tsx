@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { StatusBadge, formatPrice } from './status-badge'
+import { StatusBadge, formatPrice, isLocal } from './status-badge'
 import { SafetyNote } from './safety-note'
 
 /**
@@ -43,6 +43,7 @@ interface SimDrug {
   form: string | null
   packaging?: string | null
   lab?: string | null
+  country?: string | null
   status: string
   price: number | null
   refundable?: boolean
@@ -73,14 +74,22 @@ interface SimDetail {
 
 const MAX_LINES = 4
 
-async function searchSimDrugs(q: string, signal?: AbortSignal): Promise<SimDrug[]> {
+interface SearchSimResult {
+  drugs: SimDrug[]
+  suggestion?: string | null
+}
+
+async function searchSimDrugs(q: string, signal?: AbortSignal): Promise<SearchSimResult> {
   const res = await fetch(
     `/api/drugs?q=${encodeURIComponent(q)}&pageSize=8&status=ACTIF&sort=relevance`,
     { signal }
   )
   if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
-  const data = (await res.json()) as { drugs: SimDrug[] }
-  return data.drugs
+  const data = (await res.json()) as { drugs: SimDrug[]; _meta?: { suggestion?: string | null }; suggestion?: string | null }
+  return {
+    drugs: data.drugs || [],
+    suggestion: data._meta?.suggestion || data.suggestion || null,
+  }
 }
 
 async function fetchSimDetail(id: number, signal?: AbortSignal): Promise<SimDetail> {
@@ -118,6 +127,45 @@ function useDebounced<T>(value: T, delay: number): T {
   return v
 }
 
+/* ------------------------------------------------------------------ */
+/* Composant de surlignage des termes correspondants (Highlighting)   */
+/* ------------------------------------------------------------------ */
+
+function HighlightMatch({ text, query }: { text: string | null | undefined; query: string }) {
+  if (!text) return null
+  const q = query.trim()
+  if (!q || q.length < 2) return <span>{text}</span>
+
+  const words = q
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/\s+/)
+    .filter((w) => w.length >= 2)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+
+  if (words.length === 0) return <span>{text}</span>
+
+  const pattern = new RegExp(`(${words.join('|')})`, 'gi')
+  const parts = text.split(pattern)
+
+  return (
+    <span>
+      {parts.map((part, i) =>
+        pattern.test(part) ? (
+          <mark
+            key={i}
+            className="rounded bg-primary/20 px-0.5 font-bold text-primary dark:bg-primary/30 dark:text-sky-300"
+          >
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  )
+}
+
 function SimAutocomplete({ onPick }: { onPick: (drug: SimDrug) => void }) {
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
@@ -131,7 +179,8 @@ function SimAutocomplete({ onPick }: { onPick: (drug: SimDrug) => void }) {
     queryFn: ({ signal }) => searchSimDrugs(trimmed, signal),
     enabled: trimmed.length >= 2,
   })
-  const results = useMemo(() => data ?? [], [data])
+  const results = useMemo(() => data?.drugs ?? [], [data])
+  const suggestion = data?.suggestion
 
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
@@ -204,9 +253,24 @@ function SimAutocomplete({ onPick }: { onPick: (drug: SimDrug) => void }) {
           className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
         >
           {results.length === 0 && !isFetching ? (
-            <p className="px-3 py-5 text-center text-sm text-muted-foreground">
-              Aucun médicament actif trouvé pour «&nbsp;{trimmed}&nbsp;»
-            </p>
+            <div className="px-3 py-5 text-center">
+              <p className="text-sm text-muted-foreground">
+                Aucun médicament actif trouvé pour «&nbsp;{trimmed}&nbsp;»
+              </p>
+              {suggestion ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue(suggestion)
+                    setActive(-1)
+                  }}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Sparkles className="size-3" />
+                  Vouliez-vous dire «&nbsp;{suggestion}&nbsp;» ?
+                </button>
+              ) : null}
+            </div>
           ) : (
             results.map((d, i) => (
               <button
@@ -217,18 +281,31 @@ function SimAutocomplete({ onPick }: { onPick: (drug: SimDrug) => void }) {
                 onClick={() => pick(d)}
                 onMouseEnter={() => setActive(i)}
                 className={cn(
-                  'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                  'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors',
                   i === active ? 'bg-primary/10' : 'hover:bg-accent'
                 )}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-foreground">
-                    {d.brand}
+                    <HighlightMatch text={d.brand} query={trimmed} />
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {d.dci}
+                    <HighlightMatch text={d.dci} query={trimmed} />
                     {d.dosage ? ` · ${d.dosage}` : ''}
                     {d.form ? ` · ${d.form}` : ''}
+                  </span>
+                  <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+                    {d.lab ? <span className="font-medium text-foreground/75 truncate">{d.lab}</span> : null}
+                    {d.country ? (
+                      <span
+                        className={cn(
+                          'rounded px-1.5 py-0.2 text-[10px] font-semibold shrink-0',
+                          isLocal(d.country) ? 'bg-state-safe/10 text-state-safe' : 'bg-chifa/10 text-chifa'
+                        )}
+                      >
+                        {isLocal(d.country) ? '🇩🇿 Local' : 'Importé'}
+                      </span>
+                    ) : null}
                   </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-0.5">
@@ -492,8 +569,8 @@ export function GenericSimulator() {
     setDemoLoading(true)
     try {
       const pick = async (q: string, dosage: string): Promise<SimDrug | null> => {
-        const list = await searchSimDrugs(q)
-        return list.find((d) => d.dosage && normDosage(d.dosage) === normDosage(dosage)) ?? list[0] ?? null
+        const { drugs } = await searchSimDrugs(q)
+        return drugs.find((d) => d.dosage && normDosage(d.dosage) === normDosage(dosage)) ?? drugs[0] ?? null
       }
       const [doliprane, glucophage] = await Promise.all([
         pick('DOLIPRANE', '1000MG'),

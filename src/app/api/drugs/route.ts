@@ -133,10 +133,19 @@ const ARABIC_SEARCH_MAP: Record<string, string> = {
   "\u0627\u0643\u062a\u0626\u0627\u0628": "SERTRALINE",
   "\u062a\u0631\u0627\u0645\u0627\u062f\u0648\u0644": "TRAMADOL",
 
-  // --- Divers ---
+  // --- Divers & Darija algérienne ---
   "\u0627\u0644\u062f\u064a\u062f\u0627\u0646": "ALBENDAZOLE",
   "\u0645\u0646\u0639 \u0627\u0644\u062d\u0645\u0644": "ETHINYLESTRADIOL",
   "\u062d\u0628 \u0627\u0644\u0634\u0628\u0627\u0628": "ISOTRETINOINE",
+  "\u062f\u0648\u0627 \u0627\u0644\u0633\u062e\u0627\u0646\u0629": "PARACETAMOL", // دوا السخانة
+  "\u0627\u0644\u0633\u062e\u0627\u0646\u0629": "PARACETAMOL", // السخانة
+  "\u062f\u0648\u0627 \u0627\u0644\u0643\u0648\u0644\u0648\u0646": "MEBEVERINE", // دوا الكولون
+  "\u0627\u0644\u0643\u0648\u0644\u0648\u0646": "MEBEVERINE", // الكولون
+  "\u0627\u0644\u0642\u0648\u0644\u0648\u0646": "MEBEVERINE", // القولون
+  "\u0627\u0646\u062a\u064a\u0628\u064a\u0648\u062a\u064a\u0643": "AMOXICILLINE", // انتيبيوتيك
+  "\u0627\u0644\u0627\u0646\u062a\u064a\u0628\u064a\u0648\u062a\u064a\u0643": "AMOXICILLINE",
+  "\u062f\u0648\u0627 \u0627\u0644\u062a\u0642\u064a\u0624": "DOMPERIDONE", // دوا التقيؤ
+  "\u0628\u0648\u0645\u0627\u062f\u0627 \u0628\u064a\u0636\u0627\u0621": "ZINC", // بومادا بيضاء
 };
 
 function hasArabic(s: string): boolean {
@@ -148,6 +157,51 @@ function mapArabicQuery(q: string): string | null {
   if (trimmed in ARABIC_SEARCH_MAP) return ARABIC_SEARCH_MAP[trimmed];
   for (const [ar, fr] of Object.entries(ARABIC_SEARCH_MAP)) {
     if (trimmed.includes(ar) || ar.includes(trimmed)) return fr;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Laboratoires algériens & Extraction d'entités                      */
+/* ------------------------------------------------------------------ */
+
+const ALGERIAN_LABS: Array<{ name: string; alias: string[] }> = [
+  { name: "SAIDAL", alias: ["SAIDAL"] },
+  { name: "BIOPHARM", alias: ["BIOPHARM"] },
+  { name: "MERINAL", alias: ["MERINAL"] },
+  { name: "INPHA-MEDIS", alias: ["INPHA", "MEDIS", "INPHA-MEDIS"] },
+  { name: "FRATER-RAZES", alias: ["FRATER", "RAZES", "FRATER-RAZES", "FRATER RAZES"] },
+  { name: "BEKER", alias: ["BEKER"] },
+  { name: "HIKMA", alias: ["HIKMA"] },
+  { name: "SOPHAL", alias: ["SOPHAL"] },
+  { name: "GENPHARMA", alias: ["GENPHARMA"] },
+  { name: "DAR ESSAYDALI", alias: ["DAR ESSAYDALI", "ESSAYDALI"] },
+  { name: "NOVOPHARMA", alias: ["NOVOPHARMA"] },
+  { name: "LDM", alias: ["LDM"] },
+  { name: "BIOGALENIC", alias: ["BIOGALENIC"] },
+  { name: "SANOFI", alias: ["SANOFI"] },
+  { name: "PHARMALLIANCE", alias: ["PHARMALLIANCE"] },
+  { name: "HUP PHARMA", alias: ["HUP", "HUP PHARMA"] },
+  { name: "NAD PHARMAC", alias: ["NAD", "NAD PHARMAC"] },
+  { name: "BIOCARE", alias: ["BIOCARE"] },
+  { name: "ELEA", alias: ["ELEA"] },
+  { name: "TAPHARM", alias: ["TAPHARM"] },
+];
+
+function extractLabFromQuery(workingKey: string): { labName: string; matchedAlias: string } | null {
+  const words = workingKey.toUpperCase().split(" ");
+  // Only extract lab if there is at least one other word so searching "SAIDAL" alone remains a normal query
+  if (words.length < 2) return null;
+  for (const lab of ALGERIAN_LABS) {
+    for (const alias of lab.alias) {
+      const aliasWords = alias.split(" ");
+      if (aliasWords.length === 1 && words.includes(alias)) {
+        return { labName: lab.name, matchedAlias: alias };
+      }
+      if (aliasWords.length > 1 && workingKey.includes(alias)) {
+        return { labName: lab.name, matchedAlias: alias };
+      }
+    }
   }
   return null;
 }
@@ -386,26 +440,25 @@ function stripMetaTokens(key: string, toRemove: string[]): string {
 function scoreResult(
   dciKey: string | null,
   brandKey: string | null,
-  queryKey: string
+  queryKey: string,
+  dosageTokens: string[] = []
 ): number {
   const dk = dciKey ?? "";
   const bk = brandKey ?? "";
   const tokens = queryKey.split(" ").filter((t) => t.length >= 2);
 
+  let base = 8;
   // Exact matches (Priorité maximale)
-  if (bk === queryKey) return 0;
-  if (dk === queryKey) return 1;
-
+  if (bk === queryKey) base = 0;
+  else if (dk === queryKey) base = 1;
   // Début de terme (Starts with)
-  if (bk.startsWith(queryKey)) return 2;
-  if (dk.startsWith(queryKey)) return 3;
-
+  else if (bk.startsWith(queryKey)) base = 2;
+  else if (dk.startsWith(queryKey)) base = 3;
   // Début de mot (Word boundary start)
-  if (new RegExp(`(?:^|\\s)${queryKey}`).test(bk)) return 4;
-  if (new RegExp(`(?:^|\\s)${queryKey}`).test(dk)) return 5;
-
+  else if (new RegExp(`(?:^|\\s)${queryKey}`).test(bk)) base = 4;
+  else if (new RegExp(`(?:^|\\s)${queryKey}`).test(dk)) base = 5;
   // Tous les tokens présents comme débuts de mots
-  if (
+  else if (
     tokens.length > 1 &&
     tokens.every(
       (t) =>
@@ -413,13 +466,18 @@ function scoreResult(
         new RegExp(`(?:^|\\s)${t}`).test(dk)
     )
   ) {
-    return 6;
+    base = 6;
+  }
+  // Inclusion simple
+  else if (bk.includes(queryKey) || dk.includes(queryKey)) base = 7;
+
+  // Dosage proximity boost
+  if (dosageTokens.length > 0) {
+    const hasDosage = dosageTokens.some((tok) => bk.includes(tok));
+    if (hasDosage) base -= 0.5;
   }
 
-  // Inclusion simple
-  if (bk.includes(queryKey) || dk.includes(queryKey)) return 7;
-
-  return 8;
+  return base;
 }
 
 /**
@@ -428,7 +486,8 @@ function scoreResult(
 export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams;
-    let q = (sp.get("q") || "").trim();
+    const rawUserQuery = (sp.get("q") || "").trim();
+    let q = rawUserQuery;
 
     // Recherche arabe : traduire vers le mot-clé français
     let arabicMapped = false;
@@ -447,8 +506,9 @@ export async function GET(req: NextRequest) {
     let form = sp.get("form") || "";
     const liste = sp.get("liste") || "";
     const country = sp.get("country") || "";
-    const lab = (sp.get("lab") || "").trim();
+    let lab = (sp.get("lab") || "").trim();
     const sort = sp.get("sort") || "relevance";
+    const scope = (sp.get("scope") || "all").toLowerCase();
 
     const where: Prisma.DrugWhereInput = {};
 
@@ -467,6 +527,7 @@ export async function GET(req: NextRequest) {
     // ── Décomposition avancée de la requête ─────────────────────────────
     let dosageHint: ParsedDosage | null = null;
     let formHint: ParsedForm | null = null;
+    let extractedLab: string | null = null;
     let cleanKey = "";
     let suggestion: string | null = null;
 
@@ -501,46 +562,89 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      cleanKey = workingKey;
-
-      // 3. Clauses OR sur le nom du médicament
-      const ors: Prisma.DrugWhereInput[] = [];
-      if (cleanKey) {
-        ors.push({ dciKey: { contains: cleanKey } });
-        ors.push({ brandKey: { contains: cleanKey } });
-
-        // Tolérance phonétique instantanée (ex: cefalexine -> CEPHALEXINE)
-        const pKey = pharmaPhoneticKey(cleanKey);
-        if (pKey && pKey !== cleanKey) {
-          ors.push({ dciKey: { contains: pKey } });
-          ors.push({ brandKey: { contains: pKey } });
-        }
-
-        // Intersection multi-mots (ex: "amoxicilline acide clavulanique")
-        const drugWords = cleanKey.split(" ").filter((w) => w.length >= 2);
-        if (drugWords.length > 1) {
-          const wordAnds = drugWords.map((w) => ({
-            OR: [
-              { brandKey: { contains: w } },
-              { dciKey: { contains: w } },
-              { brand: { contains: w } },
-              { dci: { contains: w } },
-            ],
-          }));
-          ors.push({ AND: wordAnds });
+      // 3. Extraction d'entité laboratoire algérien (ex: "amoxicilline saidal")
+      if (!lab && scope !== "lab") {
+        const labMatch = extractLabFromQuery(workingKey);
+        if (labMatch) {
+          extractedLab = labMatch.labName;
+          where.lab = { contains: labMatch.matchedAlias };
+          workingKey = stripMetaTokens(workingKey, [labMatch.matchedAlias]);
         }
       }
 
-      // Recherche originale (avec accents) sur les champs texte
-      ors.push({ dci: { contains: q } });
-      ors.push({ brand: { contains: q } });
-      ors.push({ lab: { contains: q } });
-      ors.push({ regNumber: { contains: q } });
+      cleanKey = workingKey;
+
+      // 4. Clauses de recherche selon le périmètre (scope)
+      const ors: Prisma.DrugWhereInput[] = [];
+      if (scope === "dci") {
+        if (cleanKey) {
+          ors.push({ dciKey: { contains: cleanKey } });
+          const pKey = pharmaPhoneticKey(cleanKey);
+          if (pKey && pKey !== cleanKey) ors.push({ dciKey: { contains: pKey } });
+          const drugWords = cleanKey.split(" ").filter((w) => w.length >= 2);
+          if (drugWords.length > 1) {
+            ors.push({
+              AND: drugWords.map((w) => ({
+                OR: [{ dciKey: { contains: w } }, { dci: { contains: w } }],
+              })),
+            });
+          }
+        }
+        ors.push({ dci: { contains: q } });
+      } else if (scope === "brand") {
+        if (cleanKey) {
+          ors.push({ brandKey: { contains: cleanKey } });
+          const pKey = pharmaPhoneticKey(cleanKey);
+          if (pKey && pKey !== cleanKey) ors.push({ brandKey: { contains: pKey } });
+          const drugWords = cleanKey.split(" ").filter((w) => w.length >= 2);
+          if (drugWords.length > 1) {
+            ors.push({
+              AND: drugWords.map((w) => ({
+                OR: [{ brandKey: { contains: w } }, { brand: { contains: w } }],
+              })),
+            });
+          }
+        }
+        ors.push({ brand: { contains: q } });
+      } else if (scope === "lab") {
+        ors.push({ lab: { contains: cleanKey || q } });
+      } else if (scope === "regnumber") {
+        ors.push({ regNumber: { contains: cleanKey || q } });
+      } else {
+        // scope === "all" (défaut)
+        if (cleanKey) {
+          ors.push({ dciKey: { contains: cleanKey } });
+          ors.push({ brandKey: { contains: cleanKey } });
+
+          const pKey = pharmaPhoneticKey(cleanKey);
+          if (pKey && pKey !== cleanKey) {
+            ors.push({ dciKey: { contains: pKey } });
+            ors.push({ brandKey: { contains: pKey } });
+          }
+
+          const drugWords = cleanKey.split(" ").filter((w) => w.length >= 2);
+          if (drugWords.length > 1) {
+            const wordAnds = drugWords.map((w) => ({
+              OR: [
+                { brandKey: { contains: w } },
+                { dciKey: { contains: w } },
+                { brand: { contains: w } },
+                { dci: { contains: w } },
+              ],
+            }));
+            ors.push({ AND: wordAnds });
+          }
+        }
+        ors.push({ dci: { contains: q } });
+        ors.push({ brand: { contains: q } });
+        ors.push({ lab: { contains: q } });
+        ors.push({ regNumber: { contains: q } });
+      }
 
       const and = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
       where.AND = [...and, { OR: ors }];
 
-      // 4. Appliquer le filtre dosage sur dosage et brandKey
+      // 5. Appliquer le filtre dosage sur dosage et brandKey
       if (dosageHint && dosageHint.tokens.length > 0) {
         const dosageOrs: Prisma.DrugWhereInput[] = [];
         for (const tok of dosageHint.tokens) {
@@ -568,15 +672,16 @@ export async function GET(req: NextRequest) {
           select: { id: true, brandKey: true, dciKey: true, status: true },
         });
 
-        // Trier par statut ACTIF puis score de pertinence
+        // Trier par statut ACTIF puis score de pertinence (avec boost dosage)
+        const dTokens = dosageHint?.tokens ?? [];
         candidates.sort((a, b) => {
           if (a.status !== b.status) {
             if (a.status === "ACTIF") return -1;
             if (b.status === "ACTIF") return 1;
           }
           return (
-            scoreResult(a.dciKey, a.brandKey, rankingKey) -
-            scoreResult(b.dciKey, b.brandKey, rankingKey)
+            scoreResult(a.dciKey, a.brandKey, rankingKey, dTokens) -
+            scoreResult(b.dciKey, b.brandKey, rankingKey, dTokens)
           );
         });
 
@@ -773,8 +878,11 @@ export async function GET(req: NextRequest) {
       _meta: q
         ? {
             arabicMapped,
+            arabicOriginal: hasArabic(rawUserQuery) ? rawUserQuery : null,
             cleanKey,
             suggestion,
+            scope,
+            extractedLab,
             dosageHint: dosageHint
               ? { raw: dosageHint.raw, display: dosageHint.display, tokens: dosageHint.tokens }
               : null,

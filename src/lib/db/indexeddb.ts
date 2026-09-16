@@ -158,8 +158,10 @@ export async function cacheSearchResults(query: string, results: unknown[]): Pro
   }
 }
 
+export const setCachedSearchResults = cacheSearchResults
+
 /** Récupère les résultats d'une recherche depuis le cache si < 24h */
-export async function getCachedSearchResults(query: string): Promise<unknown[] | null> {
+export async function getCachedSearchResults<T = unknown[]>(query: string): Promise<T | null> {
   const q = query.trim().toLowerCase()
   if (!q) return null
   try {
@@ -181,7 +183,7 @@ export async function getCachedSearchResults(query: string): Promise<unknown[] |
           resolve(null)
           return
         }
-        resolve(entry.results)
+        resolve(entry.results as T)
       }
       request.onerror = () => resolve(null)
     })

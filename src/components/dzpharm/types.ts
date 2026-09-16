@@ -95,7 +95,10 @@ export interface DrugsResponse {
   _meta?: {
     cleanKey?: string
     arabicMapped?: boolean
+    arabicOriginal?: string | null
     suggestion?: string | null
+    scope?: string | null
+    extractedLab?: string | null
     dosageHint?: { raw: string; display?: string; tokens?: string[] } | null
     formHint?: string | null
   }
@@ -326,6 +329,7 @@ export interface DrugQueryParams {
   lab?: string
   page?: number
   pageSize?: number
+  scope?: 'all' | 'dci' | 'brand' | 'lab' | 'regNumber'
   sort?: 'relevance' | 'brand' | 'dci' | 'lab' | 'dateInitial' | 'dateFinal'
 }
 

@@ -9,6 +9,7 @@ import {
   Info,
   Plus,
   Scale,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react'
@@ -159,6 +160,24 @@ export function DrugComparator() {
 
   const loading = details.some((d) => d.isLoading) && drugs.length < items.length
 
+  const suggestedEquivalents = useMemo(() => {
+    if (items.length === 0 || !details[0]?.data) return []
+    const baseDrug = details[0].data.drug
+    const baseEquivalents = details[0].data.equivalents || []
+    return baseEquivalents
+      .filter((e) => e.status === 'ACTIF' && !items.some((it) => it.id === e.id))
+      .sort((a, b) => {
+        // Prioritize local Algerian production
+        const aLocal = isLocal(a.country) ? 1 : 0
+        const bLocal = isLocal(b.country) ? 1 : 0
+        if (aLocal !== bLocal) return bLocal - aLocal
+        // Then same dosage
+        const aSameDosage = a.dosage === baseDrug.dosage ? 1 : 0
+        const bSameDosage = b.dosage === baseDrug.dosage ? 1 : 0
+        return bSameDosage - aSameDosage
+      })
+  }, [items, details])
+
   const sameDci =
     drugs.length >= 2 && drugs.every((d) => d.dciKey === drugs[0].dciKey) && drugs[0].dciKey
 
@@ -231,6 +250,48 @@ export function DrugComparator() {
               ))}
             </div>
           )}
+
+          {/* Suggestions de génériques équivalents */}
+          {items.length > 0 && items.length < MAX_COMPARE && suggestedEquivalents.length > 0 ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs">
+              <div className="mb-2 flex items-center gap-1.5 font-semibold text-primary">
+                <Sparkles className="size-3.5" />
+                <span>
+                  Suggérer des génériques équivalents pour {items[0].brand} :
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {suggestedEquivalents.slice(0, 5).map((eq) => (
+                  <button
+                    key={eq.id}
+                    type="button"
+                    onClick={() =>
+                      handleSelect({
+                        id: eq.id,
+                        brand: eq.brand,
+                        dci: details[0]?.data?.drug.dci || '',
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    title={`Ajouter ${eq.brand} (${eq.lab || 'Lab n.d.'}) au comparateur`}
+                  >
+                    <Plus className="size-3 text-primary" />
+                    <span className="font-semibold">{eq.brand}</span>
+                    {eq.lab ? (
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                        ({eq.lab})
+                      </span>
+                    ) : null}
+                    {isLocal(eq.country) ? (
+                      <span className="rounded bg-state-safe/10 px-1 text-[9px] font-semibold text-state-safe">
+                        🇩🇿 Local
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

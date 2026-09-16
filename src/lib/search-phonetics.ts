@@ -88,14 +88,19 @@ async function getCandidateIndex(): Promise<CandidateIndex> {
   }
 
   const rows = await db.drug.findMany({
-    where: { status: "ACTIF" },
-    select: { brandKey: true, dciKey: true },
+    select: { brandKey: true, dciKey: true, status: true },
+    orderBy: [{ status: "asc" }], // ACTIF comes before NON_RENOUVELE, RETRIE
   });
 
   const seen = new Set<string>();
+  const activeKeys = new Set<string>();
   const phoneticMap = new Map<string, string[]>();
 
   for (const r of rows) {
+    if (r.status === "ACTIF") {
+      if (r.brandKey && r.brandKey.length >= 3) activeKeys.add(r.brandKey);
+      if (r.dciKey && r.dciKey.length >= 3) activeKeys.add(r.dciKey);
+    }
     if (r.brandKey && r.brandKey.length >= 3) seen.add(r.brandKey);
     if (r.dciKey && r.dciKey.length >= 3) seen.add(r.dciKey);
   }
@@ -105,7 +110,12 @@ async function getCandidateIndex(): Promise<CandidateIndex> {
     if (!pKey) continue;
     const existing = phoneticMap.get(pKey);
     if (existing) {
-      existing.push(key);
+      // Prioritize active keys at the head of the candidate array
+      if (activeKeys.has(key)) {
+        existing.unshift(key);
+      } else {
+        existing.push(key);
+      }
     } else {
       phoneticMap.set(pKey, [key]);
     }
@@ -117,7 +127,10 @@ async function getCandidateIndex(): Promise<CandidateIndex> {
       if (pw && pw !== pKey) {
         const list = phoneticMap.get(pw);
         if (list) {
-          if (!list.includes(key)) list.push(key);
+          if (!list.includes(key)) {
+            if (activeKeys.has(key)) list.unshift(key);
+            else list.push(key);
+          }
         } else {
           phoneticMap.set(pw, [key]);
         }
@@ -125,9 +138,15 @@ async function getCandidateIndex(): Promise<CandidateIndex> {
     }
   }
 
+  // Put active keys first in distinctKeys so Levenshtein tie-breaking favors active medicines
+  const distinctKeys = [
+    ...Array.from(activeKeys),
+    ...Array.from(seen).filter((k) => !activeKeys.has(k)),
+  ];
+
   cachedIndex = {
     loadedAt: now,
-    distinctKeys: Array.from(seen),
+    distinctKeys,
     phoneticMap,
   };
 

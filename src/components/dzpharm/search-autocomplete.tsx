@@ -9,9 +9,12 @@ import {
   Coins,
   CornerDownLeft,
   Flame,
+  GitCompareArrows,
+  Globe,
   History,
   Loader2,
   Pill,
+  Plus,
   Search,
   ShieldAlert,
   Sparkles,
@@ -19,9 +22,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchDrugs } from './api'
-import type { Drug } from './types'
+import type { Drug, DrugsResponse } from './types'
 import { StatusBadge, formatPrice } from './status-badge'
 import { useDzPharm } from './store'
+import { useToast } from '@/hooks/use-toast'
+import { getCachedSearchResults, setCachedSearchResults } from '@/lib/db/indexeddb'
 
 const RECENT_SEARCHES_KEY = 'dzpharm_recent_searches'
 const POPULAR_SEARCHES = [
@@ -208,13 +213,56 @@ export function SearchAutocomplete({
 }: SearchAutocompleteProps) {
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
+  const addToBasket = useDzPharm((s) => s.addToBasket)
+  const openTool = useDzPharm((s) => s.openTool)
+  const { toast } = useToast()
+
   const [value, setValue] = useState('')
+  const [scope, setScope] = useState<'all' | 'dci' | 'brand' | 'lab' | 'regNumber'>('all')
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const internalRef = useRef<HTMLInputElement>(null)
   const debounced = useDebounce(value, 200)
   const trimmed = debounced.trim()
+
+  function handleQuickAddToBasket(e: React.MouseEvent, drug: Drug) {
+    e.preventDefault()
+    e.stopPropagation()
+    const res = addToBasket({
+      id: drug.id,
+      brand: drug.brand,
+      dci: drug.dci ?? '',
+      status: drug.status,
+    })
+    if (res === 'added') {
+      toast({
+        title: 'Ajouté au panier',
+        description: `${drug.brand} ajouté aux interactions.`,
+      })
+    } else if (res === 'duplicate') {
+      toast({
+        title: 'Déjà présent',
+        description: `${drug.brand} figure déjà dans le panier.`,
+      })
+    } else {
+      toast({
+        title: 'Panier plein',
+        description: 'Maximum 10 médicaments dans le panier.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  function handleQuickCompare(e: React.MouseEvent, drug: Drug) {
+    e.preventDefault()
+    e.stopPropagation()
+    openTool('comparateur')
+    toast({
+      title: 'Comparateur ouvert',
+      description: `Rendez-vous dans le comparateur pour analyser ${drug.brand}.`,
+    })
+  }
 
   // Recherches récentes en local storage
   const [recentSearches, setRecentSearches] = useState<string[]>([])
@@ -272,9 +320,38 @@ export function SearchAutocomplete({
   const activePlaceholder = placeholder ?? PLACEHOLDER_SUGGESTIONS[placeholderIndex]
 
   const { data, isFetching } = useQuery({
-    queryKey: ['drugs', 'autocomplete', trimmed],
-    queryFn: ({ signal }) =>
-      fetchDrugs({ q: trimmed, pageSize: 8, sort: 'relevance' }, signal),
+    queryKey: ['drugs', 'autocomplete', trimmed, scope],
+    queryFn: async ({ signal }) => {
+      try {
+        const res = await fetchDrugs(
+          {
+            q: trimmed,
+            pageSize: 8,
+            sort: 'relevance',
+            scope: scope === 'all' ? undefined : scope,
+          },
+          signal
+        )
+        if (res.drugs?.length) {
+          setCachedSearchResults(`ac_${scope}_${trimmed}`, res.drugs).catch(() => {})
+        }
+        return res
+      } catch (err) {
+        // Mode hors-ligne : secours depuis IndexedDB
+        const cached = await getCachedSearchResults<Drug[]>(`ac_${scope}_${trimmed}`).catch(() => null)
+        if (cached && cached.length) {
+          return {
+            drugs: cached,
+            total: cached.length,
+            page: 1,
+            pageSize: 8,
+            totalPages: 1,
+            fuzzy: false,
+          } as DrugsResponse
+        }
+        throw err
+      }
+    },
     enabled: trimmed.length >= 2,
     placeholderData: keepPreviousData,
   })
@@ -371,8 +448,38 @@ export function SearchAutocomplete({
   const hero = size === 'hero'
   const chips = nlActive ? interpretedChips(nlData!.interpreted) : []
 
+  const SCOPES: Array<{ id: 'all' | 'dci' | 'brand' | 'lab' | 'regNumber'; label: string }> = [
+    { id: 'all', label: 'Tous' },
+    { id: 'dci', label: 'DCI / Molécule' },
+    { id: 'brand', label: 'Marque' },
+    { id: 'lab', label: 'Laboratoire' },
+    { id: 'regNumber', label: 'N° AMM' },
+  ]
+
   return (
     <div ref={wrapperRef} className={cn('relative w-full', className)}>
+      {hero && (
+        <div className="mb-2.5 flex items-center gap-1.5 overflow-x-auto scroll-thin px-1 text-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">
+            Périmètre :
+          </span>
+          {SCOPES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setScope(s.id)}
+              className={cn(
+                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer',
+                scope === s.id
+                  ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+                  : 'bg-card/90 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/70'
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div
         className={cn(
           'group flex items-center gap-3 rounded-2xl border bg-card/95 text-foreground shadow-lg shadow-black/5 transition-all',
@@ -540,6 +647,25 @@ export function SearchAutocomplete({
             )}
           </div>
 
+          {/* Alerte Darija / Arabe */}
+          {data?._meta?.arabicMapped && (
+            <div className="mb-2 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300">
+              <Globe className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <span>
+                Terme en darija / arabe détecté{data._meta.arabicOriginal ? ` (« ${data._meta.arabicOriginal} »)` : ''} — recherche convertie vers{' '}
+                <strong className="font-bold text-foreground">{data._meta.cleanKey}</strong>
+              </span>
+            </div>
+          )}
+
+          {/* Alerte Labo Algérien Détecté */}
+          {data?._meta?.extractedLab && (
+            <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs text-primary">
+              <span className="text-[10px] font-semibold uppercase tracking-wider">Laboratoire identifié :</span>
+              <strong className="font-bold text-foreground">{data._meta.extractedLab}</strong>
+            </div>
+          )}
+
           {/* Bandeau Suggestion orthographique "Vouliez-vous dire..." */}
           {data?.suggestion && data.suggestion.toUpperCase() !== trimmed.toUpperCase() && (
             <div className="mb-2 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
@@ -623,7 +749,7 @@ export function SearchAutocomplete({
                   onClick={() => select(drug)}
                   onMouseEnter={() => setActiveIndex(row)}
                   className={cn(
-                    'mt-1 flex w-full items-center justify-between gap-3 rounded-xl p-2.5 text-left transition-all',
+                    'group/row mt-1 flex w-full items-center justify-between gap-3 rounded-xl p-2.5 text-left transition-all',
                     isSelected
                       ? 'bg-primary/12 shadow-xs ring-1 ring-primary/30'
                       : 'hover:bg-accent/70'
@@ -671,6 +797,26 @@ export function SearchAutocomplete({
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">
+                    {/* Actions rapides au survol */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => handleQuickAddToBasket(e, drug)}
+                        className="flex size-7 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        title="Ajouter aux interactions"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleQuickCompare(e, drug)}
+                        className="flex size-7 items-center justify-center rounded-lg border border-border/80 bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        title="Comparer ce médicament"
+                      >
+                        <GitCompareArrows className="size-3.5" />
+                      </button>
+                    </div>
+
                     {drug.price != null && (
                       <span className="flex items-center gap-1 text-xs font-semibold text-chifa tabular-nums">
                         <Coins className="size-3" aria-hidden />

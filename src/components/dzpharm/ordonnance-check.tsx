@@ -12,16 +12,28 @@ import {
   Activity,
   AlertTriangle,
   XCircle,
+  Edit3,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
 import { fetchDrugs, postLocalInteractions } from './api'
 import type { Drug, InteractionPair, InteractionsResponse, InteractionSeverity } from './types'
 import { RISK_META, SeverityBadge, StatusBadge } from './status-badge'
 import { SafetyNote } from './safety-note'
 import { useDzPharm } from './store'
+import { SearchAutocomplete } from './search-autocomplete'
 
 /* ------------------------------------------------------------------ */
 /* Constantes & limites                                                */
@@ -103,11 +115,27 @@ function isStopToken(rawTok: string): boolean {
 /** Jeton compatible avec un nom de médicament (lettres, chiffres intégrés, traits d'union). */
 const NAME_TOKEN = /^[A-Za-zÀ-ÿ0-9'’.\-]+$/
 
+function extractPosology(raw: string): string | null {
+  const patterns = [
+    /\b(\d+(?:[.,]\d+)?\s*(?:cp|cpr|comprim[eé]|g[eé]lule|sachet|goutte|cuill[eè]re|ampoule|inj|bouff[eé]e)s?\s*(?:x|\*|par|\/)\s*\d+[\s\w\/]*)/i,
+    /\b(\d+\s*(?:x|\/)\s*j(?:our)?[\s\w]*)/i,
+    /\b(matin(?:\s*(?:et|,)\s*soir)?|soir|midi|au coucher)\b/i,
+    /\b(pendant\s*\d+\s*(?:jours?|semaines?|mois))\b/i,
+  ]
+  for (const p of patterns) {
+    const m = raw.match(p)
+    if (m) return m[0].trim()
+  }
+  return null
+}
+
 interface ParsedLine {
   /** Ligne brute après suppression de la numérotation. */
   raw: string
   /** Nom candidat extrait (mots avant le dosage) — '' si la ligne n'est pas un médicament. */
   candidate: string
+  /** Posologie heuristique extraite */
+  posology?: string | null
 }
 
 /** Déterministe : extrait le nom de médicament en tête de ligne (avant dosage/posologie). */
@@ -135,9 +163,14 @@ export function parseOrdonnanceLine(raw: string): ParsedLine {
     if (nameTokens.length >= 3) break
   }
   const candidate = nameTokens.join(' ').trim()
+  const posology = extractPosology(line)
   // ≥ 3 caractères : écarte les fragments trop courts (faux positifs de la
   // correspondance « contient » sur des sous-chaînes aléatoires).
-  return { raw: line, candidate: candidate.length >= 3 ? candidate : '' }
+  return {
+    raw: line,
+    candidate: candidate.length >= 3 ? candidate : '',
+    posology,
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -159,13 +192,15 @@ interface ResolvedDrug {
   brand: string
   dci: string | null
   status: string
+  fuzzy?: boolean
+  suggestion?: string | null
 }
 
 /**
  * Résout un candidat vers le registre : actif en priorité, sinon n'importe
  * quel statut (pour signaler honnêtement une prescription non
- * renouvelée/retirée). La correspondance est vérifiée : le candidat doit
- * apparaître dans la marque OU la DCI (jamais seulement le laboratoire).
+ * renouvelée/retirée). La correspondance est vérifiée avec support
+ * de tolérance phonétique et suggestions orthographiques de l'API.
  */
 async function resolveCandidate(candidate: string): Promise<ResolvedDrug | null> {
   try {
@@ -174,20 +209,40 @@ async function resolveCandidate(candidate: string): Promise<ResolvedDrug | null>
 
     const actifs = await fetchDrugs({ q: candidate, pageSize: 1, status: 'ACTIF', sort: 'relevance' })
     let drug: Drug | undefined = actifs.drugs[0]
+    let fuzzy = actifs.fuzzy ?? false
+    let suggestion = actifs.suggestion ?? null
+
     if (!drug) {
       const any = await fetchDrugs({ q: candidate, pageSize: 1, sort: 'relevance' })
       drug = any.drugs[0]
+      fuzzy = any.fuzzy ?? false
+      suggestion = any.suggestion ?? null
     }
     if (!drug) return null
 
     const brandKey = toSearchKey(drug.brand ?? '')
     const dciKey = toSearchKey(drug.dci ?? '')
-    const match =
+    const exactMatch =
       (brandKey !== '' && (brandKey.includes(key) || key.includes(brandKey))) ||
       (dciKey !== '' && (dciKey.includes(key) || key.includes(dciKey)))
-    if (!match) return null
 
-    return { id: drug.id, brand: drug.brand, dci: drug.dci, status: drug.status }
+    if (exactMatch) {
+      return { id: drug.id, brand: drug.brand, dci: drug.dci, status: drug.status, fuzzy: false }
+    }
+
+    // Tolérance phonétique / suggestion intelligente du moteur
+    if (fuzzy || suggestion) {
+      return {
+        id: drug.id,
+        brand: drug.brand,
+        dci: drug.dci,
+        status: drug.status,
+        fuzzy: true,
+        suggestion: suggestion || drug.brand,
+      }
+    }
+
+    return null
   } catch {
     return null
   }
@@ -210,6 +265,10 @@ interface LineResult extends ParsedLine {
 
 export function OrdonnanceCheck() {
   const openDrug = useDzPharm((s) => s.openDrug)
+  const setBasket = useDzPharm((s) => s.setBasket)
+  const setView = useDzPharm((s) => s.setView)
+  const { toast } = useToast()
+
   const [value, setValue] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -217,6 +276,7 @@ export function OrdonnanceCheck() {
   const [result, setResult] = useState<InteractionsResponse | null>(null)
   const [engineLimited, setEngineLimited] = useState(false)
   const [linesTruncated, setLinesTruncated] = useState(false)
+  const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
 
   const allLines = useMemo(() => value.split('\n'), [value])
   const nonEmptyLines = useMemo(
@@ -236,6 +296,61 @@ export function OrdonnanceCheck() {
     }
     return counts
   }, [result])
+
+  async function recheckInteractions(identified: (LineResult & { drug: ResolvedDrug })[]) {
+    if (identified.length >= 2) {
+      const items = identified
+        .slice(0, MAX_ENGINE_DRUGS)
+        .map((r) => ({ name: r.drug.brand, dci: r.drug.dci ?? undefined }))
+      const res = await postLocalInteractions(items)
+      setResult(res)
+      setEngineLimited(identified.length > MAX_ENGINE_DRUGS)
+    } else {
+      setResult(null)
+      setEngineLimited(false)
+    }
+  }
+
+  function handleManualPick(drug: Drug) {
+    if (editingLineIndex === null || !lines) return
+    const updated = [...lines]
+    updated[editingLineIndex] = {
+      ...updated[editingLineIndex],
+      status: 'found',
+      drug: {
+        id: drug.id,
+        brand: drug.brand,
+        dci: drug.dci,
+        status: drug.status,
+      },
+    }
+    setLines(updated)
+    setEditingLineIndex(null)
+    const newlyIdentified = updated.filter(
+      (r): r is LineResult & { drug: ResolvedDrug } => r.status === 'found' && !!r.drug
+    )
+    recheckInteractions(newlyIdentified)
+    toast({
+      title: 'Médicament sélectionné',
+      description: `${drug.brand} a été assigné à la ligne.`,
+    })
+  }
+
+  function transferToBasket() {
+    if (found.length === 0) return
+    const items = found.map((f) => ({
+      id: f.drug.id,
+      brand: f.drug.brand,
+      dci: f.drug.dci ?? '',
+      status: f.drug.status,
+    }))
+    setBasket(items)
+    toast({
+      title: 'Médicaments transférés',
+      description: `${items.length} médicament(s) envoyés dans le panier d'interactions.`,
+    })
+    setView('interactions')
+  }
 
   async function analyze() {
     if (pending) return
@@ -388,13 +503,28 @@ export function OrdonnanceCheck() {
         {/* ---------------- Médicaments identifiés ---------------- */}
         {lines !== null ? (
           <section aria-label="Médicaments identifiés" className="space-y-3">
-            <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-              Médicaments identifiés
-              <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary tabular-nums normal-case">
-                {found.length} reconnu{found.length > 1 ? 's' : ''}
-                {unresolved.length > 0 ? ` · ${unresolved.length} non reconnu${unresolved.length > 1 ? 's' : ''}` : ''}
-              </span>
-            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+                Médicaments identifiés
+                <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary tabular-nums normal-case">
+                  {found.length} reconnu{found.length > 1 ? 's' : ''}
+                  {unresolved.length > 0 ? ` · ${unresolved.length} non reconnu${unresolved.length > 1 ? 's' : ''}` : ''}
+                </span>
+              </h3>
+              {found.length > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={transferToBasket}
+                  className="h-8 gap-1.5 border-primary/40 bg-primary/5 text-xs font-semibold text-primary hover:bg-primary/15"
+                >
+                  <FlaskConical className="size-3.5" />
+                  <span>Transférer vers le Panier ({found.length})</span>
+                  <ArrowRight className="size-3" />
+                </Button>
+              )}
+            </div>
 
             {lines.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
@@ -406,7 +536,7 @@ export function OrdonnanceCheck() {
                   <li
                     key={`${i}-${l.raw}`}
                     className={cn(
-                      'flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 rounded-xl border p-3 text-sm',
+                      'flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border p-3 text-sm',
                       l.status === 'ignored'
                         ? 'border-border/60 bg-muted/30'
                         : l.status === 'found'
@@ -415,12 +545,23 @@ export function OrdonnanceCheck() {
                     )}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium text-foreground">
-                        {l.raw || '—'}
+                      <span className="flex flex-wrap items-center gap-1.5 font-medium text-foreground">
+                        <span>{l.raw || '—'}</span>
+                        {l.posology && (
+                          <span className="rounded bg-muted/80 px-1.5 py-0.2 font-mono text-[10px] text-muted-foreground">
+                            Poso : {l.posology}
+                          </span>
+                        )}
                       </span>
                       {l.status === 'found' && l.drug ? (
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {l.drug.brand} · {l.drug.dci ?? 'DCI non renseignée'}
+                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                          <span>{l.drug.brand} · {l.drug.dci ?? 'DCI non renseignée'}</span>
+                          {l.drug.fuzzy && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.2 text-[10px] font-semibold text-primary">
+                              <Sparkles className="size-2.5" />
+                              <span>≈ Tolérance phonétique ({l.drug.suggestion})</span>
+                            </span>
+                          )}
                         </span>
                       ) : null}
                     </span>
@@ -429,7 +570,7 @@ export function OrdonnanceCheck() {
                         Ligne non médicamenteuse ignorée
                       </span>
                     ) : l.status === 'found' && l.drug ? (
-                      <span className="flex shrink-0 items-center gap-2">
+                      <span className="flex shrink-0 items-center gap-1.5">
                         <StatusBadge status={l.drug.status} />
                         <Button
                           type="button"
@@ -441,13 +582,37 @@ export function OrdonnanceCheck() {
                         >
                           Fiche
                         </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs gap-1 border-border/80 text-muted-foreground hover:text-foreground"
+                          onClick={() => setEditingLineIndex(i)}
+                          aria-label={`Modifier le médicament pour la ligne ${l.raw}`}
+                        >
+                          <Edit3 className="size-3" />
+                          <span className="hidden sm:inline">Modifier</span>
+                        </Button>
                       </span>
                     ) : (
-                      <span
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-state-warning/40 bg-state-warning/10 px-2.5 py-0.5 text-[11px] font-semibold text-state-warning"
-                      >
-                        <XCircle className="size-3.5" aria-hidden />
-                        Non reconnu — vérifiez la DCI/manuellement
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border border-state-warning/40 bg-state-warning/10 px-2.5 py-0.5 text-[11px] font-semibold text-state-warning"
+                        >
+                          <XCircle className="size-3.5" aria-hidden />
+                          Non reconnu
+                        </span>
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          className="h-7 px-2.5 text-xs gap-1 font-semibold"
+                          onClick={() => setEditingLineIndex(i)}
+                          aria-label={`Choisir le médicament pour la ligne ${l.raw}`}
+                        >
+                          <Edit3 className="size-3" />
+                          <span>Choisir</span>
+                        </Button>
                       </span>
                     )}
                   </li>
@@ -457,8 +622,7 @@ export function OrdonnanceCheck() {
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              Identification heuristique (nom du médicament avant le dosage) — vérifiez chaque
-              correspondance proposée avant de vous fier au contrôle.
+              Identification automatique assistée par phonétique — vous pouvez modifier ou attribuer n&apos;importe quelle ligne avec le bouton « Choisir ».
             </p>
 
             {found.length < 2 ? (
@@ -469,6 +633,27 @@ export function OrdonnanceCheck() {
             ) : null}
           </section>
         ) : null}
+
+        {/* Modal de sélection manuelle d'un médicament */}
+        <Dialog open={editingLineIndex !== null} onOpenChange={(open) => !open && setEditingLineIndex(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Sélectionner le médicament correspondant</DialogTitle>
+              <DialogDescription>
+                {editingLineIndex !== null && lines && lines[editingLineIndex]
+                  ? `Pour la ligne : « ${lines[editingLineIndex].raw} »`
+                  : 'Recherchez un médicament dans le répertoire officiel'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-2">
+              <SearchAutocomplete
+                autoFocus
+                placeholder="Rechercher marque ou DCI..."
+                onSelect={handleManualPick}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* ---------------- Résultats d'interactions ---------------- */}
         {result ? (

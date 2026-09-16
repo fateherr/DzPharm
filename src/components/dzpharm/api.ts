@@ -45,6 +45,7 @@ function buildQuery(params: DrugQueryParams): string {
   if (params.liste) search.set('liste', params.liste)
   if (params.country) search.set('country', params.country)
   if (params.lab) search.set('lab', params.lab)
+  if (params.scope) search.set('scope', params.scope)
   if (params.page) search.set('page', String(params.page))
   if (params.pageSize) search.set('pageSize', String(params.pageSize))
   if (params.sort) search.set('sort', params.sort)
