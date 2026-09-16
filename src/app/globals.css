@@ -212,9 +212,9 @@
                        0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
 }
 
-/* ================================================================== */
+/* ------------------------------------------------------------------ */
 /* 10 PALETTES DE DESIGN THÉMATIQUES (SÉLECTIONNABLES EN TEMPS RÉEL)   */
-/* ================================================================== */
+/* ------------------------------------------------------------------ */
 
 /* 1. Porcelaine Suisse & Saphir (Défaut) */
 :root[data-palette="porcelain"],
@@ -268,12 +268,10 @@
 }
 .dark[data-palette="nordic-linen"],
 [data-palette="nordic-linen"].dark {
-  --background: #0f0e0c;
-  --card: #181613;
-  --popover: #181613;
   --primary: #60a5fa;
-  --border: #2c2823;
-  --muted: #1e1b17;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
 }
 
 /* 3. Zinc Satiné & Glacier (Style Linear / Raycast Studio) */
@@ -302,11 +300,10 @@
 }
 .dark[data-palette="zinc-studio"],
 [data-palette="zinc-studio"].dark {
-  --background: #090c10;
-  --card: #11161d;
-  --popover: #11161d;
-  --border: #212833;
-  --muted: #171d26;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
 }
 
 /* 4. Sauge Thérapeutique & Pin (Sérénité & Phytothérapie) */
@@ -335,12 +332,10 @@
 }
 .dark[data-palette="sage-botanical"],
 [data-palette="sage-botanical"].dark {
-  --background: #07100b;
-  --card: #0e1a14;
-  --popover: #0e1a14;
   --primary: #34d399;
-  --border: #1c2e24;
-  --muted: #13221b;
+  --ring: #34d399;
+  --sidebar-primary: #34d399;
+  --sidebar-ring: #34d399;
 }
 
 /* 5. Craie & Cobalt (Codex Officine Pharmacie) */
@@ -369,12 +364,10 @@
 }
 .dark[data-palette="french-cobalt"],
 [data-palette="french-cobalt"].dark {
-  --background: #080c18;
-  --card: #0e1424;
-  --popover: #0e1424;
   --primary: #60a5fa;
-  --border: #1d273f;
-  --muted: #141b2e;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
 }
 
 /* 6. Dune Saharienne & Cèdre (Héritage Algérien Solaire) */
@@ -403,12 +396,10 @@
 }
 .dark[data-palette="sahara-cedar"],
 [data-palette="sahara-cedar"].dark {
-  --background: #110e0b;
-  --card: #1b1712;
-  --popover: #1b1712;
   --primary: #4ade80;
-  --border: #2c241c;
-  --muted: #201a14;
+  --ring: #4ade80;
+  --sidebar-primary: #4ade80;
+  --sidebar-ring: #4ade80;
 }
 
 /* 7. Gris Minéral & Graphite (Minimalisme Industriel Dieter Rams) */
@@ -437,12 +428,10 @@
 }
 .dark[data-palette="braun-mineral"],
 [data-palette="braun-mineral"].dark {
-  --background: #101011;
-  --card: #18181b;
-  --popover: #18181b;
   --primary: #22d3ee;
-  --border: #27272a;
-  --muted: #202023;
+  --ring: #22d3ee;
+  --sidebar-primary: #22d3ee;
+  --sidebar-ring: #22d3ee;
 }
 
 /* 8. Brume Polaire & Indigo (Biotech & Intelligence IA) */
@@ -471,12 +460,10 @@
 }
 .dark[data-palette="polar-indigo"],
 [data-palette="polar-indigo"].dark {
-  --background: #090a14;
-  --card: #101324;
-  --popover: #101324;
   --primary: #818cf8;
-  --border: #212644;
-  --muted: #171b32;
+  --ring: #818cf8;
+  --sidebar-primary: #818cf8;
+  --sidebar-ring: #818cf8;
 }
 
 /* 9. Perle & Azur d’Alger (Fraîcheur Maritime) */
@@ -505,12 +492,10 @@
 }
 .dark[data-palette="mediterranean-azure"],
 [data-palette="mediterranean-azure"].dark {
-  --background: #060d16;
-  --card: #0c1828;
-  --popover: #0c1828;
   --primary: #38bdf8;
-  --border: #1b2d45;
-  --muted: #132235;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
 }
 
 /* 10. Ivoire Impérial & Émeraude (Apothicaire de Prestige) */
@@ -539,12 +524,10 @@
 }
 .dark[data-palette="ivory-emerald"],
 [data-palette="ivory-emerald"].dark {
-  --background: #0a100c;
-  --card: #121a15;
-  --popover: #121a15;
   --primary: #34d399;
-  --border: #213027;
-  --muted: #17231c;
+  --ring: #34d399;
+  --sidebar-primary: #34d399;
+  --sidebar-ring: #34d399;
 }
 
 @layer base {
