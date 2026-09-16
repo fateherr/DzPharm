@@ -592,8 +592,8 @@ export function HomeView() {
       ) : null}
 
       {/* ------------------------------ Hero ------------------------------ */}
-      <section className="hero-glow relative overflow-hidden border-b border-border/60">
-        <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden />
+      <section className="hero-glow relative border-b border-border/60">
+        <div className="hero-grid pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
         <div className="relative mx-auto max-w-4xl px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24 sm:pb-20">
           <motion.div
             initial={{ opacity: 0, y: 16 }}

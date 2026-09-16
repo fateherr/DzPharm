@@ -570,7 +570,7 @@ export function SearchAutocomplete({
         <div
           role="region"
           aria-label="Recherches récentes et suggestions"
-          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(26rem,calc(100vh-140px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl"
+          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(32rem,calc(100vh-180px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/98 p-3 shadow-2xl shadow-black/25 backdrop-blur-xl"
         >
           {recentSearches.length > 0 && (
             <div className="mb-3">
@@ -634,7 +634,7 @@ export function SearchAutocomplete({
         <div
           id={id ? `${id}-listbox` : undefined}
           role="listbox"
-          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(26rem,calc(100vh-140px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-2 shadow-2xl shadow-black/20 backdrop-blur-xl"
+          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(32rem,calc(100vh-180px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/98 p-2 shadow-2xl shadow-black/25 backdrop-blur-xl"
         >
           {/* Header row in dropdown */}
           <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
