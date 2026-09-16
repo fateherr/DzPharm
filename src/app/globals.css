@@ -530,6 +530,340 @@
   --sidebar-ring: #34d399;
 }
 
+/* ================================================================== */
+/* CATÉGORIE 2 : AUDACIEUX & AVANT-GARDE (10 NOUVELLES PALETTES)      */
+/* ================================================================== */
+
+/* 11. Cyber-Med & Bio-Néon */
+:root[data-palette="cyber-synth"],
+[data-palette="cyber-synth"]:not(.dark) {
+  --background: #f3f0fb;
+  --foreground: #1e1138;
+  --card: #ffffff;
+  --card-foreground: #1e1138;
+  --popover: #ffffff;
+  --popover-foreground: #1e1138;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #ede7f9;
+  --secondary-foreground: #1e1138;
+  --muted: #ede7f9;
+  --muted-foreground: #5b4d75;
+  --accent: #e5def5;
+  --accent-foreground: #1e1138;
+  --border: #ddd6fe;
+  --input: #ddd6fe;
+  --ring: #7c3aed;
+  --chifa: #06b6d4;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #f59e0b;
+  --brand-gradient: linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #06b6d4 100%);
+}
+.dark[data-palette="cyber-synth"],
+[data-palette="cyber-synth"].dark {
+  --primary: #a855f7;
+  --ring: #a855f7;
+  --sidebar-primary: #a855f7;
+  --sidebar-ring: #a855f7;
+}
+
+/* 12. Jasmin d’Alger & Mandarine */
+:root[data-palette="oasis-jasmin"],
+[data-palette="oasis-jasmin"]:not(.dark) {
+  --background: #fdf5ee;
+  --foreground: #2c1809;
+  --card: #ffffff;
+  --card-foreground: #2c1809;
+  --popover: #ffffff;
+  --popover-foreground: #2c1809;
+  --primary: #ea580c;
+  --primary-foreground: #ffffff;
+  --secondary: #fceadc;
+  --secondary-foreground: #2c1809;
+  --muted: #fceadc;
+  --muted-foreground: #78583c;
+  --accent: #faebd7;
+  --accent-foreground: #2c1809;
+  --border: #fed7aa;
+  --input: #fed7aa;
+  --ring: #ea580c;
+  --chifa: #16a34a;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #16a34a 100%);
+}
+.dark[data-palette="oasis-jasmin"],
+[data-palette="oasis-jasmin"].dark {
+  --primary: #fb923c;
+  --ring: #fb923c;
+  --sidebar-primary: #fb923c;
+  --sidebar-ring: #fb923c;
+}
+
+/* 13. Lapis-Lazuli & Or Avicenne */
+:root[data-palette="alchemy-gold"],
+[data-palette="alchemy-gold"]:not(.dark) {
+  --background: #fbf7ee;
+  --foreground: #172033;
+  --card: #ffffff;
+  --card-foreground: #172033;
+  --popover: #ffffff;
+  --popover-foreground: #172033;
+  --primary: #1e3a8a;
+  --primary-foreground: #ffffff;
+  --secondary: #f3ebda;
+  --secondary-foreground: #172033;
+  --muted: #f3ebda;
+  --muted-foreground: #5e594d;
+  --accent: #f8f1e2;
+  --accent-foreground: #172033;
+  --border: #e7dec6;
+  --input: #e7dec6;
+  --ring: #1e3a8a;
+  --chifa: #b45309;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #b45309 100%);
+}
+.dark[data-palette="alchemy-gold"],
+[data-palette="alchemy-gold"].dark {
+  --primary: #f59e0b;
+  --ring: #f59e0b;
+  --sidebar-primary: #f59e0b;
+  --sidebar-ring: #f59e0b;
+}
+
+/* 14. Bioluminescence Abyssale */
+:root[data-palette="abyssal-bio"],
+[data-palette="abyssal-bio"]:not(.dark) {
+  --background: #edf7f6;
+  --foreground: #0a2220;
+  --card: #ffffff;
+  --card-foreground: #0a2220;
+  --popover: #ffffff;
+  --popover-foreground: #0a2220;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --secondary: #d8f1ee;
+  --secondary-foreground: #0a2220;
+  --muted: #d8f1ee;
+  --muted-foreground: #3c6561;
+  --accent: #e2f5f2;
+  --accent-foreground: #0a2220;
+  --border: #bfe5e0;
+  --input: #bfe5e0;
+  --ring: #0f766e;
+  --chifa: #10b981;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #10b981 100%);
+}
+.dark[data-palette="abyssal-bio"],
+[data-palette="abyssal-bio"].dark {
+  --primary: #06b6d4;
+  --ring: #06b6d4;
+  --sidebar-primary: #06b6d4;
+  --sidebar-ring: #06b6d4;
+}
+
+/* 15. Crépuscule du Hoggar */
+:root[data-palette="hoggar-sunset"],
+[data-palette="hoggar-sunset"]:not(.dark) {
+  --background: #fcf2f2;
+  --foreground: #2b0b14;
+  --card: #ffffff;
+  --card-foreground: #2b0b14;
+  --popover: #ffffff;
+  --popover-foreground: #2b0b14;
+  --primary: #9f1239;
+  --primary-foreground: #ffffff;
+  --secondary: #fbe0e2;
+  --secondary-foreground: #2b0b14;
+  --muted: #fbe0e2;
+  --muted-foreground: #7c444f;
+  --accent: #fae6e7;
+  --accent-foreground: #2b0b14;
+  --border: #fecdd3;
+  --input: #fecdd3;
+  --ring: #9f1239;
+  --chifa: #15803d;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #e11d48 0%, #9f1239 50%, #15803d 100%);
+}
+.dark[data-palette="hoggar-sunset"],
+[data-palette="hoggar-sunset"].dark {
+  --primary: #f43f5e;
+  --ring: #f43f5e;
+  --sidebar-primary: #f43f5e;
+  --sidebar-ring: #f43f5e;
+}
+
+/* 16. Aurore Boréale Ionisée */
+:root[data-palette="aurora-borealis"],
+[data-palette="aurora-borealis"]:not(.dark) {
+  --background: #eefbf7;
+  --foreground: #08231a;
+  --card: #ffffff;
+  --card-foreground: #08231a;
+  --popover: #ffffff;
+  --popover-foreground: #08231a;
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+  --secondary: #d3f6eb;
+  --secondary-foreground: #08231a;
+  --muted: #d3f6eb;
+  --muted-foreground: #346c59;
+  --accent: #def9f1;
+  --accent-foreground: #08231a;
+  --border: #a7f3d0;
+  --input: #a7f3d0;
+  --ring: #059669;
+  --chifa: #9333ea;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #9333ea 100%);
+}
+.dark[data-palette="aurora-borealis"],
+[data-palette="aurora-borealis"].dark {
+  --primary: #10b981;
+  --ring: #10b981;
+  --sidebar-primary: #10b981;
+  --sidebar-ring: #10b981;
+}
+
+/* 17. Ambre Impérial & Épices */
+:root[data-palette="silk-amber"],
+[data-palette="silk-amber"]:not(.dark) {
+  --background: #fef9ee;
+  --foreground: #2c1b05;
+  --card: #ffffff;
+  --card-foreground: #2c1b05;
+  --popover: #ffffff;
+  --popover-foreground: #2c1b05;
+  --primary: #d97706;
+  --primary-foreground: #ffffff;
+  --secondary: #faefd4;
+  --secondary-foreground: #2c1b05;
+  --muted: #faefd4;
+  --muted-foreground: #755931;
+  --accent: #fcf4de;
+  --accent-foreground: #2c1b05;
+  --border: #fde68a;
+  --input: #fde68a;
+  --ring: #d97706;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #047857 100%);
+}
+.dark[data-palette="silk-amber"],
+[data-palette="silk-amber"].dark {
+  --primary: #f59e0b;
+  --ring: #f59e0b;
+  --sidebar-primary: #f59e0b;
+  --sidebar-ring: #f59e0b;
+}
+
+/* 18. Vaporwave Clinique 90s */
+:root[data-palette="retro-vapor"],
+[data-palette="retro-vapor"]:not(.dark) {
+  --background: #f3f3fd;
+  --foreground: #18153b;
+  --card: #ffffff;
+  --card-foreground: #18153b;
+  --popover: #ffffff;
+  --popover-foreground: #18153b;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #e5e5fb;
+  --secondary-foreground: #18153b;
+  --muted: #e5e5fb;
+  --muted-foreground: #58537c;
+  --accent: #eeeffc;
+  --accent-foreground: #18153b;
+  --border: #c7d2fe;
+  --input: #c7d2fe;
+  --ring: #4f46e5;
+  --chifa: #0891b2;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #0891b2 100%);
+}
+.dark[data-palette="retro-vapor"],
+[data-palette="retro-vapor"].dark {
+  --primary: #818cf8;
+  --ring: #818cf8;
+  --sidebar-primary: #818cf8;
+  --sidebar-ring: #818cf8;
+}
+
+/* 19. Rubis Cardiaque & Pouls */
+:root[data-palette="cardiac-ruby"],
+[data-palette="cardiac-ruby"]:not(.dark) {
+  --background: #fef2f2;
+  --foreground: #2e0909;
+  --card: #ffffff;
+  --card-foreground: #2e0909;
+  --popover: #ffffff;
+  --popover-foreground: #2e0909;
+  --primary: #b91c1c;
+  --primary-foreground: #ffffff;
+  --secondary: #fee0e0;
+  --secondary-foreground: #2e0909;
+  --muted: #fee0e0;
+  --muted-foreground: #7d3f3f;
+  --accent: #fde8e8;
+  --accent-foreground: #2e0909;
+  --border: #fecaca;
+  --input: #fecaca;
+  --ring: #b91c1c;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #047857 100%);
+}
+.dark[data-palette="cardiac-ruby"],
+[data-palette="cardiac-ruby"].dark {
+  --primary: #ef4444;
+  --ring: #ef4444;
+  --sidebar-primary: #ef4444;
+  --sidebar-ring: #ef4444;
+}
+
+/* 20. Quartz Minéral & Prune */
+:root[data-palette="quartz-rose"],
+[data-palette="quartz-rose"]:not(.dark) {
+  --background: #fbf5f4;
+  --foreground: #260b17;
+  --card: #ffffff;
+  --card-foreground: #260b17;
+  --popover: #ffffff;
+  --popover-foreground: #260b17;
+  --primary: #831843;
+  --primary-foreground: #ffffff;
+  --secondary: #fae4ed;
+  --secondary-foreground: #260b17;
+  --muted: #fae4ed;
+  --muted-foreground: #724258;
+  --accent: #fbeaf1;
+  --accent-foreground: #260b17;
+  --border: #fbcfe8;
+  --input: #fbcfe8;
+  --ring: #831843;
+  --chifa: #059669;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #be185d 0%, #831843 50%, #059669 100%);
+}
+.dark[data-palette="quartz-rose"],
+[data-palette="quartz-rose"].dark {
+  --primary: #ec4899;
+  --ring: #ec4899;
+  --sidebar-primary: #ec4899;
+  --sidebar-ring: #ec4899;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
