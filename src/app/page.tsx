@@ -16,6 +16,7 @@ import { StatsView } from '@/components/dzpharm/stats-view'
 import { AboutView } from '@/components/dzpharm/about-view'
 import { DrugSheet } from '@/components/dzpharm/drug-sheet'
 import { CommandPalette } from '@/components/dzpharm/command-palette'
+import { MobileBottomNav } from '@/components/dzpharm/mobile-bottom-nav'
 import { useDzPharm } from '@/components/dzpharm/store'
 
 export default function Page() {
@@ -25,7 +26,7 @@ export default function Page() {
     <div className="flex min-h-screen flex-col bg-background">
       <EmergencyBar />
       <Header />
-      <main id="contenu" className="flex-1">
+      <main id="contenu" className="flex-1 pb-16 md:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={view}
@@ -52,6 +53,8 @@ export default function Page() {
       <DrugSheet />
       {/* Palette de commande universelle (Cmd+K) */}
       <CommandPalette />
+      {/* Barre de navigation basse ergonomique mobile */}
+      <MobileBottomNav />
     </div>
   )
 }

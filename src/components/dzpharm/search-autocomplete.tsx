@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
+  BookOpen,
   Clock,
   Coins,
   CornerDownLeft,
@@ -11,6 +12,7 @@ import {
   Loader2,
   Pill,
   Search,
+  ShieldAlert,
   Sparkles,
   X,
 } from 'lucide-react'
@@ -37,6 +39,46 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => clearTimeout(t)
   }, [value, delay])
   return debounced
+}
+
+/* ------------------------------------------------------------------ */
+/* Composant de surlignage des termes correspondants (Highlighting)   */
+/* ------------------------------------------------------------------ */
+
+function HighlightMatch({ text, query }: { text: string | null | undefined; query: string }) {
+  if (!text) return null
+  const q = query.trim()
+  if (!q || q.length < 2) return <span>{text}</span>
+
+  // Nettoyer et séparer en mots significatifs
+  const words = q
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/\s+/)
+    .filter((w) => w.length >= 2)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+
+  if (words.length === 0) return <span>{text}</span>
+
+  const pattern = new RegExp(`(${words.join('|')})`, 'gi')
+  const parts = text.split(pattern)
+
+  return (
+    <span>
+      {parts.map((part, i) =>
+        pattern.test(part) ? (
+          <mark
+            key={i}
+            className="rounded bg-primary/20 px-0.5 font-bold text-primary dark:bg-primary/30 dark:text-sky-300"
+          >
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </span>
+  )
 }
 
 /* ------------------------------------------------------------------ */
@@ -132,7 +174,7 @@ function interpretedChips(interp: NlInterpreted): string[] {
 const PLACEHOLDER_SUGGESTIONS = [
   'Rechercher par DCI (ex: Paracétamol, Amoxicilline…)',
   'Rechercher par dosage & forme (ex: Amox 500mg sirop, Augmentin 1g sachet)…',
-  'Rechercher en arabe ou darija (ex: باراسيتامول, دوا السكر)…',
+  'Rechercher en arabe ou darija (ex: باراسيتامول, دوا السكر, بومادا صفراء)…',
   'Rechercher par nom de marque, laboratoire, ou n° AMM…',
 ]
 
@@ -169,10 +211,10 @@ export function SearchAutocomplete({
   const [activeIndex, setActiveIndex] = useState(-1)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const internalRef = useRef<HTMLInputElement>(null)
-  const debounced = useDebounce(value, 260)
+  const debounced = useDebounce(value, 200)
   const trimmed = debounced.trim()
 
-  // Recent searches state persisted in localStorage
+  // Recherches récentes en local storage
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   useEffect(() => {
     try {
@@ -200,7 +242,7 @@ export function SearchAutocomplete({
     } catch {}
   }
 
-  // Live detection of dosage in query
+  // Détection en direct du dosage pour le badge UI
   const detectedDosage = useMemo(() => {
     const m = trimmed.match(/\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|µg|ui|iu|ml)\b/i)
     if (m) return m[0].toUpperCase()
@@ -215,7 +257,7 @@ export function SearchAutocomplete({
     return null
   }, [trimmed])
 
-  // Dynamic cycling placeholder for hero
+  // Placeholders cycliques dynamiques
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   useEffect(() => {
     if (placeholder) return
@@ -235,7 +277,7 @@ export function SearchAutocomplete({
     placeholderData: keepPreviousData,
   })
 
-  // Recherche intelligente NL
+  // Recherche intelligente en langage naturel
   const nlCandidate = useMemo(() => isNlCandidate(trimmed), [trimmed])
   const { data: nlData } = useQuery({
     queryKey: ['nl-search', trimmed],
@@ -372,7 +414,7 @@ export function SearchAutocomplete({
           )}
         />
 
-        {/* Clear Button */}
+        {/* Bouton Effacer */}
         {value.length > 0 && (
           <button
             type="button"
@@ -391,12 +433,12 @@ export function SearchAutocomplete({
         )}
       </div>
 
-      {/* Popover for Recent & Popular searches when input is focused and empty */}
+      {/* Popover pour Recherches récentes & Suggestions si input vide */}
       {open && value.trim().length === 0 && (
         <div
           role="region"
           aria-label="Recherches récentes et suggestions"
-          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[26rem] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl"
+          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(26rem,calc(100vh-140px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl"
         >
           {recentSearches.length > 0 && (
             <div className="mb-3">
@@ -460,7 +502,7 @@ export function SearchAutocomplete({
         <div
           id={id ? `${id}-listbox` : undefined}
           role="listbox"
-          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[26rem] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-2 shadow-2xl shadow-black/20 backdrop-blur-xl"
+          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(26rem,calc(100vh-140px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/95 p-2 shadow-2xl shadow-black/20 backdrop-blur-xl"
         >
           {/* Header row in dropdown */}
           <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -468,16 +510,39 @@ export function SearchAutocomplete({
               <span>Résultats ({results.length})</span>
               {detectedDosage && (
                 <span className="rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold lowercase tracking-normal">
-                  dosage: {detectedDosage}
+                  dosage : {detectedDosage}
                 </span>
               )}
             </div>
             {data?.fuzzy && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                Recherche tolérante
+              <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                Tolérance phonétique
               </span>
             )}
           </div>
+
+          {/* Bandeau Suggestion orthographique "Vouliez-vous dire..." */}
+          {data?.suggestion && data.suggestion.toUpperCase() !== trimmed.toUpperCase() && (
+            <div className="mb-2 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+              <span className="flex items-center gap-1.5 truncate">
+                <Sparkles className="size-3.5 shrink-0 text-primary animate-pulse" aria-hidden />
+                <span className="truncate">
+                  Résultats approchés pour « {trimmed} ». Vouliez-vous dire :{' '}
+                  <strong className="font-bold text-foreground">{data.suggestion}</strong> ?
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue(data.suggestion!)
+                  setOpen(true)
+                }}
+                className="ml-2 shrink-0 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+              >
+                Appliquer
+              </button>
+            </div>
+          )}
 
           {nlActive && (
             <button
@@ -523,7 +588,7 @@ export function SearchAutocomplete({
                 Aucun médicament trouvé pour « {trimmed} »
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Vérifiez l’orthographe ou essayez avec un nom de molécule (DCI).
+                Vérifiez l’orthographe ou essayez avec un nom de molécule (DCI) ou une indication clinique.
               </p>
             </div>
           ) : (
@@ -546,9 +611,9 @@ export function SearchAutocomplete({
                   )}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="truncate text-sm font-bold text-foreground">
-                        {drug.brand}
+                        <HighlightMatch text={drug.brand} query={trimmed} />
                       </span>
                       {drug.dosage && (
                         <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80">
@@ -560,9 +625,23 @@ export function SearchAutocomplete({
                           {drug.form}
                         </span>
                       )}
+                      {drug.hasBookRcp && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.2 text-[9px] font-semibold text-sky-700 dark:text-sky-300">
+                          <BookOpen className="size-2.5" />
+                          <span>RCP</span>
+                        </span>
+                      )}
+                      {drug.p1 && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 text-[9px] font-semibold text-amber-700 dark:text-amber-400">
+                          <ShieldAlert className="size-2.5" />
+                          <span>Hôpital</span>
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span className="truncate">{drug.dci}</span>
+                      <span className="truncate">
+                        <HighlightMatch text={drug.dci} query={trimmed} />
+                      </span>
                       {drug.lab && (
                         <>
                           <span aria-hidden>·</span>
@@ -586,7 +665,7 @@ export function SearchAutocomplete({
             })
           )}
 
-          {/* Footer Shortcuts bar */}
+          {/* Raccourcis clavier au pied de l'autocomplétion */}
           <div className="mt-2 flex items-center justify-between border-t border-border/60 px-3 pt-2 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[9px] font-semibold">↑↓</kbd>
@@ -596,10 +675,10 @@ export function SearchAutocomplete({
               <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] font-semibold">
                 <CornerDownLeft className="inline size-2.5" />
               </kbd>
-              <span>Consulter</span>
+              <span>Fiche produit</span>
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[9px] font-semibold">Échap</kbd>
+              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[9px] font-semibold">Échap</kbd>
               <span>Fermer</span>
             </span>
           </div>

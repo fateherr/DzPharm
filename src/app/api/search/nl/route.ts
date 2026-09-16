@@ -4,16 +4,11 @@ import { Prisma } from "@prisma/client";
 import { getMonoIndex, matchMonograph } from "@/lib/rcp";
 
 /**
- * GET /api/search/nl?q=… — recherche en langage naturel (heuristique locale, <100ms).
- * Parse une requête en français courant ("antibiotique sirop pour enfant") et en
- * extrait : domaine thérapeutique, forme galénique, statut, P1 hôpital,
- * remboursable CNAS, contexte pédiatrique + texte libre restant.
- * Retourne les 8 meilleurs résultats du registre + filtres interprétés.
+ * GET /api/search/nl?q=… — recherche en langage naturel (heuristique locale, <50ms).
+ * Parse une requête en français courant ou dialecte maghrébin ("antibiotique sirop pour enfant", "دوا الراس", "boumada safra")
+ * et en extrait : domaine thérapeutique, forme galénique, statut, P1 hôpital,
+ * remboursable CNAS, contexte pédiatrique, dosage + texte libre restant.
  */
-
-/* ------------------------------------------------------------------ */
-/* Normalisation & dictionnaires de synonymes                          */
-/* ------------------------------------------------------------------ */
 
 function norm(s: string): string {
   return s
@@ -22,36 +17,38 @@ function norm(s: string): string {
     .replace(/œ/g, "oe")
     .replace(/æ/g, "ae")
     .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/[^a-z0-9\u0600-\u06FF ]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 /**
- * Domaines du registre (correspondance exacte avec Drug.domain).
- * Synonymes séparés par « | » ; une expression multi-mots s'écrit avec des espaces.
+ * Domaines du registre avec synonymes cliniques & symptômes populaires.
  */
 const DOMAIN_SYNONYMS: Array<{ domain: string; syn: string }> = [
-  { domain: "Antibiotiques", syn: "antibiotique | antibiotiques | antibiotic | atb" },
+  {
+    domain: "Antibiotiques",
+    syn: "antibiotique | antibiotiques | antibiotic | atb | bacterien | bacterienne | angine bacterienne",
+  },
   {
     domain: "Anti-infectieux",
     syn: "anti infectieux | antiinfectieux | infectieux | infection | infections | antiviral | antiviraux | vaccin | vaccins | vaccination",
   },
   {
     domain: "Antalgiques & Anti-inflammatoires",
-    syn: "antalgique | antalgiques | antidouleur | douleur | douleurs | analgesique | analgesiques | ains | anti inflammatoire | antiinflammatoire | antiinflammatoires | fievre | febrifuge | cephalée | cephalees",
+    syn: "antalgique | antalgiques | antidouleur | douleur | douleurs | analgesique | analgesiques | ains | anti inflammatoire | antiinflammatoire | antiinflammatoires | fievre | febrifuge | cephalée | cephalees | migraine | migraines | mal de tete | maux de tete | mal de dos | courbatures | regles douloureuses",
   },
   {
     domain: "Diabétologie & Endocrinologie",
-    syn: "diabete | diabetique | diabetiques | glycemie | endocrinologie | endocrino | thyroide",
+    syn: "diabete | diabetique | diabetiques | glycemie | endocrinologie | endocrino | thyroide | insuline | sucre | dwa sokor",
   },
   {
     domain: "Cardiologie",
-    syn: "coeur | cardiaque | cardio | tension | tensionnel | hypertension | hypotension | tachycardie | arythmie | cholesterol | triglycerides | avk",
+    syn: "coeur | cardiaque | cardio | tension | tensionnel | hypertension | hypotension | tachycardie | arythmie | cholesterol | triglycerides | avk | dwa lkelb",
   },
   {
     domain: "Pneumologie & Antiasthmatiques",
-    syn: "asthme | asthmatique | bronchite | bronchique | pneumologie | respiration | essoufflement | dyspnee",
+    syn: "asthme | asthmatique | bronchite | bronchique | pneumologie | respiration | essoufflement | dyspnee | ventoline | bouffee",
   },
   {
     domain: "Oncologie",
@@ -59,70 +56,82 @@ const DOMAIN_SYNONYMS: Array<{ domain: string; syn: string }> = [
   },
   {
     domain: "Psychiatrie & Psychotropes",
-    syn: "psychique | psychiatrie | psychiatre | deprime | depression | depressif | anxiete | anxieux | anxiolytique | neuroleptique | antidepresseur | sommeil | insomnie | calmant | sedatif",
+    syn: "psychique | psychiatrie | psychiatre | deprime | depression | depressif | anxiete | anxieux | anxiolytique | neuroleptique | antidepresseur | sommeil | insomnie | calmant | sedatif | stress | angoisse",
   },
   {
     domain: "Neurologie & Antiépileptiques",
-    syn: "epilepsie | epileptique | convulsion | convulsions | neurologie | neurologique | migraine | parkinson | alzheimer",
+    syn: "epilepsie | epileptique | convulsion | convulsions | neurologie | neurologique | parkinson | alzheimer | vertige | vertiges | doukha",
   },
   {
     domain: "Vitamines & Minéraux",
-    syn: "vitamine | vitamines | mineral | mineraux | supplement | supplements | fer",
+    syn: "vitamine | vitamines | mineral | mineraux | supplement | supplements | fer | carence | fatigue | anemie",
   },
   {
     domain: "Gastro-entérologie",
-    syn: "estomac | gastrique | gastro | ulcerе | ulceres | reflux | digestion | digestif | nausee | nausees | vomissement | vomissements | diarrhee | constipation | laxatif | colique | brulure",
+    syn: "estomac | gastrique | gastro | ulcere | ulceres | reflux | digestion | digestif | nausee | nausees | vomissement | vomissements | diarrhee | constipation | laxatif | colique | brulure | brulures destomac | brulure destomac | acidite | rgo | spasme | spasmes | maux de ventre | mal au ventre",
   },
   {
     domain: "Dermatologie",
-    syn: "peau | cutane | dermato | dermatologie | eczema | acne | psoriasis | dermite | demangeaison",
+    syn: "peau | cutane | dermato | dermatologie | eczema | acne | psoriasis | dermite | demangeaison | demangeaisons | bouton | boutons | brulure cutanee | cicatrisant",
   },
   {
     domain: "Ophtalmologie",
-    syn: "yeux | oeil | oculaire | ophtalmologie | ophtalmo | vision | conjonctivite",
+    syn: "yeux | oeil | oculaire | ophtalmologie | ophtalmo | vision | conjonctivite | yeux rouges | orgelet | larmoiement",
   },
   {
     domain: "ORL",
-    syn: "gorge | nez | rhume | sinusite | otite | orl | toux | angine | laryngite | nasal | allergie | allergies | allergique",
+    syn: "gorge | nez | rhume | sinusite | otite | orl | toux | toux seche | toux grasse | angine | laryngite | nasal | nez bouche | eternuement | eternuements | allergie | allergies | allergique | rhinite",
   },
   {
     domain: "Urologie",
-    syn: "urinaire | urologie | prostate | cystite | vesicale | erection | diuretique",
+    syn: "urinaire | urologie | prostate | cystite | vesicale | erection | diuretique | infection urinaire",
   },
   {
     domain: "Gynécologie & Obstétrique",
-    syn: "gynecologie | gyneco | contraception | contraceptif | regles | menstruel | grossesse | ovulation",
+    syn: "gynecologie | gyneco | contraception | contraceptif | regles | menstruel | grossesse | ovulation | mycose vaginale",
   },
   {
     domain: "Rhumatologie",
-    syn: "arthrose | articulation | articulations | rhumatisme | rhumatologie | lombalgie | sciatique",
+    syn: "arthrose | articulation | articulations | rhumatisme | rhumatologie | lombalgie | sciatique | tendinite | arthrite",
   },
   {
     domain: "Antifongiques & Antiparasitaires",
-    syn: "antifongique | antifongiques | mycose | mycoses | antiparasitaire | parasite | vermifuge | gale",
+    syn: "antifongique | antifongiques | mycose | mycoses | antiparasitaire | parasite | vermifuge | gale | vers",
   },
+];
+
+/**
+ * Correspondances spécifiques algériennes (Noms familiers / de rue).
+ */
+const POPULAR_ALGERIAN_MAPPINGS: Array<{ match: string; dciOrBrand: string }> = [
+  { match: "boumada safra | بومادا صفراء | البومادا الصفراء", dciOrBrand: "CHLORTETRACYCLINE" },
+  { match: "boumada kahla | بومادا كحلة | البومادا الكحلة", dciOrBrand: "SULFOBITUMINATE" },
+  { match: "cachi zreg | cachet bleu | كاشي زرق | الكاشي الزرق", dciOrBrand: "METRONIDAZOLE" },
+  { match: "dwa rass | dwa erass | دوا الراس", dciOrBrand: "PARACETAMOL" },
+  { match: "dwa sokor | دوا السكر", dciOrBrand: "METFORMINE" },
+  { match: "dwa lkelb | dwa el kalb | دوا القلب", dciOrBrand: "ACIDE ACETYLSALICYLIQUE" },
+  { match: "dwa so3la | dwa sou3la | دوا السعلة | سيرو السعلة", dciOrBrand: "CARBOCISTEINE" },
+  { match: "dwa hrig | دوا الحريق", dciOrBrand: "OMEPRAZOLE" },
 ];
 
 /** Formes galéniques → valeur « contains » du registre. */
 const FORM_SYNONYMS: Array<{ form: string; syn: string }> = [
-  // "sirop" couvre aussi les suspensions buvables (BUVABLE, SUSP) — forme réelle en Algérie
-  { form: "SIROP", syn: "sirop | sirops | liquide | oral" },
-  { form: "BUVABLE", syn: "buvable | buvables | suspension | susp" },
+  { form: "SIROP", syn: "sirop | sirops | liquide | oral | buvable | buvables | suspension | susp" },
   { form: "GOUTTE", syn: "goutte | gouttes | gtt" },
-  { form: "COMP", syn: "comprime | comprimes | tablette | tablettes | cp | cpr | cps | cachet | cachets" },
+  { form: "COMP", syn: "comprime | comprimes | tablette | tablettes | cp | cpr | cps | cachet | cachets | حبوب | كاشي" },
   { form: "GELULE", syn: "gelule | gelules | capsule | capsules" },
-  { form: "INJ", syn: "injectable | injection | injections | ampoule | ampoules | perfusion | iv | im | inj" },
-  { form: "POMMADE", syn: "pommade | pommades" },
+  { form: "INJ", syn: "injectable | injection | injections | ampoule | ampoules | perfusion | iv | im | inj | حقنة | إبرة" },
+  { form: "POMMADE", syn: "pommade | pommades | بومادا" },
   { form: "CREME", syn: "creme | cremes | topique | topiques | dermique | gel topique" },
-  { form: "COLLYRE", syn: "collyre | collyres | oculaire" },
-  { form: "SUPPO", syn: "suppositoire | suppositoires | suppo" },
-  { form: "SACHET", syn: "sachet | sachets | granule | granules | poudre" },
-  { form: "SPRAY", syn: "spray | sprays | aerosol | aerosols | inhalateur | vaporisateur | nebuliseur" },
+  { form: "COLLYRE", syn: "collyre | collyres | oculaire | قطرة" },
+  { form: "SUPPO", syn: "suppositoire | suppositoires | suppo | قويلبات" },
+  { form: "SACHET", syn: "sachet | sachets | granule | granules | poudre | كواغط" },
+  { form: "SPRAY", syn: "spray | sprays | aerosol | aerosols | inhalateur | vaporisateur | nebuliseur | بخاخ" },
   { form: "PATCH", syn: "patch | patches | dispositif | timbre | adhesif" },
   { form: "GEL", syn: "gel | gels" },
-]
+];
 
-/** Mots outils ignorés (début de phrase type « médicament pour le … »). */
+/** Mots outils ignorés. */
 const STOPWORDS = new Set([
   "pour", "un", "une", "des", "le", "la", "les", "au", "aux", "du", "de", "d",
   "avec", "sans", "contre", "je", "cherche", "recherche", "recherchez", "medicament",
@@ -131,13 +140,34 @@ const STOPWORDS = new Set([
   "est", "ce", "cet", "cette", "mon", "ma", "mes", "a", "the", "of",
   "avez", "vous", "faut", "il", "elle", "besoin", "voudrais", "souhaite", "donner",
   "donnez", "prendre", "prend", "pas", "plus", "moins", "trop",
+  "من", "عن", "على", "في", "إلى", "هو", "هي", "هذا", "هذه", "عندي", "نحوس", "حبيت", "اعطيني",
 ]);
 
-/* Dosage patterns in NL queries: "500mg", "1g", "250 mg", "0.5 g" */
+/* Dosage patterns in NL queries */
 const NL_DOSAGE_RE =
-  /\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|µg|ui|iu|ml)\b/i;
+  /\b(\d{1,6}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|µg|ui|iu|ml)\b/i;
 
-function extractDosageToken(normed: string): { token: string; valueMg: number | null } | null {
+function extractDosageToken(normed: string): { token: string; valueMg: number | null; display: string } | null {
+  // Fortes UI (Vitamine D, Heparine : 200000, 100000, 50000)
+  const uiMatch = normed.match(/\b(\d{1,3}(?:\s*\d{3})*|\d{2,6})\s*(ui|iu)\b/i);
+  if (uiMatch) {
+    const rawDigits = uiMatch[1].replace(/\s+/g, "");
+    return { token: `${rawDigits}UI`, valueMg: null, display: `${rawDigits} UI` };
+  }
+
+  // Pourcentages (0.05%, 1%, 2%)
+  const pctMatch = normed.match(/\b(\d+(?:[.,]\d+)?)\s*%/);
+  if (pctMatch) {
+    return { token: `${pctMatch[1]}%`, valueMg: null, display: `${pctMatch[1]}%` };
+  }
+
+  // Ratios (1g/200mg, 80/12.5)
+  const ratioMatch = normed.match(/\b(\d+(?:[.,]\d+)?\s*(?:mg|g))\s*\/\s*(\d+(?:[.,]\d+)?\s*(?:mg|g))\b/i);
+  if (ratioMatch) {
+    return { token: ratioMatch[0], valueMg: null, display: ratioMatch[0].toUpperCase() };
+  }
+
+  // Standard mg/g
   const m = normed.match(NL_DOSAGE_RE);
   if (m) {
     const num = parseFloat(m[1].replace(",", "."));
@@ -145,17 +175,23 @@ function extractDosageToken(normed: string): { token: string; valueMg: number | 
     let valueMg: number | null = null;
     if (unit === "mg") valueMg = num;
     else if (unit === "g") valueMg = num * 1000;
-    return { token: m[0], valueMg };
+    return { token: m[0], valueMg, display: m[0].toUpperCase() };
   }
 
-  // Bare number check in multi-word queries (e.g. "doliprane 500", "amoxicilline 1000")
+  // Bare number check (e.g. "doliprane 500", "amox 1000", "vitamine d 200000")
   const words = normed.split(" ").filter(Boolean);
   if (words.length >= 2) {
     for (const w of words) {
-      if (/^\d{1,5}(?:[.,]\d{1,2})?$/.test(w)) {
+      if (/^\d{2,6}(?:[.,]\d{1,2})?$/.test(w)) {
         const numVal = parseFloat(w.replace(",", "."));
-        if (numVal >= 0.25 && numVal <= 5000) {
-          return { token: w, valueMg: numVal === 1 || numVal === 2 ? numVal * 1000 : numVal };
+        if (numVal >= 10000) {
+          return { token: `${Math.round(numVal)}UI`, valueMg: null, display: `${Math.round(numVal)} UI` };
+        } else if (numVal >= 0.25 && numVal <= 5000) {
+          return {
+            token: w,
+            valueMg: numVal === 1 || numVal === 2 ? numVal * 1000 : numVal,
+            display: `${numVal}mg`,
+          };
         }
       }
     }
@@ -175,11 +211,8 @@ interface Interpreted {
   status?: string;
   liste?: string;
   refundableOnly?: boolean;
-  /** Produits réservés aux hôpitaux (P1 = HOP). */
   p1?: string;
-  /** Contexte pédiatrique détecté (enfant, nourrisson…). */
   pediatric?: boolean;
-  /** Dosage extracted from query (e.g. "500mg" → "500") */
   dosage?: string;
 }
 
@@ -197,7 +230,6 @@ function parseQuery(raw: string): Interpreted {
     return n;
   };
 
-  /** Consomme tous les synonymes présents dans la requête (≥1 pour renvoyer true). */
   const tryConsume = (syn: string, onMatch: () => void): boolean => {
     const variants = syn.split("|").map((s) => s.trim().split(/\s+/).filter(Boolean));
     let matched = false;
@@ -216,7 +248,18 @@ function parseQuery(raw: string): Interpreted {
     return matched;
   };
 
-  // 1. Domaine thérapeutique (premier synonyme trouvé)
+  // 0. Correspondances populaires algériennes prioritaires (boumada safra, etc.)
+  for (const entry of POPULAR_ALGERIAN_MAPPINGS) {
+    if (
+      tryConsume(entry.match, () => {
+        interpreted.q = entry.dciOrBrand;
+      })
+    ) {
+      break;
+    }
+  }
+
+  // 1. Domaine thérapeutique & symptômes
   for (const entry of DOMAIN_SYNONYMS) {
     if (tryConsume(entry.syn, () => (interpreted.domain = entry.domain))) break;
   }
@@ -226,7 +269,7 @@ function parseQuery(raw: string): Interpreted {
     if (tryConsume(entry.syn, () => (interpreted.form = entry.form))) break;
   }
 
-  // 3. Statut d'enregistrement
+  // 3. Statut
   tryConsume("non renouvele | renouvele", () => (interpreted.status = "NON_RENOUVELE"));
   if (!interpreted.status) {
     tryConsume("retire | retires | retiree | retirees | retrait", () => (interpreted.status = "RETRIE"));
@@ -235,22 +278,21 @@ function parseQuery(raw: string): Interpreted {
     tryConsume("actif | actifs | active | actives", () => (interpreted.status = "ACTIF"));
   }
 
-  // 4. Gratuit / hôpital → P1 HOP ; remboursable → CNAS ; pédiatrique
+  // 4. Hôpital P1, remboursable CNAS, pédiatrie
   tryConsume("hopital | hopitaux | gratuit | gratuits | gratuite", () => (interpreted.p1 = "HOP"));
   tryConsume(
     "remboursable | rembourse | rembourses | remboursement | remboursee | cnas",
     () => (interpreted.refundableOnly = true)
   );
   tryConsume(
-    "enfant | enfants | pediatrique | pediatrie | bebe | bebes | nourrisson | nourrissons | pediatric",
+    "enfant | enfants | pediatrique | pediatrie | bebe | bebes | nourrisson | nourrissons | pediatric | رضيع | طفل | اطفال",
     () => (interpreted.pediatric = true)
   );
 
-  // 5. Dosage extraction (e.g. "500mg", "1g", "250 mg")
+  // 5. Dosage extraction
   const normedRaw = norm(raw);
   const dosageToken = extractDosageToken(normedRaw);
   if (dosageToken) {
-    // Mark dosage tokens as consumed (remove from free text)
     const dosageWords = norm(dosageToken.token).split(" ");
     for (let i = 0; i < tokens.length; i++) {
       if (consumed.has(i)) continue;
@@ -264,11 +306,11 @@ function parseQuery(raw: string): Interpreted {
           ? String(Math.round(dosageToken.valueMg))
           : String(dosageToken.valueMg);
     } else {
-      interpreted.dosage = norm(dosageToken.token);
+      interpreted.dosage = dosageToken.display;
     }
   }
 
-  // 6. Texte libre restant (hors mots outils)
+  // 6. Texte libre restant
   const free = tokens
     .filter((_, i) => !consumed.has(i) && !STOPWORDS.has(tokens[i]))
     .join(" ")
@@ -279,10 +321,6 @@ function parseQuery(raw: string): Interpreted {
 
   return interpreted;
 }
-
-/* ------------------------------------------------------------------ */
-/* Requête registre (même sémantique que /api/drugs)                   */
-/* ------------------------------------------------------------------ */
 
 function normalizeKey(q: string): string {
   return q
@@ -305,14 +343,13 @@ export async function GET(req: NextRequest) {
     const where: Prisma.DrugWhereInput = {};
 
     if (interpreted.domain) where.domain = interpreted.domain;
-    // Form filter: sirop maps to SIROP|BUVABLE|SUSP since Algerian oral suspensions
-    // are stored as "POUDRE POUR SUSPENSION BUVABLE" not literally "SIROP"
+
     if (interpreted.form) {
       const ORAL_LIQUID_FORMS = ["SIROP", "BUVABLE"];
       if (ORAL_LIQUID_FORMS.includes(interpreted.form)) {
-        const existingAnd3 = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+        const existingAnd = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
         where.AND = [
-          ...existingAnd3,
+          ...existingAnd,
           {
             OR: [
               { form: { contains: "SIROP" } },
@@ -341,20 +378,12 @@ export async function GET(req: NextRequest) {
       ors.push({ brand: { contains: interpreted.q } });
       where.AND = [{ OR: ors }];
     }
-    // Apply dosage filter if extracted — use OR to match both converted mg value
-    // and original token (e.g. "1000" OR "1G" for a 1g query)
+
     if (interpreted.dosage) {
       const dosageOrs: Prisma.DrugWhereInput[] = [
         { dosage: { contains: interpreted.dosage } },
+        { brandKey: { contains: interpreted.dosage } },
       ];
-      // Also try the original raw dosage text from the query (e.g. "1G", "500MG")
-      const rawDosageMatch = norm(raw).match(/\b(\d{1,5}(?:[.,]\d{1,3})?)\s*(mg|g|mcg|ui|ml)\b/i);
-      if (rawDosageMatch) {
-        const rawToken = (rawDosageMatch[1] + rawDosageMatch[2]).toUpperCase().replace(",", ".");
-        if (rawToken !== interpreted.dosage) {
-          dosageOrs.push({ dosage: { contains: rawToken } });
-        }
-      }
       const existingAnd = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
       where.AND = [...existingAnd, { OR: dosageOrs }];
     }
@@ -364,7 +393,7 @@ export async function GET(req: NextRequest) {
       db.drug.findMany({
         where,
         orderBy: [{ status: "asc" }, { dciKey: "asc" }],
-        take: 40,
+        take: 30,
         include: {
           pharmacyProducts: {
             orderBy: [{ ppa: "asc" }],
@@ -375,9 +404,7 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // Domain relaxation fallback: if domain filter returns 0, retry without domain.
-    // This covers cases like "antibiotique" (maps to "Antibiotiques") but AUGMENTIN
-    // is in "Anti-infectieux" — keeping other filters (form, dosage) intact.
+    // Relâchement du filtre domaine si 0 résultat
     if (total === 0 && interpreted.domain) {
       const relaxedWhere = { ...where };
       delete relaxedWhere.domain;
@@ -386,7 +413,7 @@ export async function GET(req: NextRequest) {
         db.drug.findMany({
           where: relaxedWhere,
           orderBy: [{ status: "asc" }, { dciKey: "asc" }],
-          take: 40,
+          take: 30,
           include: {
             pharmacyProducts: {
               orderBy: [{ ppa: "asc" }],
@@ -402,7 +429,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Contexte pédiatrique : privilégier les spécialités « ENFANT / PEDIATRIQUE »
+    // Priorité pédiatrique
     let ranked = drugs;
     if (interpreted.pediatric) {
       ranked = [...drugs].sort((a, b) => {

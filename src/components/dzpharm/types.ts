@@ -89,6 +89,16 @@ export interface DrugsResponse {
   totalPages: number
   /** true si les résultats viennent du repli flou (tolérance aux fautes de saisie). */
   fuzzy?: boolean
+  /** Terme suggéré pour la correction orthographique phonétique ("Vouliez-vous dire... ?"). */
+  suggestion?: string | null
+  /** Métadonnées de parsing de la requête */
+  _meta?: {
+    cleanKey?: string
+    arabicMapped?: boolean
+    suggestion?: string | null
+    dosageHint?: { raw: string; display?: string; tokens?: string[] } | null
+    formHint?: string | null
+  }
 }
 
 export interface DrugDetailResponse {

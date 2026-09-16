@@ -7,7 +7,6 @@ import {
   Baby,
   BarChart3,
   BookOpen,
-  Calculator,
   Coins,
   CreditCard,
   Droplets,
@@ -18,8 +17,11 @@ import {
   Library,
   Lock,
   Moon,
+  PhoneCall,
   Pill,
+  Search,
   ShieldAlert,
+  Siren,
   Sparkles,
   Stethoscope,
   Store,
@@ -57,12 +59,13 @@ export function CommandPalette() {
   const setView = useDzPharm((s) => s.setView)
   const openDrug = useDzPharm((s) => s.openDrug)
   const openTool = useDzPharm((s) => s.openTool)
+  const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
   const audience = useDzPharm((s) => s.audience)
   const setAudience = useDzPharm((s) => s.setAudience)
   const { theme, setTheme } = useTheme()
 
   const [query, setQuery] = useState('')
-  const debounced = useDebounce(query.trim(), 250)
+  const debounced = useDebounce(query.trim(), 200)
 
   // Écouteur global pour Cmd+K / Ctrl+K
   useEffect(() => {
@@ -103,6 +106,12 @@ export function CommandPalette() {
     setQuery('')
   }
 
+  function handleSearchInDirectory(q: string) {
+    gotoDirectory({ q })
+    setCommandOpen(false)
+    setQuery('')
+  }
+
   return (
     <CommandDialog
       open={commandOpen}
@@ -122,9 +131,35 @@ export function CommandPalette() {
           {drugsLoading ? (
             <span>Recherche dans les 9&nbsp;555 AMM…</span>
           ) : (
-            <span>Aucun résultat trouvé pour «&nbsp;{query}&nbsp;».</span>
+            <div className="space-y-2">
+              <p>Aucun résultat exact trouvé pour «&nbsp;{query}&nbsp;».</p>
+              {query.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => handleSearchInDirectory(query)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-all"
+                >
+                  <Search className="size-3.5" />
+                  <span>Chercher « {query} » dans le Répertoire</span>
+                </button>
+              )}
+            </div>
           )}
         </CommandEmpty>
+
+        {/* Section Action directe si texte saisi */}
+        {debounced.length >= 2 && (
+          <CommandGroup heading="Action de recherche">
+            <CommandItem
+              onSelect={() => handleSearchInDirectory(debounced)}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 cursor-pointer bg-primary/5 text-primary hover:bg-primary/10"
+            >
+              <Search className="size-4 text-primary" />
+              <span className="font-semibold">Ouvrir « {debounced} » dans le Répertoire complet</span>
+              <CommandShortcut>⏎</CommandShortcut>
+            </CommandItem>
+          </CommandGroup>
+        )}
 
         {/* Section Médicaments en direct */}
         {debounced.length >= 2 && drugResults && drugResults.drugs.length > 0 && (
@@ -150,6 +185,11 @@ export function CommandPalette() {
                           {drug.dosage}
                         </span>
                       )}
+                      {drug.hasBookRcp && (
+                        <span className="rounded bg-sky-500/10 border border-sky-500/30 px-1 py-0.2 text-[9px] font-semibold text-sky-700 dark:text-sky-300">
+                          RCP
+                        </span>
+                      )}
                     </div>
                     <p className="truncate text-xs text-muted-foreground">{drug.dci}</p>
                   </div>
@@ -168,6 +208,33 @@ export function CommandPalette() {
             ))}
           </CommandGroup>
         )}
+
+        <CommandSeparator className="my-1" />
+
+        {/* Urgences Médicales Nationales */}
+        <CommandGroup heading="Urgences Médicales Algérie">
+          <CommandItem
+            onSelect={() => {
+              window.location.href = 'tel:14'
+              setCommandOpen(false)
+            }}
+            className="cursor-pointer text-red-600 dark:text-red-400 font-medium"
+          >
+            <Siren className="size-4 text-red-500 animate-pulse" />
+            <span>Appeler le SAMU (14) — Urgence vitale</span>
+            <CommandShortcut>14</CommandShortcut>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              window.location.href = 'tel:021713042'
+              setCommandOpen(false)
+            }}
+            className="cursor-pointer"
+          >
+            <PhoneCall className="size-4 text-amber-500" />
+            <span>Centre Antipoison d&apos;Alger (021 71 30 42 / 021 71 30 43)</span>
+          </CommandItem>
+        </CommandGroup>
 
         <CommandSeparator className="my-1" />
 
@@ -203,7 +270,7 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('copilote')} className="cursor-pointer">
             <Sparkles className="size-4 text-primary" />
-            <span>Copilote IA (Gemini 3.6 Flash)</span>
+            <span>Copilote IA (Gemini 3.8 Flash)</span>
             <CommandShortcut>C</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('outils')} className="cursor-pointer">

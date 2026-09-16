@@ -12,9 +12,15 @@ import {
   Coins,
   Download,
   FileX2,
+  LayoutGrid,
+  List,
   Loader2,
+  Pill,
   RotateCcw,
   Search,
+  ShieldAlert,
+  Sparkles,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -132,16 +138,24 @@ export function DirectoryView() {
   const { toast } = useToast()
 
   const [searchInput, setSearchInput] = useState(filters.q)
-  const debouncedSearch = useDebouncedValue(searchInput, 300)
+  const debouncedSearch = useDebouncedValue(searchInput, 250)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [sort, setSort] = useState<SortField>('relevance')
   const [exporting, setExporting] = useState(false)
+  const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table')
 
   // Synchronise la recherche débouncée avec le store
   useEffect(() => {
     if (debouncedSearch !== filters.q) setFilters({ q: debouncedSearch })
   }, [debouncedSearch])
+
+  // Synchronise l'input si le store change de l'extérieur (ex: suggestion cliquée)
+  useEffect(() => {
+    if (filters.q !== searchInput) {
+      setSearchInput(filters.q)
+    }
+  }, [filters.q])
 
   // Réinitialise la page quand les filtres changent
   useEffect(() => {
@@ -180,11 +194,13 @@ export function DirectoryView() {
   const total = data?.total ?? 0
   const totalPages = data?.totalPages ?? 0
   const fuzzy = data?.fuzzy === true
+  const suggestion = (data as any)?.suggestion as string | undefined
 
-  const hasActiveFilters =
+  const hasActiveFilters = Boolean(
     filters.q || filters.status || filters.domain || filters.form || filters.liste || filters.country || filters.lab
+  )
 
-  // Options de filtres (normalisées) issues des statistiques
+  // Options de filtres normalisées issues des statistiques
   const listeOptions = useMemo(() => {
     if (!stats) return []
     const map = new Map<string, number>()
@@ -258,7 +274,7 @@ export function DirectoryView() {
       })
     } catch {
       toast({
-        title: 'Échec de l\u2019export',
+        title: 'Échec de l’export',
         description: 'Une erreur est survenue lors de la génération du fichier CSV.',
         variant: 'destructive',
       })
@@ -271,9 +287,10 @@ export function DirectoryView() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {/* --------------------------- Titre & Actions --------------------------- */}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Répertoire</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Répertoire Officiel</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isLoading ? (
               'Recherche en cours…'
@@ -284,8 +301,8 @@ export function DirectoryView() {
                 <span className="font-semibold text-foreground">{formatNumber(total)}</span>{' '}
                 médicament{total !== 1 ? 's' : ''} trouvé{total !== 1 ? 's' : ''}
                 {fuzzy ? (
-                  <span className="ml-1 rounded-full border border-state-warning/40 bg-state-warning/10 px-2 py-0.5 text-[11px] font-medium text-state-warning">
-                    orthographe approximative — résultats les plus proches
+                  <span className="ml-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                    tolérance phonétique active
                   </span>
                 ) : null}
                 {isFetching ? ' · actualisation…' : ''}
@@ -293,23 +310,54 @@ export function DirectoryView() {
             )}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportCsv}
-          disabled={exporting || total === 0}
-          className="gap-1.5"
-        >
-          {exporting ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <Download className="size-4" aria-hidden />
-          )}
-          Exporter CSV
-        </Button>
+
+        <div className="flex items-center gap-2">
+          {/* Bascule Mode Table / Mode Cartes */}
+          <div className="flex items-center rounded-lg border border-border bg-card p-0.5 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setLayoutMode('table')}
+              className={cn(
+                'flex size-8 items-center justify-center rounded-md text-xs transition-colors',
+                layoutMode === 'table' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Affichage en tableau"
+              aria-label="Affichage en tableau"
+            >
+              <List className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setLayoutMode('cards')}
+              className={cn(
+                'flex size-8 items-center justify-center rounded-md text-xs transition-colors',
+                layoutMode === 'cards' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="Affichage en cartes"
+              aria-label="Affichage en cartes"
+            >
+              <LayoutGrid className="size-4" />
+            </button>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={exporting || total === 0}
+            className="gap-1.5"
+          >
+            {exporting ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Download className="size-4" aria-hidden />
+            )}
+            <span className="hidden sm:inline">Exporter</span> CSV
+          </Button>
+        </div>
       </div>
 
-      {/* --------------------------- Toolbar --------------------------- */}
+      {/* --------------------------- Toolbar Filtres --------------------------- */}
       <div className="mb-4 rounded-xl border border-border bg-card p-3 shadow-sm">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
           <div className="relative flex-1">
@@ -321,21 +369,35 @@ export function DirectoryView() {
               type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Rechercher par marque, DCI, laboratoire ou n° AMM…"
+              placeholder="Rechercher marque, DCI, labo, dosage (ex: Augmentin 1g, Amox 500 sirop)…"
               aria-label="Rechercher dans le répertoire"
               className="h-10 border-border bg-background pl-9"
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput('')
+                  setFilters({ q: '' })
+                }}
+                className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Effacer le texte"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center">
             <Select
               value={filters.status || 'all'}
               onValueChange={(v) => setFilters({ status: v === 'all' ? '' : v })}
             >
-              <SelectTrigger className="h-10 w-full lg:w-[150px]" aria-label="Filtrer par statut">
+              <SelectTrigger className="h-10 w-full lg:w-[140px]" aria-label="Filtrer par statut">
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="all">Tous statuts</SelectItem>
                 {STATUS_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
                     {o.label}
@@ -348,11 +410,11 @@ export function DirectoryView() {
               value={filters.domain || 'all'}
               onValueChange={(v) => setFilters({ domain: v === 'all' ? '' : v })}
             >
-              <SelectTrigger className="h-10 w-full lg:w-[190px]" aria-label="Filtrer par domaine">
+              <SelectTrigger className="h-10 w-full lg:w-[170px]" aria-label="Filtrer par domaine">
                 <SelectValue placeholder="Domaine" />
               </SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="all">Tous les domaines</SelectItem>
+                <SelectItem value="all">Tous domaines</SelectItem>
                 {(stats?.domains ?? []).map((d) => (
                   <SelectItem key={d.key} value={d.key}>
                     {d.key} ({d.count})
@@ -365,11 +427,11 @@ export function DirectoryView() {
               value={filters.form || 'all'}
               onValueChange={(v) => setFilters({ form: v === 'all' ? '' : v })}
             >
-              <SelectTrigger className="h-10 w-full lg:w-[170px]" aria-label="Filtrer par forme">
+              <SelectTrigger className="h-10 w-full lg:w-[150px]" aria-label="Filtrer par forme">
                 <SelectValue placeholder="Forme" />
               </SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="all">Toutes les formes</SelectItem>
+                <SelectItem value="all">Toutes formes</SelectItem>
                 {(stats?.topForms ?? []).slice(0, 20).map((f) => (
                   <SelectItem key={f.key} value={f.key}>
                     {f.key} ({f.count})
@@ -386,7 +448,7 @@ export function DirectoryView() {
                 <SelectValue placeholder="Liste" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les listes</SelectItem>
+                <SelectItem value="all">Toutes listes</SelectItem>
                 {listeOptions.map((l) => (
                   <SelectItem key={l.name} value={l.name}>
                     {l.name} ({l.count})
@@ -399,11 +461,11 @@ export function DirectoryView() {
               value={filters.country || 'all'}
               onValueChange={(v) => setFilters({ country: v === 'all' ? '' : v })}
             >
-              <SelectTrigger className="h-10 w-full lg:w-[150px]" aria-label="Filtrer par pays">
+              <SelectTrigger className="h-10 w-full lg:w-[130px]" aria-label="Filtrer par pays">
                 <SelectValue placeholder="Pays" />
               </SelectTrigger>
               <SelectContent className="max-h-72">
-                <SelectItem value="all">Tous les pays</SelectItem>
+                <SelectItem value="all">Tous pays</SelectItem>
                 {(stats?.countries ?? []).map((c) => (
                   <SelectItem key={c.key} value={c.key}>
                     {c.key} ({c.count})
@@ -423,28 +485,148 @@ export function DirectoryView() {
                 className="h-10 gap-1.5 text-muted-foreground hover:text-foreground"
               >
                 <RotateCcw className="size-4" aria-hidden />
-                Réinitialiser
+                <span>Effacer</span>
               </Button>
             ) : null}
           </div>
         </div>
-        {filters.lab ? (
-          <div className="mt-2.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="rounded-md bg-secondary px-2 py-1 font-medium text-secondary-foreground">
-              Laboratoire : {filters.lab}
+
+        {/* -------------------- Jetons de Filtres Actifs (Smart Chips) -------------------- */}
+        {hasActiveFilters && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2.5 text-xs">
+            <span className="font-semibold text-muted-foreground mr-1 text-[11px] uppercase tracking-wider">
+              Filtres actifs :
             </span>
-            <button
-              type="button"
-              onClick={() => setFilters({ lab: '' })}
-              className="underline hover:text-foreground"
-            >
-              retirer
-            </button>
+
+            {filters.q && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 font-medium text-primary">
+                <span>« {filters.q} »</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput('')
+                    setFilters({ q: '' })
+                  }}
+                  className="rounded-full hover:bg-primary/20 p-0.5"
+                  aria-label="Retirer la recherche texte"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+
+            {filters.status && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-medium text-foreground">
+                <span>Statut : {STATUS_OPTIONS.find((s) => s.value === filters.status)?.label ?? filters.status}</span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ status: '' })}
+                  className="rounded-full hover:bg-muted p-0.5"
+                  aria-label="Retirer le filtre statut"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+
+            {filters.domain && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-medium text-foreground">
+                <span>Domaine : {filters.domain}</span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ domain: '' })}
+                  className="rounded-full hover:bg-muted p-0.5"
+                  aria-label="Retirer le filtre domaine"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+
+            {filters.form && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-medium text-foreground">
+                <span>Forme : {filters.form}</span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ form: '' })}
+                  className="rounded-full hover:bg-muted p-0.5"
+                  aria-label="Retirer le filtre forme"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+
+            {filters.liste && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-medium text-foreground">
+                <span>Liste : {filters.liste}</span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ liste: '' })}
+                  className="rounded-full hover:bg-muted p-0.5"
+                  aria-label="Retirer le filtre liste"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+
+            {filters.country && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-medium text-foreground">
+                <span>Pays : {filters.country}</span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ country: '' })}
+                  className="rounded-full hover:bg-muted p-0.5"
+                  aria-label="Retirer le filtre pays"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+
+            {filters.lab && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 font-medium text-foreground">
+                <span>Labo : {filters.lab}</span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ lab: '' })}
+                  className="rounded-full hover:bg-muted p-0.5"
+                  aria-label="Retirer le filtre laboratoire"
+                >
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
           </div>
-        ) : null}
+        )}
       </div>
 
-      {/* ---------------------------- Table ----------------------------- */}
+      {/* -------------------- Bandeau Suggestion Phonétique "Vouliez-vous dire..." -------------------- */}
+      {suggestion && suggestion.toUpperCase() !== (filters.q || '').trim().toUpperCase() && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 shrink-0 text-primary animate-pulse" />
+            <span>
+              Résultats approchés pour « {filters.q} ». Vouliez-vous dire :{' '}
+              <strong className="font-bold text-foreground">{suggestion}</strong> ?
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs border-primary/30 bg-card hover:bg-primary/20"
+            onClick={() => {
+              setSearchInput(suggestion)
+              setFilters({ q: suggestion })
+            }}
+          >
+            Rechercher « {suggestion} »
+          </Button>
+        </div>
+      )}
+
+      {/* ---------------------------- Contenu (Table ou Cartes) ----------------------------- */}
       {isLoading ? (
         <div className="space-y-2 rounded-xl border border-border bg-card p-4">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -463,7 +645,7 @@ export function DirectoryView() {
           <FileX2 className="size-10 text-muted-foreground/60" aria-hidden />
           <p className="mt-4 text-base font-semibold text-foreground">Aucun médicament trouvé</p>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Essayez d&apos;élargir votre recherche ou de retirer certains filtres.
+            Essayez d&apos;élargir votre recherche, de vérifier l&apos;orthographe de la molécule ou de retirer certains filtres.
           </p>
           <Button
             variant="outline"
@@ -478,201 +660,251 @@ export function DirectoryView() {
             Réinitialiser les filtres
           </Button>
         </div>
-      ) : (
-        <>
-          <div className="scroll-thin max-h-[64vh] overflow-auto rounded-xl border border-border bg-card shadow-sm">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <SortHeader label="Marque" field="brand" sort={sort} onSort={handleSort} className="min-w-[130px] sm:min-w-[160px]" />
-                  <SortHeader label="DCI" field="dci" sort={sort} onSort={handleSort} className="hidden min-w-[180px] sm:table-cell" />
-                  <StaticHeader label="Forme &amp; dosage" className="min-w-0 sm:min-w-[150px]" />
-                  <StaticHeader label="PPA" className="min-w-[92px] text-right" />
-                  <SortHeader label="Laboratoire" field="lab" sort={sort} onSort={handleSort} className="hidden min-w-[180px] lg:table-cell" />
-                  <StaticHeader label="Domaine" className="hidden md:table-cell" />
-                  <StaticHeader label="Statut" className="min-w-0 sm:min-w-[120px]" />
-                </tr>
-              </thead>
-              <tbody>
-                {drugs.map((drug) => (
-                  <tr
-                    key={drug.id}
-                    onClick={() => openDrug(drug.id)}
-                    className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent/60"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') openDrug(drug.id)
-                    }}
-                    aria-label={`Ouvrir la fiche de ${drug.brand}`}
-                  >
-                    <td className="px-3 py-3">
-                      <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="block font-semibold text-foreground">{drug.brand}</span>
-                        {drug.hasBookRcp ? (
-                          <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary"
-                            title="RCP disponible — livre technique DzPharm"
-                          >
-                            <BookOpen className="size-2.5" aria-hidden />
-                            RCP
-                          </span>
-                        ) : null}
-                        {drug.hasBookRcp ? (
-                          <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-state-safe/30 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
-                            title="Monographie DCI complète issue des livres techniques DzPharm"
-                          >
-                            <BadgeCheck className="size-2.5" aria-hidden />
-                            Fiche complète
-                          </span>
-                        ) : null}
-                        {drug.price != null ? (
-                          <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-chifa/30 bg-chifa/10 px-1.5 py-0.5 text-[9px] font-bold text-chifa"
-                            title="Prix public PPA référencé en officine (DA)"
-                          >
-                            <Coins className="size-2.5" aria-hidden />
-                            Prix PPA
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="block text-[11px] text-muted-foreground">
-                        {drug.regNumber}
-                        {drug.type ? ` · ${drug.type}` : ''}
-                      </span>
-                    </td>
-                    <td className="hidden max-w-[260px] px-3 py-3 align-top sm:table-cell">
-                      <span className="block truncate text-foreground/90" title={drug.dci}>
-                        {drug.dci}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <span className="block text-foreground/90">{drug.form || '—'}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {drug.dosage || ''}
-                        {drug.packaging ? ` · ${drug.packaging}` : ''}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right align-top">
-                      {drug.price != null ? (
-                        <span className="flex flex-col items-end">
-                          <span className="font-semibold text-foreground tabular-nums">
-                            {formatPrice(drug.price)}
-                          </span>
-                          {drug.refundable ? (
-                            <span className="text-[10px] font-medium text-state-safe">
-                              CNAS
-                            </span>
-                          ) : null}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="hidden max-w-[220px] px-3 py-3 align-top lg:table-cell">
-                      <span className="block truncate text-foreground/90" title={drug.lab}>
-                        {drug.lab}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        {countryCode(drug.country) ? (
-                          <span className="rounded border border-border bg-muted px-1 font-mono text-[10px] font-semibold">
-                            {countryCode(drug.country)}
-                          </span>
-                        ) : null}
-                        {drug.country}
-                      </span>
-                    </td>
-                    <td className="hidden px-3 py-3 align-top md:table-cell">
-                      {drug.domain ? (
-                        <span className="inline-flex max-w-[170px] items-center truncate rounded-md border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                          {drug.domain}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <StatusBadge status={drug.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      ) : layoutMode === 'cards' ? (
+        /* Mode Cartes Cliniques (Idéal tactile et mobile) */
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {drugs.map((drug) => (
+            <button
+              key={drug.id}
+              type="button"
+              onClick={() => openDrug(drug.id)}
+              className="group flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
+                    {drug.brand}
+                  </span>
+                  <StatusBadge status={drug.status} className="shrink-0" />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{drug.dci}</p>
 
-          {/* -------------------------- Pagination -------------------------- */}
-          <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <p className="text-xs text-muted-foreground tabular-nums">
-              Page {formatNumber(page)} sur {formatNumber(Math.max(totalPages, 1))} ·{' '}
-              {formatNumber(total)} résultats
-            </p>
-            <div className="flex items-center gap-3">
-              <Select
-                value={String(pageSize)}
-                onValueChange={(v) => {
-                  setPageSize(Number(v))
-                  setPage(1)
-                }}
-              >
-                <SelectTrigger
-                  size="sm"
-                  className="h-9 w-[110px]"
-                  aria-label="Nombre de résultats par page"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s} / page
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <nav aria-label="Pagination" className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-9"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  aria-label="Page précédente"
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-                {pagination.map((p, i) =>
-                  p === '…' ? (
-                    <span key={`ellipsis-${i}`} className="px-1.5 text-sm text-muted-foreground" aria-hidden>
-                      …
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {drug.dosage && (
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-foreground/80">
+                      {drug.dosage}
                     </span>
-                  ) : (
-                    <Button
-                      key={p}
-                      variant={p === page ? 'default' : 'ghost'}
-                      size="icon"
-                      className={cn('size-9 text-sm tabular-nums', p === page && 'font-semibold')}
-                      onClick={() => setPage(p)}
-                      aria-label={`Page ${p}`}
-                      aria-current={p === page ? 'page' : undefined}
-                    >
-                      {p}
-                    </Button>
-                  )
+                  )}
+                  {drug.form && (
+                    <span className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                      {drug.form}
+                    </span>
+                  )}
+                  {drug.hasBookRcp && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-300">
+                      <BookOpen className="size-2.5" />
+                      RCP
+                    </span>
+                  )}
+                  {drug.p1 && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                      <ShieldAlert className="size-2.5" />
+                      P1 Hôpital
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-2.5 text-xs text-muted-foreground">
+                <span className="truncate max-w-[160px]">{drug.lab}</span>
+                {drug.price != null ? (
+                  <span className="font-semibold text-chifa tabular-nums">
+                    {formatPrice(drug.price)} {drug.refundable ? '· CNAS' : ''}
+                  </span>
+                ) : (
+                  <span>AMM: {drug.regNumber}</span>
                 )}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-9"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  aria-label="Page suivante"
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        /* Mode Tableau Structuré */
+        <div className="scroll-thin max-h-[64vh] overflow-auto rounded-xl border border-border bg-card shadow-sm">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                <SortHeader label="Marque" field="brand" sort={sort} onSort={handleSort} className="min-w-[130px] sm:min-w-[160px]" />
+                <SortHeader label="DCI" field="dci" sort={sort} onSort={handleSort} className="hidden min-w-[180px] sm:table-cell" />
+                <StaticHeader label="Forme &amp; dosage" className="min-w-0 sm:min-w-[150px]" />
+                <StaticHeader label="PPA" className="min-w-[92px] text-right" />
+                <SortHeader label="Laboratoire" field="lab" sort={sort} onSort={handleSort} className="hidden min-w-[180px] lg:table-cell" />
+                <StaticHeader label="Domaine" className="hidden md:table-cell" />
+                <StaticHeader label="Statut" className="min-w-0 sm:min-w-[120px]" />
+              </tr>
+            </thead>
+            <tbody>
+              {drugs.map((drug) => (
+                <tr
+                  key={drug.id}
+                  onClick={() => openDrug(drug.id)}
+                  className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent/60"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') openDrug(drug.id)
+                  }}
+                  aria-label={`Ouvrir la fiche de ${drug.brand}`}
                 >
-                  <ChevronRight className="size-4" />
-                </Button>
-              </nav>
-            </div>
+                  <td className="px-3 py-3">
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span className="block font-semibold text-foreground">{drug.brand}</span>
+                      {drug.hasBookRcp ? (
+                        <span
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary"
+                          title="RCP disponible — livre technique DzPharm"
+                        >
+                          <BookOpen className="size-2.5" aria-hidden />
+                          RCP
+                        </span>
+                      ) : null}
+                      {drug.price != null ? (
+                        <span
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-chifa/30 bg-chifa/10 px-1.5 py-0.5 text-[9px] font-bold text-chifa"
+                          title="Prix public PPA référencé en officine (DA)"
+                        >
+                          <Coins className="size-2.5" aria-hidden />
+                          Prix PPA
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {drug.regNumber}
+                      {drug.type ? ` · ${drug.type}` : ''}
+                    </span>
+                  </td>
+                  <td className="hidden max-w-[260px] px-3 py-3 align-top sm:table-cell">
+                    <span className="block truncate text-foreground/90" title={drug.dci}>
+                      {drug.dci}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <span className="block text-foreground/90">{drug.form || '—'}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {drug.dosage || ''}
+                      {drug.packaging ? ` · ${drug.packaging}` : ''}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-right align-top">
+                    {drug.price != null ? (
+                      <span className="flex flex-col items-end">
+                        <span className="font-semibold text-foreground tabular-nums">
+                          {formatPrice(drug.price)}
+                        </span>
+                        {drug.refundable ? (
+                          <span className="text-[10px] font-medium text-state-safe">
+                            CNAS
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="hidden max-w-[220px] px-3 py-3 align-top lg:table-cell">
+                    <span className="block truncate text-foreground/90" title={drug.lab}>
+                      {drug.lab}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {countryCode(drug.country) ? (
+                        <span className="rounded border border-border bg-muted px-1 font-mono text-[10px] font-semibold">
+                          {countryCode(drug.country)}
+                        </span>
+                      ) : null}
+                      {drug.country}
+                    </span>
+                  </td>
+                  <td className="hidden px-3 py-3 align-top md:table-cell">
+                    {drug.domain ? (
+                      <span className="inline-flex max-w-[170px] items-center truncate rounded-md border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                        {drug.domain}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <StatusBadge status={drug.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* -------------------------- Pagination -------------------------- */}
+      {drugs.length > 0 && (
+        <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <p className="text-xs text-muted-foreground tabular-nums">
+            Page {formatNumber(page)} sur {formatNumber(Math.max(totalPages, 1))} ·{' '}
+            {formatNumber(total)} résultats
+          </p>
+          <div className="flex items-center gap-3">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPageSize(Number(v))
+                setPage(1)
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                className="h-9 w-[110px]"
+                aria-label="Nombre de résultats par page"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[20, 50, 100].map((s) => (
+                  <SelectItem key={s} value={String(s)}>
+                    {s} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <nav aria-label="Pagination" className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-9"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                aria-label="Page précédente"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              {pagination.map((p, i) =>
+                p === '…' ? (
+                  <span key={`ellipsis-${i}`} className="px-1.5 text-sm text-muted-foreground" aria-hidden>
+                    …
+                  </span>
+                ) : (
+                  <Button
+                    key={p}
+                    variant={p === page ? 'default' : 'ghost'}
+                    size="icon"
+                    className={cn('size-9 text-sm tabular-nums', p === page && 'font-semibold')}
+                    onClick={() => setPage(p)}
+                    aria-label={`Page ${p}`}
+                    aria-current={p === page ? 'page' : undefined}
+                  >
+                    {p}
+                  </Button>
+                )
+              )}
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-9"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                aria-label="Page suivante"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </nav>
           </div>
-        </>
+        </div>
       )}
     </div>
   )
