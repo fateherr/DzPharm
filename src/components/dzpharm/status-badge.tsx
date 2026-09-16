@@ -77,39 +77,95 @@ export function ListeBadge({ liste, className }: { liste?: string | null; classN
 }
 
 /* ------------------------------------------------------------------ */
-/* Gravité d'interaction médicamenteuse                                */
+/* ------------------------------------------------------------------ */
+/* Gravité d'interaction médicamenteuse (Thésaurus ANSM & MIPH)       */
 /* ------------------------------------------------------------------ */
 
-const SEVERITY_META: Record<InteractionSeverity, { label: string; className: string }> = {
+export const SEVERITY_META: Record<
+  InteractionSeverity,
+  {
+    level: number
+    label: string
+    ansmLabel: string
+    shape: string
+    dataSeverity: string
+    className: string
+    dot: string
+  }
+> = {
   'CONTRE-INDIQUE': {
+    level: 4,
     label: 'Contre-indication',
-    className: 'border-transparent bg-state-danger text-white font-bold',
+    ansmLabel: 'Niveau 4 — Contre-indication absolue',
+    shape: '☠',
+    dataSeverity: '4',
+    className: 'border-state-danger/50 bg-state-danger/15 text-state-danger font-bold',
+    dot: 'bg-state-danger',
   },
   MAJEURE: {
-    label: 'Majeure',
-    className: 'border-state-danger/40 bg-state-danger/15 text-state-danger font-semibold',
+    level: 3,
+    label: 'Déconseillée',
+    ansmLabel: 'Niveau 3 — Association déconseillée',
+    shape: '⛔',
+    dataSeverity: '3',
+    className: 'border-state-severe/40 bg-state-severe/15 text-state-severe font-semibold',
+    dot: 'bg-state-severe',
   },
   MODEREE: {
-    label: 'Modérée',
-    className: 'border-state-warning/40 bg-state-warning/15 text-state-warning',
+    level: 2,
+    label: 'Précaution',
+    ansmLabel: 'Niveau 2 — Précaution d\'emploi',
+    shape: '⚠',
+    dataSeverity: '2',
+    className: 'border-state-warning/40 bg-state-warning/15 text-state-warning font-medium',
+    dot: 'bg-state-warning',
   },
   MINEURE: {
-    label: 'Mineure',
-    className: 'border-border bg-secondary text-secondary-foreground',
+    level: 1,
+    label: 'À prendre en compte',
+    ansmLabel: 'Niveau 1 — À prendre en compte',
+    shape: 'ℹ',
+    dataSeverity: '1',
+    className: 'border-state-info/40 bg-state-info/15 text-state-info font-medium',
+    dot: 'bg-state-info',
   },
 }
 
 export function SeverityBadge({
   severity,
   className,
+  showAnsmLevel = true,
 }: {
-  severity: InteractionSeverity
+  severity: InteractionSeverity | string
   className?: string
+  showAnsmLevel?: boolean
 }) {
-  const meta = SEVERITY_META[severity] ?? SEVERITY_META.MINEURE
+  const meta = SEVERITY_META[severity as InteractionSeverity] ?? {
+    level: 0,
+    label: severity || 'Données manquantes',
+    ansmLabel: 'Données manquantes dans le thésaurus',
+    shape: '?',
+    dataSeverity: 'unknown',
+    className: 'border-state-unknown/40 bg-state-unknown/15 text-state-unknown font-medium',
+    dot: 'bg-state-unknown',
+  }
+
   return (
-    <Badge variant="outline" className={cn('gap-1.5', meta.className, className)}>
-      {meta.label}
+    <Badge
+      variant="outline"
+      data-severity={meta.dataSeverity}
+      aria-label={meta.ansmLabel}
+      className={cn(
+        'gap-1.5 font-medium shadow-xs transition-colors',
+        meta.className,
+        className
+      )}
+    >
+      <span className="font-bold text-[11px]" aria-hidden="true">
+        {meta.shape}
+      </span>
+      <span>{showAnsmLevel && meta.level ? `N${meta.level} · ` : ''}{meta.label}</span>
+      <span className="sr-only">({meta.ansmLabel})</span>
     </Badge>
   )
 }
@@ -136,9 +192,9 @@ export const RISK_META: Record<
   },
   ELEVE: {
     label: 'Risque élevé',
-    className: 'bg-state-warning/20 text-state-warning',
-    border: 'border-state-warning/50',
-    icon: 'text-state-warning',
+    className: 'bg-state-severe/15 text-state-severe font-semibold',
+    border: 'border-state-severe/50',
+    icon: 'text-state-severe',
   },
   CRITIQUE: {
     label: 'Risque critique',

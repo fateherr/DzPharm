@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   BarChart3,
+  Barcode,
   BookOpen,
   ChevronDown,
   HeartHandshake,
@@ -140,6 +141,7 @@ export function Header() {
   const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
+  const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
 
   const { data: stats } = useQuery({
     queryKey: ['stats'],
@@ -353,6 +355,24 @@ export function Header() {
                 ⌘K
               </kbd>
             </button>
+
+            {/* Bouton Scanner code-barres / CBM */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setScannerOpen(true)}
+                  aria-label="Scanner un médicament (Code-barres / CBM)"
+                  className="size-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <Barcode className="size-4" aria-hidden />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Scanner un médicament (CBM)
+              </TooltipContent>
+            </Tooltip>
 
             {/* Badge total AMM */}
             {stats ? (

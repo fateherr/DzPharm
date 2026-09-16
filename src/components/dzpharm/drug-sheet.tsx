@@ -1,7 +1,7 @@
 'use client'
 
 import { createPortal } from 'react-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -31,8 +31,15 @@ import {
   TrendingDown,
   TriangleAlert,
   Type,
+  ArrowUpDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Sheet,
   SheetContent,
@@ -52,6 +59,7 @@ import { useToast } from '@/hooks/use-toast'
 import { fetchDrugDetail, postDrugView } from './api'
 import type { DrugDetail } from './types'
 import { RcpViewer } from './rcp-view'
+import { PatientDosageDialog } from './patient-dosage-sheet'
 import {
   ChifaBadge,
   ListeBadge,
@@ -544,6 +552,24 @@ export function DrugSheet() {
       ? pricedEquivalents.reduce((a, b) => ((a.price ?? Infinity) <= (b.price ?? Infinity) ? a : b))
       : null
 
+  const [patientSheetOpen, setPatientSheetOpen] = useState(false)
+  const [equivSort, setEquivSort] = useState<'price_asc' | 'copay_asc' | 'brand_asc'>('price_asc')
+
+  const sortedEquivalents = useMemo(() => {
+    const list = [...equivalents]
+    if (equivSort === 'price_asc') {
+      return list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))
+    }
+    if (equivSort === 'copay_asc') {
+      const getCopay = (e: (typeof equivalents)[number]) => {
+        if (e.price == null) return Infinity
+        return e.refundable ? e.price * 0.2 : e.price
+      }
+      return list.sort((a, b) => getCopay(a) - getCopay(b))
+    }
+    return list.sort((a, b) => a.brand.localeCompare(b.brand, 'fr'))
+  }, [equivalents, equivSort])
+
   // Historique récent + compteur de consultations (une fois par ouverture)
   const countedRef = useRef<number | null>(null)
   useEffect(() => {
@@ -760,15 +786,32 @@ export function DrugSheet() {
                       aria-hidden
                     />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handlePrint}
-                    aria-label="Imprimer la fiche du médicament"
-                    className="size-9 rounded-lg text-muted-foreground hover:text-primary"
-                  >
-                    <Printer className="size-5" aria-hidden />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Options d'impression"
+                        className="size-9 rounded-lg text-muted-foreground hover:text-primary"
+                        title="Imprimer..."
+                      >
+                        <Printer className="size-5" aria-hidden />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 text-xs">
+                      <DropdownMenuItem onClick={handlePrint} className="gap-2 cursor-pointer">
+                        <FileText className="size-4 text-muted-foreground" />
+                        <span>Monographie officielle A4</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setPatientSheetOpen(true)}
+                        className="gap-2 cursor-pointer font-semibold text-primary"
+                      >
+                        <Printer className="size-4 text-primary" />
+                        <span>Fiche Posologique Patient</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
@@ -1154,12 +1197,33 @@ export function DrugSheet() {
               {/* Équivalents */}
               {equivalents.length > 0 && (
                 <section aria-label="Équivalents même DCI">
-                  <h3 className="mb-3 flex items-center justify-between text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    <span>Équivalents même DCI</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary tabular-nums">
-                      {formatNumber(equivalents.length)}
-                    </span>
-                  </h3>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      <span>Équivalents même DCI</span>
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary tabular-nums">
+                        {formatNumber(equivalents.length)}
+                      </span>
+                    </h3>
+
+                    {/* Contrôle de tri — Phase 3.1 & 3.2 */}
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <ArrowUpDown className="size-3 text-muted-foreground" aria-hidden />
+                      <span className="text-[11px] text-muted-foreground hidden sm:inline">Trier :</span>
+                      <select
+                        value={equivSort}
+                        onChange={(e) =>
+                          setEquivSort(e.target.value as 'price_asc' | 'copay_asc' | 'brand_asc')
+                        }
+                        aria-label="Trier les équivalents"
+                        className="rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                      >
+                        <option value="price_asc">PPA croissant</option>
+                        <option value="copay_asc">Reste à charge</option>
+                        <option value="brand_asc">Nom de marque (A-Z)</option>
+                      </select>
+                    </div>
+                  </div>
+
                   {cheapestEquivalent ? (
                     <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-lg border border-state-safe/25 bg-state-safe/5 px-3 py-2 text-xs text-foreground">
                       <TrendingDown className="size-4 shrink-0 text-state-safe" aria-hidden />
@@ -1193,52 +1257,66 @@ export function DrugSheet() {
                   <div className="scroll-thin max-h-72 overflow-y-auto rounded-lg border border-border/70">
                     <table className="w-full text-sm">
                       <tbody>
-                        {equivalents.map((eq) => (
-                          <tr
-                            key={eq.id}
-                            className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
-                            onClick={() => openDrug(eq.id)}
-                          >
-                            <td className="px-3 py-2.5">
-                              <span className="flex items-center gap-1.5">
-                                <span className="block font-semibold text-foreground">{eq.brand}</span>
-                                {eq.price != null && eq.price === minEquivalentPrice ? (
+                        {sortedEquivalents.map((eq) => {
+                          const eqPrice = eq.price ?? null
+                          const copayShare =
+                            eqPrice != null
+                              ? eq.refundable
+                                ? Math.round(eqPrice * 0.2 * 100) / 100
+                                : eqPrice
+                              : null
+
+                          return (
+                            <tr
+                              key={eq.id}
+                              className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-accent"
+                              onClick={() => openDrug(eq.id)}
+                            >
+                              <td className="px-3 py-2.5">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="block font-semibold text-foreground">{eq.brand}</span>
+                                  {eq.price != null && eq.price === minEquivalentPrice ? (
+                                    <span
+                                      className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-state-safe/30 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
+                                      title="Prix le plus bas parmi les équivalents"
+                                    >
+                                      <TrendingDown className="size-2.5" aria-hidden />
+                                      Éco
+                                    </span>
+                                  ) : null}
+                                </span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {eq.lab}
+                                  {eq.dosage ? ` · ${eq.dosage}` : ''}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-right align-top">
+                                {eqPrice != null ? (
                                   <span
-                                    className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-state-safe/30 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
-                                    title="Prix le plus bas parmi les équivalents"
+                                    className={cn(
+                                      'block font-semibold tabular-nums',
+                                      eq.price === minEquivalentPrice ? 'text-state-safe' : 'text-foreground'
+                                    )}
                                   >
-                                    <TrendingDown className="size-2.5" aria-hidden />
-                                    Éco
+                                    {formatPrice(eqPrice)}
                                   </span>
                                 ) : null}
-                              </span>
-                              <span className="block truncate text-xs text-muted-foreground">
-                                {eq.lab}
-                                {eq.dosage ? ` · ${eq.dosage}` : ''}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2.5 text-right align-top">
-                              {eq.price != null ? (
-                                <span
-                                  className={cn(
-                                    'block font-semibold tabular-nums',
-                                    eq.price === minEquivalentPrice ? 'text-state-safe' : 'text-foreground'
-                                  )}
-                                >
-                                  {formatPrice(eq.price)}
-                                </span>
-                              ) : null}
-                              {eq.refundable ? (
-                                <span className="text-[10px] font-medium text-state-safe">
-                                  CNAS
-                                </span>
-                              ) : null}
-                            </td>
-                            <td className="px-3 py-2.5 text-right">
-                              <StatusBadge status={eq.status} />
-                            </td>
-                          </tr>
-                        ))}
+                                {eq.refundable ? (
+                                  <span className="block text-[10px] font-medium text-state-safe tabular-nums">
+                                    CNAS {copayShare != null ? `· Reste ${formatPrice(copayShare)}` : ''}
+                                  </span>
+                                ) : eqPrice != null ? (
+                                  <span className="block text-[10px] text-muted-foreground">
+                                    Hors Chifa
+                                  </span>
+                                ) : null}
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                <StatusBadge status={eq.status} />
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1302,16 +1380,32 @@ export function DrugSheet() {
               </span>
             )}
           </Button>
-          <Button
-            variant="outline"
-            size="default"
-            onClick={handlePrint}
-            className="h-11 shrink-0 gap-1.5 px-3.5 border-border hover:bg-muted font-medium text-xs sm:text-sm"
-            title="Imprimer la fiche et monographie A4"
-          >
-            <Printer className="size-4 shrink-0" />
-            <span className="hidden sm:inline">Imprimer A4</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="default"
+                className="h-11 shrink-0 gap-1.5 px-3.5 border-border hover:bg-muted font-medium text-xs sm:text-sm"
+                title="Options d'impression"
+              >
+                <Printer className="size-4 shrink-0" />
+                <span className="hidden sm:inline">Imprimer</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 text-xs">
+              <DropdownMenuItem onClick={handlePrint} className="gap-2 cursor-pointer">
+                <FileText className="size-4 text-muted-foreground" />
+                <span>Monographie officielle A4</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setPatientSheetOpen(true)}
+                className="gap-2 cursor-pointer font-semibold text-primary"
+              >
+                <Printer className="size-4 text-primary" />
+                <span>Fiche Posologique Patient</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="default"
@@ -1329,6 +1423,13 @@ export function DrugSheet() {
       {drug && sheetTab === 'fiche' ? (
         <PrintMonograph drug={drug} equivalents={equivalents.slice(0, 30)} />
       ) : null}
+      {drug && (
+        <PatientDosageDialog
+          open={patientSheetOpen}
+          onOpenChange={setPatientSheetOpen}
+          drug={drug}
+        />
+      )}
     </Sheet>
   )
 }

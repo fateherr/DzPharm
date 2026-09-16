@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -27,6 +27,15 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -43,20 +52,150 @@ const SEVERITY_ORDER: InteractionSeverity[] = ['CONTRE-INDIQUE', 'MAJEURE', 'MOD
 
 const SEVERITY_LEGEND: Record<InteractionSeverity, string> = {
   'CONTRE-INDIQUE': 'bg-state-danger',
-  MAJEURE: 'bg-state-danger/60',
+  MAJEURE: 'bg-state-severe',
   MODEREE: 'bg-state-warning',
-  MINEURE: 'bg-muted-foreground/40',
+  MINEURE: 'bg-state-info',
 }
 
 const SEVERITY_LABELS: Record<InteractionSeverity, string> = {
-  'CONTRE-INDIQUE': 'Contre-indication',
-  MAJEURE: 'Majeure',
-  MODEREE: 'Modérée',
-  MINEURE: 'Mineure',
+  'CONTRE-INDIQUE': 'Contre-indication (N4)',
+  MAJEURE: 'Déconseillée (N3)',
+  MODEREE: 'Précaution (N2)',
+  MINEURE: 'À prendre en compte (N1)',
 }
 
 /** Nombre max de médicaments affichés dans la matrice. */
 const MAX_MATRIX = 6
+
+export function SeverityLegendCard() {
+  return (
+    <Card className="border-border/70 bg-card/60">
+      <CardHeader className="py-2.5 px-4 pb-2">
+        <CardTitle className="flex items-center justify-between text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+          <span className="flex items-center gap-1.5 text-foreground/90">
+            <Info className="size-3.5 text-primary" aria-hidden="true" />
+            Légende des 4 niveaux (ANSM / MIPH)
+          </span>
+          <span className="text-[10px] text-muted-foreground font-normal">
+            référentiel officiel
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 pb-3 pt-0">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+          <div className="flex items-center gap-2 rounded-lg border border-state-danger/30 bg-state-danger/10 px-2.5 py-1.5 text-state-danger">
+            <span className="font-bold text-sm" aria-hidden="true">☠</span>
+            <div className="min-w-0">
+              <p className="font-bold leading-tight">Niveau 4 · Contre-indication</p>
+              <p className="text-[10px] opacity-90 truncate">Association formellement interdite</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-state-severe/30 bg-state-severe/10 px-2.5 py-1.5 text-state-severe">
+            <span className="font-bold text-sm" aria-hidden="true">⛔</span>
+            <div className="min-w-0">
+              <p className="font-bold leading-tight">Niveau 3 · Déconseillée</p>
+              <p className="text-[10px] opacity-90 truncate">Éviter sauf absolue nécessité</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-state-warning/30 bg-state-warning/10 px-2.5 py-1.5 text-state-warning">
+            <span className="font-bold text-sm" aria-hidden="true">⚠</span>
+            <div className="min-w-0">
+              <p className="font-bold leading-tight">Niveau 2 · Précaution</p>
+              <p className="text-[10px] opacity-90 truncate">Surveillance clinique / biologique</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-state-info/30 bg-state-info/10 px-2.5 py-1.5 text-state-info">
+            <span className="font-bold text-sm" aria-hidden="true">ℹ</span>
+            <div className="min-w-0">
+              <p className="font-bold leading-tight">Niveau 1 · À prendre en compte</p>
+              <p className="text-[10px] opacity-90 truncate">Risque potentiel à évaluer</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function Level4ContraindicationModal({
+  open,
+  onAcknowledge,
+  pairs,
+}: {
+  open: boolean
+  onAcknowledge: () => void
+  pairs: InteractionPair[]
+}) {
+  const ciPairs = pairs.filter((p) => p.severity === 'CONTRE-INDIQUE')
+  if (ciPairs.length === 0) return null
+
+  return (
+    <AlertDialog open={open}>
+      <AlertDialogContent
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        className="max-w-xl border-l-4 border-l-state-danger border-t border-r border-b border-border bg-card p-6 shadow-2xl"
+      >
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3">
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-state-danger/15 text-state-danger ring-4 ring-state-danger/10">
+              <Ban className="size-6 text-state-danger animate-pulse" aria-hidden="true" />
+            </span>
+            <div>
+              <AlertDialogTitle className="text-base font-bold text-state-danger">
+                CONTRE-INDICATION ABSOLUE DÉTECTÉE (NIVEAU 4)
+              </AlertDialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Thésaurus ANSM &amp; Référentiel National MIPH
+              </p>
+            </div>
+          </div>
+          <AlertDialogDescription asChild>
+            <div className="mt-4 space-y-3 text-sm text-foreground">
+              <p className="font-semibold text-foreground/90">
+                L&apos;analyse a identifié {ciPairs.length} association{ciPairs.length > 1 ? 's' : ''} formellement contre-indiquée{ciPairs.length > 1 ? 's' : ''} :
+              </p>
+              <div className="max-h-60 space-y-2.5 overflow-y-auto pr-1">
+                {ciPairs.map((pair, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-state-danger/30 bg-state-danger/5 p-3.5"
+                  >
+                    <div className="flex items-center justify-between gap-2 font-bold text-state-danger">
+                      <span>
+                        {pair.drugs[0]} + {pair.drugs[1]}
+                      </span>
+                      <SeverityBadge severity="CONTRE-INDIQUE" />
+                    </div>
+                    <div className="mt-2 space-y-1 text-xs text-foreground/80">
+                      <p>
+                        <strong className="text-foreground">Risque :</strong> {pair.mechanism}
+                      </p>
+                      <p>
+                        <strong className="text-foreground">Conduite à tenir :</strong>{' '}
+                        {pair.management}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Cette alerte clinique est bloquante. Veuillez vérifier l&apos;ordonnance et envisager une alternative thérapeutique avant toute dispensation.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="mt-4">
+          <AlertDialogAction
+            onClick={onAcknowledge}
+            className="w-full sm:w-auto bg-state-danger hover:bg-state-danger/90 text-white font-semibold"
+          >
+            J&apos;ai pris connaissance de la contre-indication absolue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
 function PairCard({ pair }: { pair: InteractionPair }) {
   return (
@@ -253,15 +392,67 @@ function VerifierPanel() {
     return counts
   }, [result])
 
+  const [acknowledgedCiHash, setAcknowledgedCiHash] = useState<string>('')
+  const [ciModalOpen, setCiModalOpen] = useState(false)
+
+  // Détection bloquante de contre-indication absolue (Niveau 4 ANSM)
+  useEffect(() => {
+    const ciPairs = (result?.pairs ?? []).filter((p) => p.severity === 'CONTRE-INDIQUE')
+    if (ciPairs.length > 0) {
+      const hash = ciPairs
+        .map((p) => [...p.drugs].sort().join('-'))
+        .sort()
+        .join(';')
+      if (hash && hash !== acknowledgedCiHash) {
+        setCiModalOpen(true)
+      }
+    } else {
+      setCiModalOpen(false)
+    }
+  }, [result, acknowledgedCiHash])
+
+  function handleAcknowledgeCi() {
+    const ciPairs = (result?.pairs ?? []).filter((p) => p.severity === 'CONTRE-INDIQUE')
+    const hash = ciPairs
+      .map((p) => [...p.drugs].sort().join('-'))
+      .sort()
+      .join(';')
+    setAcknowledgedCiHash(hash)
+    setCiModalOpen(false)
+    toast({
+      title: 'Prise de connaissance enregistrée',
+      description: 'Vous avez accusé réception de la contre-indication absolue (Niveau 4).',
+    })
+  }
+
   function handleSelect(name: Parameters<typeof addToBasket>[0]) {
+    // 1. Détection de doublon exact (même médicament)
+    if (basket.some((b) => b.id === name.id)) {
+      toast({ title: 'Déjà présent', description: `${name.brand} est déjà dans le panier.` })
+      return
+    }
+
+    // 2. Détection de doublon de DCI (même principe actif -> risque de surdosage / redondance)
+    const norm = (s?: string | null) =>
+      (s || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const targetDci = norm(name.dci)
+    const duplicateDciDrug = targetDci ? basket.find((b) => norm(b.dci) === targetDci) : null
+
     const res = addToBasket(name)
     if (res === 'added') {
-      toast({
-        title: 'Médicament ajouté',
-        description: `${name.brand} (${name.dci}) — ${basket.length + 1} produit(s) dans le panier.`,
-      })
-    } else if (res === 'duplicate') {
-      toast({ title: 'Déjà présent', description: `${name.brand} est déjà dans le panier.` })
+      if (duplicateDciDrug) {
+        toast({
+          title: '⚠️ Attention : Doublon de DCI détecté !',
+          description: `« ${name.brand} » partage la même molécule (${name.dci}) que « ${duplicateDciDrug.brand} » déjà présent dans le panier. Risque majeur de surdosage !`,
+          variant: 'destructive',
+          duration: 7000,
+        })
+      } else {
+        toast({
+          title: 'Médicament ajouté',
+          description: `${name.brand} (${name.dci}) — ${basket.length + 1} produit(s) dans le panier.`,
+        })
+      }
     } else {
       toast({
         title: 'Panier complet',
@@ -433,6 +624,9 @@ function VerifierPanel() {
             ) : null}
           </CardContent>
         </Card>
+
+        {/* Légende permanente des niveaux d'interaction ANSM & MIPH (Phase 1.5) */}
+        <SeverityLegendCard />
       </div>
 
       {/* ------------------------ Résultats ------------------------ */}
@@ -657,6 +851,13 @@ function VerifierPanel() {
           </div>
         ) : null}
       </div>
+
+      {/* Modal bloquant pour Contre-indication Absolue Niveau 4 (Phase 1.6) */}
+      <Level4ContraindicationModal
+        open={ciModalOpen}
+        onAcknowledge={handleAcknowledgeCi}
+        pairs={result?.pairs ?? []}
+      />
     </div>
   )
 }
@@ -671,35 +872,35 @@ const CELL_META: Record<CellKind, { icon: typeof Ban; short: string; label: stri
   'CONTRE-INDIQUE': {
     icon: Ban,
     short: 'CI',
-    label: 'Contre-indication',
-    className: 'bg-state-danger text-white hover:bg-state-danger/90 focus-visible:ring-state-danger',
+    label: 'Niveau 4 · Contre-indication absolue',
+    className: 'bg-state-danger text-white hover:bg-state-danger/90 focus-visible:ring-2 focus-visible:ring-state-danger',
   },
   MAJEURE: {
     icon: AlertTriangle,
-    short: 'MAJ',
-    label: 'Interaction majeure',
-    className: 'bg-state-danger/60 text-white hover:bg-state-danger/70 focus-visible:ring-state-danger/60',
+    short: 'DÉC',
+    label: 'Niveau 3 · Association déconseillée',
+    className: 'bg-state-severe text-white hover:bg-state-severe/90 focus-visible:ring-2 focus-visible:ring-state-severe',
   },
   MODEREE: {
     icon: AlertCircle,
-    short: 'MOD',
-    label: 'Interaction modérée',
+    short: 'PRÉ',
+    label: 'Niveau 2 · Précaution d\'emploi',
     className:
-      'border border-state-warning/60 bg-state-warning/20 text-state-warning hover:bg-state-warning/30 focus-visible:ring-state-warning/60',
+      'border border-state-warning/60 bg-state-warning/20 text-state-warning hover:bg-state-warning/30 focus-visible:ring-2 focus-visible:ring-state-warning',
   },
   MINEURE: {
-    icon: Minus,
-    short: 'MIN',
-    label: 'Interaction mineure',
+    icon: Info,
+    short: 'INFO',
+    label: 'Niveau 1 · À prendre en compte',
     className:
-      'border border-border bg-muted-foreground/25 text-foreground hover:bg-muted-foreground/35 focus-visible:ring-ring',
+      'border border-state-info/60 bg-state-info/20 text-state-info hover:bg-state-info/30 focus-visible:ring-2 focus-visible:ring-state-info',
   },
   NONE: {
     icon: Check,
     short: 'OK',
     label: "Pas d'interaction connue",
     className:
-      'border border-state-safe/40 bg-state-safe/15 text-state-safe hover:bg-state-safe/25 focus-visible:ring-state-safe/60',
+      'border border-state-none/40 bg-state-none/15 text-state-none hover:bg-state-none/25 focus-visible:ring-2 focus-visible:ring-state-none',
   },
 }
 
@@ -918,6 +1119,9 @@ function MatrixPanel({ onGoToVerifier }: { onGoToVerifier: () => void }) {
           pairs.map((pair, i) => <PairCard key={`${pair.drugs.join('-')}-${i}`} pair={pair} />)
         )}
       </div>
+
+      {/* Légende permanente des niveaux d'interaction ANSM & MIPH (Phase 1.5) */}
+      <SeverityLegendCard />
 
       <p className="flex items-start gap-2 text-xs text-muted-foreground">
         <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />

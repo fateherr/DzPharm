@@ -16,6 +16,7 @@ import { StatsView } from '@/components/dzpharm/stats-view'
 import { AboutView } from '@/components/dzpharm/about-view'
 import { DrugSheet } from '@/components/dzpharm/drug-sheet'
 import { CommandPalette } from '@/components/dzpharm/command-palette'
+import { BarcodeScannerModal } from '@/components/dzpharm/barcode-scanner'
 import { MobileBottomNav } from '@/components/dzpharm/mobile-bottom-nav'
 import { useDzPharm } from '@/components/dzpharm/store'
 
@@ -24,6 +25,14 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {/* Lien d'évitement accessible pour les utilisateurs clavier / lecteurs d'écran */}
+      <a
+        href="#contenu"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Aller au contenu principal
+      </a>
+
       {/* En-tête supérieur unifié (Urgences + Navigation principale) */}
       <div className="sticky top-0 z-40 w-full print:hidden">
         <EmergencyBar />
@@ -56,6 +65,8 @@ export default function Page() {
       <DrugSheet />
       {/* Palette de commande universelle (Cmd+K) */}
       <CommandPalette />
+      {/* Scanner Code Barre / CBM (Phase 3.6) */}
+      <BarcodeScannerModal />
       {/* Barre de navigation basse ergonomique mobile */}
       <MobileBottomNav />
     </div>

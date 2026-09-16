@@ -104,6 +104,9 @@ interface DzPharmStore {
   commandOpen: boolean
   setCommandOpen: (open: boolean) => void
 
+  scannerOpen: boolean
+  setScannerOpen: (open: boolean) => void
+
   sheetDrugId: number | null
   openDrug: (id: number) => void
   closeDrug: () => void
@@ -190,6 +193,9 @@ export const useDzPharm = create<DzPharmStore>()(
 
       commandOpen: false,
       setCommandOpen: (commandOpen) => set({ commandOpen }),
+
+      scannerOpen: false,
+      setScannerOpen: (scannerOpen) => set({ scannerOpen }),
 
       sheetDrugId: null,
       openDrug: (id) => set({ sheetDrugId: id }),

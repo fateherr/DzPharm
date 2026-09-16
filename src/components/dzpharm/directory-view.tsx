@@ -157,6 +157,72 @@ export function DirectoryView() {
     }
   }, [filters.q])
 
+  // Phase 2.3: Restauration de l'état de recherche depuis l'URL au montage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const patch: Partial<typeof filters> = {}
+    const qParam = params.get('q')
+    const statusParam = params.get('status')
+    const domainParam = params.get('domain')
+    const formParam = params.get('form')
+    const listeParam = params.get('liste')
+    const countryParam = params.get('country')
+    const labParam = params.get('lab')
+    const pageParam = params.get('page')
+
+    if (qParam) patch.q = qParam
+    if (statusParam) patch.status = statusParam
+    if (domainParam) patch.domain = domainParam
+    if (formParam) patch.form = formParam
+    if (listeParam) patch.liste = listeParam
+    if (countryParam) patch.country = countryParam
+    if (labParam) patch.lab = labParam
+
+    if (pageParam) {
+      const p = parseInt(pageParam, 10)
+      if (p > 1) setPage(p)
+    }
+
+    if (Object.keys(patch).length > 0) {
+      setFilters(patch)
+      if (patch.q) setSearchInput(patch.q)
+    }
+  }, [])
+
+  // Phase 2.3: Synchronisation de l'état de recherche vers l'URL (sans rechargement)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (filters.q) params.set('q', filters.q)
+    else params.delete('q')
+
+    if (filters.status) params.set('status', filters.status)
+    else params.delete('status')
+
+    if (filters.domain) params.set('domain', filters.domain)
+    else params.delete('domain')
+
+    if (filters.form) params.set('form', filters.form)
+    else params.delete('form')
+
+    if (filters.liste) params.set('liste', filters.liste)
+    else params.delete('liste')
+
+    if (filters.country) params.set('country', filters.country)
+    else params.delete('country')
+
+    if (filters.lab) params.set('lab', filters.lab)
+    else params.delete('lab')
+
+    if (page > 1) params.set('page', String(page))
+    else params.delete('page')
+
+    const qStr = params.toString()
+    const targetUrl = qStr ? `${window.location.pathname}?${qStr}` : window.location.pathname
+    window.history.replaceState(null, '', targetUrl)
+  }, [filters, page])
+
   // Réinitialise la page quand les filtres changent
   useEffect(() => {
     setPage(1)

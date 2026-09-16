@@ -61,7 +61,9 @@ export function SessionGuard({ children }: { children?: ReactNode }) {
     if (!active) {
       setAuthorized(false)
       void fetch('/api/logout', { method: 'POST' }).finally(() => {
-        window.location.replace('/login')
+        const target = window.location.pathname + window.location.search
+        const targetUrl = target && target !== '/' ? `/login?redirectTo=${encodeURIComponent(target)}` : '/login'
+        window.location.replace(targetUrl)
       })
     } else {
       setAuthorized(true)

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
+  Barcode,
   BookOpen,
   Clock,
   Coins,
@@ -206,6 +207,7 @@ export function SearchAutocomplete({
   rightHint,
 }: SearchAutocompleteProps) {
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+  const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -423,6 +425,23 @@ export function SearchAutocomplete({
             aria-label="Effacer la recherche"
           >
             <X className="size-3.5" />
+          </button>
+        )}
+
+        {/* Bouton Scanner direct sur champ de recherche hero */}
+        {hero && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setScannerOpen(true)
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/60 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground shrink-0 cursor-pointer"
+            title="Scanner le code-barres d'un médicament (CBM / AMM)"
+          >
+            <Barcode className="size-3.5 text-primary" aria-hidden />
+            <span className="hidden sm:inline">Scanner</span>
           </button>
         )}
 

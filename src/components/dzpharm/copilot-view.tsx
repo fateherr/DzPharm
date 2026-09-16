@@ -16,6 +16,8 @@ import {
   Square,
   Stethoscope,
   Siren,
+  ThumbsDown,
+  ThumbsUp,
   User,
   Volume2,
   VolumeX,
@@ -65,6 +67,32 @@ const SUGGESTIONS = [
   'دوا تاع السكر؟',
   'Posologie paracétamol enfant 20 kg',
 ]
+
+/** Motifs strictement exclus du périmètre copilote (Phase 3.3 / 3.4) */
+const BLOCKED_PATTERNS = [
+  /\bprescri(re|vez|ption)\b/i,
+  /\bordonnance\b/i,
+  /\bdose exacte\b/i,
+  /\bmg\/kg\b/i,
+]
+
+export function AiDisclaimer() {
+  return (
+    <div
+      role="note"
+      aria-label="Avertissement clinique IA"
+      className="mt-2.5 rounded-xl border border-state-warning/30 bg-state-warning/8 p-2.5 text-[11px] leading-relaxed text-foreground/90"
+    >
+      <div className="flex items-center gap-1.5 font-semibold text-state-warning">
+        <Info className="size-3.5 shrink-0" aria-hidden="true" />
+        <span>AVERTISSEMENT :</span>
+      </div>
+      <p className="mt-1 text-muted-foreground">
+        Cette réponse est générée par IA et ne constitue pas un avis médical ou une prescription thérapeutique. Consultez les sources officielles (ANSM, MIPH) pour toute décision clinique.
+      </p>
+    </div>
+  )
+}
 
 const markdownComponents: Components = {
   h1: (props) => <h2 className="mt-4 mb-2 text-base font-bold text-foreground" {...props} />,
@@ -189,9 +217,41 @@ export function CopilotView() {
     []
   )
 
+  /* Évaluation de la qualité des réponses (Phase 3.4) */
+  const [feedback, setFeedback] = useState<Record<number, 'up' | 'down'>>({})
+
+  function handleFeedback(id: number, type: 'up' | 'down') {
+    setFeedback((prev) => ({ ...prev, [id]: type }))
+    toast({
+      title: type === 'up' ? 'Merci pour votre retour !' : 'Signalement enregistré',
+      description:
+        type === 'up'
+          ? 'Votre appréciation aide à améliorer la qualité clinique du copilote.'
+          : 'Ce retour a été noté pour l’amélioration des réponses.',
+    })
+  }
+
   function send(text: string) {
     const content = text.trim()
     if (!content || mutation.isPending) return
+
+    // Phase 3.3/3.4: Barrière de sécurité clinique — interception des requêtes hors périmètre
+    const isBlocked = BLOCKED_PATTERNS.some((pat) => pat.test(content))
+    if (isBlocked) {
+      const next: ChatMessage[] = [
+        ...messages,
+        { role: 'user', content },
+        {
+          role: 'assistant',
+          content:
+            '⚠️ **Demande hors périmètre du copilote**\n\nLe copilote DzPharm ne peut pas délivrer de prescription médicale personnalisée ni fixer une posologie impérative.\n\nPour toute prescription ou décision clinique, veuillez vous référer :\n- Au **médecin traitant**\n- Aux **RCP officiels** et aux **monographies validées** du répertoire national\n- Aux recommandations officielles du **Ministère de l’Industrie et de la Production Pharmaceutique (MIPH)**',
+        },
+      ]
+      setMessages(next)
+      setInput('')
+      return
+    }
+
     const next: ChatMessage[] = [...messages, { role: 'user', content }]
     setMessages(next)
     setInput('')
@@ -387,6 +447,12 @@ export function CopilotView() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Copilote IA</h1>
+            <span
+              className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-xs font-bold text-primary"
+              title="Version Bêta clinique"
+            >
+              β
+            </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-state-safe/30 bg-state-safe/10 px-2.5 py-0.5 text-[11px] font-semibold text-state-safe">
               <span className="relative flex size-2">
                 <span className="beacon-ping absolute inline-flex h-full w-full rounded-full bg-state-safe opacity-75" />
@@ -574,15 +640,47 @@ export function CopilotView() {
                             {message.content}
                           </Markdown>
                         </div>
-                        {/* 24-c b/c) Pied de réponse : avertissement IA + lecture à voix haute */}
-                        <footer className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-2">
-                          <p className="flex min-w-0 items-center gap-1.5 text-[11px] leading-snug text-muted-foreground">
-                            <Info className="size-3 shrink-0" aria-hidden />
-                            <span>
-                              Réponse générée par IA — vérifiez les RCP officiels et
-                              l&apos;avis d&apos;un professionnel de santé.
-                            </span>
-                          </p>
+
+                        {/* Avertissement IA clinique obligatoire & non supprimable (Phase 3.3 / 3.4) */}
+                        <AiDisclaimer />
+
+                        {/* Pied de réponse : lecture à voix haute, copie et évaluation qualité */}
+                        <footer className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-2">
+                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <span className="font-medium">Cette réponse vous a-t-elle été utile ?</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleFeedback(i, 'up')}
+                              title="Réponse utile et exacte"
+                              aria-label="Réponse utile"
+                              className={cn(
+                                'size-6.5 shrink-0 rounded-full transition-colors',
+                                feedback[i] === 'up'
+                                  ? 'bg-state-safe/20 text-state-safe font-bold'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              <ThumbsUp className="size-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleFeedback(i, 'down')}
+                              title="Réponse imprécise ou incomplète"
+                              aria-label="Signaler une réponse imprécise"
+                              className={cn(
+                                'size-6.5 shrink-0 rounded-full transition-colors',
+                                feedback[i] === 'down'
+                                  ? 'bg-state-danger/20 text-state-danger font-bold'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              <ThumbsDown className="size-3" />
+                            </Button>
+                          </div>
                           <div className="flex shrink-0 items-center gap-1">
                             <Button
                               type="button"

@@ -103,7 +103,7 @@ export function PwaProvider() {
           <span className="pointer-events-auto flex items-center gap-2 rounded-full border border-state-warning/40 bg-state-warning/15 px-4 py-1.5 text-xs font-semibold text-state-warning shadow-lg backdrop-blur-sm">
             <WifiOff className="size-3.5" aria-hidden />
             {offline
-              ? 'Hors ligne — fiches consultées disponibles en cache'
+              ? 'Mode hors ligne — Données mises en cache. Contrôle d\'interactions indisponible sans connexion.'
               : 'Serveur momentanément indisponible — données servies depuis le cache (fraîcheur non garantie)'}
           </span>
         </div>

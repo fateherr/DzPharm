@@ -25,6 +25,10 @@ export function middleware(req: NextRequest) {
   // Redirect to login
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = "/login";
+  const target = pathname + (req.nextUrl.search || "");
+  if (target && target !== "/") {
+    loginUrl.searchParams.set("redirectTo", target);
+  }
   return NextResponse.redirect(loginUrl);
 }
 

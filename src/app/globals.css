@@ -41,9 +41,13 @@
   --color-chifa: var(--chifa);
   --color-chifa-foreground: var(--chifa-foreground);
   --color-chifa-gold: var(--chifa-gold);
+  --color-state-none: var(--state-none);
+  --color-state-info: var(--state-info);
   --color-state-safe: var(--state-safe);
   --color-state-warning: var(--state-warning);
+  --color-state-severe: var(--state-severe);
   --color-state-danger: var(--state-danger);
+  --color-state-unknown: var(--state-unknown);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -74,9 +78,13 @@
   --chifa: #059669;
   --chifa-foreground: #ffffff;
   --chifa-gold: #d97706;
+  --state-none: #62748e;
+  --state-info: #0088cc;
   --state-safe: #16a34a;
   --state-warning: #d97706;
+  --state-severe: #ea580c;
   --state-danger: #dc2626;
+  --state-unknown: #7c3aed;
   --chart-1: #0284c7;
   --chart-2: #059669;
   --chart-3: #d97706;
@@ -116,9 +124,13 @@
   --chifa: #10b981;
   --chifa-foreground: #04121e;
   --chifa-gold: #fbbf24;
+  --state-none: #62748e;
+  --state-info: #00a5ef;
   --state-safe: #22c55e;
-  --state-warning: #f59e0b;
-  --state-danger: #ef4444;
+  --state-warning: #f99c00;
+  --state-severe: #fe6e00;
+  --state-danger: #e70044;
+  --state-unknown: #8d54ff;
   --chart-1: #38bdf8;
   --chart-2: #10b981;
   --chart-3: #fbbf24;
@@ -168,6 +180,22 @@
   border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@supports not (backdrop-filter: blur(0)) {
+  .glass-panel {
+    background: var(--card);
+  }
+  .glass-card {
+    background: var(--card);
+  }
+}
+
+/* Accessible Shape Encoding for Clinical Severity (WCAG 1.4.1) */
+.severity-shape-1::before { content: "ℹ "; }
+.severity-shape-2::before { content: "⚠ "; }
+.severity-shape-3::before { content: "⛔ "; }
+.severity-shape-4::before { content: "☠ "; }
+.severity-shape-unknown::before { content: "? "; }
 
 .card-lift {
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
@@ -316,3 +344,14 @@
     overflow: visible !important;
   }
 }
+
+@keyframes scanLaser {
+  0% { top: 10%; opacity: 0.8; }
+  50% { top: 88%; opacity: 1; }
+  100% { top: 10%; opacity: 0.8; }
+}
+
+.scanner-laser {
+  animation: scanLaser 2s ease-in-out infinite;
+}
+

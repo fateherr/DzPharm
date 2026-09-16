@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import {
   Baby,
+  Barcode,
   BarChart3,
   BookOpen,
   Coins,
@@ -56,6 +57,7 @@ function useDebounce<T>(value: T, delay: number): T {
 export function CommandPalette() {
   const commandOpen = useDzPharm((s) => s.commandOpen)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
+  const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const setView = useDzPharm((s) => s.setView)
   const openDrug = useDzPharm((s) => s.openDrug)
   const openTool = useDzPharm((s) => s.openTool)
@@ -67,17 +69,21 @@ export function CommandPalette() {
   const [query, setQuery] = useState('')
   const debounced = useDebounce(query.trim(), 200)
 
-  // Écouteur global pour Cmd+K / Ctrl+K
+  // Écouteur global pour Cmd+K / Ctrl+K (recherche) et Ctrl+I (interactions)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setCommandOpen(!commandOpen)
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
+        e.preventDefault()
+        setView('interactions')
+        setCommandOpen(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [commandOpen, setCommandOpen])
+  }, [commandOpen, setCommandOpen, setView])
 
   // Recherche en direct des médicaments
   const { data: drugResults, isLoading: drugsLoading } = useQuery({
@@ -233,6 +239,23 @@ export function CommandPalette() {
           >
             <PhoneCall className="size-4 text-amber-500" />
             <span>Centre Antipoison d&apos;Alger (021 71 30 42 / 021 71 30 43)</span>
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator className="my-1" />
+
+        {/* Actions rapides */}
+        <CommandGroup heading="Actions rapides">
+          <CommandItem
+            onSelect={() => {
+              setCommandOpen(false)
+              setScannerOpen(true)
+            }}
+            className="cursor-pointer"
+          >
+            <Barcode className="size-4 text-primary" />
+            <span>Scanner un médicament (Code-barres CBM / AMM)</span>
+            <CommandShortcut>S</CommandShortcut>
           </CommandItem>
         </CommandGroup>
 
