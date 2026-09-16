@@ -36,7 +36,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { fetchDrugs, fetchStats } from './api'
 import type { Drug, DrugQueryParams } from './types'
-import { StatusBadge, countryCode, formatNumber, formatPrice } from './status-badge'
+import { StatusBadge, countryCode, formatNumber, formatPrice, isLocal } from './status-badge'
 import { useDzPharm } from './store'
 
 type SortField = NonNullable<DrugQueryParams['sort']>
@@ -706,13 +706,21 @@ export function DirectoryView() {
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-2.5 text-xs text-muted-foreground">
-                <span className="truncate max-w-[160px]">{drug.lab}</span>
+                <span className="truncate max-w-[160px] flex items-center gap-1 font-medium">
+                  {isLocal(drug.country) && <span title="Fabrication algérienne" aria-hidden>🇩🇿</span>}
+                  <span className="truncate">{drug.lab}</span>
+                </span>
                 {drug.price != null ? (
-                  <span className="font-semibold text-chifa tabular-nums">
-                    {formatPrice(drug.price)} {drug.refundable ? '· CNAS' : ''}
+                  <span className="flex items-center gap-1">
+                    <span className="font-bold text-foreground tabular-nums">{formatPrice(drug.price)}</span>
+                    {drug.refundable && (
+                      <span className="rounded-sm bg-chifa/15 px-1 py-0.5 text-[9px] font-bold text-chifa" title="Remboursable Chifa">
+                        Chifa
+                      </span>
+                    )}
                   </span>
                 ) : (
-                  <span>AMM: {drug.regNumber}</span>
+                  <span className="font-mono text-[11px]">AMM: {drug.regNumber}</span>
                 )}
               </div>
             </button>

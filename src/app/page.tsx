@@ -24,8 +24,11 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <EmergencyBar />
-      <Header />
+      {/* En-tête supérieur unifié (Urgences + Navigation principale) */}
+      <div className="sticky top-0 z-40 w-full print:hidden">
+        <EmergencyBar />
+        <Header />
+      </div>
       <main id="contenu" className="flex-1 pb-16 md:pb-0">
         <AnimatePresence mode="wait">
           <motion.div

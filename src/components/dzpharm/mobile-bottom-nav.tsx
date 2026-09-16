@@ -49,6 +49,7 @@ export function MobileBottomNav() {
   const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
+  const basket = useDzPharm((s) => s.basket)
   const [moreOpen, setMoreOpen] = useState(false)
 
   const isMoreActive = MORE_MENU_ITEMS.some((m) => m.id === view)
@@ -174,12 +175,19 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => handleSelect('interactions')}
             className={cn(
-              'flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
+              'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
               view === 'interactions' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            <ShieldAlert className="size-5" />
-            <span>Sécurité</span>
+            <div className="relative">
+              <ShieldAlert className="size-5" />
+              {basket.length > 0 && (
+                <span className="absolute -top-1 -right-2 flex size-4 items-center justify-center rounded-full bg-state-danger text-[9px] font-bold text-white shadow-xs animate-pulse">
+                  {basket.length}
+                </span>
+              )}
+            </div>
+            <span>Interactions</span>
           </button>
 
           {/* 5. Menu / Plus */}

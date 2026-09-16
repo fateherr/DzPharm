@@ -467,11 +467,11 @@ export function CatalogView() {
                         </span>
                         {p.refundable ? (
                           <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-state-safe/25 bg-state-safe/10 px-1.5 py-0.5 text-[9px] font-bold text-state-safe"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-chifa/35 bg-chifa/10 px-1.5 py-0.5 text-[9px] font-bold text-chifa"
                             title={`Remboursable CNAS (ID ${p.cnasId})`}
                           >
                             <BadgeCheck className="size-2.5" aria-hidden />
-                            CNAS
+                            Chifa
                           </span>
                         ) : null}
                       </span>

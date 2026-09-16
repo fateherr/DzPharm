@@ -99,7 +99,7 @@ function AudienceToggle() {
     <div
       role="group"
       aria-label="Mode d’usage — professionnel ou famille"
-      className="flex h-8 items-center rounded-lg border border-border/70 bg-muted/60 p-0.5"
+      className="flex h-8 items-center rounded-lg border border-border/80 bg-muted/60 p-0.5"
     >
       <button
         type="button"
@@ -109,7 +109,7 @@ function AudienceToggle() {
         className={cn(
           base,
           audience === 'pro'
-            ? 'bg-card text-foreground shadow-xs'
+            ? 'bg-primary/15 text-primary font-semibold shadow-xs border border-primary/25'
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
@@ -124,7 +124,7 @@ function AudienceToggle() {
         className={cn(
           base,
           audience === 'famille'
-            ? 'bg-card text-foreground shadow-xs'
+            ? 'bg-chifa/15 text-chifa font-semibold shadow-xs border border-chifa/25'
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
@@ -167,7 +167,7 @@ export function Header() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <header className="sticky top-7 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
+      <header className="relative z-0 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
           {/* Logo & Nom de la Plateforme */}
           <button

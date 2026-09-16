@@ -16,7 +16,7 @@ export function EmergencyBar() {
       <aside
         role="region"
         aria-label="Numéros d'urgence médicale en Algérie (réduit)"
-        className="sticky top-0 z-50 w-full border-b border-rose-500/20 bg-slate-950/95 text-slate-100 backdrop-blur-md print:hidden transition-all"
+        className="relative z-10 w-full border-b border-rose-500/20 bg-slate-950/95 text-slate-100 backdrop-blur-md print:hidden transition-all"
       >
         <div className="mx-auto flex h-6 max-w-7xl items-center justify-between px-3 text-[11px]">
           <button
@@ -49,7 +49,7 @@ export function EmergencyBar() {
     <aside
       role="region"
       aria-label="Numéros d'urgence médicale en Algérie"
-      className="sticky top-0 z-50 w-full border-b border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30 backdrop-blur-lg print:hidden transition-all"
+      className="relative z-10 w-full border-b border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30 backdrop-blur-lg print:hidden transition-all"
     >
       <div className="mx-auto flex h-7 max-w-7xl items-center justify-between gap-1 px-3 text-[11px] font-medium tracking-wide sm:text-xs">
         {/* Left: Emergency Status Beacon & Numbers */}

@@ -53,7 +53,9 @@ import { fetchDrugDetail, postDrugView } from './api'
 import type { DrugDetail } from './types'
 import { RcpViewer } from './rcp-view'
 import {
+  ChifaBadge,
   ListeBadge,
+  OriginBadge,
   StatusBadge,
   countryCode,
   formatDate,
@@ -179,21 +181,35 @@ function ChifaCopayCalculator({ ppa }: { ppa: number }) {
         </div>
       </div>
 
+      {/* Barre visuelle de répartition CNAS vs Ticket Modérateur */}
+      <div className="mt-3 overflow-hidden rounded-full bg-muted/80 h-2 flex">
+        <div
+          style={{ width: `${cnasRate * 100}%` }}
+          className="bg-chifa transition-all duration-300"
+          title={`CNAS: ${cnasRate * 100}%`}
+        />
+        <div
+          style={{ width: `${(1 - cnasRate) * 100}%` }}
+          className="bg-amber-500 transition-all duration-300"
+          title={`Ticket modérateur: ${Math.round((1 - cnasRate) * 100)}%`}
+        />
+      </div>
+
       <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-        <div className="rounded-lg border border-state-safe/30 bg-state-safe/10 p-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-state-safe">
+        <div className="rounded-lg border border-chifa/30 bg-chifa/10 p-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-chifa">
             Prise en charge CNAS ({regime}%)
           </p>
-          <p className="mt-0.5 text-base font-bold text-state-safe tabular-nums">
+          <p className="mt-0.5 text-base font-bold text-chifa tabular-nums">
             {formatPrice(cnasCovered)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-muted/50 p-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Ticket modérateur (Reste à charge)
+            Ticket modérateur (Patient)
           </p>
           <p className="mt-0.5 text-base font-bold text-foreground tabular-nums">
-            {patientShare === 0 ? '0,00 DA (Pris à 100%)' : formatPrice(patientShare)}
+            {patientShare === 0 ? '0,00 DA (100% CNAS)' : formatPrice(patientShare)}
           </p>
         </div>
       </div>
@@ -201,6 +217,129 @@ function ChifaCopayCalculator({ ppa }: { ppa: number }) {
         Tarif PPA officiel · Droit commun CNAS / CASNOS · Tiers-payant officine
       </p>
     </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Quatuor Clinique Express (Matrice 2x2 — Vue 30 secondes)           */
+/* ------------------------------------------------------------------ */
+
+function ClinicalMatrix({
+  drug,
+  activeShortages,
+  onOpenShortages,
+}: {
+  drug: DrugDetail
+  activeShortages: number
+  onOpenShortages: () => void
+}) {
+  const pharmacy = drug.pharmacy?.[0]
+  const isPediatric = isPediatricCandidate(drug.form, drug.dci, drug.brand)
+  const isStup = (drug.liste || '').toUpperCase().includes('STUPE')
+
+  return (
+    <section aria-label="Quatuor clinique express" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {/* Quadrant 1 : Prix & Chifa */}
+      <div className="clinical-quadrant">
+        <div className="flex items-center justify-between gap-1 text-[11px] font-semibold tracking-wider text-chifa uppercase">
+          <span className="flex items-center gap-1.5">
+            <Coins className="size-3.5" aria-hidden />
+            Prix & Chifa
+          </span>
+          {pharmacy?.refundable ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-chifa/10 px-2 py-0.5 text-[10px] font-bold text-chifa">
+              <BadgeCheck className="size-3" />
+              Chifa
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-2 text-xl sm:text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+          {pharmacy?.ppa != null ? formatPrice(pharmacy.ppa) : 'Non référencé'}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+          {pharmacy?.refundable
+            ? `Prise en charge CNAS ${pharmacy.cnasId ? `(${pharmacy.cnasId})` : '80% / 100%'}`
+            : 'Produit hospitalier ou non remboursable'}
+        </p>
+      </div>
+
+      {/* Quadrant 2 : Forme & Posologie */}
+      <div className="clinical-quadrant">
+        <div className="flex items-center justify-between gap-1 text-[11px] font-semibold tracking-wider text-primary uppercase">
+          <span className="flex items-center gap-1.5">
+            <Pill className="size-3.5" aria-hidden />
+            Forme & Dosage
+          </span>
+          {isPediatric && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+              <Baby className="size-3" />
+              Pédiatrique
+            </span>
+          )}
+        </div>
+        <p className="mt-2 text-base sm:text-lg font-bold tracking-tight text-foreground line-clamp-1">
+          {drug.dosage || drug.form || 'Non spécifié'}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+          {drug.form ? drug.form : ''}
+          {drug.packaging ? ` · ${drug.packaging}` : ''}
+        </p>
+      </div>
+
+      {/* Quadrant 3 : Sécurité & Prescription */}
+      <div className="clinical-quadrant">
+        <div className="flex items-center justify-between gap-1 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <ShieldPlus className="size-3.5" aria-hidden />
+            Sécurité & Délivrance
+          </span>
+          {isStup ? (
+            <span className="rounded-full bg-state-danger/15 px-2 py-0.5 text-[10px] font-bold text-state-danger">
+              Stupéfiant
+            </span>
+          ) : drug.p1 ? (
+            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+              P1 Hôpital
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-2 text-base sm:text-lg font-bold tracking-tight text-foreground">
+          {drug.liste || 'Prescription libre'}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+          {drug.domains?.slice(0, 2).join(', ') || 'Pharmacopée nationale'}
+        </p>
+      </div>
+
+      {/* Quadrant 4 : Disponibilité & AMM */}
+      <div className="clinical-quadrant">
+        <div className="flex items-center justify-between gap-1 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <TriangleAlert className="size-3.5" aria-hidden />
+            Disponibilité Officine
+          </span>
+          {activeShortages > 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-state-warning/15 px-2 py-0.5 text-[10px] font-bold text-state-warning animate-pulse">
+              En tension
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-state-safe/10 px-2 py-0.5 text-[10px] font-semibold text-state-safe">
+              Disponible
+            </span>
+          )}
+        </div>
+        <p className="mt-2 text-base sm:text-lg font-bold tracking-tight text-foreground">
+          {activeShortages > 0 ? `${activeShortages} tension(s) signalée(s)` : 'En approvisionnement normal'}
+        </p>
+        <button
+          type="button"
+          onClick={onOpenShortages}
+          className="mt-1 text-xs text-primary hover:underline font-medium flex items-center gap-1"
+        >
+          {activeShortages > 0 ? 'Consulter les signalements' : 'Signaler une rupture locale'}
+        </button>
+      </div>
+    </section>
   )
 }
 
@@ -338,6 +477,7 @@ export function DrugSheet() {
   const closeDrug = useDzPharm((s) => s.closeDrug)
   const openDrug = useDzPharm((s) => s.openDrug)
   const addToBasket = useDzPharm((s) => s.addToBasket)
+  const basket = useDzPharm((s) => s.basket)
   const setView = useDzPharm((s) => s.setView)
   const openTool = useDzPharm((s) => s.openTool)
   const openLibraryMonograph = useDzPharm((s) => s.openLibraryMonograph)
@@ -385,6 +525,7 @@ export function DrugSheet() {
   const drug = data?.drug
   const equivalents = data?.equivalents ?? []
   const isFav = drug ? favorites.some((f) => f.id === drug.id) : false
+  const isInBasket = drug ? basket.some((b) => b.id === drug.id) : false
 
   // Complétude des données (audit 1.2 / P9) — réutilise strictement les
   // conditions des sections existantes : monographie livre (lien RCP/DCI)
@@ -553,8 +694,13 @@ export function DrugSheet() {
     <Sheet open={sheetDrugId !== null} onOpenChange={(o) => !o && closeDrug()}>
       <SheetContent
         side="right"
-        className="scroll-thin w-full gap-0 overflow-y-auto border-border bg-background p-0 sm:max-w-md md:max-w-xl"
+        className="flex flex-col h-full w-full gap-0 overflow-hidden border-l border-border/80 bg-background p-0 shadow-2xl sm:max-w-xl md:max-w-2xl lg:max-w-[740px]"
       >
+        {/* Mobile touch pull handle */}
+        <div className="sm:hidden shrink-0 pt-2 pb-1 bg-card/40" aria-hidden>
+          <div className="touch-sheet-handle" />
+        </div>
+
         {isLoading || !drug ? (
           <div className="space-y-4 p-6">
             <SheetTitle className="sr-only">Chargement de la fiche médicament</SheetTitle>
@@ -571,14 +717,19 @@ export function DrugSheet() {
           </div>
         ) : (
           <>
-            <SheetHeader className="space-y-3 border-b border-border/70 bg-card/50 p-5">
+            <SheetHeader className="shrink-0 space-y-3 border-b border-border/70 bg-card/50 p-5 sm:p-6">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <SheetTitle className="text-2xl leading-tight font-bold tracking-tight text-foreground">
+                  <SheetTitle className="text-2xl sm:text-3xl leading-tight font-extrabold tracking-tight text-foreground">
                     {drug.brand}
                   </SheetTitle>
-                  <SheetDescription className="mt-1 text-sm font-medium text-muted-foreground">
-                    {drug.dci}
+                  <SheetDescription className="mt-1 text-sm sm:text-base font-semibold text-muted-foreground flex flex-wrap items-center gap-2">
+                    <span>{drug.dci}</span>
+                    {drug.dosage && (
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-foreground/85">
+                        {drug.dosage}
+                      </span>
+                    )}
                   </SheetDescription>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -600,12 +751,12 @@ export function DrugSheet() {
                     className={cn(
                       'size-9 rounded-lg transition-colors',
                       isFav
-                        ? 'text-chifa hover:bg-chifa/10'
-                        : 'text-muted-foreground hover:text-chifa'
+                        ? 'text-amber-500 hover:bg-amber-500/10'
+                        : 'text-muted-foreground hover:text-amber-500'
                     )}
                   >
                     <Star
-                      className={cn('size-5', isFav && 'fill-chifa')}
+                      className={cn('size-5', isFav && 'fill-amber-500 text-amber-500')}
                       aria-hidden
                     />
                   </Button>
@@ -622,6 +773,11 @@ export function DrugSheet() {
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <StatusBadge status={drug.status} />
+                <OriginBadge country={drug.country} />
+                <ListeBadge liste={drug.liste} />
+                {drug.pharmacy?.[0]?.refundable && (
+                  <ChifaBadge refundable={true} cnasId={drug.pharmacy[0].cnasId} />
+                )}
                 {drug.domains.slice(0, 2).map((d) => (
                   <span
                     key={d}
@@ -630,17 +786,11 @@ export function DrugSheet() {
                     {d}
                   </span>
                 ))}
-                <ListeBadge liste={drug.liste} />
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium',
-                    isLocal(drug.country)
-                      ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
-                      : 'border-chifa/30 bg-chifa/10 text-chifa'
-                  )}
-                >
-                  {isLocal(drug.country) ? 'Produit local' : 'Importé'}
-                </span>
+                {drug.regNumber && (
+                  <span className="inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 text-xs font-mono text-muted-foreground">
+                    AMM: {drug.regNumber}
+                  </span>
+                )}
                 {typeof drug.views === 'number' && drug.views > 0 ? (
                   <span
                     className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums"
@@ -685,23 +835,20 @@ export function DrugSheet() {
                   </span>
                 ) : null}
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Niveau de complétude des données pour ce médicament
-              </p>
             </SheetHeader>
 
             <Tabs
               value={sheetTab}
               onValueChange={(v) => setSheetTab(v as 'fiche' | 'rcp')}
-              className="flex min-h-0 flex-1 flex-col"
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
             >
-              <TabsList className="mx-5 mt-4 grid h-10 grid-cols-2">
-                <TabsTrigger value="fiche" className="text-sm">
+              <TabsList className="mx-5 my-2.5 grid h-10 shrink-0 grid-cols-2">
+                <TabsTrigger value="fiche" className="text-sm font-semibold">
                   Fiche produit
                 </TabsTrigger>
-                <TabsTrigger value="rcp" className="gap-1.5 text-sm">
+                <TabsTrigger value="rcp" className="gap-1.5 text-sm font-semibold">
                   <BookOpen className="size-3.5" aria-hidden />
-                  RCP
+                  RCP & Monographie
                   {drug.rcpSource === 'BOOK' && (
                     <span
                       className="rounded-full bg-primary/15 px-1.5 text-[10px] font-bold text-primary"
@@ -712,8 +859,14 @@ export function DrugSheet() {
                   )}
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="fiche" className="mt-0 flex-1">
-            <div className="space-y-6 p-5">
+              <TabsContent value="fiche" className="mt-0 flex-1 overflow-y-auto scroll-thin">
+                <div className="space-y-6 p-5 sm:p-6">
+                  {/* Quatuor Clinique Express (30-second glance) */}
+                  <ClinicalMatrix
+                    drug={drug}
+                    activeShortages={activeShortageCount}
+                    onOpenShortages={() => setShortageOpen(true)}
+                  />
               {/* Prix officine (PPA) */}
               {drug.pharmacy && drug.pharmacy.length > 0 ? (
                 <section
@@ -1094,52 +1247,85 @@ export function DrugSheet() {
 
               <Separator />
 
-              <Button
-                onClick={handleAddToBasket}
-                className="h-11 w-full text-sm font-semibold"
-                size="lg"
-              >
-                <ShieldPlus className="size-4" aria-hidden />
-                Ajouter au contrôle d&apos;interactions
-              </Button>
-
               <SafetyNote />
             </div>
-              </TabsContent>
-              <TabsContent value="rcp" className="mt-0 flex-1">
-                {drug.rcpSource === 'BOOK' && drug.dciKey ? (
-                  <div className="px-5 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        closeDrug()
-                        openLibraryMonograph(drug.dciKey!)
-                      }}
-                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Library className="size-4 shrink-0 text-primary" aria-hidden />
-                        <span>
-                          <span className="block text-sm font-semibold text-foreground">
-                            Monographie complète de {drug.dci}
-                          </span>
-                          <span className="block text-xs text-muted-foreground">
-                            Ouvrir dans la Bibliothèque clinique (24 livres)
-                          </span>
-                        </span>
+          </TabsContent>
+          <TabsContent value="rcp" className="mt-0 flex-1 overflow-y-auto scroll-thin">
+            {drug.rcpSource === 'BOOK' && drug.dciKey ? (
+              <div className="px-5 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeDrug()
+                    openLibraryMonograph(drug.dciKey!)
+                  }}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-left transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Library className="size-4 shrink-0 text-primary" aria-hidden />
+                    <span>
+                      <span className="block text-sm font-semibold text-foreground">
+                        Monographie complète de {drug.dci}
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-primary">
-                        Ouvrir →
+                      <span className="block text-xs text-muted-foreground">
+                        Ouvrir dans la Bibliothèque clinique (24 livres)
                       </span>
-                    </button>
-                  </div>
-                ) : null}
-                <RcpViewer drugId={drug.id} brand={drug.brand} />
-              </TabsContent>
-            </Tabs>
-          </>
-        )}
-      </SheetContent>
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold text-primary">
+                    Ouvrir →
+                  </span>
+                </button>
+              </div>
+            ) : null}
+            <RcpViewer drugId={drug.id} brand={drug.brand} />
+          </TabsContent>
+        </Tabs>
+
+        {/* Permanent Bottom Action Dock */}
+        <div className="shrink-0 bottom-action-dock p-3 sm:px-5 sm:py-3.5 flex items-center justify-between gap-2.5">
+          <Button
+            onClick={handleAddToBasket}
+            className={cn(
+              'flex-1 h-11 font-semibold text-sm shadow-sm gap-2 transition-all',
+              isInBasket ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20' : ''
+            )}
+            variant={isInBasket ? 'outline' : 'default'}
+          >
+            <ShieldPlus className="size-4 shrink-0" />
+            <span className="truncate">
+              {isInBasket ? 'Déjà dans les interactions' : 'Ajouter aux interactions'}
+            </span>
+            {basket.length > 0 && (
+              <span className="ml-1 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                {basket.length}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={handlePrint}
+            className="h-11 shrink-0 gap-1.5 px-3.5 border-border hover:bg-muted font-medium text-xs sm:text-sm"
+            title="Imprimer la fiche et monographie A4"
+          >
+            <Printer className="size-4 shrink-0" />
+            <span className="hidden sm:inline">Imprimer A4</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => setShortageOpen(true)}
+            className="h-11 shrink-0 gap-1.5 px-3 border-state-warning/40 text-state-warning hover:bg-state-warning/10 font-medium text-xs sm:text-sm"
+            title="Signaler une rupture d'approvisionnement"
+          >
+            <TriangleAlert className="size-4 shrink-0" />
+            <span className="hidden sm:inline">Rupture</span>
+          </Button>
+        </div>
+      </>
+    )}
+  </SheetContent>
       {drug && sheetTab === 'fiche' ? (
         <PrintMonograph drug={drug} equivalents={equivalents.slice(0, 30)} />
       ) : null}

@@ -57,9 +57,9 @@ export function ListeBadge({ liste, className }: { liste?: string | null; classN
     <Badge
       variant="outline"
       className={cn(
-        'gap-1',
+        'gap-1 font-medium',
         isStup
-          ? 'border-chifa/40 bg-chifa/10 text-chifa'
+          ? 'border-state-danger/40 bg-state-danger/10 text-state-danger font-semibold'
           : isListe1
             ? 'border-primary/30 bg-primary/10 text-primary'
             : 'border-border bg-secondary text-secondary-foreground',
@@ -83,11 +83,11 @@ export function ListeBadge({ liste, className }: { liste?: string | null; classN
 const SEVERITY_META: Record<InteractionSeverity, { label: string; className: string }> = {
   'CONTRE-INDIQUE': {
     label: 'Contre-indication',
-    className: 'border-transparent bg-state-danger text-white',
+    className: 'border-transparent bg-state-danger text-white font-bold',
   },
   MAJEURE: {
     label: 'Majeure',
-    className: 'border-state-danger/40 bg-state-danger/15 text-state-danger',
+    className: 'border-state-danger/40 bg-state-danger/15 text-state-danger font-semibold',
   },
   MODEREE: {
     label: 'Modérée',
@@ -136,16 +136,79 @@ export const RISK_META: Record<
   },
   ELEVE: {
     label: 'Risque élevé',
-    className: 'bg-chifa/10 text-chifa',
-    border: 'border-chifa/40',
-    icon: 'text-chifa',
+    className: 'bg-state-warning/20 text-state-warning',
+    border: 'border-state-warning/50',
+    icon: 'text-state-warning',
   },
   CRITIQUE: {
     label: 'Risque critique',
-    className: 'bg-state-danger/10 text-state-danger',
-    border: 'border-state-danger/40',
+    className: 'bg-state-danger/15 text-state-danger font-bold',
+    border: 'border-state-danger/50',
     icon: 'text-state-danger',
   },
+}
+
+/* ------------------------------------------------------------------ */
+/* Badges Origine & Remboursement Chifa                               */
+/* ------------------------------------------------------------------ */
+
+export function OriginBadge({
+  country,
+  className,
+}: {
+  country?: string | null
+  className?: string
+}) {
+  const local = isLocal(country)
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold',
+        local
+          ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
+          : 'border-border/80 bg-muted/60 text-muted-foreground',
+        className
+      )}
+    >
+      <span aria-hidden>{local ? '🇩🇿' : '🌐'}</span>
+      <span>{local ? 'Produit local' : 'Importé'}</span>
+    </span>
+  )
+}
+
+export function ChifaBadge({
+  refundable,
+  cnasId,
+  className,
+}: {
+  refundable?: boolean | null
+  cnasId?: string | number | null
+  className?: string
+}) {
+  if (refundable) {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 rounded-md border border-chifa/35 bg-chifa/10 px-2 py-0.5 text-xs font-bold text-chifa',
+          className
+        )}
+        title={cnasId ? `Remboursable CNAS (Code: ${cnasId})` : 'Pris en charge par la sécurité sociale (Chifa)'}
+      >
+        <span className="size-1.5 rounded-full bg-chifa" aria-hidden />
+        Chifa CNAS
+      </span>
+    )
+  }
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md border border-border/70 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground',
+        className
+      )}
+    >
+      Non remboursé
+    </span>
+  )
 }
 
 /* ------------------------------------------------------------------ */

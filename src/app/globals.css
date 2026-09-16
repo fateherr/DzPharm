@@ -40,6 +40,7 @@
   /* DzPharm custom tokens */
   --color-chifa: var(--chifa);
   --color-chifa-foreground: var(--chifa-foreground);
+  --color-chifa-gold: var(--chifa-gold);
   --color-state-safe: var(--state-safe);
   --color-state-warning: var(--state-warning);
   --color-state-danger: var(--state-danger);
@@ -49,7 +50,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Light theme — clinical, cool slate surfaces with medical cyan */
+/* Light theme — clinical, high-contrast slate surfaces with medical cyan & authentic emerald Chifa */
 :root {
   --radius: 0.75rem;
   --background: #f8fafc;
@@ -60,25 +61,26 @@
   --popover-foreground: #0b1220;
   --primary: #0284c7;
   --primary-foreground: #ffffff;
-  --secondary: #eef2f7;
+  --secondary: #f1f5f9;
   --secondary-foreground: #0b1220;
   --muted: #f1f5f9;
-  --muted-foreground: #5b6b82;
+  --muted-foreground: #475569;
   --accent: #e8eef6;
   --accent-foreground: #0b1220;
   --destructive: #dc2626;
-  --border: #e2e8f0;
+  --border: #cbd5e1;
   --input: #cbd5e1;
   --ring: #0284c7;
-  --chifa: #ea580c;
+  --chifa: #059669;
   --chifa-foreground: #ffffff;
-  --state-safe: #059669;
+  --chifa-gold: #d97706;
+  --state-safe: #16a34a;
   --state-warning: #d97706;
-  --state-danger: #b91c1c;
+  --state-danger: #dc2626;
   --chart-1: #0284c7;
   --chart-2: #059669;
-  --chart-3: #ea580c;
-  --chart-4: #d97706;
+  --chart-3: #d97706;
+  --chart-4: #6366f1;
   --chart-5: #64748b;
   --sidebar: #f8fafc;
   --sidebar-foreground: #0b1220;
@@ -86,24 +88,24 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e8eef6;
   --sidebar-accent-foreground: #0b1220;
-  --sidebar-border: #e2e8f0;
+  --sidebar-border: #cbd5e1;
   --sidebar-ring: #0284c7;
 }
 
-/* Dark theme — executive obsidian slate & radiant medical cyan */
+/* Dark theme — executive obsidian slate, deep midnight card elevation & radiant emerald Chifa */
 .dark {
   --radius: 0.75rem;
-  --background: #080d1a;
+  --background: #070b14;
   --foreground: #f1f5f9;
-  --card: #0e172a;
+  --card: #0d1527;
   --card-foreground: #f1f5f9;
-  --popover: #0f1930;
+  --popover: #0f182e;
   --popover-foreground: #f1f5f9;
   --primary: #38bdf8;
   --primary-foreground: #04121e;
-  --secondary: #162238;
+  --secondary: #142036;
   --secondary-foreground: #f1f5f9;
-  --muted: #131d31;
+  --muted: #111c33;
   --muted-foreground: #94a3b8;
   --accent: #192742;
   --accent-foreground: #f1f5f9;
@@ -111,21 +113,22 @@
   --border: #1e293b;
   --input: #1e293b;
   --ring: #38bdf8;
-  --chifa: #f97316;
-  --chifa-foreground: #ffffff;
-  --state-safe: #10b981;
+  --chifa: #10b981;
+  --chifa-foreground: #04121e;
+  --chifa-gold: #fbbf24;
+  --state-safe: #22c55e;
   --state-warning: #f59e0b;
   --state-danger: #ef4444;
   --chart-1: #38bdf8;
   --chart-2: #10b981;
-  --chart-3: #f97316;
-  --chart-4: #f59e0b;
+  --chart-3: #fbbf24;
+  --chart-4: #818cf8;
   --chart-5: #94a3b8;
   --sidebar: #0a1122;
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #38bdf8;
   --sidebar-primary-foreground: #04121e;
-  --sidebar-accent: #162238;
+  --sidebar-accent: #142036;
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #1e293b;
   --sidebar-ring: #38bdf8;
@@ -173,6 +176,46 @@
   transform: translateY(-2px);
   box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--primary) 12%, transparent);
   border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+/* 4-Quadrant Clinical Summary matrix card */
+.clinical-quadrant {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  padding: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+.clinical-quadrant:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow: 0 4px 20px -4px color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+/* Fixed Bottom Action Dock for clinical sheets & forms */
+.bottom-action-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--background) 90%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  box-shadow: 0 -8px 24px -6px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile Bottom Sheet touch pull indicator handle */
+.touch-sheet-handle {
+  width: 44px;
+  height: 4.5px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  margin: 0.5rem auto 0.25rem auto;
+  transition: background-color 0.2s ease;
+}
+.touch-sheet-handle:hover {
+  background: color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 /* Pulse status beacon for active live indicators */
