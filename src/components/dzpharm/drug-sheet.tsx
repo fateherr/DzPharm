@@ -128,9 +128,9 @@ function Metric({
   icon?: typeof Pill
 }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-muted/40 p-3">
+    <div className="rounded-lg border border-border/80 bg-card/60 p-3 shadow-2xs transition-all hover:border-primary/30">
       <p className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-        {Icon ? <Icon className="size-3" aria-hidden /> : null}
+        {Icon ? <Icon className="size-3 text-primary/70" aria-hidden /> : null}
         {label}
       </p>
       <p className="mt-1 text-sm font-semibold break-words text-foreground">{value || '—'}</p>
@@ -194,12 +194,12 @@ function ChifaCopayCalculator({ ppa }: { ppa: number }) {
       <div className="mt-3 overflow-hidden rounded-full bg-muted/80 h-2 flex">
         <div
           style={{ width: `${cnasRate * 100}%` }}
-          className="bg-chifa transition-all duration-300"
+          className="bg-chifa transition-all duration-500 ease-out"
           title={`CNAS: ${cnasRate * 100}%`}
         />
         <div
           style={{ width: `${(1 - cnasRate) * 100}%` }}
-          className="bg-amber-500 transition-all duration-300"
+          className="bg-state-warning transition-all duration-500 ease-out"
           title={`Ticket modérateur: ${Math.round((1 - cnasRate) * 100)}%`}
         />
       </div>
@@ -262,7 +262,7 @@ function ClinicalMatrix({
             </span>
           ) : null}
         </div>
-        <p className="mt-2 text-xl sm:text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+        <p className="mt-2 text-xl sm:text-2xl font-extrabold tracking-tight text-foreground tabular-nums text-price">
           {pharmacy?.ppa != null ? formatPrice(pharmacy.ppa) : 'Non référencé'}
         </p>
         <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
@@ -402,7 +402,7 @@ function PediatricPosologyWidget({
   return (
     <section
       aria-label="Calculateur posologique pédiatrique"
-      className="rounded-xl border border-primary/30 bg-primary/5 p-4"
+      className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-xs"
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-primary uppercase tracking-wider">
@@ -745,7 +745,7 @@ export function DrugSheet() {
           </div>
         ) : (
           <>
-            <SheetHeader className="shrink-0 space-y-3 border-b border-border/70 bg-card/50 p-5 sm:p-6">
+            <SheetHeader className="shrink-0 space-y-3 border-b border-border/70 bg-gradient-to-b from-card to-background/60 backdrop-blur-md p-5 sm:p-6">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <SheetTitle className="text-2xl sm:text-3xl leading-tight font-extrabold tracking-tight text-foreground">
@@ -754,7 +754,7 @@ export function DrugSheet() {
                   <SheetDescription className="mt-1 text-sm sm:text-base font-semibold text-muted-foreground flex flex-wrap items-center gap-2">
                     <span>{drug.dci}</span>
                     {drug.dosage && (
-                      <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-foreground/85">
+                      <span className="rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                         {drug.dosage}
                       </span>
                     )}
@@ -1217,7 +1217,7 @@ export function DrugSheet() {
                           setEquivSort(e.target.value as 'price_asc' | 'copay_asc' | 'brand_asc')
                         }
                         aria-label="Trier les équivalents"
-                        className="rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                        className="rounded-md border border-border/80 bg-background px-2 py-0.5 text-xs text-foreground shadow-2xs transition-colors hover:border-primary/40 focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
                       >
                         <option value="price_asc">PPA croissant</option>
                         <option value="copay_asc">Reste à charge</option>

@@ -1,18 +1,20 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Coins, Database, Info, RefreshCw, ShieldCheck, Wifi } from 'lucide-react'
+import { BookOpen, Coins, Database, Info, Pill, RefreshCw, ShieldCheck, Wifi } from 'lucide-react'
 import { useDzPharm } from './store'
 
 export function Footer() {
   const setView = useDzPharm((s) => s.setView)
   return (
-    <footer className="mt-auto w-full border-t border-border/70 bg-card/40 print:hidden">
+    <footer className="mt-auto w-full border-t border-border/80 bg-gradient-to-t from-card/80 to-card/40 backdrop-blur-md print:hidden">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-xs text-muted-foreground sm:flex-row sm:px-6">
-        <p className="flex items-center gap-1.5 text-center sm:text-left">
-          <Database className="size-3.5 shrink-0" aria-hidden />
+        <p className="flex items-center gap-2 text-center sm:text-left">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-chifa text-white shadow-2xs">
+            <Pill className="size-3" aria-hidden />
+          </span>
           <span>
-            DzPharm — Données : Nomenclature Nationale (Ministère de
+            <strong className="font-semibold text-foreground/90">DzPharm</strong> — Nomenclature Nationale (Ministère de
             l&apos;Industrie Pharmaceutique, DZ)
           </span>
         </p>
@@ -20,7 +22,7 @@ export function Footer() {
           <button
             type="button"
             onClick={() => setView('apropos')}
-            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 font-medium text-primary transition-colors hover:text-primary/80 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 font-semibold text-primary transition-colors hover:text-primary/80 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="Ouvrir la page À propos et sources"
           >
             <Info className="size-3.5 shrink-0" aria-hidden />
@@ -40,7 +42,7 @@ export function Footer() {
           </p>
           <p className="flex items-center gap-1.5">
             <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
-            Usage professionnel — Vérifiez toujours les RCP officiels
+            Usage professionnel — Vérifiez les RCP
           </p>
           <span className="hidden items-center gap-1.5 sm:flex">
             <RefreshCw className="size-3 shrink-0 text-state-safe" aria-hidden />
@@ -48,7 +50,7 @@ export function Footer() {
           </span>
           <Badge
             variant="outline"
-            className="border-primary/25 bg-primary/5 text-primary"
+            className="border-chifa/30 bg-chifa/10 text-chifa shadow-2xs font-semibold"
           >
             MAJ Juin 2026
           </Badge>

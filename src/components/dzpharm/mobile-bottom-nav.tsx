@@ -109,11 +109,11 @@ export function MobileBottomNav() {
                       className={cn(
                         'flex flex-col items-start gap-1 rounded-2xl border p-3 text-left transition-all',
                         active
-                          ? 'border-primary/40 bg-primary/10 text-primary shadow-xs'
+                          ? 'border-l-2 border-l-primary border-primary/30 bg-primary/12 text-primary shadow-sm'
                           : 'border-border/70 bg-card hover:border-primary/20 hover:bg-accent'
                       )}
                     >
-                      <span className={cn('flex size-8 items-center justify-center rounded-xl', active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>
+                      <span className={cn('flex size-8 items-center justify-center rounded-xl shadow-xs', active ? 'bg-primary text-white' : 'bg-muted text-muted-foreground')}>
                         <item.icon className="size-4" />
                       </span>
                       <span className="mt-1 text-xs font-semibold text-foreground">{item.label}</span>
@@ -130,7 +130,7 @@ export function MobileBottomNav() {
       {/* Barre de navigation basse permanente */}
       <nav
         aria-label="Navigation mobile principale"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/90 px-3 py-1.5 shadow-lg backdrop-blur-xl md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/95 px-3 py-1.5 shadow-lg shadow-black/20 backdrop-blur-xl md:hidden"
         style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="flex items-center justify-around">
@@ -139,12 +139,15 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => handleSelect('accueil')}
             className={cn(
-              'flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
+              'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
               view === 'accueil' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Home className="size-5" />
             <span>Accueil</span>
+            {view === 'accueil' && (
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
+            )}
           </button>
 
           {/* 2. Répertoire */}
@@ -152,12 +155,15 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => handleSelect('repertoire')}
             className={cn(
-              'flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
+              'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
               view === 'repertoire' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <BookOpen className="size-5" />
             <span>Répertoire</span>
+            {view === 'repertoire' && (
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
+            )}
           </button>
 
           {/* 3. Bouton central Flash Search (Surélevé) */}
@@ -165,7 +171,7 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => setCommandOpen(true)}
             aria-label="Recherche universelle rapide"
-            className="group relative -top-3 flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-sky-600 text-primary-foreground shadow-lg shadow-primary/35 transition-transform active:scale-95"
+            className="group relative -top-3 flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 via-primary to-primary text-white shadow-lg shadow-primary/40 ring-2 ring-primary/25 transition-transform active:scale-95 hover:scale-105"
           >
             <Search className="size-5.5 transition-transform group-hover:scale-110" />
           </button>
@@ -188,6 +194,9 @@ export function MobileBottomNav() {
               )}
             </div>
             <span>Interactions</span>
+            {view === 'interactions' && (
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
+            )}
           </button>
 
           {/* 5. Menu / Plus */}
@@ -195,12 +204,15 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => setMoreOpen(!moreOpen)}
             className={cn(
-              'flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
+              'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
               isMoreActive || moreOpen ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <MoreHorizontal className="size-5" />
             <span>Menu</span>
+            {(isMoreActive || moreOpen) && (
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
+            )}
           </button>
         </div>
       </nav>

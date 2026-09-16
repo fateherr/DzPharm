@@ -80,7 +80,7 @@ function ThemeToggle() {
       variant="ghost"
       size="icon"
       aria-label="Changer de thème"
-      className="size-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+      className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 hover:rotate-12 active:rotate-45"
       onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
     >
       <Sun className="hidden size-4 dark:block" aria-hidden />
@@ -179,14 +179,14 @@ export function Header() {
             aria-label="DzPharm — retour à l'accueil"
           >
             <span
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-sky-600 shadow-md shadow-primary/25 transition-transform group-hover:scale-105"
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 via-primary to-chifa shadow-md shadow-primary/30 ring-1 ring-white/10 dark:ring-white/5 transition-transform group-hover:scale-105"
               aria-hidden
             >
-              <Pill className="size-5 text-primary-foreground" />
+              <Pill className="size-5 text-white" />
             </span>
             <span className="flex min-w-0 flex-col text-left leading-tight">
               <span className="text-lg font-bold tracking-tight text-foreground">
-                Dz<span className="bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent">Pharm</span>
+                Dz<span className="bg-gradient-to-r from-primary via-sky-500 to-chifa bg-clip-text text-transparent">Pharm</span>
               </span>
               <span className="hidden truncate text-[10px] font-medium tracking-wide text-muted-foreground xl:block">
                 Référentiel Officiel · 2026
@@ -195,7 +195,7 @@ export function Header() {
           </button>
 
           {/* Navigation Adaptative Desktop & Tablette */}
-          <nav aria-label="Navigation principale" className="hidden items-center gap-0.5 rounded-xl border border-border/60 bg-muted/40 p-1 md:flex">
+          <nav aria-label="Navigation principale" className="hidden items-center gap-0.5 rounded-xl border border-border/60 bg-muted/60 p-1 shadow-inner md:flex">
             {/* 4 modules fondamentaux */}
             {CORE_NAV.map((item) => {
               const active = view === item.id
@@ -215,7 +215,7 @@ export function Header() {
                   {active && (
                     <motion.span
                       layoutId="activeNavTab"
-                      className="absolute inset-0 rounded-lg bg-card shadow-xs border border-border/60"
+                      className="absolute inset-0 rounded-lg bg-card shadow-md shadow-primary/10 border border-border/60"
                       transition={{ type: 'spring', stiffness: 450, damping: 35 }}
                     />
                   )}
@@ -344,14 +344,14 @@ export function Header() {
             <button
               type="button"
               onClick={() => setCommandOpen(true)}
-              className="group relative flex h-8 w-32 sm:w-44 md:w-48 lg:w-56 items-center justify-between rounded-lg border border-border/70 bg-card/60 px-2.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group relative flex h-8 w-32 sm:w-44 md:w-48 lg:w-56 items-center justify-between gap-0 rounded-lg border border-border/70 bg-card/60 text-xs text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
               title="Recherche universelle (Cmd+K)"
             >
-              <span className="flex items-center gap-1.5 truncate">
+              <span className="flex items-center gap-1.5 bg-primary/8 px-2.5 h-full border-r border-border/50 shrink-0">
                 <Search className="size-3.5 text-primary group-hover:scale-110 transition-transform" aria-hidden />
-                <span className="truncate">Rechercher…</span>
               </span>
-              <kbd className="hidden rounded border border-border/80 bg-muted/80 px-1 text-[10px] font-semibold text-muted-foreground shadow-2xs sm:inline-block">
+              <span className="truncate px-2.5 flex-1 text-left">Rechercher…</span>
+              <kbd className="hidden shrink-0 rounded border border-border/80 bg-muted/80 px-1.5 mr-2 text-[10px] font-semibold text-muted-foreground shadow-2xs sm:inline-block">
                 ⌘K
               </kbd>
             </button>
@@ -364,7 +364,7 @@ export function Header() {
                   size="icon"
                   onClick={() => setScannerOpen(true)}
                   aria-label="Scanner un médicament (Code-barres / CBM)"
-                  className="size-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                  className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   <Barcode className="size-4" aria-hidden />
                 </Button>
@@ -398,7 +398,7 @@ export function Header() {
                   size="icon"
                   onClick={handleLogout}
                   aria-label="Verrouiller la session"
-                  className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors"
                 >
                   <Lock className="size-4" aria-hidden />
                 </Button>

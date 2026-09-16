@@ -285,8 +285,17 @@ function QuickAccessGrid({ cards }: { cards: QuickAccessCard[] }) {
   return (
     <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 lg:grid-cols-5">
       {cards.map((card) => {
-        const cardClass =
-          'group relative w-56 shrink-0 overflow-hidden rounded-xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:w-auto'
+        const accentHover =
+          card.accent === 'chifa'
+            ? 'hover:border-l-chifa hover:border-chifa/40 hover:shadow-chifa/10'
+            : card.accent === 'danger'
+              ? 'hover:border-l-state-danger hover:border-state-danger/40 hover:shadow-state-danger/10'
+              : 'hover:border-l-primary hover:border-primary/40 hover:shadow-primary/10'
+
+        const cardClass = cn(
+          'group relative w-56 shrink-0 overflow-hidden rounded-xl border border-l-2 border-border/80 border-l-transparent bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:w-auto',
+          accentHover
+        )
         const accentClass =
           card.accent === 'chifa'
             ? 'bg-chifa/10 text-chifa'
@@ -296,12 +305,12 @@ function QuickAccessGrid({ cards }: { cards: QuickAccessCard[] }) {
         const content = (
           <>
             <span
-              className={cn('flex size-9 items-center justify-center rounded-lg', accentClass)}
+              className={cn('flex size-10 items-center justify-center rounded-xl shadow-2xs transition-transform group-hover:scale-105', accentClass)}
               aria-hidden
             >
-              <card.icon className="size-4.5" />
+              <card.icon className="size-5" />
             </span>
-            <span className="mt-2.5 block text-sm leading-snug font-semibold text-foreground">
+            <span className="mt-2.5 block text-sm leading-snug font-semibold text-foreground group-hover:text-primary transition-colors">
               {card.title}
             </span>
             <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
@@ -385,10 +394,10 @@ function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
     >
-      <Card className="card-lift glass-card group relative overflow-hidden rounded-2xl border border-border/80 shadow-xs">
+      <Card className="card-lift glass-card group relative overflow-hidden rounded-2xl border border-border/80 shadow-sm">
         <div
           className={cn(
-            'absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent to-transparent',
+            'absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-transparent to-transparent',
             accent.gradient
           )}
           aria-hidden
@@ -410,7 +419,7 @@ function KpiCard({
             </div>
             <span
               className={cn(
-                'flex size-11 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 shadow-xs',
+                'flex size-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 shadow-sm',
                 accent.bg
               )}
               aria-hidden
@@ -560,11 +569,11 @@ export function HomeView() {
         <div
           role="note"
           aria-label="Mode famille — contenus grand public"
-          className="border-b border-primary/20 bg-primary/5 print:hidden"
+          className="border-b border-primary/15 bg-gradient-to-r from-primary/8 via-chifa/5 to-transparent print:hidden"
         >
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1.5 px-4 py-2.5 text-xs sm:px-6">
             <span className="flex min-w-0 items-center gap-1.5 leading-snug text-foreground">
-              <HeartHandshake className="size-3.5 shrink-0 text-primary" aria-hidden />
+              <HeartHandshake className="size-3.5 shrink-0 text-chifa" aria-hidden />
               <span>
                 <strong className="font-semibold">Mode famille</strong> — contenus grand public.
                 Pour un usage professionnel, basculez en Mode professionnel.
@@ -591,13 +600,13 @@ export function HomeView() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm">
               <Stethoscope className="size-3.5" aria-hidden />
               Nomenclature officielle — Juin 2026
             </span>
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
               L&apos;intelligence pharmaceutique{' '}
-              <span className="bg-gradient-to-r from-primary to-chifa bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-sky-400 via-primary to-chifa bg-clip-text text-transparent">
                 algérienne
               </span>
             </h1>
@@ -606,23 +615,23 @@ export function HomeView() {
               sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
             </p>
             <div className="mx-auto mt-6 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
                 <BookOpen className="size-3.5 text-primary" aria-hidden />
                 <span className="font-semibold text-foreground">24 livres</span> pharmacologie
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
                 <FileText className="size-3.5 text-primary" aria-hidden />
                 <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-2xs backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-sm backdrop-blur-lg">
                 <Store className="size-3.5" aria-hidden />
                 <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
                 <FileCheck className="size-3.5 text-primary" aria-hidden />
                 RCP ANSM officiel
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/40 bg-pink-500/10 px-3.5 py-1.5 text-pink-700 shadow-2xs backdrop-blur-md dark:text-pink-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/40 bg-pink-500/10 px-3.5 py-1.5 text-pink-700 shadow-sm backdrop-blur-lg dark:text-pink-300">
                 <HeartPulse className="size-3.5" aria-hidden />
                 Grossesse CRAT
               </span>
@@ -660,9 +669,9 @@ export function HomeView() {
                   key={chip}
                   type="button"
                   onClick={() => gotoDirectory({ q: chip })}
-                  className="group flex items-center gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-primary hover:shadow-xs focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  className="group flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-xs transition-all hover:border-primary/50 hover:bg-card hover:text-primary hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 >
-                  <span className="size-1 rounded-full bg-primary/60 group-hover:bg-primary transition-colors" />
+                  <span className="size-1.5 rounded-full bg-primary/60 group-hover:bg-primary group-hover:scale-125 transition-all" />
                   {chip}
                 </button>
               ))}
@@ -763,7 +772,7 @@ export function HomeView() {
                 type="button"
                 onClick={() => openDrug(item.id)}
                 title={`Ouvrir la fiche ${item.brand}`}
-                className="group flex shrink-0 items-center gap-2.5 rounded-xl border border-border bg-card py-2 pr-3 pl-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="group flex shrink-0 items-center gap-2.5 rounded-xl border border-l-2 border-border/80 border-l-primary/35 bg-card py-2 pr-3 pl-3 shadow-2xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <Clock className="size-4 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary" aria-hidden />
                 <span className="min-w-0 text-left">
@@ -878,7 +887,7 @@ export function HomeView() {
             {favorites.map((fav) => (
               <div
                 key={fav.id}
-                className="group relative flex shrink-0 items-center gap-2.5 rounded-xl border border-chifa/25 bg-chifa/5 py-2 pr-8 pl-3 transition-colors hover:border-chifa/50"
+                className="group relative flex shrink-0 items-center gap-2.5 rounded-xl border border-chifa/40 bg-chifa/8 py-2 pr-8 pl-3 shadow-2xs transition-all hover:border-chifa/60 hover:shadow-xs"
               >
                 <button
                   type="button"
@@ -932,7 +941,7 @@ export function HomeView() {
                 className="group relative overflow-hidden rounded-xl border border-border bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <span
-                  className="absolute -top-1 -left-1 flex size-7 items-center justify-center rounded-br-xl bg-gradient-to-br from-primary/20 to-chifa/20 text-xs font-bold text-primary tabular-nums"
+                  className="absolute -top-1 -left-1 flex size-7 items-center justify-center rounded-br-xl bg-gradient-to-br from-primary/30 to-chifa/30 text-xs font-bold text-primary tabular-nums shadow-2xs"
                   aria-hidden
                 >
                   {i + 1}
@@ -986,7 +995,7 @@ export function HomeView() {
                 className="group flex shrink-0 items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:w-auto"
               >
                 <span
-                  className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-chifa/20 text-xs font-bold text-primary tabular-nums"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/30 to-chifa/30 text-xs font-bold text-primary tabular-nums shadow-2xs"
                   aria-hidden
                 >
                   {i + 1}
@@ -1024,7 +1033,7 @@ export function HomeView() {
       >
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <h2 id="outils-title" className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            <h2 id="outils-title" className="section-heading-accent text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               Tous les outils
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -1041,22 +1050,22 @@ export function HomeView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * i }}
               onClick={() => setView(tool.view)}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/8 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span
                 className={cn(
                   'absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
                   tool.accent === 'chifa'
-                    ? 'via-chifa/60'
+                    ? 'via-chifa/70'
                     : tool.accent === 'danger'
-                      ? 'via-state-danger/60'
-                      : 'via-primary/60'
+                      ? 'via-state-danger/70'
+                      : 'via-primary/70'
                 )}
                 aria-hidden
               />
               <span
                 className={cn(
-                  'flex size-10 items-center justify-center rounded-lg',
+                  'flex size-10 items-center justify-center rounded-xl shadow-xs transition-transform group-hover:scale-110',
                   tool.accent === 'chifa'
                     ? 'bg-chifa/10 text-chifa'
                     : tool.accent === 'danger'
@@ -1085,7 +1094,7 @@ export function HomeView() {
       >
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
-            <h2 id="domaines-title" className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            <h2 id="domaines-title" className="section-heading-accent text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               Domaines thérapeutiques
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -1119,7 +1128,7 @@ export function HomeView() {
                 >
                   <span
                     className={cn(
-                      'flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110 shadow-2xs',
+                      'flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110 group-hover:rotate-3 shadow-2xs',
                       style.bg
                     )}
                     aria-hidden
@@ -1148,7 +1157,7 @@ export function HomeView() {
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* DCI */}
-          <Card>
+          <Card className="card-lift glass-card border border-border/80 shadow-xs">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Pill className="size-4 text-primary" aria-hidden />
@@ -1179,8 +1188,7 @@ export function HomeView() {
                         </span>
                       </span>
                       <span className="block h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <span
-                          className="block h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all"
+                      <span className="block h-full rounded-full bg-gradient-to-r from-primary/70 via-primary to-chifa/70 transition-all"
                           style={{ width: `${Math.max(4, (dci.count / maxDci) * 100)}%` }}
                         />
                       </span>
@@ -1190,7 +1198,7 @@ export function HomeView() {
           </Card>
 
           {/* Laboratoires */}
-          <Card>
+          <Card className="card-lift glass-card border border-border/80 shadow-xs">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Building2 className="size-4 text-chifa" aria-hidden />

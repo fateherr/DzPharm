@@ -92,7 +92,8 @@ function SortHeader({
     <th
       scope="col"
       className={cn(
-        'sticky top-0 z-10 bg-card px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase shadow-[0_1px_0_0_var(--border)]',
+        'sticky top-0 z-10 bg-card/95 backdrop-blur-sm px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase shadow-[0_1px_0_0_var(--border)] transition-colors',
+        active && 'bg-primary/8 text-primary font-bold',
         className
       )}
     >
@@ -100,16 +101,16 @@ function SortHeader({
         type="button"
         onClick={() => onSort(field)}
         className={cn(
-          'inline-flex items-center gap-1 rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+          'inline-flex items-center gap-1.5 rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none transition-colors',
           active ? 'text-primary' : 'hover:text-foreground'
         )}
         aria-label={`Trier par ${label}`}
       >
         {label}
         {active ? (
-          <ArrowUp className="size-3.5" aria-hidden />
+          <ArrowUp className="size-3.5 text-primary" aria-hidden />
         ) : (
-          <ArrowUpDown className="size-3.5 opacity-50" aria-hidden />
+          <ArrowUpDown className="size-3.5 opacity-40 hover:opacity-80" aria-hidden />
         )}
       </button>
     </th>
@@ -121,7 +122,7 @@ function StaticHeader({ label, className }: { label: string; className?: string 
     <th
       scope="col"
       className={cn(
-        'sticky top-0 z-10 bg-card px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase shadow-[0_1px_0_0_var(--border)]',
+        'sticky top-0 z-10 bg-card/95 backdrop-blur-sm px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase shadow-[0_1px_0_0_var(--border)]',
         className
       )}
     >
@@ -367,7 +368,7 @@ export function DirectoryView() {
                 <span className="font-semibold text-foreground">{formatNumber(total)}</span>{' '}
                 médicament{total !== 1 ? 's' : ''} trouvé{total !== 1 ? 's' : ''}
                 {fuzzy ? (
-                  <span className="ml-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  <span className="ml-1.5 rounded-full border border-primary/35 bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary shadow-xs">
                     tolérance phonétique active
                   </span>
                 ) : null}
@@ -379,12 +380,12 @@ export function DirectoryView() {
 
         <div className="flex items-center gap-2">
           {/* Bascule Mode Table / Mode Cartes */}
-          <div className="flex items-center rounded-lg border border-border bg-card p-0.5 shadow-2xs">
+          <div className="flex items-center rounded-lg border border-border/80 bg-card p-0.5 shadow-xs">
             <button
               type="button"
               onClick={() => setLayoutMode('table')}
               className={cn(
-                'flex size-8 items-center justify-center rounded-md text-xs transition-colors',
+                'flex size-8 items-center justify-center rounded-md text-xs transition-all',
                 layoutMode === 'table' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground'
               )}
               title="Affichage en tableau"
@@ -396,7 +397,7 @@ export function DirectoryView() {
               type="button"
               onClick={() => setLayoutMode('cards')}
               className={cn(
-                'flex size-8 items-center justify-center rounded-md text-xs transition-colors',
+                'flex size-8 items-center justify-center rounded-md text-xs transition-all',
                 layoutMode === 'cards' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground'
               )}
               title="Affichage en cartes"
@@ -411,7 +412,7 @@ export function DirectoryView() {
             size="sm"
             onClick={handleExportCsv}
             disabled={exporting || total === 0}
-            className="gap-1.5"
+            className="gap-1.5 shadow-2xs hover:shadow-xs"
           >
             {exporting ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -424,7 +425,7 @@ export function DirectoryView() {
       </div>
 
       {/* --------------------------- Toolbar Filtres --------------------------- */}
-      <div className="mb-4 rounded-xl border border-border bg-card p-3 shadow-sm">
+      <div className="mb-4 rounded-xl border border-border/80 bg-card/85 p-3.5 shadow-sm backdrop-blur-md">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search
@@ -437,7 +438,7 @@ export function DirectoryView() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Rechercher marque, DCI, labo, dosage (ex: Augmentin 1g, Amox 500 sirop)…"
               aria-label="Rechercher dans le répertoire"
-              className="h-10 border-border bg-background pl-9"
+              className="h-10 border-border/80 bg-background/90 pl-9 transition-colors focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/60"
             />
             {searchInput && (
               <button
@@ -734,7 +735,14 @@ export function DirectoryView() {
               key={drug.id}
               type="button"
               onClick={() => openDrug(drug.id)}
-              className="group flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+              className={cn(
+                'group flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md',
+                drug.status === 'ACTIF'
+                  ? 'border-t-2 border-t-state-safe/60'
+                  : drug.status === 'RETRIE'
+                    ? 'border-t-2 border-t-state-danger/60'
+                    : 'border-t-2 border-t-state-warning/60'
+              )}
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
@@ -957,7 +965,10 @@ export function DirectoryView() {
                     key={p}
                     variant={p === page ? 'default' : 'ghost'}
                     size="icon"
-                    className={cn('size-9 text-sm tabular-nums', p === page && 'font-semibold')}
+                    className={cn(
+                      'size-9 text-sm tabular-nums transition-all',
+                      p === page ? 'font-bold shadow-xs ring-1 ring-primary/40' : 'hover:bg-accent'
+                    )}
                     onClick={() => setPage(p)}
                     aria-label={`Page ${p}`}
                     aria-current={p === page ? 'page' : undefined}

@@ -1,3 +1,4 @@
+import { AlertTriangle, Ban, HelpCircle, Info, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import type { DrugStatus, GlobalRisk, InteractionSeverity } from './types'
@@ -10,7 +11,7 @@ const STATUS_META: Record<DrugStatus, { label: string; className: string; dot: s
   ACTIF: {
     label: 'Actif',
     className: 'border-state-safe/30 bg-state-safe/10 text-state-safe',
-    dot: 'bg-state-safe',
+    dot: 'bg-state-safe dot-pulse',
   },
   NON_RENOUVELE: {
     label: 'Non renouvelé',
@@ -88,6 +89,7 @@ export const SEVERITY_META: Record<
     label: string
     ansmLabel: string
     shape: string
+    icon: typeof Ban
     dataSeverity: string
     className: string
     dot: string
@@ -98,8 +100,9 @@ export const SEVERITY_META: Record<
     label: 'Contre-indication',
     ansmLabel: 'Niveau 4 — Contre-indication absolue',
     shape: '☠',
+    icon: Ban,
     dataSeverity: '4',
-    className: 'border-state-danger/50 bg-state-danger/15 text-state-danger font-bold',
+    className: 'border-state-danger/50 bg-state-danger/15 text-state-danger font-bold shadow-[inset_2px_0_0_0_var(--state-danger)]',
     dot: 'bg-state-danger',
   },
   MAJEURE: {
@@ -107,6 +110,7 @@ export const SEVERITY_META: Record<
     label: 'Déconseillée',
     ansmLabel: 'Niveau 3 — Association déconseillée',
     shape: '⛔',
+    icon: ShieldAlert,
     dataSeverity: '3',
     className: 'border-state-severe/40 bg-state-severe/15 text-state-severe font-semibold',
     dot: 'bg-state-severe',
@@ -116,6 +120,7 @@ export const SEVERITY_META: Record<
     label: 'Précaution',
     ansmLabel: 'Niveau 2 — Précaution d\'emploi',
     shape: '⚠',
+    icon: AlertTriangle,
     dataSeverity: '2',
     className: 'border-state-warning/40 bg-state-warning/15 text-state-warning font-medium',
     dot: 'bg-state-warning',
@@ -125,6 +130,7 @@ export const SEVERITY_META: Record<
     label: 'À prendre en compte',
     ansmLabel: 'Niveau 1 — À prendre en compte',
     shape: 'ℹ',
+    icon: Info,
     dataSeverity: '1',
     className: 'border-state-info/40 bg-state-info/15 text-state-info font-medium',
     dot: 'bg-state-info',
@@ -145,10 +151,12 @@ export function SeverityBadge({
     label: severity || 'Données manquantes',
     ansmLabel: 'Données manquantes dans le thésaurus',
     shape: '?',
+    icon: HelpCircle,
     dataSeverity: 'unknown',
     className: 'border-state-unknown/40 bg-state-unknown/15 text-state-unknown font-medium',
     dot: 'bg-state-unknown',
   }
+  const Icon = meta.icon ?? HelpCircle
 
   return (
     <Badge
@@ -161,9 +169,7 @@ export function SeverityBadge({
         className
       )}
     >
-      <span className="font-bold text-[11px]" aria-hidden="true">
-        {meta.shape}
-      </span>
+      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
       <span>{showAnsmLevel && meta.level ? `N${meta.level} · ` : ''}{meta.label}</span>
       <span className="sr-only">({meta.ansmLabel})</span>
     </Badge>
@@ -245,12 +251,12 @@ export function ChifaBadge({
     return (
       <span
         className={cn(
-          'inline-flex items-center gap-1 rounded-md border border-chifa/35 bg-chifa/10 px-2 py-0.5 text-xs font-bold text-chifa',
+          'inline-flex items-center gap-1.5 rounded-md border border-chifa/50 bg-chifa/12 px-2 py-0.5 text-xs font-bold text-chifa shadow-xs transition-colors',
           className
         )}
         title={cnasId ? `Remboursable CNAS (Code: ${cnasId})` : 'Pris en charge par la sécurité sociale (Chifa)'}
       >
-        <span className="size-1.5 rounded-full bg-chifa" aria-hidden />
+        <span className="size-1.5 rounded-full bg-chifa shadow-[0_0_6px_0_var(--chifa)]" aria-hidden />
         Chifa CNAS
       </span>
     )
