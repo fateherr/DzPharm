@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 /**
  * Bandeau permanent des numéros d'urgence médicale en Algérie.
  * SAMU (14), Protection Civile (102), Police (17) et Centre Anti-Poison (021 71 30 42).
- * Design médical épuré avec balise pulsante, puces interactives et hauteur optimisée (28px).
+ * Pleine largeur ergonomique, alignement parfait sur tous formats d'écran.
  */
 export function EmergencyBar() {
   const [minimized, setMinimized] = useState(false)
@@ -20,9 +20,14 @@ export function EmergencyBar() {
       <aside
         role="region"
         aria-label="Numéros d'urgence médicale en Algérie (réduit)"
-        className="relative z-10 w-full border-b border-rose-500/20 bg-slate-950/95 text-slate-100 backdrop-blur-md print:hidden transition-all"
+        className={cn(
+          'relative z-30 w-full border-b backdrop-blur-md print:hidden transition-all duration-200',
+          isBotanique
+            ? 'border-[#2d6a4f]/30 bg-[#0d281e]/95 text-emerald-100'
+            : 'border-rose-500/20 bg-slate-950/95 text-slate-100'
+        )}
       >
-        <div className="mx-auto flex h-6 max-w-7xl items-center justify-between px-3 text-[11px]">
+        <div className="mx-auto flex h-6 max-w-7xl items-center justify-between px-3 sm:px-6 text-[11px]">
           <button
             type="button"
             onClick={() => setMinimized(false)}
@@ -39,7 +44,7 @@ export function EmergencyBar() {
           </button>
           <a
             href="tel:14"
-            className="flex items-center gap-1 rounded bg-rose-600/80 px-2 py-0.5 font-bold text-white hover:bg-rose-500 transition-colors"
+            className="flex items-center gap-1 rounded bg-rose-600/90 px-2 py-0.5 font-bold text-white hover:bg-rose-500 transition-colors"
           >
             <PhoneCall className="size-2.5" />
             <span>SAMU 14</span>
@@ -54,15 +59,15 @@ export function EmergencyBar() {
       role="region"
       aria-label="Numéros d'urgence médicale en Algérie"
       className={cn(
-        'relative z-10 w-full border-b backdrop-blur-lg print:hidden transition-all',
+        'relative z-30 w-full border-b backdrop-blur-md print:hidden transition-all duration-200',
         isBotanique
-          ? 'border-[#2d6a4f]/30 bg-gradient-to-r from-[#060c09] via-[#1b4332]/90 to-[#060c09] text-emerald-100 shadow-xs shadow-[#1b4332]/40'
+          ? 'border-[#2d6a4f]/30 bg-[#0a1f17]/95 text-emerald-100 shadow-xs shadow-[#0a1f17]/40'
           : 'border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30'
       )}
     >
-      <div className="mx-auto flex h-7 max-w-7xl items-center justify-between gap-1 px-3 text-[11px] font-medium tracking-wide sm:text-xs">
+      <div className="mx-auto flex h-7 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 text-[11px] font-medium tracking-wide sm:text-xs">
         {/* Left: Emergency Status Beacon & Numbers */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5">
           <span className="flex shrink-0 items-center gap-1.5 font-semibold uppercase tracking-wider text-rose-300">
             <span className="relative flex size-2 shrink-0">
               <span className="beacon-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
@@ -123,7 +128,7 @@ export function EmergencyBar() {
         <button
           type="button"
           onClick={() => setMinimized(true)}
-          className="shrink-0 rounded p-0.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+          className="shrink-0 rounded p-1 text-slate-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
           title="Réduire le bandeau d'urgence"
           aria-label="Réduire le bandeau d'urgence"
         >

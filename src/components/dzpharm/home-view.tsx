@@ -63,11 +63,11 @@ import { formatNumber } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
 import { useDzPharm, type ViewId } from './store'
 import {
-  BotanicalCrest,
+  ApothecaryMortarRose,
   BotanicalBadge,
   BotanicalFiligree,
-  BotanicalHeroPattern,
 } from './botanical-decorations'
+import { FloatingLeaves } from './floating-leaves'
 
 /* ------------------------------------------------------------------ */
 /* Tendances DCI — types locaux + fetcher (réponse /top-views étendue)  */
@@ -601,13 +601,13 @@ export function HomeView() {
       ) : null}
 
       {/* ------------------------------ Hero ------------------------------ */}
-      <section className="hero-glow relative border-b border-border/60">
+      <section className="hero-glow relative border-b border-border/60 overflow-hidden">
         {isBotanique ? (
-          <BotanicalHeroPattern />
+          <FloatingLeaves />
         ) : (
           <div className="hero-grid pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
         )}
-        <div className="relative mx-auto max-w-4xl px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24 sm:pb-20">
+        <div className="relative mx-auto max-w-4xl px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24 sm:pb-20 z-10">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -615,22 +615,23 @@ export function HomeView() {
           >
             {isBotanique ? (
               <>
-                <div className="flex justify-center mb-3">
-                  <BotanicalCrest />
+                <div className="flex justify-center mb-4">
+                  <ApothecaryMortarRose />
                 </div>
-                <BotanicalBadge variant="sage" className="mb-2">
-                  Officine Royale &amp; Flore Médicinale · 2026
-                </BotanicalBadge>
-                <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  Pharmacopée Royale &amp;{' '}
+                <div className="flex justify-center gap-2 mb-2">
+                  <BotanicalBadge variant="gold">Codex de Pharmacopée · 2026</BotanicalBadge>
+                  <BotanicalBadge variant="rose">Flore &amp; Extraits Naturels</BotanicalBadge>
+                </div>
+                <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl font-serif">
+                  Herbier d&apos;Officine &amp;{' '}
                   <span className="bg-gradient-to-r from-[#1b4332] via-[#2d6a4f] to-[#be185d] dark:from-[#5eead4] dark:via-[#34d399] dark:to-[#fb7185] bg-clip-text text-transparent">
-                    Botanique Médicale
+                    Pharmacopée
                   </span>
                 </h1>
                 <BotanicalFiligree />
                 <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                  L&apos;alliance de la tradition officinale et de la pharmacologie moderne :
-                  9&nbsp;555 spécialités, extraits botaniques, monographies officielles et interactions.
+                  L&apos;alliance de la botanique médicinale, des roses damascena et de la pharmacologie moderne :
+                  9&nbsp;555 spécialités, extraits titrés et monographies thérapeutiques.
                 </p>
               </>
             ) : (
@@ -669,7 +670,7 @@ export function HomeView() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-[#be185d]/30 bg-[#be185d]/10 px-3.5 py-1.5 text-[#be185d] dark:text-[#fb7185] shadow-sm backdrop-blur-lg">
                     <Flower2 className="size-3.5" aria-hidden />
-                    Rose de Damas &amp; Phytothérapie
+                    Rose Damascena &amp; Phytopharmacie
                   </span>
                 </>
               ) : (
@@ -725,22 +726,29 @@ export function HomeView() {
             />
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
               <span className="text-xs font-medium text-muted-foreground/80 mr-1 hidden sm:inline">
-                {isBotanique ? 'Remèdes & Spécialités :' : 'Suggestions fréquentes :'}
+                {isBotanique ? 'Fiches d’herbier & remèdes :' : 'Suggestions fréquentes :'}
               </span>
               {(isBotanique
-                ? ['Sauge officinale', 'Rose de Damas', 'Camomille', 'Paracétamol', 'Huile d’Argan', 'Eucalyptus']
+                ? ['🌿 Sauge officinale', '🌹 Rose de Damas', '🌼 Camomille matricaire', '🌱 Eucalyptus globulus', '💊 Paracétamol', '✨ Huile d’Argan']
                 : QUICK_CHIPS
-              ).map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => gotoDirectory({ q: chip })}
-                  className="group flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-xs transition-all hover:border-primary/50 hover:bg-card hover:text-primary hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                >
-                  <span className="size-1.5 rounded-full bg-primary/60 group-hover:bg-primary group-hover:scale-125 transition-all" />
-                  {chip}
-                </button>
-              ))}
+              ).map((chip) => {
+                const queryText = chip.replace(/^[^\w\s]+\s*/, '')
+                return (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => gotoDirectory({ q: queryText })}
+                    className={cn(
+                      'group flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium shadow-xs transition-all cursor-pointer',
+                      isBotanique
+                        ? 'border-[#dcd4c5] bg-[#fcfbf8]/90 text-[#1b4332] dark:border-[#1a2f24] dark:bg-[#0b1611]/90 dark:text-[#34d399] hover:border-[#b45309]/50 hover:bg-card hover:shadow-md'
+                        : 'border-border/70 bg-card/80 text-muted-foreground hover:border-primary/50 hover:bg-card hover:text-primary hover:shadow-sm'
+                    )}
+                  >
+                    <span>{chip}</span>
+                  </button>
+                )
+              })}
             </div>
           </motion.div>
         </div>
@@ -756,12 +764,14 @@ export function HomeView() {
             id="quick-access-title"
             className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground"
           >
-            {audience === 'famille' ? (
+            {isBotanique ? (
+              <Leaf className="size-4.5 text-[#1b4332] dark:text-[#34d399]" aria-hidden />
+            ) : audience === 'famille' ? (
               <HeartHandshake className="size-4.5 text-primary" aria-hidden />
             ) : (
               <Stethoscope className="size-4.5 text-primary" aria-hidden />
             )}
-            Accès rapide
+            {isBotanique ? 'Modules d’Officine & Pharmacopée' : 'Accès rapide'}
           </h2>
           <span className="hidden text-xs text-muted-foreground sm:block">
             {audience === 'famille'

@@ -216,7 +216,7 @@ export function Header() {
                 )}
               </span>
               <span className="hidden truncate text-[10px] font-medium tracking-wide text-muted-foreground xl:block">
-                {isBotanique ? 'Officine & Pharmacopée Royale' : 'Référentiel Officiel · 2026'}
+                Référentiel Officiel · 2026
               </span>
             </span>
           </button>

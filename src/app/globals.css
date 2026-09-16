@@ -1002,14 +1002,73 @@ html[data-design-mode="botanique"].dark,
 
 /* Texture & Filigranes Botaniques */
 html[data-design-mode="botanique"] body {
-  background-image: radial-gradient(circle at 10% 20%, rgba(217, 72, 108, 0.03) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 80%, rgba(27, 67, 50, 0.04) 0%, transparent 45%);
+  background-color: #f5f2ea;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(190, 24, 93, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(27, 67, 50, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(180, 83, 9, 0.02) 0%, transparent 60%);
   background-attachment: fixed;
 }
 html[data-design-mode="botanique"].dark body {
-  background-image: radial-gradient(circle at 15% 15%, rgba(251, 113, 133, 0.04) 0%, transparent 40%),
-                    radial-gradient(circle at 85% 85%, rgba(52, 211, 153, 0.05) 0%, transparent 45%);
+  background-color: #040906;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(251, 113, 133, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(52, 211, 153, 0.06) 0%, transparent 50%);
   background-attachment: fixed;
+}
+
+/* Animations Particules : Feuilles de Sauge & Pétales de Rose Damascena */
+@keyframes floatFall {
+  0% {
+    transform: translateY(-80px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(28vh) translateX(35px) rotate(45deg);
+  }
+  50% {
+    transform: translateY(58vh) translateX(-30px) rotate(90deg);
+  }
+  75% {
+    transform: translateY(85vh) translateX(25px) rotate(140deg);
+  }
+  100% {
+    transform: translateY(118vh) translateX(0px) rotate(190deg);
+  }
+}
+
+@keyframes leafSway {
+  0%, 100% {
+    transform: rotateY(0deg) rotateZ(-12deg) scale(1);
+  }
+  50% {
+    transform: rotateY(180deg) rotateZ(16deg) scale(0.92);
+  }
+}
+
+.floating-leaf-track {
+  animation-name: floatFall;
+  animation-timing-function: cubic-bezier(0.35, 0.1, 0.25, 1);
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.floating-leaf-body {
+  animation-name: leafSway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Éléments Graphiques Exclusifs du Mode Botanique */
+html[data-design-mode="botanique"] .glass-panel {
+  background: rgba(255, 254, 250, 0.88);
+  border: 1px solid rgba(220, 212, 197, 0.75);
+  box-shadow: 0 4px 20px -2px rgba(27, 67, 50, 0.06), 0 1px 3px rgba(190, 24, 93, 0.04);
+}
+html[data-design-mode="botanique"].dark .glass-panel {
+  background: rgba(9, 21, 16, 0.85);
+  border: 1px solid rgba(26, 47, 36, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 0 12px rgba(52, 211, 153, 0.04);
 }
 
 @layer base {

@@ -489,8 +489,12 @@ export function SearchAutocomplete({
               'shrink-0 rounded-full font-medium transition-all cursor-pointer whitespace-nowrap',
               hero ? 'px-3 py-1 text-xs' : 'px-2 py-0.5 text-[10px]',
               scope === s.id
-                ? 'bg-primary text-primary-foreground font-semibold shadow-xs ring-1 ring-primary/30'
-                : 'bg-card/80 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/70'
+                ? (isBotanique
+                    ? 'bg-[#1b4332] text-white font-semibold shadow-xs ring-1 ring-[#1b4332]/40 dark:bg-[#34d399] dark:text-[#040906]'
+                    : 'bg-primary text-primary-foreground font-semibold shadow-xs ring-1 ring-primary/30')
+                : (isBotanique
+                    ? 'bg-[#fcfbf8]/90 text-[#1b4332]/80 hover:bg-[#eae4d5] hover:text-[#1b4332] border border-[#dcd4c5]/80 dark:bg-[#0b1611]/90 dark:text-[#34d399]/80 dark:border-[#1a2f24]'
+                    : 'bg-card/80 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/70')
             )}
           >
             {s.label}
@@ -499,8 +503,10 @@ export function SearchAutocomplete({
       </div>
       <div
         className={cn(
-          'group flex items-center gap-3 rounded-2xl border bg-card/95 text-foreground shadow-lg shadow-black/5 transition-all',
-          'border-border/80 focus-within:border-primary/80 focus-within:ring-4 focus-within:ring-primary/20',
+          'group flex items-center gap-3 rounded-2xl border text-foreground transition-all',
+          isBotanique
+            ? 'border-[#dcd4c5] bg-[#fcfbf8]/98 shadow-xl shadow-[#1b4332]/8 focus-within:border-[#1b4332] focus-within:ring-4 focus-within:ring-[#1b4332]/15 dark:border-[#1a2f24] dark:bg-[#0b1611]/95 dark:shadow-black/40 dark:focus-within:border-[#34d399] dark:focus-within:ring-[#34d399]/15'
+            : 'border-border/80 bg-card/95 shadow-lg shadow-black/5 focus-within:border-primary/80 focus-within:ring-4 focus-within:ring-primary/20',
           hero
             ? 'h-15 px-4.5 backdrop-blur-xl sm:h-16'
             : 'h-11 px-3.5'
@@ -508,7 +514,10 @@ export function SearchAutocomplete({
       >
         <Search
           className={cn(
-            'shrink-0 text-muted-foreground transition-colors group-focus-within:text-primary',
+            'shrink-0 transition-colors',
+            isBotanique
+              ? 'text-[#1b4332]/60 group-focus-within:text-[#1b4332] dark:text-[#34d399]/60 dark:group-focus-within:text-[#34d399]'
+              : 'text-muted-foreground group-focus-within:text-primary',
             hero ? 'size-5.5' : 'size-4'
           )}
           aria-hidden
