@@ -458,28 +458,34 @@ export function SearchAutocomplete({
 
   return (
     <div ref={wrapperRef} className={cn('relative w-full', className)}>
-      {hero && (
-        <div className="mb-2.5 flex items-center gap-1.5 overflow-x-auto scroll-thin px-1 text-xs">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">
-            Périmètre :
-          </span>
-          {SCOPES.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setScope(s.id)}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer',
-                scope === s.id
-                  ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                  : 'bg-card/90 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/70'
-              )}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Périmètre scope bar — visible on all sizes, compact on non-hero */}
+      <div className={cn(
+        'flex items-center gap-1.5 overflow-x-auto scroll-thin no-scrollbar px-1',
+        hero ? 'mb-2.5 text-xs' : 'mb-1.5 text-[11px]'
+      )}>
+        <span className={cn(
+          'font-semibold uppercase tracking-wider text-muted-foreground shrink-0',
+          hero ? 'text-[11px] mr-1' : 'text-[10px] mr-0.5'
+        )}>
+          Périmètre :
+        </span>
+        {SCOPES.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => setScope(s.id)}
+            className={cn(
+              'shrink-0 rounded-full font-medium transition-all cursor-pointer whitespace-nowrap',
+              hero ? 'px-3 py-1 text-xs' : 'px-2 py-0.5 text-[10px]',
+              scope === s.id
+                ? 'bg-primary text-primary-foreground font-semibold shadow-xs ring-1 ring-primary/30'
+                : 'bg-card/80 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/70'
+            )}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
       <div
         className={cn(
           'group flex items-center gap-3 rounded-2xl border bg-card/95 text-foreground shadow-lg shadow-black/5 transition-all',

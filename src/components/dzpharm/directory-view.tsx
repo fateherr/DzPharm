@@ -145,6 +145,7 @@ export function DirectoryView() {
   const [sort, setSort] = useState<SortField>('relevance')
   const [exporting, setExporting] = useState(false)
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table')
+  const [dirScope, setDirScope] = useState<'all' | 'dci' | 'brand' | 'lab' | 'regNumber'>('all')
 
   // Synchronise la recherche débouncée avec le store
   useEffect(() => {
@@ -244,11 +245,12 @@ export function DirectoryView() {
       liste: filters.liste || undefined,
       country: filters.country || undefined,
       lab: filters.lab || undefined,
+      scope: dirScope === 'all' ? undefined : dirScope,
       page,
       pageSize,
       sort,
     }),
-    [filters, page, pageSize, sort]
+    [filters, dirScope, page, pageSize, sort]
   )
 
   const { data, isLoading, isFetching, isError } = useQuery({
@@ -426,6 +428,33 @@ export function DirectoryView() {
 
       {/* --------------------------- Toolbar Filtres --------------------------- */}
       <div className="mb-4 rounded-xl border border-border/80 bg-card/85 p-3.5 shadow-sm backdrop-blur-md">
+        {/* Périmètre filter bar */}
+        <div className="mb-2.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar px-0.5">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-0.5">
+            Périmètre :
+          </span>
+          {([
+            { id: 'all', label: 'Tous' },
+            { id: 'dci', label: 'DCI / Molécule' },
+            { id: 'brand', label: 'Marque' },
+            { id: 'lab', label: 'Laboratoire' },
+            { id: 'regNumber', label: 'N° AMM' },
+          ] as const).map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setDirScope(s.id)}
+              className={cn(
+                'shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap',
+                dirScope === s.id
+                  ? 'bg-primary text-primary-foreground font-semibold shadow-xs ring-1 ring-primary/30'
+                  : 'bg-background/70 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/70'
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search
