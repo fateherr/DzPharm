@@ -217,8 +217,7 @@
 /* ------------------------------------------------------------------ */
 
 /* 1. Porcelaine Suisse & Saphir (Défaut) */
-:root[data-palette="porcelain"],
-[data-palette="porcelain"]:not(.dark) {
+html:not(.dark)[data-palette="porcelain"] {
   --background: #ebedf2;
   --foreground: #0f172a;
   --card: #ffffff;
@@ -241,10 +240,16 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #0284c7 0%, #026aa7 50%, #047857 100%);
 }
+html.dark[data-palette="porcelain"],
+.dark[data-palette="porcelain"] {
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
 
 /* 2. Lin Nordique & Encre Noire (Éditorial Papier Chaud — 100% Anti-éblouissement) */
-:root[data-palette="nordic-linen"],
-[data-palette="nordic-linen"]:not(.dark) {
+html:not(.dark)[data-palette="nordic-linen"] {
   --background: #f0ede6;
   --foreground: #1c1917;
   --card: #faf8f5;
@@ -266,8 +271,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #047857 100%);
 }
-.dark[data-palette="nordic-linen"],
-[data-palette="nordic-linen"].dark {
+html.dark[data-palette="nordic-linen"],
+.dark[data-palette="nordic-linen"] {
   --primary: #60a5fa;
   --ring: #60a5fa;
   --sidebar-primary: #60a5fa;
@@ -275,8 +280,7 @@
 }
 
 /* 3. Zinc Satiné & Glacier (Style Linear / Raycast Studio) */
-:root[data-palette="zinc-studio"],
-[data-palette="zinc-studio"]:not(.dark) {
+html:not(.dark)[data-palette="zinc-studio"] {
   --background: #e8ebf0;
   --foreground: #090d16;
   --card: #ffffff;
@@ -298,8 +302,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #059669 100%);
 }
-.dark[data-palette="zinc-studio"],
-[data-palette="zinc-studio"].dark {
+html.dark[data-palette="zinc-studio"],
+.dark[data-palette="zinc-studio"] {
   --primary: #38bdf8;
   --ring: #38bdf8;
   --sidebar-primary: #38bdf8;
@@ -307,8 +311,7 @@
 }
 
 /* 4. Sauge Thérapeutique & Pin (Sérénité & Phytothérapie) */
-:root[data-palette="sage-botanical"],
-[data-palette="sage-botanical"]:not(.dark) {
+html:not(.dark)[data-palette="sage-botanical"] {
   --background: #edf2ee;
   --foreground: #14221b;
   --card: #f9fbf9;
@@ -330,8 +333,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #10b981 0%, #16654f 50%, #047857 100%);
 }
-.dark[data-palette="sage-botanical"],
-[data-palette="sage-botanical"].dark {
+html.dark[data-palette="sage-botanical"],
+.dark[data-palette="sage-botanical"] {
   --primary: #34d399;
   --ring: #34d399;
   --sidebar-primary: #34d399;
@@ -339,8 +342,7 @@
 }
 
 /* 5. Craie & Cobalt (Codex Officine Pharmacie) */
-:root[data-palette="french-cobalt"],
-[data-palette="french-cobalt"]:not(.dark) {
+html:not(.dark)[data-palette="french-cobalt"] {
   --background: #f1f3f7;
   --foreground: #0b1329;
   --card: #ffffff;
@@ -362,8 +364,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #059669 100%);
 }
-.dark[data-palette="french-cobalt"],
-[data-palette="french-cobalt"].dark {
+html.dark[data-palette="french-cobalt"],
+.dark[data-palette="french-cobalt"] {
   --primary: #60a5fa;
   --ring: #60a5fa;
   --sidebar-primary: #60a5fa;
@@ -371,8 +373,7 @@
 }
 
 /* 6. Dune Saharienne & Cèdre (Héritage Algérien Solaire) */
-:root[data-palette="sahara-cedar"],
-[data-palette="sahara-cedar"]:not(.dark) {
+html:not(.dark)[data-palette="sahara-cedar"] {
   --background: #f4f0e8;
   --foreground: #211c16;
   --card: #fbf9f5;
@@ -394,8 +395,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #d97706 0%, #2d5a36 50%, #059669 100%);
 }
-.dark[data-palette="sahara-cedar"],
-[data-palette="sahara-cedar"].dark {
+html.dark[data-palette="sahara-cedar"],
+.dark[data-palette="sahara-cedar"] {
   --primary: #4ade80;
   --ring: #4ade80;
   --sidebar-primary: #4ade80;
@@ -403,8 +404,7 @@
 }
 
 /* 7. Gris Minéral & Graphite (Minimalisme Industriel Dieter Rams) */
-:root[data-palette="braun-mineral"],
-[data-palette="braun-mineral"]:not(.dark) {
+html:not(.dark)[data-palette="braun-mineral"] {
   --background: #eeeee9;
   --foreground: #18181b;
   --card: #ffffff;
@@ -426,8 +426,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #06b6d4 0%, #0e7490 50%, #047857 100%);
 }
-.dark[data-palette="braun-mineral"],
-[data-palette="braun-mineral"].dark {
+html.dark[data-palette="braun-mineral"],
+.dark[data-palette="braun-mineral"] {
   --primary: #22d3ee;
   --ring: #22d3ee;
   --sidebar-primary: #22d3ee;
@@ -435,8 +435,7 @@
 }
 
 /* 8. Brume Polaire & Indigo (Biotech & Intelligence IA) */
-:root[data-palette="polar-indigo"],
-[data-palette="polar-indigo"]:not(.dark) {
+html:not(.dark)[data-palette="polar-indigo"] {
   --background: #eceff5;
   --foreground: #0f172a;
   --card: #ffffff;
@@ -458,8 +457,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 50%, #0f766e 100%);
 }
-.dark[data-palette="polar-indigo"],
-[data-palette="polar-indigo"].dark {
+html.dark[data-palette="polar-indigo"],
+.dark[data-palette="polar-indigo"] {
   --primary: #818cf8;
   --ring: #818cf8;
   --sidebar-primary: #818cf8;
@@ -467,8 +466,7 @@
 }
 
 /* 9. Perle & Azur d’Alger (Fraîcheur Maritime) */
-:root[data-palette="mediterranean-azure"],
-[data-palette="mediterranean-azure"]:not(.dark) {
+html:not(.dark)[data-palette="mediterranean-azure"] {
   --background: #ebf0f5;
   --foreground: #0c1a2e;
   --card: #ffffff;
@@ -490,8 +488,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #047857 100%);
 }
-.dark[data-palette="mediterranean-azure"],
-[data-palette="mediterranean-azure"].dark {
+html.dark[data-palette="mediterranean-azure"],
+.dark[data-palette="mediterranean-azure"] {
   --primary: #38bdf8;
   --ring: #38bdf8;
   --sidebar-primary: #38bdf8;
@@ -499,8 +497,7 @@
 }
 
 /* 10. Ivoire Impérial & Émeraude (Apothicaire de Prestige) */
-:root[data-palette="ivory-emerald"],
-[data-palette="ivory-emerald"]:not(.dark) {
+html:not(.dark)[data-palette="ivory-emerald"] {
   --background: #f2efe7;
   --foreground: #172017;
   --card: #faf8f3;
@@ -522,8 +519,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #047857 0%, #065f46 50%, #b45309 100%);
 }
-.dark[data-palette="ivory-emerald"],
-[data-palette="ivory-emerald"].dark {
+html.dark[data-palette="ivory-emerald"],
+.dark[data-palette="ivory-emerald"] {
   --primary: #34d399;
   --ring: #34d399;
   --sidebar-primary: #34d399;
@@ -535,8 +532,7 @@
 /* ================================================================== */
 
 /* 11. Cyber-Med & Bio-Néon */
-:root[data-palette="cyber-synth"],
-[data-palette="cyber-synth"]:not(.dark) {
+html:not(.dark)[data-palette="cyber-synth"] {
   --background: #f3f0fb;
   --foreground: #1e1138;
   --card: #ffffff;
@@ -559,8 +555,8 @@
   --chifa-gold: #f59e0b;
   --brand-gradient: linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #06b6d4 100%);
 }
-.dark[data-palette="cyber-synth"],
-[data-palette="cyber-synth"].dark {
+html.dark[data-palette="cyber-synth"],
+.dark[data-palette="cyber-synth"] {
   --primary: #a855f7;
   --ring: #a855f7;
   --sidebar-primary: #a855f7;
@@ -568,8 +564,7 @@
 }
 
 /* 12. Jasmin d’Alger & Mandarine */
-:root[data-palette="oasis-jasmin"],
-[data-palette="oasis-jasmin"]:not(.dark) {
+html:not(.dark)[data-palette="oasis-jasmin"] {
   --background: #fdf5ee;
   --foreground: #2c1809;
   --card: #ffffff;
@@ -592,8 +587,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #16a34a 100%);
 }
-.dark[data-palette="oasis-jasmin"],
-[data-palette="oasis-jasmin"].dark {
+html.dark[data-palette="oasis-jasmin"],
+.dark[data-palette="oasis-jasmin"] {
   --primary: #fb923c;
   --ring: #fb923c;
   --sidebar-primary: #fb923c;
@@ -601,8 +596,7 @@
 }
 
 /* 13. Lapis-Lazuli & Or Avicenne */
-:root[data-palette="alchemy-gold"],
-[data-palette="alchemy-gold"]:not(.dark) {
+html:not(.dark)[data-palette="alchemy-gold"] {
   --background: #fbf7ee;
   --foreground: #172033;
   --card: #ffffff;
@@ -625,8 +619,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #b45309 100%);
 }
-.dark[data-palette="alchemy-gold"],
-[data-palette="alchemy-gold"].dark {
+html.dark[data-palette="alchemy-gold"],
+.dark[data-palette="alchemy-gold"] {
   --primary: #f59e0b;
   --ring: #f59e0b;
   --sidebar-primary: #f59e0b;
@@ -634,8 +628,7 @@
 }
 
 /* 14. Bioluminescence Abyssale */
-:root[data-palette="abyssal-bio"],
-[data-palette="abyssal-bio"]:not(.dark) {
+html:not(.dark)[data-palette="abyssal-bio"] {
   --background: #edf7f6;
   --foreground: #0a2220;
   --card: #ffffff;
@@ -658,8 +651,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #10b981 100%);
 }
-.dark[data-palette="abyssal-bio"],
-[data-palette="abyssal-bio"].dark {
+html.dark[data-palette="abyssal-bio"],
+.dark[data-palette="abyssal-bio"] {
   --primary: #06b6d4;
   --ring: #06b6d4;
   --sidebar-primary: #06b6d4;
@@ -667,8 +660,7 @@
 }
 
 /* 15. Crépuscule du Hoggar */
-:root[data-palette="hoggar-sunset"],
-[data-palette="hoggar-sunset"]:not(.dark) {
+html:not(.dark)[data-palette="hoggar-sunset"] {
   --background: #fcf2f2;
   --foreground: #2b0b14;
   --card: #ffffff;
@@ -691,8 +683,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #e11d48 0%, #9f1239 50%, #15803d 100%);
 }
-.dark[data-palette="hoggar-sunset"],
-[data-palette="hoggar-sunset"].dark {
+html.dark[data-palette="hoggar-sunset"],
+.dark[data-palette="hoggar-sunset"] {
   --primary: #f43f5e;
   --ring: #f43f5e;
   --sidebar-primary: #f43f5e;
@@ -700,8 +692,7 @@
 }
 
 /* 16. Aurore Boréale Ionisée */
-:root[data-palette="aurora-borealis"],
-[data-palette="aurora-borealis"]:not(.dark) {
+html:not(.dark)[data-palette="aurora-borealis"] {
   --background: #eefbf7;
   --foreground: #08231a;
   --card: #ffffff;
@@ -724,8 +715,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #9333ea 100%);
 }
-.dark[data-palette="aurora-borealis"],
-[data-palette="aurora-borealis"].dark {
+html.dark[data-palette="aurora-borealis"],
+.dark[data-palette="aurora-borealis"] {
   --primary: #10b981;
   --ring: #10b981;
   --sidebar-primary: #10b981;
@@ -733,8 +724,7 @@
 }
 
 /* 17. Ambre Impérial & Épices */
-:root[data-palette="silk-amber"],
-[data-palette="silk-amber"]:not(.dark) {
+html:not(.dark)[data-palette="silk-amber"] {
   --background: #fef9ee;
   --foreground: #2c1b05;
   --card: #ffffff;
@@ -757,8 +747,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #047857 100%);
 }
-.dark[data-palette="silk-amber"],
-[data-palette="silk-amber"].dark {
+html.dark[data-palette="silk-amber"],
+.dark[data-palette="silk-amber"] {
   --primary: #f59e0b;
   --ring: #f59e0b;
   --sidebar-primary: #f59e0b;
@@ -766,8 +756,7 @@
 }
 
 /* 18. Vaporwave Clinique 90s */
-:root[data-palette="retro-vapor"],
-[data-palette="retro-vapor"]:not(.dark) {
+html:not(.dark)[data-palette="retro-vapor"] {
   --background: #f3f3fd;
   --foreground: #18153b;
   --card: #ffffff;
@@ -790,8 +779,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #0891b2 100%);
 }
-.dark[data-palette="retro-vapor"],
-[data-palette="retro-vapor"].dark {
+html.dark[data-palette="retro-vapor"],
+.dark[data-palette="retro-vapor"] {
   --primary: #818cf8;
   --ring: #818cf8;
   --sidebar-primary: #818cf8;
@@ -799,8 +788,7 @@
 }
 
 /* 19. Rubis Cardiaque & Pouls */
-:root[data-palette="cardiac-ruby"],
-[data-palette="cardiac-ruby"]:not(.dark) {
+html:not(.dark)[data-palette="cardiac-ruby"] {
   --background: #fef2f2;
   --foreground: #2e0909;
   --card: #ffffff;
@@ -823,8 +811,8 @@
   --chifa-gold: #d97706;
   --brand-gradient: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #047857 100%);
 }
-.dark[data-palette="cardiac-ruby"],
-[data-palette="cardiac-ruby"].dark {
+html.dark[data-palette="cardiac-ruby"],
+.dark[data-palette="cardiac-ruby"] {
   --primary: #ef4444;
   --ring: #ef4444;
   --sidebar-primary: #ef4444;
@@ -832,8 +820,7 @@
 }
 
 /* 20. Quartz Minéral & Prune */
-:root[data-palette="quartz-rose"],
-[data-palette="quartz-rose"]:not(.dark) {
+html:not(.dark)[data-palette="quartz-rose"] {
   --background: #fbf5f4;
   --foreground: #260b17;
   --card: #ffffff;
@@ -856,8 +843,8 @@
   --chifa-gold: #b45309;
   --brand-gradient: linear-gradient(135deg, #be185d 0%, #831843 50%, #059669 100%);
 }
-.dark[data-palette="quartz-rose"],
-[data-palette="quartz-rose"].dark {
+html.dark[data-palette="quartz-rose"],
+.dark[data-palette="quartz-rose"] {
   --primary: #ec4899;
   --ring: #ec4899;
   --sidebar-primary: #ec4899;
