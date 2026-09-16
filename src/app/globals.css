@@ -55,71 +55,71 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Light theme — warm fog surface with ink-blue accent                 */
+/* Light theme — Medical Porcelain & Deep Ink (Anti-glare, Swiss minimal) */
 /* ------------------------------------------------------------------ */
 :root {
   --radius: 0.75rem;
-  --background: #f4f6f9;
-  --foreground: #0d1b2a;
+  --background: #ebedf2;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #0d1b2a;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #0d1b2a;
-  --primary: #0369a1;
+  --popover-foreground: #0f172a;
+  --primary: #026aa7;
   --primary-foreground: #ffffff;
-  --secondary: #edf0f5;
-  --secondary-foreground: #0d1b2a;
-  --muted: #edf0f5;
-  --muted-foreground: #546478;
-  --accent: #e4ecf7;
-  --accent-foreground: #0d1b2a;
+  --secondary: #dfe3ea;
+  --secondary-foreground: #0f172a;
+  --muted: #dfe3ea;
+  --muted-foreground: #475569;
+  --accent: #e2e7ef;
+  --accent-foreground: #0f172a;
   --destructive: #dc2626;
-  --border: #c4cdd8;
-  --input: #c4cdd8;
-  --ring: #0369a1;
-  --chifa: #059669;
+  --border: #d0d7e2;
+  --input: #d0d7e2;
+  --ring: #026aa7;
+  --chifa: #047857;
   --chifa-foreground: #ffffff;
-  --chifa-gold: #d97706;
-  --state-none: #62748e;
-  --state-info: #0369a1;
+  --chifa-gold: #b45309;
+  --state-none: #64748b;
+  --state-info: #026aa7;
   --state-safe: #16a34a;
   --state-warning: #d97706;
   --state-severe: #ea580c;
   --state-danger: #dc2626;
   --state-unknown: #7c3aed;
-  --chart-1: #0369a1;
-  --chart-2: #059669;
+  --chart-1: #026aa7;
+  --chart-2: #047857;
   --chart-3: #d97706;
   --chart-4: #6366f1;
   --chart-5: #64748b;
-  --sidebar: #f4f6f9;
-  --sidebar-foreground: #0d1b2a;
-  --sidebar-primary: #0369a1;
+  --sidebar: #ebedf2;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #026aa7;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e4ecf7;
-  --sidebar-accent-foreground: #0d1b2a;
-  --sidebar-border: #c4cdd8;
-  --sidebar-ring: #0369a1;
+  --sidebar-accent: #e2e7ef;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #d0d7e2;
+  --sidebar-ring: #026aa7;
 
-  /* Surface elevation layers — light mode (real depth between levels) */
-  --surface-0: #f4f6f9;
+  /* Surface elevation layers — light mode (calibrated 4-level depth) */
+  --surface-0: #ebedf2;
   --surface-1: #ffffff;
-  --surface-2: #edf0f5;
-  --surface-3: #e4ecf7;
+  --surface-2: #dfe3ea;
+  --surface-3: #e2e7ef;
 
-  /* Shadow system — increased presence so cards visibly float */
-  --shadow-xs:  0 1px 3px 0 rgba(13,27,42,0.07);
-  --shadow-sm:  0 2px 8px -1px rgba(13,27,42,0.10), 0 1px 3px -1px rgba(13,27,42,0.06);
-  --shadow-md:  0 4px 20px -4px rgba(13,27,42,0.13), 0 2px 8px -2px rgba(13,27,42,0.08);
-  --shadow-lg:  0 12px 36px -8px rgba(13,27,42,0.15), 0 4px 14px -4px rgba(13,27,42,0.09);
+  /* Shadow system — multi-layer ambient shadows that lift cards cleanly without muddy edges */
+  --shadow-xs:  0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm:  0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md:  0 4px 12px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg:  0 12px 28px -4px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
   --shadow-card: var(--shadow-sm);
   --shadow-popover: var(--shadow-md);
-  --shadow-glow-primary: 0 0 24px -6px color-mix(in srgb, var(--primary) 35%, transparent);
-  --shadow-glow-chifa:   0 0 24px -6px color-mix(in srgb, var(--chifa) 30%, transparent);
-  --shadow-glow-danger:  0 0 20px -4px color-mix(in srgb, var(--state-danger) 30%, transparent);
+  --shadow-glow-primary: 0 0 24px -6px color-mix(in srgb, var(--primary) 28%, transparent);
+  --shadow-glow-chifa:   0 0 24px -6px color-mix(in srgb, var(--chifa) 25%, transparent);
+  --shadow-glow-danger:  0 0 20px -4px color-mix(in srgb, var(--state-danger) 25%, transparent);
 
   /* Brand gradient */
-  --brand-gradient: linear-gradient(135deg, #0ea5e9 0%, #0369a1 45%, #059669 100%);
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #026aa7 50%, #047857 100%);
 
   /* Z-Index Scale */
   --z-base: 0;
@@ -283,9 +283,9 @@
 }
 .card-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--primary) 18%, transparent),
-              0 4px 8px -4px color-mix(in srgb, var(--primary) 10%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08),
+              0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 /* ------------------------------------------------------------------ */
@@ -408,17 +408,17 @@
 /* ------------------------------------------------------------------ */
 .hero-glow {
   background:
-    radial-gradient(ellipse 70% 55% at 15% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 68%),
-    radial-gradient(ellipse 55% 50% at 88% 5%, color-mix(in srgb, var(--chifa) 10%, transparent), transparent 70%),
-    radial-gradient(ellipse 40% 35% at 50% 100%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 60%);
+    radial-gradient(ellipse 70% 55% at 15% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 68%),
+    radial-gradient(ellipse 55% 50% at 88% 5%, color-mix(in srgb, var(--chifa) 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 50% 100%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
 }
 
-/* Subtle dot-grid texture — reduced density to avoid visual noise */
+/* Subtle dot-grid texture — whisper quiet to avoid visual noise */
 .hero-grid {
   background-image:
-    radial-gradient(circle, color-mix(in srgb, var(--foreground) 7%, transparent) 1px, transparent 1px);
+    radial-gradient(circle, color-mix(in srgb, var(--foreground) 4.5%, transparent) 1px, transparent 1px);
   background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, black 25%, transparent 75%);
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, black 20%, transparent 70%);
 }
 
 /* ------------------------------------------------------------------ */
