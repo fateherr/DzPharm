@@ -528,327 +528,414 @@ html.dark[data-palette="ivory-emerald"],
 }
 
 /* ================================================================== */
-/* CATÉGORIE 2 : AUDACIEUX & AVANT-GARDE (10 NOUVELLES PALETTES)      */
-/* ================================================================== */
+/* CATÉGORIE 2 : SYSTÈMES & ARCHITECTURES DE DESIGN (10 DESIGNS COMPLETS) */
+/* ------------------------------------------------------------------ */
 
-/* 11. Cyber-Med & Bio-Néon */
-html:not(.dark)[data-palette="cyber-synth"] {
-  --background: #f3f0fb;
-  --foreground: #1e1138;
+/* 11. Néo-Brutalisme Chirurgical (Angles 0px & Ombres Dures) */
+html:not(.dark)[data-palette="design-brutalist"] {
+  --radius: 0px;
+  --background: #f4f5f8;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #1e1138;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #1e1138;
-  --primary: #7c3aed;
+  --popover-foreground: #0f172a;
+  --primary: #1d4ed8;
   --primary-foreground: #ffffff;
-  --secondary: #ede7f9;
-  --secondary-foreground: #1e1138;
-  --muted: #ede7f9;
-  --muted-foreground: #5b4d75;
-  --accent: #e5def5;
-  --accent-foreground: #1e1138;
-  --border: #ddd6fe;
-  --input: #ddd6fe;
-  --ring: #7c3aed;
-  --chifa: #06b6d4;
-  --chifa-foreground: #ffffff;
-  --chifa-gold: #f59e0b;
-  --brand-gradient: linear-gradient(135deg, #a855f7 0%, #7c3aed 50%, #06b6d4 100%);
-}
-html.dark[data-palette="cyber-synth"],
-.dark[data-palette="cyber-synth"] {
-  --primary: #a855f7;
-  --ring: #a855f7;
-  --sidebar-primary: #a855f7;
-  --sidebar-ring: #a855f7;
-}
-
-/* 12. Jasmin d’Alger & Mandarine */
-html:not(.dark)[data-palette="oasis-jasmin"] {
-  --background: #fdf5ee;
-  --foreground: #2c1809;
-  --card: #ffffff;
-  --card-foreground: #2c1809;
-  --popover: #ffffff;
-  --popover-foreground: #2c1809;
-  --primary: #ea580c;
-  --primary-foreground: #ffffff;
-  --secondary: #fceadc;
-  --secondary-foreground: #2c1809;
-  --muted: #fceadc;
-  --muted-foreground: #78583c;
-  --accent: #faebd7;
-  --accent-foreground: #2c1809;
-  --border: #fed7aa;
-  --input: #fed7aa;
-  --ring: #ea580c;
-  --chifa: #16a34a;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #475569;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --border: #94a3b8;
+  --input: #94a3b8;
+  --ring: #1d4ed8;
+  --chifa: #059669;
   --chifa-foreground: #ffffff;
   --chifa-gold: #d97706;
-  --brand-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #16a34a 100%);
+  --shadow-xs: 1px 1px 0px rgba(15, 23, 42, 0.15);
+  --shadow-sm: 2px 2px 0px rgba(15, 23, 42, 0.18);
+  --shadow-md: 4px 4px 0px rgba(15, 23, 42, 0.22);
+  --shadow-lg: 6px 6px 0px rgba(15, 23, 42, 0.25);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #059669 100%);
 }
-html.dark[data-palette="oasis-jasmin"],
-.dark[data-palette="oasis-jasmin"] {
-  --primary: #fb923c;
-  --ring: #fb923c;
-  --sidebar-primary: #fb923c;
-  --sidebar-ring: #fb923c;
-}
-
-/* 13. Lapis-Lazuli & Or Avicenne */
-html:not(.dark)[data-palette="alchemy-gold"] {
-  --background: #fbf7ee;
-  --foreground: #172033;
-  --card: #ffffff;
-  --card-foreground: #172033;
-  --popover: #ffffff;
-  --popover-foreground: #172033;
-  --primary: #1e3a8a;
-  --primary-foreground: #ffffff;
-  --secondary: #f3ebda;
-  --secondary-foreground: #172033;
-  --muted: #f3ebda;
-  --muted-foreground: #5e594d;
-  --accent: #f8f1e2;
-  --accent-foreground: #172033;
-  --border: #e7dec6;
-  --input: #e7dec6;
-  --ring: #1e3a8a;
-  --chifa: #b45309;
-  --chifa-foreground: #ffffff;
-  --chifa-gold: #d97706;
-  --brand-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #b45309 100%);
-}
-html.dark[data-palette="alchemy-gold"],
-.dark[data-palette="alchemy-gold"] {
-  --primary: #f59e0b;
-  --ring: #f59e0b;
-  --sidebar-primary: #f59e0b;
-  --sidebar-ring: #f59e0b;
+html.dark[data-palette="design-brutalist"],
+.dark[data-palette="design-brutalist"] {
+  --radius: 0px;
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+  --shadow-sm: 2px 2px 0px rgba(0, 0, 0, 0.6);
+  --shadow-md: 4px 4px 0px rgba(0, 0, 0, 0.8);
 }
 
-/* 14. Bioluminescence Abyssale */
-html:not(.dark)[data-palette="abyssal-bio"] {
-  --background: #edf7f6;
-  --foreground: #0a2220;
+/* 12. Verre Liquide & Aéro (Translucidité & Rayon 20px) */
+html:not(.dark)[data-palette="design-liquid-glass"] {
+  --radius: 1.25rem;
+  --background: #eef3fa;
+  --foreground: #0b1b30;
   --card: #ffffff;
-  --card-foreground: #0a2220;
+  --card-foreground: #0b1b30;
   --popover: #ffffff;
-  --popover-foreground: #0a2220;
-  --primary: #0f766e;
+  --popover-foreground: #0b1b30;
+  --primary: #0284c7;
   --primary-foreground: #ffffff;
-  --secondary: #d8f1ee;
-  --secondary-foreground: #0a2220;
-  --muted: #d8f1ee;
-  --muted-foreground: #3c6561;
-  --accent: #e2f5f2;
-  --accent-foreground: #0a2220;
-  --border: #bfe5e0;
-  --input: #bfe5e0;
-  --ring: #0f766e;
+  --secondary: #dce7f5;
+  --secondary-foreground: #0b1b30;
+  --muted: #dce7f5;
+  --muted-foreground: #435b78;
+  --accent: #e2eef9;
+  --accent-foreground: #0b1b30;
+  --border: #c2d5ec;
+  --input: #c2d5ec;
+  --ring: #0284c7;
   --chifa: #10b981;
   --chifa-foreground: #ffffff;
-  --chifa-gold: #b45309;
-  --brand-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #10b981 100%);
+  --chifa-gold: #f59e0b;
+  --shadow-xs: 0 2px 8px rgba(31, 38, 135, 0.05);
+  --shadow-sm: 0 8px 24px -4px rgba(31, 38, 135, 0.08);
+  --shadow-md: 0 16px 40px -6px rgba(31, 38, 135, 0.12);
+  --shadow-lg: 0 24px 60px -8px rgba(31, 38, 135, 0.16);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #10b981 100%);
 }
-html.dark[data-palette="abyssal-bio"],
-.dark[data-palette="abyssal-bio"] {
-  --primary: #06b6d4;
-  --ring: #06b6d4;
-  --sidebar-primary: #06b6d4;
-  --sidebar-ring: #06b6d4;
-}
-
-/* 15. Crépuscule du Hoggar */
-html:not(.dark)[data-palette="hoggar-sunset"] {
-  --background: #fcf2f2;
-  --foreground: #2b0b14;
-  --card: #ffffff;
-  --card-foreground: #2b0b14;
-  --popover: #ffffff;
-  --popover-foreground: #2b0b14;
-  --primary: #9f1239;
-  --primary-foreground: #ffffff;
-  --secondary: #fbe0e2;
-  --secondary-foreground: #2b0b14;
-  --muted: #fbe0e2;
-  --muted-foreground: #7c444f;
-  --accent: #fae6e7;
-  --accent-foreground: #2b0b14;
-  --border: #fecdd3;
-  --input: #fecdd3;
-  --ring: #9f1239;
-  --chifa: #15803d;
-  --chifa-foreground: #ffffff;
-  --chifa-gold: #d97706;
-  --brand-gradient: linear-gradient(135deg, #e11d48 0%, #9f1239 50%, #15803d 100%);
-}
-html.dark[data-palette="hoggar-sunset"],
-.dark[data-palette="hoggar-sunset"] {
-  --primary: #f43f5e;
-  --ring: #f43f5e;
-  --sidebar-primary: #f43f5e;
-  --sidebar-ring: #f43f5e;
+html.dark[data-palette="design-liquid-glass"],
+.dark[data-palette="design-liquid-glass"] {
+  --radius: 1.25rem;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
 }
 
-/* 16. Aurore Boréale Ionisée */
-html:not(.dark)[data-palette="aurora-borealis"] {
-  --background: #eefbf7;
-  --foreground: #08231a;
+/* 13. Terminal d’Officine Pro (Micro-coins 4px & Densité Maximale) */
+html:not(.dark)[data-palette="design-compact-dense"] {
+  --radius: 0.25rem;
+  --background: #ebedf2;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #08231a;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #08231a;
-  --primary: #059669;
+  --popover-foreground: #0f172a;
+  --primary: #0369a1;
   --primary-foreground: #ffffff;
-  --secondary: #d3f6eb;
-  --secondary-foreground: #08231a;
-  --muted: #d3f6eb;
-  --muted-foreground: #346c59;
-  --accent: #def9f1;
-  --accent-foreground: #08231a;
-  --border: #a7f3d0;
-  --input: #a7f3d0;
-  --ring: #059669;
-  --chifa: #9333ea;
-  --chifa-foreground: #ffffff;
-  --chifa-gold: #b45309;
-  --brand-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #9333ea 100%);
-}
-html.dark[data-palette="aurora-borealis"],
-.dark[data-palette="aurora-borealis"] {
-  --primary: #10b981;
-  --ring: #10b981;
-  --sidebar-primary: #10b981;
-  --sidebar-ring: #10b981;
-}
-
-/* 17. Ambre Impérial & Épices */
-html:not(.dark)[data-palette="silk-amber"] {
-  --background: #fef9ee;
-  --foreground: #2c1b05;
-  --card: #ffffff;
-  --card-foreground: #2c1b05;
-  --popover: #ffffff;
-  --popover-foreground: #2c1b05;
-  --primary: #d97706;
-  --primary-foreground: #ffffff;
-  --secondary: #faefd4;
-  --secondary-foreground: #2c1b05;
-  --muted: #faefd4;
-  --muted-foreground: #755931;
-  --accent: #fcf4de;
-  --accent-foreground: #2c1b05;
-  --border: #fde68a;
-  --input: #fde68a;
-  --ring: #d97706;
+  --secondary: #dfe4ec;
+  --secondary-foreground: #0f172a;
+  --muted: #dfe4ec;
+  --muted-foreground: #475569;
+  --accent: #e3e8f0;
+  --accent-foreground: #0f172a;
+  --border: #c8d1de;
+  --input: #c8d1de;
+  --ring: #0369a1;
   --chifa: #047857;
   --chifa-foreground: #ffffff;
   --chifa-gold: #b45309;
-  --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #047857 100%);
+  --shadow-xs: 0 1px 1px 0 rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 6px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #047857 100%);
 }
-html.dark[data-palette="silk-amber"],
-.dark[data-palette="silk-amber"] {
-  --primary: #f59e0b;
-  --ring: #f59e0b;
-  --sidebar-primary: #f59e0b;
-  --sidebar-ring: #f59e0b;
+html.dark[data-palette="design-compact-dense"],
+.dark[data-palette="design-compact-dense"] {
+  --radius: 0.25rem;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
 }
 
-/* 18. Vaporwave Clinique 90s */
-html:not(.dark)[data-palette="retro-vapor"] {
-  --background: #f3f3fd;
-  --foreground: #18153b;
+/* 14. Galet Organique & Silicone (Formes Rondes 24px) */
+html:not(.dark)[data-palette="design-soft-pebble"] {
+  --radius: 1.5rem;
+  --background: #f1f4f8;
+  --foreground: #131b2e;
   --card: #ffffff;
-  --card-foreground: #18153b;
+  --card-foreground: #131b2e;
   --popover: #ffffff;
-  --popover-foreground: #18153b;
+  --popover-foreground: #131b2e;
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
-  --secondary: #e5e5fb;
-  --secondary-foreground: #18153b;
-  --muted: #e5e5fb;
-  --muted-foreground: #58537c;
-  --accent: #eeeffc;
-  --accent-foreground: #18153b;
-  --border: #c7d2fe;
-  --input: #c7d2fe;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #131b2e;
+  --muted: #e2e8f0;
+  --muted-foreground: #4f5a70;
+  --accent: #eaeff6;
+  --accent-foreground: #131b2e;
+  --border: #d4dce7;
+  --input: #d4dce7;
   --ring: #4f46e5;
-  --chifa: #0891b2;
+  --chifa: #059669;
   --chifa-foreground: #ffffff;
   --chifa-gold: #d97706;
-  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #0891b2 100%);
+  --shadow-xs: 0 2px 4px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 12px 32px -4px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 20px 48px -6px rgba(15, 23, 42, 0.11);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #059669 100%);
 }
-html.dark[data-palette="retro-vapor"],
-.dark[data-palette="retro-vapor"] {
+html.dark[data-palette="design-soft-pebble"],
+.dark[data-palette="design-soft-pebble"] {
+  --radius: 1.5rem;
   --primary: #818cf8;
   --ring: #818cf8;
   --sidebar-primary: #818cf8;
   --sidebar-ring: #818cf8;
 }
 
-/* 19. Rubis Cardiaque & Pouls */
-html:not(.dark)[data-palette="cardiac-ruby"] {
-  --background: #fef2f2;
-  --foreground: #2e0909;
+/* 15. Ligne Pure & 0 Ombre (Swiss Flat Design) */
+html:not(.dark)[data-palette="design-flat-architect"] {
+  --radius: 0.5rem;
+  --background: #ecf0f4;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #2e0909;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #2e0909;
-  --primary: #b91c1c;
+  --popover-foreground: #0f172a;
+  --primary: #0f766e;
   --primary-foreground: #ffffff;
-  --secondary: #fee0e0;
-  --secondary-foreground: #2e0909;
-  --muted: #fee0e0;
-  --muted-foreground: #7d3f3f;
-  --accent: #fde8e8;
-  --accent-foreground: #2e0909;
-  --border: #fecaca;
-  --input: #fecaca;
-  --ring: #b91c1c;
+  --secondary: #dde3eb;
+  --secondary-foreground: #0f172a;
+  --muted: #dde3eb;
+  --muted-foreground: #475569;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --border: #cad5e2;
+  --input: #cad5e2;
+  --ring: #0f766e;
   --chifa: #047857;
   --chifa-foreground: #ffffff;
-  --chifa-gold: #d97706;
-  --brand-gradient: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #047857 100%);
+  --chifa-gold: #b45309;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: 0 0 0 1px var(--border);
+  --shadow-card: none;
+  --shadow-popover: 0 0 0 1px var(--border);
+  --brand-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #047857 100%);
 }
-html.dark[data-palette="cardiac-ruby"],
-.dark[data-palette="cardiac-ruby"] {
-  --primary: #ef4444;
-  --ring: #ef4444;
-  --sidebar-primary: #ef4444;
-  --sidebar-ring: #ef4444;
+html.dark[data-palette="design-flat-architect"],
+.dark[data-palette="design-flat-architect"] {
+  --radius: 0.5rem;
+  --primary: #2dd4bf;
+  --ring: #2dd4bf;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-ring: #2dd4bf;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-card: none;
 }
 
-/* 20. Quartz Minéral & Prune */
-html:not(.dark)[data-palette="quartz-rose"] {
-  --background: #fbf5f4;
-  --foreground: #260b17;
+/* 16. Élévation Volumétrique 3D (Floating Depth) */
+html:not(.dark)[data-palette="design-volumetric-card"] {
+  --radius: 0.85rem;
+  --background: #e9ecf2;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #260b17;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #260b17;
-  --primary: #831843;
+  --popover-foreground: #0f172a;
+  --primary: #1e40af;
   --primary-foreground: #ffffff;
-  --secondary: #fae4ed;
-  --secondary-foreground: #260b17;
-  --muted: #fae4ed;
-  --muted-foreground: #724258;
-  --accent: #fbeaf1;
-  --accent-foreground: #260b17;
-  --border: #fbcfe8;
-  --input: #fbcfe8;
-  --ring: #831843;
-  --chifa: #059669;
+  --secondary: #d8e0eb;
+  --secondary-foreground: #0f172a;
+  --muted: #d8e0eb;
+  --muted-foreground: #475569;
+  --accent: #e0e7f1;
+  --accent-foreground: #0f172a;
+  --border: #c5d0e0;
+  --input: #c5d0e0;
+  --ring: #1e40af;
+  --chifa: #047857;
   --chifa-foreground: #ffffff;
   --chifa-gold: #b45309;
-  --brand-gradient: linear-gradient(135deg, #be185d 0%, #831843 50%, #059669 100%);
+  --shadow-xs: 0 2px 4px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 16px 36px -6px rgba(15, 23, 42, 0.14), 0 6px 14px -3px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 24px 56px -8px rgba(15, 23, 42, 0.18), 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 50%, #047857 100%);
 }
-html.dark[data-palette="quartz-rose"],
-.dark[data-palette="quartz-rose"] {
-  --primary: #ec4899;
-  --ring: #ec4899;
-  --sidebar-primary: #ec4899;
-  --sidebar-ring: #ec4899;
+html.dark[data-palette="design-volumetric-card"],
+.dark[data-palette="design-volumetric-card"] {
+  --radius: 0.85rem;
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+  --shadow-md: 0 16px 40px -6px rgba(0, 0, 0, 0.7);
+}
+
+/* 17. Haute Accessibilité Médicale (WCAG AAA & Bordures 2px) */
+html:not(.dark)[data-palette="design-high-contrast"] {
+  --radius: 0.5rem;
+  --background: #e5e9f0;
+  --foreground: #090d16;
+  --card: #ffffff;
+  --card-foreground: #090d16;
+  --popover: #ffffff;
+  --popover-foreground: #090d16;
+  --primary: #025a9e;
+  --primary-foreground: #ffffff;
+  --secondary: #d1d9e4;
+  --secondary-foreground: #090d16;
+  --muted: #d1d9e4;
+  --muted-foreground: #334155;
+  --accent: #dbe3ed;
+  --accent-foreground: #090d16;
+  --border: #64748b;
+  --input: #64748b;
+  --ring: #025a9e;
+  --chifa: #036044;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #a16207;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.2);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #025a9e 50%, #036044 100%);
+}
+html.dark[data-palette="design-high-contrast"],
+.dark[data-palette="design-high-contrast"] {
+  --radius: 0.5rem;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 18. Cockpit Télémétrique & HUD (Moniteur Médical 3px) */
+html:not(.dark)[data-palette="design-telemetry-hud"] {
+  --radius: 0.2rem;
+  --background: #e8edf3;
+  --foreground: #0b1524;
+  --card: #ffffff;
+  --card-foreground: #0b1524;
+  --popover: #ffffff;
+  --popover-foreground: #0b1524;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #d6e0ea;
+  --secondary-foreground: #0b1524;
+  --muted: #d6e0ea;
+  --muted-foreground: #3b4e66;
+  --accent: #dde6ef;
+  --accent-foreground: #0b1524;
+  --border: #94a3b8;
+  --input: #94a3b8;
+  --ring: #0284c7;
+  --chifa: #059669;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --shadow-xs: 0 1px 2px rgba(2, 132, 199, 0.08);
+  --shadow-sm: 0 1px 4px rgba(2, 132, 199, 0.12);
+  --shadow-md: 0 4px 14px -2px rgba(2, 132, 199, 0.16);
+  --shadow-lg: 0 8px 24px -4px rgba(2, 132, 199, 0.2);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #00d4ff 0%, #0284c7 50%, #059669 100%);
+}
+html.dark[data-palette="design-telemetry-hud"],
+.dark[data-palette="design-telemetry-hud"] {
+  --radius: 0.2rem;
+  --primary: #00d4ff;
+  --ring: #00d4ff;
+  --sidebar-primary: #00d4ff;
+  --sidebar-ring: #00d4ff;
+}
+
+/* 19. Fiches Bristol d’Officine (Papier d’Apothicaire) */
+html:not(.dark)[data-palette="design-paper-codex"] {
+  --radius: 0.6rem;
+  --background: #eee9df;
+  --foreground: #1f1a14;
+  --card: #fcfbfa;
+  --card-foreground: #1f1a14;
+  --popover: #fcfbfa;
+  --popover-foreground: #1f1a14;
+  --primary: #1e3a8a;
+  --primary-foreground: #ffffff;
+  --secondary: #e4dcce;
+  --secondary-foreground: #1f1a14;
+  --muted: #e4dcce;
+  --muted-foreground: #5a5043;
+  --accent: #eadecd;
+  --accent-foreground: #1f1a14;
+  --border: #d5ccbe;
+  --input: #d5ccbe;
+  --ring: #1e3a8a;
+  --chifa: #2e6930;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: 0 1px 2px 0 rgba(70, 50, 20, 0.04);
+  --shadow-sm: 0 1px 4px 0 rgba(70, 50, 20, 0.06);
+  --shadow-md: 0 4px 16px -2px rgba(70, 50, 20, 0.10);
+  --shadow-lg: 0 10px 28px -4px rgba(70, 50, 20, 0.14);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #2e6930 100%);
+}
+html.dark[data-palette="design-paper-codex"],
+.dark[data-palette="design-paper-codex"] {
+  --radius: 0.6rem;
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+}
+
+/* 20. Monochrome Industriel (Rams Braun) */
+html:not(.dark)[data-palette="design-monochrome-braun"] {
+  --radius: 0.35rem;
+  --background: #eeeeea;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #d97706;
+  --primary-foreground: #ffffff;
+  --secondary: #deded8;
+  --secondary-foreground: #18181b;
+  --muted: #deded8;
+  --muted-foreground: #52525b;
+  --accent: #e4e4dd;
+  --accent-foreground: #18181b;
+  --border: #c8c8c2;
+  --input: #c8c8c2;
+  --ring: #d97706;
+  --chifa: #15803d;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 10px 24px -4px rgba(0, 0, 0, 0.15);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #15803d 100%);
+}
+html.dark[data-palette="design-monochrome-braun"],
+.dark[data-palette="design-monochrome-braun"] {
+  --radius: 0.35rem;
+  --primary: #f59e0b;
+  --ring: #f59e0b;
+  --sidebar-primary: #f59e0b;
+  --sidebar-ring: #f59e0b;
 }
 
 @layer base {

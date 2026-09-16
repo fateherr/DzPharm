@@ -10,10 +10,10 @@ export type InteractionSeverity =
 
 export type GlobalRisk = 'FAIBLE' | 'MODERE' | 'ELEVE' | 'CRITIQUE'
 
-export type PaletteCategory = 'minimalist' | 'expressive'
+export type PaletteCategory = 'minimalist' | 'system'
 
 export type PaletteId =
-  // 10 Palettes Minimalistes
+  // 10 Palettes Nuances Minimalistes
   | 'porcelain'
   | 'nordic-linen'
   | 'zinc-studio'
@@ -24,17 +24,17 @@ export type PaletteId =
   | 'polar-indigo'
   | 'mediterranean-azure'
   | 'ivory-emerald'
-  // 10 Palettes Audacieuses & Avant-Garde
-  | 'cyber-synth'
-  | 'oasis-jasmin'
-  | 'alchemy-gold'
-  | 'abyssal-bio'
-  | 'hoggar-sunset'
-  | 'aurora-borealis'
-  | 'silk-amber'
-  | 'retro-vapor'
-  | 'cardiac-ruby'
-  | 'quartz-rose'
+  // 10 Architectures & Systèmes de Design Complets
+  | 'design-brutalist'
+  | 'design-liquid-glass'
+  | 'design-compact-dense'
+  | 'design-soft-pebble'
+  | 'design-flat-architect'
+  | 'design-monochrome-braun'
+  | 'design-volumetric-card'
+  | 'design-high-contrast'
+  | 'design-telemetry-hud'
+  | 'design-paper-codex'
 
 export interface PaletteDefinition {
   id: PaletteId
@@ -43,6 +43,7 @@ export interface PaletteDefinition {
   description: string
   category: PaletteCategory
   badge: string
+  features?: string[]
   colors: {
     bg: string
     card: string
