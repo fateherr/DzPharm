@@ -23,6 +23,7 @@ import {
   FileText,
   FlaskConical,
   Flame,
+  Flower2,
   GitCompareArrows,
   Heart,
   HeartHandshake,
@@ -61,6 +62,12 @@ import type { TopViewedDrug } from './types'
 import { formatNumber } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
 import { useDzPharm, type ViewId } from './store'
+import {
+  BotanicalCrest,
+  BotanicalBadge,
+  BotanicalFiligree,
+  BotanicalHeroPattern,
+} from './botanical-decorations'
 
 /* ------------------------------------------------------------------ */
 /* Tendances DCI — types locaux + fetcher (réponse /top-views étendue)  */
@@ -525,6 +532,8 @@ export function HomeView() {
   const setView = useDzPharm((s) => s.setView)
   const audience = useDzPharm((s) => s.audience)
   const setAudience = useDzPharm((s) => s.setAudience)
+  const designMode = useDzPharm((s) => s.designMode)
+  const isBotanique = designMode === 'botanique'
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const recentlyViewed = useDzPharm((s) => s.recentlyViewed)
@@ -593,48 +602,100 @@ export function HomeView() {
 
       {/* ------------------------------ Hero ------------------------------ */}
       <section className="hero-glow relative border-b border-border/60">
-        <div className="hero-grid pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
+        {isBotanique ? (
+          <BotanicalHeroPattern />
+        ) : (
+          <div className="hero-grid pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
+        )}
         <div className="relative mx-auto max-w-4xl px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24 sm:pb-20">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm">
-              <Stethoscope className="size-3.5" aria-hidden />
-              Nomenclature officielle — Juin 2026
-            </span>
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-              L&apos;intelligence pharmaceutique{' '}
-              <span className="bg-gradient-to-r from-sky-400 via-primary to-chifa bg-clip-text text-transparent">
-                algérienne
-              </span>
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-              Le référentiel national des médicaments enrichi par l&apos;IA : recherche
-              sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
-            </p>
+            {isBotanique ? (
+              <>
+                <div className="flex justify-center mb-3">
+                  <BotanicalCrest />
+                </div>
+                <BotanicalBadge variant="sage" className="mb-2">
+                  Officine Royale &amp; Flore Médicinale · 2026
+                </BotanicalBadge>
+                <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                  Pharmacopée Royale &amp;{' '}
+                  <span className="bg-gradient-to-r from-[#1b4332] via-[#2d6a4f] to-[#be185d] dark:from-[#5eead4] dark:via-[#34d399] dark:to-[#fb7185] bg-clip-text text-transparent">
+                    Botanique Médicale
+                  </span>
+                </h1>
+                <BotanicalFiligree />
+                <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
+                  L&apos;alliance de la tradition officinale et de la pharmacologie moderne :
+                  9&nbsp;555 spécialités, extraits botaniques, monographies officielles et interactions.
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm">
+                  <Stethoscope className="size-3.5" aria-hidden />
+                  Nomenclature officielle — Juin 2026
+                </span>
+                <h1 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                  L&apos;intelligence pharmaceutique{' '}
+                  <span className="bg-gradient-to-r from-sky-400 via-primary to-chifa bg-clip-text text-transparent">
+                    algérienne
+                  </span>
+                </h1>
+                <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+                  Le référentiel national des médicaments enrichi par l&apos;IA : recherche
+                  sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
+                </p>
+              </>
+            )}
+
             <div className="mx-auto mt-6 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
-                <BookOpen className="size-3.5 text-primary" aria-hidden />
-                <span className="font-semibold text-foreground">24 livres</span> pharmacologie
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
-                <FileText className="size-3.5 text-primary" aria-hidden />
-                <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-sm backdrop-blur-lg">
-                <Store className="size-3.5" aria-hidden />
-                <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
-                <FileCheck className="size-3.5 text-primary" aria-hidden />
-                RCP ANSM officiel
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/40 bg-pink-500/10 px-3.5 py-1.5 text-pink-700 shadow-sm backdrop-blur-lg dark:text-pink-300">
-                <HeartPulse className="size-3.5" aria-hidden />
-                Grossesse CRAT
-              </span>
+              {isBotanique ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1b4332]/30 bg-[#1b4332]/10 dark:border-[#34d399]/30 dark:bg-[#34d399]/10 px-3.5 py-1.5 shadow-sm backdrop-blur-lg text-[#1b4332] dark:text-[#34d399]">
+                    <Leaf className="size-3.5" aria-hidden />
+                    <span className="font-semibold">Plantes &amp; Extraits</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
+                    <FileText className="size-3.5 text-primary" aria-hidden />
+                    <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies DCI
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-sm backdrop-blur-lg">
+                    <Store className="size-3.5" aria-hidden />
+                    <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#be185d]/30 bg-[#be185d]/10 px-3.5 py-1.5 text-[#be185d] dark:text-[#fb7185] shadow-sm backdrop-blur-lg">
+                    <Flower2 className="size-3.5" aria-hidden />
+                    Rose de Damas &amp; Phytothérapie
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
+                    <BookOpen className="size-3.5 text-primary" aria-hidden />
+                    <span className="font-semibold text-foreground">24 livres</span> pharmacologie
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
+                    <FileText className="size-3.5 text-primary" aria-hidden />
+                    <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-sm backdrop-blur-lg">
+                    <Store className="size-3.5" aria-hidden />
+                    <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
+                    <FileCheck className="size-3.5 text-primary" aria-hidden />
+                    RCP ANSM officiel
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-300/40 bg-pink-500/10 px-3.5 py-1.5 text-pink-700 shadow-sm backdrop-blur-lg dark:text-pink-300">
+                    <HeartPulse className="size-3.5" aria-hidden />
+                    Grossesse CRAT
+                  </span>
+                </>
+              )}
             </div>
           </motion.div>
 
@@ -663,8 +724,13 @@ export function HomeView() {
               }
             />
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground/80 mr-1 hidden sm:inline">Suggestions fréquentes :</span>
-              {QUICK_CHIPS.map((chip) => (
+              <span className="text-xs font-medium text-muted-foreground/80 mr-1 hidden sm:inline">
+                {isBotanique ? 'Remèdes & Spécialités :' : 'Suggestions fréquentes :'}
+              </span>
+              {(isBotanique
+                ? ['Sauge officinale', 'Rose de Damas', 'Camomille', 'Paracétamol', 'Huile d’Argan', 'Eucalyptus']
+                : QUICK_CHIPS
+              ).map((chip) => (
                 <button
                   key={chip}
                   type="button"

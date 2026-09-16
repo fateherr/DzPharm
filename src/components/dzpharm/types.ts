@@ -10,6 +10,8 @@ export type InteractionSeverity =
 
 export type GlobalRisk = 'FAIBLE' | 'MODERE' | 'ELEVE' | 'CRITIQUE'
 
+export type DesignMode = 'standard' | 'botanique'
+
 export type PaletteCategory = 'minimalist' | 'system'
 
 export type PaletteId =

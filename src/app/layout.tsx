@@ -87,7 +87,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var valid=['porcelain','nordic-linen','zinc-studio','sage-botanical','french-cobalt','sahara-cedar','braun-mineral','polar-indigo','mediterranean-azure','ivory-emerald','design-brutalist','design-liquid-glass','design-compact-dense','design-soft-pebble','design-flat-architect','design-monochrome-braun','design-volumetric-card','design-high-contrast','design-telemetry-hud','design-paper-codex'];var p=localStorage.getItem('dzpharm_palette');var id=valid.includes(p)?p:'porcelain';document.documentElement.setAttribute('data-palette',id);}catch(e){}})();`,
+            __html: `(function(){try{var valid=['porcelain','nordic-linen','zinc-studio','sage-botanical','french-cobalt','sahara-cedar','braun-mineral','polar-indigo','mediterranean-azure','ivory-emerald','design-brutalist','design-liquid-glass','design-compact-dense','design-soft-pebble','design-flat-architect','design-monochrome-braun','design-volumetric-card','design-high-contrast','design-telemetry-hud','design-paper-codex'];var p=localStorage.getItem('dzpharm_palette');var id=valid.includes(p)?p:'porcelain';document.documentElement.setAttribute('data-palette',id);var dm=localStorage.getItem('dzpharm_design_mode');if(dm==='botanique'){document.documentElement.setAttribute('data-design-mode','botanique');}else{document.documentElement.setAttribute('data-design-mode','standard');}}catch(e){}})();`,
           }}
         />
       </head>

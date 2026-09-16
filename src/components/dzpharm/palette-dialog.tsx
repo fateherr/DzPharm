@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes'
 import {
   Check,
   Layers,
+  Leaf,
   Moon,
   Palette,
   Sparkles,
@@ -28,6 +29,8 @@ export function PaletteDialog() {
   const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
   const activePalette  = useDzPharm((s) => s.palette)
   const setPalette     = useDzPharm((s) => s.setPalette)
+  const designMode     = useDzPharm((s) => s.designMode)
+  const setDesignMode  = useDzPharm((s) => s.setDesignMode)
   const { resolvedTheme, setTheme } = useTheme()
 
   // Auto-open on the tab that owns the currently active palette
@@ -36,7 +39,12 @@ export function PaletteDialog() {
   const [activeCategory, setActiveCategory] =
     useState<PaletteCategory>(initialCategory)
 
-  const handleSelect = (id: PaletteId) => setPalette(id)
+  const handleSelect = (id: PaletteId) => {
+    setPalette(id)
+    if (designMode === 'botanique') {
+      setDesignMode('standard')
+    }
+  }
 
   const filtered      = PALETTES.filter((p) => p.category === activeCategory)
   const minCount      = PALETTES.filter((p) => p.category === 'minimalist').length
@@ -75,6 +83,37 @@ export function PaletteDialog() {
                 {resolvedTheme === 'dark'
                   ? <><Sun  className="size-3.5 text-amber-500" /><span className="hidden sm:inline">Mode Clair</span></>
                   : <><Moon className="size-3.5 text-sky-500"   /><span className="hidden sm:inline">Mode Sombre</span></>}
+              </Button>
+            </div>
+
+            {/* Botanical Mode Showcase Banner */}
+            <div className="mt-2.5 flex items-center justify-between gap-2 p-2.5 rounded-xl border border-[#1b4332]/25 bg-[#1b4332]/8 dark:border-[#34d399]/30 dark:bg-[#34d399]/10">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-[#1b4332]/15 text-[#1b4332] dark:bg-[#34d399]/20 dark:text-[#34d399] shrink-0">
+                  <Leaf className="size-4" />
+                </span>
+                <div className="truncate text-xs">
+                  <p className="font-semibold text-foreground truncate">
+                    Nouveau Design : Pharmacopée Royale &amp; Botanique
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    Plantes médicinales, roses damascena, mortiers &amp; alambics
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={designMode === 'botanique' ? 'default' : 'outline'}
+                onClick={() => setDesignMode(designMode === 'botanique' ? 'standard' : 'botanique')}
+                className={cn(
+                  'h-7 px-2.5 text-xs font-semibold shrink-0 cursor-pointer rounded-lg',
+                  designMode === 'botanique'
+                    ? 'bg-[#1b4332] text-white hover:bg-[#1b4332]/90 dark:bg-[#34d399] dark:text-[#060c09]'
+                    : 'border-[#1b4332]/30 text-[#1b4332] dark:border-[#34d399]/40 dark:text-[#34d399]'
+                )}
+              >
+                {designMode === 'botanique' ? 'Actif 🌿' : 'Activer'}
               </Button>
             </div>
 

@@ -309,15 +309,26 @@ export function SearchAutocomplete({
 
   // Placeholders cycliques dynamiques
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const designMode = useDzPharm((s) => s.designMode)
+  const isBotanique = designMode === 'botanique'
+
+  const BOTANICAL_PLACEHOLDERS = [
+    'Rechercher une DCI ou plante médicinale (ex: Sauge, Paracétamol…)',
+    'Rechercher par forme d’officine (ex: Extrait végétal, sirop, sachet)…',
+    'Rechercher par principe actif, rose de Damas, camomille, princeps…',
+    'Rechercher par nom de marque, laboratoire ou n° AMM…',
+  ]
+
   useEffect(() => {
     if (placeholder) return
+    const suggestions = isBotanique ? BOTANICAL_PLACEHOLDERS : PLACEHOLDER_SUGGESTIONS
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_SUGGESTIONS.length)
+      setPlaceholderIndex((prev) => (prev + 1) % suggestions.length)
     }, 4500)
     return () => clearInterval(interval)
-  }, [placeholder])
+  }, [placeholder, isBotanique])
 
-  const activePlaceholder = placeholder ?? PLACEHOLDER_SUGGESTIONS[placeholderIndex]
+  const activePlaceholder = placeholder ?? (isBotanique ? BOTANICAL_PLACEHOLDERS[placeholderIndex % BOTANICAL_PLACEHOLDERS.length] : PLACEHOLDER_SUGGESTIONS[placeholderIndex % PLACEHOLDER_SUGGESTIONS.length])
 
   const { data, isFetching } = useQuery({
     queryKey: ['drugs', 'autocomplete', trimmed, scope],

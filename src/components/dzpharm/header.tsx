@@ -15,8 +15,10 @@ import {
   Barcode,
   BookOpen,
   ChevronDown,
+  Flower2,
   HeartHandshake,
   Home,
+  Leaf,
   Library,
   Lock,
   Moon,
@@ -145,6 +147,8 @@ export function Header() {
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
+  const designMode = useDzPharm((s) => s.designMode)
+  const setDesignMode = useDzPharm((s) => s.setDesignMode)
 
   const { data: stats } = useQuery({
     queryKey: ['stats'],
@@ -170,6 +174,8 @@ export function Header() {
     SECONDARY_NAV.some((item) => item.id === view) ||
     EXTENDED_NAV.some((item) => item.id === view)
 
+  const isBotanique = designMode === 'botanique'
+
   return (
     <TooltipProvider delayDuration={200}>
       <header className="relative z-0 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
@@ -181,18 +187,36 @@ export function Header() {
             className="group flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="DzPharm — retour à l'accueil"
           >
-            <span
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 via-primary to-chifa shadow-md shadow-primary/30 ring-1 ring-white/10 dark:ring-white/5 transition-transform group-hover:scale-105"
-              aria-hidden
-            >
-              <Pill className="size-5 text-white" />
-            </span>
+            {isBotanique ? (
+              <span
+                className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1b4332] via-[#2d6a4f] to-[#be185d] shadow-md shadow-[#1b4332]/30 ring-1 ring-[#dcd4c5]/40 transition-transform group-hover:scale-105"
+                aria-hidden
+              >
+                <Leaf className="size-5 text-emerald-200" />
+              </span>
+            ) : (
+              <span
+                className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 via-primary to-chifa shadow-md shadow-primary/30 ring-1 ring-white/10 dark:ring-white/5 transition-transform group-hover:scale-105"
+                aria-hidden
+              >
+                <Pill className="size-5 text-white" />
+              </span>
+            )}
             <span className="flex min-w-0 flex-col text-left leading-tight">
               <span className="text-lg font-bold tracking-tight text-foreground">
-                Dz<span className="bg-gradient-to-r from-primary via-sky-500 to-chifa bg-clip-text text-transparent">Pharm</span>
+                Dz
+                {isBotanique ? (
+                  <span className="bg-gradient-to-r from-[#1b4332] via-[#2d6a4f] to-[#be185d] dark:from-[#5eead4] dark:via-[#34d399] dark:to-[#fb7185] bg-clip-text text-transparent">
+                    Pharm
+                  </span>
+                ) : (
+                  <span className="bg-gradient-to-r from-primary via-sky-500 to-chifa bg-clip-text text-transparent">
+                    Pharm
+                  </span>
+                )}
               </span>
               <span className="hidden truncate text-[10px] font-medium tracking-wide text-muted-foreground xl:block">
-                Référentiel Officiel · 2026
+                {isBotanique ? 'Officine & Pharmacopée Royale' : 'Référentiel Officiel · 2026'}
               </span>
             </span>
           </button>
@@ -392,23 +416,57 @@ export function Header() {
 
             <AudienceToggle />
 
-            {/* Sélecteur de Nuancier & Palettes (10 thèmes) */}
+            {/* Bascule 1-Clic : Mode Botanique & Pharmacopée vs Mode Clinique */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setPaletteOpen(true)}
-                  aria-label="Nuancier & Palettes de couleurs"
-                  className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-primary transition-all duration-200"
-                >
-                  <Palette className="size-4" aria-hidden />
-                </Button>
+                {isBotanique ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDesignMode('standard')}
+                    className="h-8 gap-1.5 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2.5 shadow-2xs transition-all duration-300 cursor-pointer"
+                  >
+                    <Pill className="size-3.5 text-sky-600 dark:text-sky-400" />
+                    <span className="hidden sm:inline">Mode Clinique</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDesignMode('botanique')}
+                    className="h-8 gap-1.5 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2.5 shadow-2xs transition-all duration-300 cursor-pointer"
+                  >
+                    <Leaf className="size-3.5 text-[#1b4332] dark:text-[#34d399]" />
+                    <span className="hidden sm:inline">Mode Botanique</span>
+                  </Button>
+                )}
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                Nuancier & Palettes (10 designs)
+                {isBotanique
+                  ? 'Revenir au design Clinique Standard (20 palettes)'
+                  : 'Basculer vers le design Pharmacopée Royale & Botanique (1 clic)'}
               </TooltipContent>
             </Tooltip>
+
+            {/* Sélecteur de Nuancier & Palettes (uniquement si en mode standard) */}
+            {!isBotanique && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setPaletteOpen(true)}
+                    aria-label="Nuancier & Palettes de couleurs"
+                    className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-primary transition-all duration-200"
+                  >
+                    <Palette className="size-4" aria-hidden />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Nuancier & Palettes (20 designs)
+                </TooltipContent>
+              </Tooltip>
+            )}
 
             <ThemeToggle />
 

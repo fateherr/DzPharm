@@ -938,6 +938,80 @@ html.dark[data-palette="design-monochrome-braun"],
   --sidebar-ring: #f59e0b;
 }
 
+/* ================================================================== */
+/* UNIVERS DE DESIGN : PHARMACOPÉE ROYALE & BOTANIQUE                */
+/* ================================================================== */
+html[data-design-mode="botanique"]:not(.dark) {
+  --radius: 0.875rem;
+  --background: #f7f5ed;
+  --foreground: #182019;
+  --card: #fcfbf8;
+  --card-foreground: #182019;
+  --popover: #fcfbf8;
+  --popover-foreground: #182019;
+  --primary: #1b4332;
+  --primary-foreground: #ffffff;
+  --secondary: #eae4d5;
+  --secondary-foreground: #182019;
+  --muted: #eae4d5;
+  --muted-foreground: #555f52;
+  --accent: #f0e9dc;
+  --accent-foreground: #182019;
+  --destructive: #dc2626;
+  --border: #dcd4c5;
+  --input: #dcd4c5;
+  --ring: #2d6a4f;
+  --chifa: #15803d;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: 0 1px 3px rgba(27, 67, 50, 0.05);
+  --shadow-sm: 0 3px 10px -2px rgba(27, 67, 50, 0.08);
+  --shadow-md: 0 8px 24px -4px rgba(27, 67, 50, 0.12);
+  --shadow-lg: 0 16px 40px -6px rgba(27, 67, 50, 0.16);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #1b4332 0%, #2d6a4f 55%, #d9486c 100%);
+}
+
+html[data-design-mode="botanique"].dark,
+.dark[data-design-mode="botanique"] {
+  --radius: 0.875rem;
+  --background: #060c09;
+  --foreground: #f1f7f3;
+  --card: #0b1611;
+  --card-foreground: #f1f7f3;
+  --popover: #0f1d16;
+  --popover-foreground: #f1f7f3;
+  --primary: #34d399;
+  --primary-foreground: #031c11;
+  --secondary: #13241c;
+  --secondary-foreground: #f1f7f3;
+  --muted: #13241c;
+  --muted-foreground: #829c8e;
+  --accent: #192d23;
+  --accent-foreground: #f1f7f3;
+  --border: #1a2f24;
+  --input: #1a2f24;
+  --ring: #34d399;
+  --chifa: #10b981;
+  --chifa-gold: #fbbf24;
+  --shadow-card: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 8px 32px -4px rgba(0, 0, 0, 0.7);
+  --brand-gradient: linear-gradient(135deg, #5eead4 0%, #34d399 50%, #fb7185 100%);
+}
+
+/* Texture & Filigranes Botaniques */
+html[data-design-mode="botanique"] body {
+  background-image: radial-gradient(circle at 10% 20%, rgba(217, 72, 108, 0.03) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(27, 67, 50, 0.04) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+html[data-design-mode="botanique"].dark body {
+  background-image: radial-gradient(circle at 15% 15%, rgba(251, 113, 133, 0.04) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 85%, rgba(52, 211, 153, 0.05) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

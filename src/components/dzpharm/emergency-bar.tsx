@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Ambulance, ChevronDown, PhoneCall, Siren, X } from 'lucide-react'
+import { useDzPharm } from './store'
+import { cn } from '@/lib/utils'
 
 /**
  * Bandeau permanent des numéros d'urgence médicale en Algérie.
@@ -10,6 +12,8 @@ import { Ambulance, ChevronDown, PhoneCall, Siren, X } from 'lucide-react'
  */
 export function EmergencyBar() {
   const [minimized, setMinimized] = useState(false)
+  const designMode = useDzPharm((s) => s.designMode)
+  const isBotanique = designMode === 'botanique'
 
   if (minimized) {
     return (
@@ -49,7 +53,12 @@ export function EmergencyBar() {
     <aside
       role="region"
       aria-label="Numéros d'urgence médicale en Algérie"
-      className="relative z-10 w-full border-b border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30 backdrop-blur-lg print:hidden transition-all"
+      className={cn(
+        'relative z-10 w-full border-b backdrop-blur-lg print:hidden transition-all',
+        isBotanique
+          ? 'border-[#2d6a4f]/30 bg-gradient-to-r from-[#060c09] via-[#1b4332]/90 to-[#060c09] text-emerald-100 shadow-xs shadow-[#1b4332]/40'
+          : 'border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30'
+      )}
     >
       <div className="mx-auto flex h-7 max-w-7xl items-center justify-between gap-1 px-3 text-[11px] font-medium tracking-wide sm:text-xs">
         {/* Left: Emergency Status Beacon & Numbers */}

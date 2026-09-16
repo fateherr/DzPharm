@@ -6,6 +6,7 @@ import {
   BookOpen,
   Home,
   LayoutGrid,
+  Leaf,
   Library,
   MoreHorizontal,
   Pill,
@@ -49,6 +50,8 @@ export function MobileBottomNav() {
   const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
+  const designMode = useDzPharm((s) => s.designMode)
+  const setDesignMode = useDzPharm((s) => s.setDesignMode)
   const basket = useDzPharm((s) => s.basket)
   const [moreOpen, setMoreOpen] = useState(false)
 
@@ -97,6 +100,35 @@ export function MobileBottomNav() {
                   <X className="size-4.5" />
                 </button>
               </div>
+
+              {/* Design Mode Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  setDesignMode(designMode === 'botanique' ? 'standard' : 'botanique')
+                  setMoreOpen(false)
+                }}
+                className={cn(
+                  'mb-3 w-full flex items-center justify-between gap-2 rounded-2xl border p-3 text-left transition-all',
+                  designMode === 'botanique'
+                    ? 'border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:border-[#34d399]/40 dark:bg-[#34d399]/10 dark:text-[#34d399]'
+                    : 'border-border/70 bg-card hover:border-primary/20 hover:bg-accent text-foreground'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={cn('flex size-8 items-center justify-center rounded-xl shadow-xs', designMode === 'botanique' ? 'bg-[#1b4332] text-white dark:bg-[#34d399] dark:text-[#060c09]' : 'bg-muted text-muted-foreground')}>
+                    {designMode === 'botanique' ? <Leaf className="size-4" /> : <Pill className="size-4" />}
+                  </span>
+                  <div>
+                    <div className="text-xs font-semibold">
+                      {designMode === 'botanique' ? '🌿 Mode Botanique Actif' : 'Mode Clinique Standard'}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {designMode === 'botanique' ? 'Appuyer pour revenir au mode clinique' : 'Appuyer pour activer la Pharmacopée Royale'}
+                    </div>
+                  </div>
+                </div>
+              </button>
 
               <div className="grid grid-cols-2 gap-2.5 pb-8">
                 {MORE_MENU_ITEMS.map((item) => {

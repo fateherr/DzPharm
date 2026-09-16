@@ -15,6 +15,7 @@ import {
   HeartHandshake,
   HeartPulse,
   Home,
+  Leaf,
   Library,
   Lock,
   Moon,
@@ -61,6 +62,8 @@ export function CommandPalette() {
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
+  const designMode = useDzPharm((s) => s.designMode)
+  const setDesignMode = useDzPharm((s) => s.setDesignMode)
   const setView = useDzPharm((s) => s.setView)
   const openDrug = useDzPharm((s) => s.openDrug)
   const openTool = useDzPharm((s) => s.openTool)
@@ -300,12 +303,32 @@ export function CommandPalette() {
           <CommandItem
             onSelect={() => {
               setCommandOpen(false)
+              setDesignMode(designMode === 'botanique' ? 'standard' : 'botanique')
+            }}
+            className="cursor-pointer"
+          >
+            {designMode === 'botanique' ? (
+              <>
+                <Pill className="size-4 text-sky-500" />
+                <span>Basculer vers le Mode Clinique Standard</span>
+              </>
+            ) : (
+              <>
+                <Leaf className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Basculer vers le Mode Pharmacopée Royale &amp; Botanique (1 clic)</span>
+              </>
+            )}
+            <CommandShortcut>B</CommandShortcut>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              setCommandOpen(false)
               setPaletteOpen(true)
             }}
             className="cursor-pointer"
           >
             <Palette className="size-4 text-primary" />
-            <span>Nuancier : Changer la palette de design &amp; couleurs (10 thèmes)</span>
+            <span>Nuancier : Changer la palette de design &amp; couleurs (20 designs)</span>
             <CommandShortcut>T</CommandShortcut>
           </CommandItem>
           <CommandItem
