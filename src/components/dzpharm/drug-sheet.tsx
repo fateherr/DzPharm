@@ -60,6 +60,7 @@ import { fetchDrugDetail, postDrugView } from './api'
 import type { DrugDetail } from './types'
 import { RcpViewer } from './rcp-view'
 import { PatientDosageDialog } from './patient-dosage-sheet'
+import { cacheDrug } from '@/lib/db/indexeddb'
 import {
   ChifaBadge,
   ListeBadge,
@@ -575,6 +576,7 @@ export function DrugSheet() {
   useEffect(() => {
     if (!drug) return
     pushRecent({ id: drug.id, brand: drug.brand, dci: drug.dci, status: drug.status })
+    cacheDrug(drug).catch(() => {})
     if (countedRef.current !== drug.id) {
       countedRef.current = drug.id
       postDrugView(drug.id)

@@ -98,6 +98,25 @@
   --sidebar-accent-foreground: #0b1220;
   --sidebar-border: #cbd5e1;
   --sidebar-ring: #0284c7;
+
+  /* Z-Index Scale (Section 3.1) */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 40;
+  --z-sticky: 50;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-drawer: 300;
+  --z-popover: 400;
+  --z-tooltip: 500;
+  --z-critical: 9999;
+
+  /* Focus ring tokens (Section 2.2) */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--primary);
+  --focus-ring-shadow: 0 0 0 var(--focus-ring-offset) var(--background),
+                       0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
 }
 
 /* Dark theme — executive obsidian slate, deep midnight card elevation & radiant emerald Chifa */
@@ -144,6 +163,8 @@
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #1e293b;
   --sidebar-ring: #38bdf8;
+  --focus-ring-shadow: 0 0 0 var(--focus-ring-offset) var(--background),
+                       0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
 }
 
 @layer base {
@@ -317,6 +338,31 @@
 }
 .typing-dot:nth-child(3) {
   animation-delay: 0.3s;
+}
+
+/* ------------------------------------------------------------------ */
+/* Typographie clinique & monospacée (Section 2.3)                     */
+/* ------------------------------------------------------------------ */
+.text-clinical {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.01em;
+}
+
+.text-dci {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.text-price {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 /* ------------------------------------------------------------------ */
