@@ -10,6 +10,34 @@ export type InteractionSeverity =
 
 export type GlobalRisk = 'FAIBLE' | 'MODERE' | 'ELEVE' | 'CRITIQUE'
 
+export type PaletteId =
+  | 'porcelain'
+  | 'nordic-linen'
+  | 'zinc-studio'
+  | 'sage-botanical'
+  | 'french-cobalt'
+  | 'sahara-cedar'
+  | 'braun-mineral'
+  | 'polar-indigo'
+  | 'mediterranean-azure'
+  | 'ivory-emerald'
+
+export interface PaletteDefinition {
+  id: PaletteId
+  name: string
+  tagline: string
+  description: string
+  category: 'clinique' | 'chaleur' | 'moderne' | 'nature'
+  colors: {
+    bg: string
+    card: string
+    primary: string
+    chifa: string
+    border: string
+    text: string
+  }
+}
+
 export interface Drug {
   id: number
   regNumber: string

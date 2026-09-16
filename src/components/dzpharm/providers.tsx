@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { SessionGuard } from './session-guard'
+import { PaletteSync } from './palette-sync'
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -29,6 +30,7 @@ export function Providers({ children }: { children: ReactNode }) {
         disableTransitionOnChange
       >
         <SessionGuard>
+          <PaletteSync />
           {children}
         </SessionGuard>
       </ThemeProvider>

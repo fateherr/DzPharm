@@ -20,6 +20,7 @@ import {
   Library,
   Lock,
   Moon,
+  Palette,
   Pill,
   Search,
   ShieldAlert,
@@ -43,6 +44,7 @@ import {
 import { fetchStats } from './api'
 import { formatNumber } from './status-badge'
 import { useDzPharm, type ViewId } from './store'
+import { PaletteDialog } from './palette-dialog'
 
 interface NavItem {
   id: ViewId
@@ -142,6 +144,7 @@ export function Header() {
   const setView = useDzPharm((s) => s.setView)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
+  const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
 
   const { data: stats } = useQuery({
     queryKey: ['stats'],
@@ -388,6 +391,25 @@ export function Header() {
             )}
 
             <AudienceToggle />
+
+            {/* Sélecteur de Nuancier & Palettes (10 thèmes) */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setPaletteOpen(true)}
+                  aria-label="Nuancier & Palettes de couleurs"
+                  className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-primary transition-all duration-200"
+                >
+                  <Palette className="size-4" aria-hidden />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Nuancier & Palettes (10 designs)
+              </TooltipContent>
+            </Tooltip>
+
             <ThemeToggle />
 
             {/* Bouton Verrouiller la session */}
@@ -409,6 +431,7 @@ export function Header() {
             </Tooltip>
           </div>
         </div>
+        <PaletteDialog />
       </header>
     </TooltipProvider>
   )

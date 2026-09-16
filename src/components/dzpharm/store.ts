@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ChifaCardType, ChifaLine } from './types'
+import type { ChifaCardType, ChifaLine, PaletteId } from './types'
 import type {
   ArmoireEntry,
   ArmoireEntryInput,
@@ -104,6 +104,12 @@ interface DzPharmStore {
   commandOpen: boolean
   setCommandOpen: (open: boolean) => void
 
+  paletteOpen: boolean
+  setPaletteOpen: (open: boolean) => void
+
+  palette: PaletteId
+  setPalette: (palette: PaletteId) => void
+
   scannerOpen: boolean
   setScannerOpen: (open: boolean) => void
 
@@ -193,6 +199,12 @@ export const useDzPharm = create<DzPharmStore>()(
 
       commandOpen: false,
       setCommandOpen: (commandOpen) => set({ commandOpen }),
+
+      paletteOpen: false,
+      setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+
+      palette: 'porcelain',
+      setPalette: (palette) => set({ palette }),
 
       scannerOpen: false,
       setScannerOpen: (scannerOpen) => set({ scannerOpen }),
@@ -498,6 +510,7 @@ export const useDzPharm = create<DzPharmStore>()(
       // Persiste mode d'usage + favoris + historique récent + armoire v2
       // + journal + panier Chifa — l'état de navigation reste éphémère
       partialize: (state) => ({
+        palette: state.palette,
         audience: state.audience,
         favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,

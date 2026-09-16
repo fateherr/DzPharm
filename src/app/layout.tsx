@@ -84,6 +84,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=localStorage.getItem('dzpharm_palette');if(p){document.documentElement.setAttribute('data-palette',p);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body
         className="font-sans antialiased bg-background text-foreground"
       >

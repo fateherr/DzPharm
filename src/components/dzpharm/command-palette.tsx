@@ -18,6 +18,7 @@ import {
   Library,
   Lock,
   Moon,
+  Palette,
   PhoneCall,
   Pill,
   Search,
@@ -59,6 +60,7 @@ export function CommandPalette() {
   const commandOpen = useDzPharm((s) => s.commandOpen)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
+  const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
   const setView = useDzPharm((s) => s.setView)
   const openDrug = useDzPharm((s) => s.openDrug)
   const openTool = useDzPharm((s) => s.openTool)
@@ -295,6 +297,17 @@ export function CommandPalette() {
 
         {/* Actions rapides */}
         <CommandGroup heading="Actions rapides">
+          <CommandItem
+            onSelect={() => {
+              setCommandOpen(false)
+              setPaletteOpen(true)
+            }}
+            className="cursor-pointer"
+          >
+            <Palette className="size-4 text-primary" />
+            <span>Nuancier : Changer la palette de design &amp; couleurs (10 thèmes)</span>
+            <CommandShortcut>T</CommandShortcut>
+          </CommandItem>
           <CommandItem
             onSelect={() => {
               setCommandOpen(false)

@@ -212,6 +212,341 @@
                        0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
 }
 
+/* ================================================================== */
+/* 10 PALETTES DE DESIGN THÉMATIQUES (SÉLECTIONNABLES EN TEMPS RÉEL)   */
+/* ================================================================== */
+
+/* 1. Porcelaine Suisse & Saphir (Défaut) */
+:root[data-palette="porcelain"],
+[data-palette="porcelain"]:not(.dark) {
+  --background: #ebedf2;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #026aa7;
+  --primary-foreground: #ffffff;
+  --secondary: #dfe3ea;
+  --secondary-foreground: #0f172a;
+  --muted: #dfe3ea;
+  --muted-foreground: #475569;
+  --accent: #e2e7ef;
+  --accent-foreground: #0f172a;
+  --border: #d0d7e2;
+  --input: #d0d7e2;
+  --ring: #026aa7;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #026aa7 50%, #047857 100%);
+}
+
+/* 2. Lin Nordique & Encre Noire (Éditorial Papier Chaud — 100% Anti-éblouissement) */
+:root[data-palette="nordic-linen"],
+[data-palette="nordic-linen"]:not(.dark) {
+  --background: #f0ede6;
+  --foreground: #1c1917;
+  --card: #faf8f5;
+  --card-foreground: #1c1917;
+  --popover: #faf8f5;
+  --popover-foreground: #1c1917;
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --secondary: #e6e1d6;
+  --secondary-foreground: #1c1917;
+  --muted: #e6e1d6;
+  --muted-foreground: #57534e;
+  --accent: #eae4d8;
+  --accent-foreground: #1c1917;
+  --border: #d8d1c3;
+  --input: #d8d1c3;
+  --ring: #1d4ed8;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #047857 100%);
+}
+.dark[data-palette="nordic-linen"],
+[data-palette="nordic-linen"].dark {
+  --background: #0f0e0c;
+  --card: #181613;
+  --popover: #181613;
+  --primary: #60a5fa;
+  --border: #2c2823;
+  --muted: #1e1b17;
+}
+
+/* 3. Zinc Satiné & Glacier (Style Linear / Raycast Studio) */
+:root[data-palette="zinc-studio"],
+[data-palette="zinc-studio"]:not(.dark) {
+  --background: #e8ebf0;
+  --foreground: #090d16;
+  --card: #ffffff;
+  --card-foreground: #090d16;
+  --popover: #ffffff;
+  --popover-foreground: #090d16;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #dbe0e8;
+  --secondary-foreground: #090d16;
+  --muted: #dbe0e8;
+  --muted-foreground: #525d6f;
+  --accent: #e1e6ee;
+  --accent-foreground: #090d16;
+  --border: #cad2de;
+  --input: #cad2de;
+  --ring: #0284c7;
+  --chifa: #059669;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #059669 100%);
+}
+.dark[data-palette="zinc-studio"],
+[data-palette="zinc-studio"].dark {
+  --background: #090c10;
+  --card: #11161d;
+  --popover: #11161d;
+  --border: #212833;
+  --muted: #171d26;
+}
+
+/* 4. Sauge Thérapeutique & Pin (Sérénité & Phytothérapie) */
+:root[data-palette="sage-botanical"],
+[data-palette="sage-botanical"]:not(.dark) {
+  --background: #edf2ee;
+  --foreground: #14221b;
+  --card: #f9fbf9;
+  --card-foreground: #14221b;
+  --popover: #f9fbf9;
+  --popover-foreground: #14221b;
+  --primary: #16654f;
+  --primary-foreground: #ffffff;
+  --secondary: #dce4de;
+  --secondary-foreground: #14221b;
+  --muted: #dce4de;
+  --muted-foreground: #485a50;
+  --accent: #e2ebe3;
+  --accent-foreground: #14221b;
+  --border: #c9d5cb;
+  --input: #c9d5cb;
+  --ring: #16654f;
+  --chifa: #059669;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #10b981 0%, #16654f 50%, #047857 100%);
+}
+.dark[data-palette="sage-botanical"],
+[data-palette="sage-botanical"].dark {
+  --background: #07100b;
+  --card: #0e1a14;
+  --popover: #0e1a14;
+  --primary: #34d399;
+  --border: #1c2e24;
+  --muted: #13221b;
+}
+
+/* 5. Craie & Cobalt (Codex Officine Pharmacie) */
+:root[data-palette="french-cobalt"],
+[data-palette="french-cobalt"]:not(.dark) {
+  --background: #f1f3f7;
+  --foreground: #0b1329;
+  --card: #ffffff;
+  --card-foreground: #0b1329;
+  --popover: #ffffff;
+  --popover-foreground: #0b1329;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #e1e5ee;
+  --secondary-foreground: #0b1329;
+  --muted: #e1e5ee;
+  --muted-foreground: #4c566a;
+  --accent: #e6eaf3;
+  --accent-foreground: #0b1329;
+  --border: #cfd5e3;
+  --input: #cfd5e3;
+  --ring: #2563eb;
+  --chifa: #059669;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #059669 100%);
+}
+.dark[data-palette="french-cobalt"],
+[data-palette="french-cobalt"].dark {
+  --background: #080c18;
+  --card: #0e1424;
+  --popover: #0e1424;
+  --primary: #60a5fa;
+  --border: #1d273f;
+  --muted: #141b2e;
+}
+
+/* 6. Dune Saharienne & Cèdre (Héritage Algérien Solaire) */
+:root[data-palette="sahara-cedar"],
+[data-palette="sahara-cedar"]:not(.dark) {
+  --background: #f4f0e8;
+  --foreground: #211c16;
+  --card: #fbf9f5;
+  --card-foreground: #211c16;
+  --popover: #fbf9f5;
+  --popover-foreground: #211c16;
+  --primary: #2d5a36;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e2d4;
+  --secondary-foreground: #211c16;
+  --muted: #e8e2d4;
+  --muted-foreground: #61584c;
+  --accent: #ede6d8;
+  --accent-foreground: #211c16;
+  --border: #d8cfbe;
+  --input: #d8cfbe;
+  --ring: #2d5a36;
+  --chifa: #059669;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #d97706 0%, #2d5a36 50%, #059669 100%);
+}
+.dark[data-palette="sahara-cedar"],
+[data-palette="sahara-cedar"].dark {
+  --background: #110e0b;
+  --card: #1b1712;
+  --popover: #1b1712;
+  --primary: #4ade80;
+  --border: #2c241c;
+  --muted: #201a14;
+}
+
+/* 7. Gris Minéral & Graphite (Minimalisme Industriel Dieter Rams) */
+:root[data-palette="braun-mineral"],
+[data-palette="braun-mineral"]:not(.dark) {
+  --background: #eeeee9;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #0e7490;
+  --primary-foreground: #ffffff;
+  --secondary: #deded8;
+  --secondary-foreground: #18181b;
+  --muted: #deded8;
+  --muted-foreground: #52525b;
+  --accent: #e4e4dd;
+  --accent-foreground: #18181b;
+  --border: #cbcbc4;
+  --input: #cbcbc4;
+  --ring: #0e7490;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #06b6d4 0%, #0e7490 50%, #047857 100%);
+}
+.dark[data-palette="braun-mineral"],
+[data-palette="braun-mineral"].dark {
+  --background: #101011;
+  --card: #18181b;
+  --popover: #18181b;
+  --primary: #22d3ee;
+  --border: #27272a;
+  --muted: #202023;
+}
+
+/* 8. Brume Polaire & Indigo (Biotech & Intelligence IA) */
+:root[data-palette="polar-indigo"],
+[data-palette="polar-indigo"]:not(.dark) {
+  --background: #eceff5;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #4338ca;
+  --primary-foreground: #ffffff;
+  --secondary: #dbe1ec;
+  --secondary-foreground: #0f172a;
+  --muted: #dbe1ec;
+  --muted-foreground: #4f5a70;
+  --accent: #e1e7f2;
+  --accent-foreground: #0f172a;
+  --border: #c8d1e0;
+  --input: #c8d1e0;
+  --ring: #4338ca;
+  --chifa: #0f766e;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 50%, #0f766e 100%);
+}
+.dark[data-palette="polar-indigo"],
+[data-palette="polar-indigo"].dark {
+  --background: #090a14;
+  --card: #101324;
+  --popover: #101324;
+  --primary: #818cf8;
+  --border: #212644;
+  --muted: #171b32;
+}
+
+/* 9. Perle & Azur d’Alger (Fraîcheur Maritime) */
+:root[data-palette="mediterranean-azure"],
+[data-palette="mediterranean-azure"]:not(.dark) {
+  --background: #ebf0f5;
+  --foreground: #0c1a2e;
+  --card: #ffffff;
+  --card-foreground: #0c1a2e;
+  --popover: #ffffff;
+  --popover-foreground: #0c1a2e;
+  --primary: #0369a1;
+  --primary-foreground: #ffffff;
+  --secondary: #d8e2ed;
+  --secondary-foreground: #0c1a2e;
+  --muted: #d8e2ed;
+  --muted-foreground: #485c74;
+  --accent: #dfe7f0;
+  --accent-foreground: #0c1a2e;
+  --border: #c2d2e3;
+  --input: #c2d2e3;
+  --ring: #0369a1;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #047857 100%);
+}
+.dark[data-palette="mediterranean-azure"],
+[data-palette="mediterranean-azure"].dark {
+  --background: #060d16;
+  --card: #0c1828;
+  --popover: #0c1828;
+  --primary: #38bdf8;
+  --border: #1b2d45;
+  --muted: #132235;
+}
+
+/* 10. Ivoire Impérial & Émeraude (Apothicaire de Prestige) */
+:root[data-palette="ivory-emerald"],
+[data-palette="ivory-emerald"]:not(.dark) {
+  --background: #f2efe7;
+  --foreground: #172017;
+  --card: #faf8f3;
+  --card-foreground: #172017;
+  --popover: #faf8f3;
+  --popover-foreground: #172017;
+  --primary: #065f46;
+  --primary-foreground: #ffffff;
+  --secondary: #e5dfd2;
+  --secondary-foreground: #172017;
+  --muted: #e5dfd2;
+  --muted-foreground: #5a6358;
+  --accent: #ece6da;
+  --accent-foreground: #172017;
+  --border: #d4ccbd;
+  --input: #d4ccbd;
+  --ring: #065f46;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #047857 0%, #065f46 50%, #b45309 100%);
+}
+.dark[data-palette="ivory-emerald"],
+[data-palette="ivory-emerald"].dark {
+  --background: #0a100c;
+  --card: #121a15;
+  --popover: #121a15;
+  --primary: #34d399;
+  --border: #213027;
+  --muted: #17231c;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
