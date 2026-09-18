@@ -84,7 +84,7 @@ function ThemeToggle() {
       variant="ghost"
       size="icon"
       aria-label="Changer de thème"
-      className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 hover:rotate-12 active:rotate-45"
+      className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 hover:rotate-12 active:rotate-45"
       onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
     >
       <Sun className="hidden size-4 dark:block" aria-hidden />
@@ -104,7 +104,7 @@ function AudienceToggle() {
     <div
       role="group"
       aria-label="Mode d’usage — professionnel ou famille"
-      className="flex h-8 items-center rounded-lg border border-border/80 bg-muted/60 p-0.5"
+      className="flex h-8 shrink-0 items-center rounded-lg border border-border/80 bg-muted/60 p-0.5"
     >
       <button
         type="button"
@@ -178,8 +178,8 @@ export function Header() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <header className="relative z-0 w-full max-w-full overflow-hidden border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6 w-full min-w-0">
+      <header className="relative z-0 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
+        <div className="mx-auto flex h-14 max-w-[1720px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8 w-full min-w-0">
           {/* Logo & Nom de la Plateforme */}
           <button
             type="button"
@@ -258,7 +258,7 @@ export function Header() {
               )
             })}
 
-            {/* Modules étendus visibles uniquement sur grand écran (> 1280px) pour éviter le tassement */}
+            {/* Modules étendus visibles uniquement sur très grand écran (>= 1536px) pour éviter le tassement */}
             {EXTENDED_NAV.map((item) => {
               const active = view === item.id
               const isAi = item.id === 'copilote'
@@ -269,7 +269,7 @@ export function Header() {
                   onClick={() => setView(item.id)}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'relative hidden items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none xl:flex lg:text-sm',
+                    'relative hidden items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none 2xl:flex lg:text-sm',
                     active
                       ? 'text-primary font-semibold'
                       : 'text-muted-foreground hover:text-foreground'
@@ -318,8 +318,8 @@ export function Header() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 p-1.5 shadow-xl">
-                {/* Affiche Armoire et Copilote sur tablette s'ils sont masqués de la barre principale */}
-                <div className="xl:hidden">
+                {/* Affiche Armoire et Copilote sur écran standard s'ils sont masqués de la barre principale */}
+                <div className="2xl:hidden">
                   {EXTENDED_NAV.map((sub) => {
                     const subActive = view === sub.id
                     return (
@@ -371,7 +371,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setCommandOpen(true)}
-              className="group relative flex h-8 w-24 sm:w-36 md:w-40 lg:w-48 xl:w-56 shrink-0 items-center justify-between gap-0 rounded-lg border border-border/70 bg-card/60 text-xs text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
+              className="group relative flex h-8 w-28 sm:w-32 md:w-36 lg:w-40 xl:w-48 shrink-0 items-center justify-between gap-0 rounded-lg border border-border/70 bg-card/60 text-xs text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
               title="Recherche universelle (Cmd+K)"
             >
               <span className="flex items-center gap-1.5 bg-primary/8 px-2 sm:px-2.5 h-full border-r border-border/50 shrink-0">
@@ -424,22 +424,22 @@ export function Header() {
                     variant="outline"
                     size="sm"
                     onClick={() => setDesignMode('standard')}
-                    className="h-8 gap-1 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
+                    className="h-8 gap-1.5 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
                     <Pill className="size-3.5 text-sky-600 dark:text-sky-400" />
-                    <span className="hidden xl:inline">Mode Clinique</span>
-                    <span className="hidden sm:inline xl:hidden">Clinique</span>
+                    <span className="hidden 2xl:inline">Mode Clinique</span>
+                    <span className="hidden sm:inline 2xl:hidden">Clinique</span>
                   </Button>
                 ) : (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setDesignMode('botanique')}
-                    className="h-8 gap-1 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
+                    className="h-8 gap-1.5 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
                     <Leaf className="size-3.5 text-[#1b4332] dark:text-[#34d399]" />
-                    <span className="hidden xl:inline">Mode Botanique</span>
-                    <span className="hidden sm:inline xl:hidden">Botanique</span>
+                    <span className="hidden 2xl:inline">Mode Botanique</span>
+                    <span className="hidden sm:inline 2xl:hidden">Botanique</span>
                   </Button>
                 )}
               </TooltipTrigger>
@@ -459,7 +459,7 @@ export function Header() {
                     size="icon"
                     onClick={() => setPaletteOpen(true)}
                     aria-label="Nuancier & Palettes de couleurs"
-                    className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-primary transition-all duration-200"
+                    className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-primary transition-all duration-200"
                   >
                     <Palette className="size-4" aria-hidden />
                   </Button>
@@ -480,7 +480,7 @@ export function Header() {
                   size="icon"
                   onClick={handleLogout}
                   aria-label="Verrouiller la session"
-                  className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors"
+                  className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors"
                 >
                   <Lock className="size-4" aria-hidden />
                 </Button>

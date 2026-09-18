@@ -27,7 +27,7 @@ export function EmergencyBar() {
             : 'border-rose-500/20 bg-slate-950/95 text-slate-100'
         )}
       >
-        <div className="mx-auto flex h-6 max-w-7xl w-full items-center justify-between px-3 sm:px-6 text-[11px] min-w-0">
+        <div className="mx-auto flex h-6 max-w-[1720px] w-full items-center justify-between px-3 sm:px-6 lg:px-8 text-[11px] min-w-0">
           <button
             type="button"
             onClick={() => setMinimized(false)}
@@ -65,7 +65,7 @@ export function EmergencyBar() {
           : 'border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30'
       )}
     >
-      <div className="mx-auto flex h-7 max-w-7xl w-full items-center justify-between gap-2 px-3 sm:px-6 text-[11px] font-medium tracking-wide sm:text-xs min-w-0">
+      <div className="mx-auto flex h-7 max-w-[1720px] w-full items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 text-[11px] font-medium tracking-wide sm:text-xs min-w-0">
         {/* Left: Emergency Status Beacon & Numbers */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0 shrink">
           <span className="flex shrink-0 items-center gap-1.5 font-semibold uppercase tracking-wider text-rose-300">
