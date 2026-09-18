@@ -468,7 +468,7 @@ export function SearchAutocomplete({
   ]
 
   return (
-    <div ref={wrapperRef} className={cn('relative w-full', className)}>
+    <div ref={wrapperRef} className={cn('relative w-full z-40', className)}>
       {/* Périmètre scope bar — visible on all sizes, compact on non-hero */}
       <div className={cn(
         'flex items-center gap-1.5 overflow-x-auto scroll-thin no-scrollbar px-1',
@@ -590,7 +590,12 @@ export function SearchAutocomplete({
         <div
           role="region"
           aria-label="Recherches récentes et suggestions"
-          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(32rem,calc(100vh-180px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/98 p-3 shadow-2xl shadow-black/25 backdrop-blur-xl"
+          className={cn(
+            'scroll-thin absolute inset-x-0 top-full z-[100] mt-2 max-h-[min(32rem,calc(100vh-180px))] overflow-y-auto rounded-2xl border p-3.5 shadow-2xl backdrop-blur-2xl transition-all',
+            isBotanique
+              ? 'border-[#dcd4c5] bg-[#fcfbf8]/98 shadow-[#1b4332]/15 dark:border-[#1a2f24] dark:bg-[#0b1611]/98'
+              : 'border-border/80 bg-popover/98 shadow-black/25'
+          )}
         >
           {recentSearches.length > 0 && (
             <div className="mb-3">
@@ -654,7 +659,12 @@ export function SearchAutocomplete({
         <div
           id={id ? `${id}-listbox` : undefined}
           role="listbox"
-          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-[min(32rem,calc(100vh-180px))] overflow-y-auto rounded-2xl border border-border/80 bg-popover/98 p-2 shadow-2xl shadow-black/25 backdrop-blur-xl"
+          className={cn(
+            'scroll-thin absolute inset-x-0 top-full z-[100] mt-2 max-h-[min(32rem,calc(100vh-180px))] overflow-y-auto rounded-2xl border p-2 shadow-2xl backdrop-blur-2xl transition-all',
+            isBotanique
+              ? 'border-[#dcd4c5] bg-[#fcfbf8]/98 shadow-[#1b4332]/15 dark:border-[#1a2f24] dark:bg-[#0b1611]/98'
+              : 'border-border/80 bg-popover/98 shadow-black/25'
+          )}
         >
           {/* Header row in dropdown */}
           <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">

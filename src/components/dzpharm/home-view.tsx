@@ -601,7 +601,7 @@ export function HomeView() {
       ) : null}
 
       {/* ------------------------------ Hero ------------------------------ */}
-      <section className="hero-glow relative border-b border-border/60 overflow-hidden">
+      <section className="hero-glow relative border-b border-border/60 z-20">
         {isBotanique ? (
           <FloatingLeaves />
         ) : (
@@ -704,7 +704,7 @@ export function HomeView() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="mt-8"
+            className="mt-8 relative z-30"
           >
             <SearchAutocomplete
               size="hero"
