@@ -178,8 +178,8 @@ export function Header() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <header className="relative z-0 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
+      <header className="relative z-0 w-full max-w-full overflow-hidden border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6 w-full min-w-0">
           {/* Logo & Nom de la Plateforme */}
           <button
             type="button"
@@ -366,19 +366,19 @@ export function Header() {
           </nav>
 
           {/* Quick Actions Droite */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0">
             {/* Capsule de recherche universelle fluide */}
             <button
               type="button"
               onClick={() => setCommandOpen(true)}
-              className="group relative flex h-8 w-32 sm:w-44 md:w-48 lg:w-56 items-center justify-between gap-0 rounded-lg border border-border/70 bg-card/60 text-xs text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
+              className="group relative flex h-8 w-24 sm:w-36 md:w-40 lg:w-48 xl:w-56 shrink-0 items-center justify-between gap-0 rounded-lg border border-border/70 bg-card/60 text-xs text-muted-foreground transition-all hover:border-primary/50 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
               title="Recherche universelle (Cmd+K)"
             >
-              <span className="flex items-center gap-1.5 bg-primary/8 px-2.5 h-full border-r border-border/50 shrink-0">
+              <span className="flex items-center gap-1.5 bg-primary/8 px-2 sm:px-2.5 h-full border-r border-border/50 shrink-0">
                 <Search className="size-3.5 text-primary group-hover:scale-110 transition-transform" aria-hidden />
               </span>
-              <span className="truncate px-2.5 flex-1 text-left">Rechercher…</span>
-              <kbd className="hidden shrink-0 rounded border border-border/80 bg-muted/80 px-1.5 mr-2 text-[10px] font-semibold text-muted-foreground shadow-2xs sm:inline-block">
+              <span className="truncate px-1.5 sm:px-2.5 flex-1 text-left">Rechercher…</span>
+              <kbd className="hidden shrink-0 rounded border border-border/80 bg-muted/80 px-1.5 mr-1.5 text-[10px] font-semibold text-muted-foreground shadow-2xs sm:inline-block">
                 ⌘K
               </kbd>
             </button>
@@ -391,7 +391,7 @@ export function Header() {
                   size="icon"
                   onClick={() => setScannerOpen(true)}
                   aria-label="Scanner un médicament (Code-barres / CBM)"
-                  className="size-8 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   <Barcode className="size-4" aria-hidden />
                 </Button>
@@ -405,13 +405,13 @@ export function Header() {
             {stats ? (
               <Badge
                 variant="outline"
-                className="hidden gap-1.5 border-primary/25 bg-primary/5 text-primary 2xl:inline-flex"
+                className="hidden gap-1.5 border-primary/25 bg-primary/5 text-primary 2xl:inline-flex shrink-0"
               >
                 <span className="size-1.5 rounded-full bg-primary" />
                 {formatNumber(stats.total)} AMM
               </Badge>
             ) : (
-              <Skeleton className="hidden h-6 w-20 rounded-full 2xl:block" aria-hidden />
+              <Skeleton className="hidden h-6 w-20 rounded-full 2xl:block shrink-0" aria-hidden />
             )}
 
             <AudienceToggle />
@@ -424,20 +424,22 @@ export function Header() {
                     variant="outline"
                     size="sm"
                     onClick={() => setDesignMode('standard')}
-                    className="h-8 gap-1.5 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2.5 shadow-2xs transition-all duration-300 cursor-pointer"
+                    className="h-8 gap-1 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
                     <Pill className="size-3.5 text-sky-600 dark:text-sky-400" />
-                    <span className="hidden sm:inline">Mode Clinique</span>
+                    <span className="hidden xl:inline">Mode Clinique</span>
+                    <span className="hidden sm:inline xl:hidden">Clinique</span>
                   </Button>
                 ) : (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setDesignMode('botanique')}
-                    className="h-8 gap-1.5 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2.5 shadow-2xs transition-all duration-300 cursor-pointer"
+                    className="h-8 gap-1 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
                     <Leaf className="size-3.5 text-[#1b4332] dark:text-[#34d399]" />
-                    <span className="hidden sm:inline">Mode Botanique</span>
+                    <span className="hidden xl:inline">Mode Botanique</span>
+                    <span className="hidden sm:inline xl:hidden">Botanique</span>
                   </Button>
                 )}
               </TooltipTrigger>

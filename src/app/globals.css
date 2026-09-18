@@ -1080,9 +1080,15 @@ html[data-design-mode="botanique"].dark .glass-panel {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
   }
   ::selection {
     background-color: color-mix(in srgb, var(--primary) 28%, transparent);

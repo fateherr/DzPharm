@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 /**
  * Bandeau permanent des numéros d'urgence médicale en Algérie.
  * SAMU (14), Protection Civile (102), Police (17) et Centre Anti-Poison (021 71 30 42).
- * Pleine largeur ergonomique, alignement parfait sur tous formats d'écran.
+ * 100% pleine largeur, zéro dépassement horizontal (overflow-x-hidden), adaptation fluide.
  */
 export function EmergencyBar() {
   const [minimized, setMinimized] = useState(false)
@@ -21,30 +21,30 @@ export function EmergencyBar() {
         role="region"
         aria-label="Numéros d'urgence médicale en Algérie (réduit)"
         className={cn(
-          'relative z-30 w-full border-b backdrop-blur-md print:hidden transition-all duration-200',
+          'relative z-30 w-full max-w-full overflow-hidden border-b backdrop-blur-md print:hidden transition-all duration-200',
           isBotanique
             ? 'border-[#2d6a4f]/30 bg-[#0d281e]/95 text-emerald-100'
             : 'border-rose-500/20 bg-slate-950/95 text-slate-100'
         )}
       >
-        <div className="mx-auto flex h-6 max-w-7xl items-center justify-between px-3 sm:px-6 text-[11px]">
+        <div className="mx-auto flex h-6 max-w-7xl w-full items-center justify-between px-3 sm:px-6 text-[11px] min-w-0">
           <button
             type="button"
             onClick={() => setMinimized(false)}
-            className="flex items-center gap-1.5 text-rose-300 hover:text-rose-200 transition-colors font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-400 rounded"
+            className="flex items-center gap-1.5 text-rose-300 hover:text-rose-200 transition-colors font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-400 rounded min-w-0 truncate"
             title="Développer les numéros d'urgence médicale"
           >
             <span className="relative flex size-2 shrink-0">
               <span className="beacon-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
               <span className="relative inline-flex size-2 rounded-full bg-rose-400" />
             </span>
-            <Siren className="size-3" />
-            <span>Urgences Médicales 24/7 (SAMU 14 · Prot. Civile 102 · Anti-Poison 021 71 30 42)</span>
-            <ChevronDown className="size-3 opacity-70" />
+            <Siren className="size-3 shrink-0" />
+            <span className="truncate">Urgences Médicales 24/7 (SAMU 14 · Prot. Civile 102 · Anti-Poison 021 71 30 42)</span>
+            <ChevronDown className="size-3 opacity-70 shrink-0" />
           </button>
           <a
             href="tel:14"
-            className="flex items-center gap-1 rounded bg-rose-600/90 px-2 py-0.5 font-bold text-white hover:bg-rose-500 transition-colors"
+            className="flex shrink-0 items-center gap-1 rounded bg-rose-600/90 px-2 py-0.5 font-bold text-white hover:bg-rose-500 transition-colors ml-2"
           >
             <PhoneCall className="size-2.5" />
             <span>SAMU 14</span>
@@ -59,15 +59,15 @@ export function EmergencyBar() {
       role="region"
       aria-label="Numéros d'urgence médicale en Algérie"
       className={cn(
-        'relative z-30 w-full border-b backdrop-blur-md print:hidden transition-all duration-200',
+        'relative z-30 w-full max-w-full overflow-hidden border-b backdrop-blur-md print:hidden transition-all duration-200',
         isBotanique
           ? 'border-[#2d6a4f]/30 bg-[#0a1f17]/95 text-emerald-100 shadow-xs shadow-[#0a1f17]/40'
           : 'border-rose-500/20 bg-gradient-to-r from-slate-950 via-rose-950/80 to-slate-950 text-slate-100 shadow-xs shadow-rose-950/30'
       )}
     >
-      <div className="mx-auto flex h-7 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 text-[11px] font-medium tracking-wide sm:text-xs">
+      <div className="mx-auto flex h-7 max-w-7xl w-full items-center justify-between gap-2 px-3 sm:px-6 text-[11px] font-medium tracking-wide sm:text-xs min-w-0">
         {/* Left: Emergency Status Beacon & Numbers */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-0.5 min-w-0 shrink">
           <span className="flex shrink-0 items-center gap-1.5 font-semibold uppercase tracking-wider text-rose-300">
             <span className="relative flex size-2 shrink-0">
               <span className="beacon-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />

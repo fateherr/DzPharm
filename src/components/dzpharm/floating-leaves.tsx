@@ -17,26 +17,26 @@ interface LeafParticle {
 export function FloatingLeaves() {
   const particles = useMemo<LeafParticle[]>(() => {
     return [
-      { id: 1, type: 'sage', left: 8, size: 28, duration: 16, delay: 0, opacity: 0.45, blur: 0, drift: 35 },
-      { id: 2, type: 'rose', left: 18, size: 22, duration: 19, delay: 4, opacity: 0.5, blur: 0.5, drift: -45 },
-      { id: 3, type: 'olive', left: 28, size: 24, duration: 22, delay: 8, opacity: 0.4, blur: 1, drift: 30 },
-      { id: 4, type: 'rose', left: 38, size: 18, duration: 17, delay: 2, opacity: 0.55, blur: 0, drift: -35 },
-      { id: 5, type: 'sage', left: 48, size: 32, duration: 21, delay: 6, opacity: 0.35, blur: 1.5, drift: 50 },
-      { id: 6, type: 'pollen', left: 55, size: 10, duration: 14, delay: 1, opacity: 0.6, blur: 0, drift: 20 },
-      { id: 7, type: 'rose', left: 64, size: 26, duration: 18, delay: 5, opacity: 0.48, blur: 0.5, drift: -40 },
-      { id: 8, type: 'sage', left: 74, size: 25, duration: 20, delay: 9, opacity: 0.42, blur: 0, drift: 35 },
-      { id: 9, type: 'olive', left: 84, size: 20, duration: 23, delay: 3, opacity: 0.38, blur: 1, drift: -30 },
-      { id: 10, type: 'rose', left: 92, size: 21, duration: 16, delay: 7, opacity: 0.5, blur: 0, drift: 40 },
-      { id: 11, type: 'pollen', left: 22, size: 12, duration: 15, delay: 10, opacity: 0.55, blur: 0, drift: -25 },
-      { id: 12, type: 'sage', left: 88, size: 30, duration: 24, delay: 12, opacity: 0.36, blur: 1.2, drift: -45 },
-      { id: 13, type: 'rose', left: 44, size: 24, duration: 18, delay: 11, opacity: 0.45, blur: 0.8, drift: 30 },
-      { id: 14, type: 'olive', left: 62, size: 22, duration: 21, delay: 13, opacity: 0.4, blur: 0, drift: 35 },
+      { id: 1, type: 'sage', left: 6, size: 26, duration: 16, delay: 0, opacity: 0.45, blur: 0, drift: 20 },
+      { id: 2, type: 'rose', left: 16, size: 22, duration: 19, delay: 4, opacity: 0.5, blur: 0.5, drift: -25 },
+      { id: 3, type: 'olive', left: 24, size: 24, duration: 22, delay: 8, opacity: 0.4, blur: 1, drift: 20 },
+      { id: 4, type: 'rose', left: 34, size: 18, duration: 17, delay: 2, opacity: 0.55, blur: 0, drift: -20 },
+      { id: 5, type: 'sage', left: 44, size: 28, duration: 21, delay: 6, opacity: 0.35, blur: 1.5, drift: 25 },
+      { id: 6, type: 'pollen', left: 52, size: 10, duration: 14, delay: 1, opacity: 0.6, blur: 0, drift: 15 },
+      { id: 7, type: 'rose', left: 58, size: 24, duration: 18, delay: 5, opacity: 0.48, blur: 0.5, drift: -25 },
+      { id: 8, type: 'sage', left: 66, size: 24, duration: 20, delay: 9, opacity: 0.42, blur: 0, drift: 20 },
+      { id: 9, type: 'olive', left: 74, size: 20, duration: 23, delay: 3, opacity: 0.38, blur: 1, drift: -20 },
+      { id: 10, type: 'rose', left: 82, size: 21, duration: 16, delay: 7, opacity: 0.5, blur: 0, drift: -20 },
+      { id: 11, type: 'pollen', left: 20, size: 12, duration: 15, delay: 10, opacity: 0.55, blur: 0, drift: -15 },
+      { id: 12, type: 'sage', left: 80, size: 26, duration: 24, delay: 12, opacity: 0.36, blur: 1.2, drift: -20 },
+      { id: 13, type: 'rose', left: 40, size: 22, duration: 18, delay: 11, opacity: 0.45, blur: 0.8, drift: 20 },
+      { id: 14, type: 'olive', left: 56, size: 22, duration: 21, delay: 13, opacity: 0.4, blur: 0, drift: 20 },
     ]
   }, [])
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden select-none"
+      className="pointer-events-none fixed inset-0 z-[1] w-full max-w-full overflow-hidden select-none"
       aria-hidden="true"
     >
       {particles.map((p) => {

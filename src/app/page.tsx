@@ -24,7 +24,7 @@ export default function Page() {
   const view = useDzPharm((s) => s.view)
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background w-full max-w-full overflow-x-hidden">
       {/* Lien d'évitement accessible pour les utilisateurs clavier / lecteurs d'écran */}
       <a
         href="#contenu"
@@ -34,7 +34,7 @@ export default function Page() {
       </a>
 
       {/* En-tête supérieur unifié (Urgences + Navigation principale) */}
-      <div className="sticky top-0 z-40 w-full print:hidden">
+      <div className="sticky top-0 z-40 w-full max-w-full print:hidden">
         <EmergencyBar />
         <Header />
       </div>
