@@ -17,6 +17,7 @@ import { AboutView } from '@/components/dzpharm/about-view'
 import { DrugSheet } from '@/components/dzpharm/drug-sheet'
 import { CommandPalette } from '@/components/dzpharm/command-palette'
 import { BarcodeScannerModal } from '@/components/dzpharm/barcode-scanner'
+import { AdminBarcodeModal } from '@/components/dzpharm/admin-barcode-modal'
 import { MobileBottomNav } from '@/components/dzpharm/mobile-bottom-nav'
 import { useDzPharm } from '@/components/dzpharm/store'
 
@@ -67,6 +68,8 @@ export default function Page() {
       <CommandPalette />
       {/* Scanner Code Barre / CBM (Phase 3.6) */}
       <BarcodeScannerModal />
+      {/* Console Administrateur Codes-Barres Originaux */}
+      <AdminBarcodeModal />
       {/* Barre de navigation basse ergonomique mobile */}
       <MobileBottomNav />
     </div>

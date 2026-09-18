@@ -8,6 +8,7 @@ import {
   Baby,
   BadgeCheck,
   Ban,
+  Barcode,
   BookOpen,
   Building2,
   Calculator,
@@ -490,6 +491,7 @@ export function DrugSheet() {
   const setView = useDzPharm((s) => s.setView)
   const openTool = useDzPharm((s) => s.openTool)
   const openLibraryMonograph = useDzPharm((s) => s.openLibraryMonograph)
+  const openAdminBarcodeForDrug = useDzPharm((s) => s.openAdminBarcodeForDrug)
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const pushRecent = useDzPharm((s) => s.pushRecent)
@@ -823,6 +825,22 @@ export function DrugSheet() {
                 {drug.pharmacy?.[0]?.refundable && (
                   <ChifaBadge refundable={true} cnasId={drug.pharmacy[0].cnasId} />
                 )}
+                {drug.barcode && (
+                  <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-mono font-semibold text-emerald-800 dark:text-emerald-300">
+                    <Barcode className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{drug.barcode}</span>
+                  </span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openAdminBarcodeForDrug(drug.id)}
+                  className="h-6 text-[11px] gap-1 px-2 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
+                  title="Gérer les codes-barres originaux de ce produit (Admin)"
+                >
+                  <Barcode className="size-3" />
+                  <span>{drug.barcode ? 'Éditer Code-Barres' : '+ Code-Barres (Admin)'}</span>
+                </Button>
                 {drug.domains.slice(0, 2).map((d) => (
                   <span
                     key={d}

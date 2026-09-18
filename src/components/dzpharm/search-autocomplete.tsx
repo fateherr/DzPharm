@@ -812,6 +812,12 @@ export function SearchAutocomplete({
                           <span>RCP</span>
                         </span>
                       )}
+                      {drug.barcode && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.2 text-[9px] font-mono font-semibold text-emerald-700 dark:text-emerald-300">
+                          <Barcode className="size-2.5" />
+                          <span>{drug.barcode}</span>
+                        </span>
+                      )}
                       {drug.p1 && (
                         <span className="inline-flex items-center gap-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 text-[9px] font-semibold text-amber-700 dark:text-amber-400">
                           <ShieldAlert className="size-2.5" />

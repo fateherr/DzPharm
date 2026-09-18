@@ -38,11 +38,14 @@ model Drug {
   classes        String? // JSON array of pharmacological classes
   domain         String? // primary domain (denormalized for filtering)
   views          Int      @default(0) // consultation counter (DzPharm sessions)
+  barcode        String?  // Code-barres commercial d'origine (EAN-13 / GTIN)
 
   pharmacyProducts PharmacyProduct[]
+  drugBarcodes     DrugBarcode[]
 
   @@index([dciKey])
   @@index([brandKey])
+  @@index([barcode])
   @@index([status])
   @@index([domain])
   @@index([lab])
@@ -106,4 +109,18 @@ model Rcp {
   updatedAt DateTime @updatedAt
 
   @@index([dciKey])
+}
+
+// Barcode linking (EAN-13, GTIN-14, GS1 Datamatrix, CBM) to a registered drug
+model DrugBarcode {
+  id        Int      @id @default(autoincrement())
+  barcode   String   @unique
+  drugId    Int
+  note      String?  // Ex: "Boîte de 10", "Packaging 2026", "Conditionnement hôpital"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  drug      Drug     @relation(fields: [drugId], references: [id], onDelete: Cascade)
+
+  @@index([barcode])
+  @@index([drugId])
 }

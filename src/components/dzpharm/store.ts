@@ -116,6 +116,14 @@ interface DzPharmStore {
   scannerOpen: boolean
   setScannerOpen: (open: boolean) => void
 
+  adminBarcodeModalOpen: boolean
+  setAdminBarcodeModalOpen: (open: boolean) => void
+  adminTargetDrugId: number | null
+  setAdminTargetDrugId: (id: number | null) => void
+  openAdminBarcodeForDrug: (id: number) => void
+  isAdminAuthenticated: boolean
+  setIsAdminAuthenticated: (val: boolean) => void
+
   sheetDrugId: number | null
   openDrug: (id: number) => void
   closeDrug: () => void
@@ -214,6 +222,14 @@ export const useDzPharm = create<DzPharmStore>()(
 
       scannerOpen: false,
       setScannerOpen: (scannerOpen) => set({ scannerOpen }),
+
+      adminBarcodeModalOpen: false,
+      setAdminBarcodeModalOpen: (adminBarcodeModalOpen) => set({ adminBarcodeModalOpen }),
+      adminTargetDrugId: null,
+      setAdminTargetDrugId: (adminTargetDrugId) => set({ adminTargetDrugId }),
+      openAdminBarcodeForDrug: (id) => set({ adminBarcodeModalOpen: true, adminTargetDrugId: id }),
+      isAdminAuthenticated: false,
+      setIsAdminAuthenticated: (isAdminAuthenticated) => set({ isAdminAuthenticated }),
 
       sheetDrugId: null,
       openDrug: (id) => set({ sheetDrugId: id }),

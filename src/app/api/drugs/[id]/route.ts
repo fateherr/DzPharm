@@ -23,6 +23,10 @@ export async function GET(
           orderBy: [{ ppa: "asc" }],
           select: { id: true, name: true, ppa: true, cnasId: true, class: true, lab: true },
         },
+        drugBarcodes: {
+          orderBy: [{ createdAt: "desc" }],
+          select: { id: true, barcode: true, note: true, createdAt: true },
+        },
       },
     });
     if (!drug) {

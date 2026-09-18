@@ -639,6 +639,12 @@ export async function GET(req: NextRequest) {
         ors.push({ brand: { contains: q } });
         ors.push({ lab: { contains: q } });
         ors.push({ regNumber: { contains: q } });
+
+        const cleanDigits = q.replace(/[\s\-_]/g, "");
+        if (cleanDigits.length >= 4) {
+          ors.push({ barcode: { contains: cleanDigits } });
+          ors.push({ drugBarcodes: { some: { barcode: { contains: cleanDigits } } } });
+        }
       }
 
       const and = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];

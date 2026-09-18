@@ -84,6 +84,10 @@ export interface Drug {
   refundable?: boolean
   /** RCP issu des livres techniques disponible pour cette DCI. */
   hasBookRcp?: boolean
+  /** Code-barres commercial original (EAN-13, GTIN, CBM). */
+  barcode?: string | null
+  /** Liste des codes-barres associés à ce produit. */
+  drugBarcodes?: Array<{ id: number; barcode: string; note?: string | null; createdAt?: string }>
 }
 
 export interface DrugDetail extends Drug {

@@ -57,6 +57,7 @@ export function BarcodeScannerModal() {
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const openDrug = useDzPharm((s) => s.openDrug)
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+  const setAdminBarcodeModalOpen = useDzPharm((s) => s.setAdminBarcodeModalOpen)
   const { toast } = useToast()
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -531,17 +532,31 @@ export function BarcodeScannerModal() {
                   <p className="text-xs font-medium text-muted-foreground">
                     Aucun produit associé au code <span className="font-mono font-bold text-foreground">{lastScannedCode}</span>.
                   </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setScannerOpen(false)
-                      gotoDirectory({ q: lastScannedCode || '' })
-                    }}
-                    className="text-xs"
-                  >
-                    Rechercher dans le répertoire
-                  </Button>
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setScannerOpen(false)
+                        gotoDirectory({ q: lastScannedCode || '' })
+                      }}
+                      className="text-xs cursor-pointer"
+                    >
+                      Rechercher dans le répertoire
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setScannerOpen(false)
+                        setAdminBarcodeModalOpen(true)
+                      }}
+                      className="text-xs gap-1 border border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer"
+                    >
+                      <Barcode className="size-3.5" />
+                      <span>Associer ce code (Admin)</span>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

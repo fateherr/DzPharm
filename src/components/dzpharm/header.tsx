@@ -147,6 +147,7 @@ export function Header() {
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
+  const setAdminBarcodeModalOpen = useDzPharm((s) => s.setAdminBarcodeModalOpen)
   const designMode = useDzPharm((s) => s.designMode)
   const setDesignMode = useDzPharm((s) => s.setDesignMode)
 
@@ -361,6 +362,25 @@ export function Header() {
                     </DropdownMenuItem>
                   )
                 })}
+
+                <div className="my-1 border-t border-border/60" />
+                <DropdownMenuItem
+                  onClick={() => setAdminBarcodeModalOpen(true)}
+                  className="flex items-start gap-2.5 rounded-lg px-3 py-2 cursor-pointer text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 focus:bg-amber-500/10"
+                >
+                  <Barcode className="size-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold">Admin · Codes-Barres</span>
+                      <span className="rounded bg-amber-500/20 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider">
+                        Admin
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      Intégrer les codes-barres originaux aux médicaments
+                    </span>
+                  </div>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
