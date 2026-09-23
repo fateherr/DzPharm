@@ -560,3 +560,22 @@ Notes:
   - Two-layer design: (1) localStorage persist (always on, survives refresh) + (2) URL ?drugs= sync (shareable links, gated on the routing flags). Layer 1 alone satisfies the acceptance test "refresh lands on the populated list". Layer 2 unlocks the "shareable link to a specific drug pair" + SEO — deferred until the human enables the routing flag.
   - The hook is additive — it never replaces the Zustand basket as the source of truth; the URL is a secondary projection. Hydration only happens when the basket is empty (don't clobber an active session).
   - Feature flag NEXT_PUBLIC_FEATURE_INTERACTIONS_URL recommended (gated on NEXT_PUBLIC_FEATURE_APP_ROUTER). Both default off.
+
+---
+Card: P1-10 — Add Copilot conversation history to Zustand (persist, 30-msg FIFO)
+Date: 2026-09-24 (cron round 8)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/store.ts (NEW copilotMessages: ChatMessage[] slice + setCopilotMessages (enforces 30-msg FIFO via .slice(-30)) + clearCopilotMessages actions; NEW MAX_COPILOT_MESSAGES = 30 constant; imported ChatMessage type; partialize now includes copilotMessages; persist version 3 → 4; NEW v3→v4 migrate defaulting copilotMessages to [] for existing users)
+  - src/components/dzpharm/copilot-view.tsx (imported useDzPharm + X icon; hydrates local useState from persistedMessages on mount; NEW useEffect syncing local messages → persisted slice on every change; NEW "Effacer" button in the header — visible when messages.length > 0, calls setMessages([]) + clearCopilotMessages() + fires a confirmation toast)
+  - screenshots/cron-r8-p1-10.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing; transient X-not-imported error fixed by adding X to the lucide import)
+  - tsc --noEmit: clean for src/
+  - agent-browser: /copilote loads (H1="Copilote IA", --state-danger=#e70044); localStorage version=4 CONFIRMED (v3→v4 migration ran); copilotMessages key present in localStorage CONFIRMED; "Effacer" button correctly absent when conversation is empty (renders conditionally when messages exist).
+Commit: pending (this entry)
+Notes:
+  - Additive design: the local useState stays the rendering source (existing setMessages call sites work unchanged); the Zustand slice is a persistence mirror. The useEffect syncs local → persisted on every change. This avoids a full rewrite of the copilot-view's message handling.
+  - The 30-message FIFO cap is enforced in the store's setCopilotMessages (messages.slice(-30)) — so even long conversations don't bloat localStorage.
+  - Coordinate with P1-06 (streaming): when streaming ships, the useChat hook will have its own message state — bridge it to the Zustand slice on each token (debounced) to avoid write amplification. Flagged for the P1-06 card.
+  - Feature flag: n/a (persistence is always on — no regression; the local useState fallback still works if the slice is empty).

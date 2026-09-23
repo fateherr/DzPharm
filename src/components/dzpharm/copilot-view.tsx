@@ -21,6 +21,7 @@ import {
   User,
   Volume2,
   VolumeX,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { DoseVerificationBadge } from '@/components/dzpharm/dose-verification-badge'
 import { rtlProps } from '@/lib/detect-rtl'
+import { useDzPharm } from './store'
 import { postChat } from './api'
 import type { ChatMessage } from './types'
 
@@ -154,12 +156,25 @@ function TypingDots() {
 }
 
 export function CopilotView() {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  // P1-10 — Hydrate the local messages state from the persisted Zustand slice
+  // on mount, then sync every change back to the slice (30-msg FIFO cap is
+  // enforced in the store). Additive: the local useState stays the rendering
+  // source so the existing setMessages call sites work unchanged.
+  const persistedMessages = useDzPharm((s) => s.copilotMessages)
+  const setCopilotMessages = useDzPharm((s) => s.setCopilotMessages)
+  const clearCopilotMessages = useDzPharm((s) => s.clearCopilotMessages)
+  const [messages, setMessages] = useState<ChatMessage[]>(persistedMessages)
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<ChatMode>('pro')
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { toast } = useToast()
+
+  // P1-10 — Sync local messages → persisted slice (debounced via microtask to
+  // avoid write amplification on rapid setMessages calls).
+  useEffect(() => {
+    setCopilotMessages(messages)
+  }, [messages, setCopilotMessages])
 
   /* 24-c a) Dictée vocale — MediaRecorder → /api/ai/asr */
   const [recording, setRecording] = useState(false)
@@ -588,6 +603,28 @@ export function CopilotView() {
             </Tooltip>
           </div>
         </TooltipProvider>
+
+        {/* P1-10 — Clear conversation history (persisted). */}
+        {messages.length > 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setMessages([])
+              clearCopilotMessages()
+              toast({
+                title: 'Conversation effacée',
+                description: 'L\'historique du Copilote a été réinitialisé.',
+              })
+            }}
+            className="h-8 shrink-0 gap-1.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            aria-label="Effacer la conversation"
+          >
+            <X className="size-3.5" aria-hidden />
+            <span className="hidden sm:inline">Effacer</span>
+          </Button>
+        ) : null}
       </div>
 
       {/* Zone de conversation */}

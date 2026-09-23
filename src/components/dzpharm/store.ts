@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ChifaCardType, ChifaLine, DesignMode, PaletteId } from './types'
+import type { ChifaCardType, ChifaLine, ChatMessage, DesignMode, PaletteId } from './types'
 import type {
   ArmoireEntry,
   ArmoireEntryInput,
@@ -78,6 +78,8 @@ export type AddResult = 'added' | 'duplicate' | 'full'
 export const MAX_BASKET = 10
 export const MAX_FAVORITES = 30
 export const MAX_RECENT = 8
+/** P1-10 — Copilot conversation history FIFO cap (last 30 messages). */
+export const MAX_COPILOT_MESSAGES = 30
 
 interface DzPharmStore {
   view: ViewId
@@ -148,6 +150,15 @@ interface DzPharmStore {
   recentlyViewed: RecentItem[]
   pushRecent: (item: Omit<RecentItem, 'viewedAt'>) => void
   clearRecent: () => void
+
+  /**
+   * P1-10 — Copilot conversation history (persisted, 30-msg FIFO).
+   * Survives refresh. The copilot-view consumes this slice instead of local
+   * useState so the conversation is restored on reload.
+   */
+  copilotMessages: ChatMessage[]
+  setCopilotMessages: (messages: ChatMessage[]) => void
+  clearCopilotMessages: () => void
 
   /* ------------------ Armoire v2 (plan « Armoire à Pharmacie
      Familiale » — membres + entrées assignables/partagées) ----------- */
@@ -279,6 +290,12 @@ export const useDzPharm = create<DzPharmStore>()(
         })),
       clearRecent: () => set({ recentlyViewed: [] }),
 
+      // P1-10 — Copilot conversation history. 30-msg FIFO cap.
+      copilotMessages: [],
+      setCopilotMessages: (messages) =>
+        set({ copilotMessages: messages.slice(-MAX_COPILOT_MESSAGES) }),
+      clearCopilotMessages: () => set({ copilotMessages: [] }),
+
       armoireMembers: [],
       armoireEntries: [],
       addArmoireMember: (m) => {
@@ -392,7 +409,7 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      version: 3,
+      version: 4,
       /**
        * Migration v0 → v1 : ancien modèle (profils × items imbriqués) vers
        * le modèle du plan (membres + entrées assignables/partagées).
@@ -536,6 +553,15 @@ export const useDzPharm = create<DzPharmStore>()(
           }
         }
 
+        // v3 → v4: P1-10 — add `copilotMessages` to the persisted slice.
+        // Existing users with v3 state won't have `copilotMessages` — default
+        // to an empty array so the store hydrates cleanly.
+        if (version <= 3) {
+          if (!Array.isArray((next as { copilotMessages?: unknown }).copilotMessages)) {
+            ;(next as { copilotMessages?: unknown }).copilotMessages = []
+          }
+        }
+
         return next as unknown as DzPharmStore
       },
       // Persiste mode d'usage + favoris + historique récent + armoire v2
@@ -551,6 +577,10 @@ export const useDzPharm = create<DzPharmStore>()(
         // param sync (useInteractionListState hook) is the secondary shareable
         // layer; this localStorage persist is the always-on baseline.
         basket: state.basket,
+        // P1-10 — Persist the Copilot conversation history (30-msg FIFO).
+        // Survives refresh. The copilot-view consumes this slice instead of
+        // local useState.
+        copilotMessages: state.copilotMessages,
         armoireMembers: state.armoireMembers,
         armoireEntries: state.armoireEntries,
         armoireJournal: state.armoireJournal,
