@@ -153,3 +153,102 @@ export async function callGeminiChat(
 
   return callGemini(systemInstruction, messages, options);
 }
+
+/**
+ * P1-06 — Streaming variant of callGeminiChat. Uses the Gemini REST
+ * `streamGenerateContent?alt=sse` endpoint and yields text chunks as they
+ * arrive (true token streaming, not simulated). Additive — the batch
+ * callGeminiChat path is unchanged.
+ *
+ * @yields string — each yielded value is a text delta (concatenate to get
+ *                  the full response).
+ */
+export async function* callGeminiChatStream(
+  systemInstruction: string,
+  history: { role: "user" | "assistant"; content: string }[],
+  options: GeminiOptions = {}
+): AsyncGenerator<string, void, unknown> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new GeminiError("GEMINI_API_KEY non configuré");
+  }
+
+  const messages: GeminiMessage[] = history.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  if (messages.length === 0 || messages[0].role !== "user") {
+    messages.unshift({ role: "user", parts: [{ text: "." }] });
+  }
+
+  const model = options.model ?? GEMINI_MODEL;
+  const url = `${GEMINI_API_BASE}/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+
+  const body = {
+    systemInstruction: { parts: [{ text: systemInstruction }] },
+    contents: messages,
+    generationConfig: {
+      temperature: options.temperature ?? 0.2,
+      maxOutputTokens: options.maxOutputTokens ?? 4096,
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok || !res.body) {
+    throw new GeminiError(
+      `Gemini API error ${res.status}: ${res.statusText}`,
+    );
+  }
+
+  // Parse the SSE stream: each `data: {...}` line is a JSON chunk with
+  // candidates[0].content.parts[0].text.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      // Keep the last partial line in the buffer.
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const jsonStr = trimmed.slice(5).trim();
+        if (!jsonStr || jsonStr === "[DONE]") continue;
+        try {
+          const chunk = JSON.parse(jsonStr);
+          const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (typeof text === "string" && text.length > 0) {
+            yield text;
+          }
+        } catch {
+          // Partial JSON — skip; the next chunk will complete it.
+        }
+      }
+    }
+    // Flush any remaining buffer.
+    if (buffer.trim().startsWith("data:")) {
+      try {
+        const jsonStr = buffer.trim().slice(5).trim();
+        const chunk = JSON.parse(jsonStr);
+        const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (typeof text === "string" && text.length > 0) {
+          yield text;
+        }
+      } catch {
+        // Ignore trailing partial.
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
