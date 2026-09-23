@@ -22,6 +22,18 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // P0-02 — When the NextAuth flag is on (full migration shipped), also accept
+  // the next-auth session cookie. Transitional: the dzpharm_auth cookie above
+  // remains the default path until the flag rolls out 10% → 50% → 100%.
+  if (process.env.NEXT_PUBLIC_FEATURE_NEXTAUTH === "true") {
+    const nextAuthToken =
+      req.cookies.get("next-auth.session-token")?.value ??
+      req.cookies.get("__Secure-next-auth.session-token")?.value;
+    if (nextAuthToken) {
+      return NextResponse.next();
+    }
+  }
+
   // Redirect to login
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = "/login";

@@ -181,3 +181,26 @@ Notes:
   - The deep-link stubs work whether the flag is on or off — they set the view via the `initialView` prop. The flag only controls whether the header pushes the URL.
   - Flag NEXT_PUBLIC_FEATURE_APP_ROUTER defaults OFF (legacy SPA behaviour preserved — no regression risk, Risk #1 mitigation). Roll out 10% → 50% → 100% after human review of the full migration.
   - REMAINING (needs human, multi-week): the 4 stub routes are client-rendered shells, NOT the SSR/ISR route handlers the deep dive specifies. Pure <Link> semantics in header (vs the current onClick+router.push), URL-driven filter state (?q=...&status=...), the 9,555 medication pages with generateStaticParams, the intercepting-route modal pattern (P0-03), the 7 clinical-tool routes. Flagged NEEDS HUMAN REVIEW — full implementation is 2 weeks.
+
+---
+Card: P0-02 — NextAuth scaffold + per-user accounts + audit trail (Law 85-05)
+Date: 2025-01-15 (session)
+Status: ⚠️ PARTIAL — foundation + audit trail shipped; full 4-week NextAuth migration flagged NEEDS HUMAN
+Changes:
+  - prisma/schema.prisma (NEW models: User, Account, Session, VerificationToken, AuditLog; NEW enums: Role, AuditAction, AuditSeverity — additive, no existing model touched)
+  - src/lib/auth/audit-log.ts (NEW — logAction() + logAuthEvent() helpers; non-blocking writes)
+  - src/lib/auth/session.ts (NEW — getCurrentUserId/requireRole/logClinicalAction transitional wrappers)
+  - src/app/api/auth/route.ts (instrumented: logs LOGIN_SUCCESS/LOGIN_FAILURE with IP + UA)
+  - middleware.ts (accepts next-auth.session-token cookie when NEXT_PUBLIC_FEATURE_NEXTAUTH=on; legacy dzpharm_auth path preserved)
+  - .env.example (NEW — documents NEXT_PUBLIC_FEATURE_APP_ROUTER, _NEXTAUTH, _WEBFONTS, plus NEXTAUTH_SECRET/DZPHARM_ACCESS_CODE placeholders for the full migration)
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser/curl: POST /api/auth wrong-password → 401 "Mot de passe incorrect"; correct password → 200 {"ok":true}; AuditLog table shows LOGIN_SUCCESS + LOGIN_FAILURE rows
+Commit: pending (this entry)
+Notes:
+  - ⚠️ The V7 sessionStorage bypass is NOT yet closed. Closing it requires the full session-guard.tsx → useSession() rewrite + SessionProvider wrap, which is the multi-week part of the migration (Phase 1 day 2 of the Tool08 4-week plan). The foundation ships the schema + audit trail + middleware flag + helpers so the full migration is a wire-up, not a design effort.
+  - Per Tool08 deep dive (28 pages, 5 phases): Phase 1 (NextAuth Credentials scaffold + session move to httpOnly — 1 day, scaffold-able, PARTIALLY DONE), Phase 2 (User/Account/Session models + registration + email verify + roles — 1 week, needs human), Phase 3 (TOTP MFA — 3 days, needs human), Phase 4 (AuditLog instrumentation across all clinical actions + admin dashboard + 7-year retention cron — 5 days, foundation DONE for login; needs human for full coverage), Phase 5 (RBAC middleware + idle timeout + rate limiting — 3 days, needs human).
+  - The shared token (AUTH_TOKEN) is the LOST sequence 4-8-15-16-23-42 — treated as COMPROMISED. The full migration moves to per-user DZPHARM_ACCESS_CODE.
+  - Three P0 attacks status: (1) devtools sessionStorage bypass — STILL OPEN (needs session-guard rewrite); (2) shared credential exposure — STILL OPEN (needs per-user accounts); (4) no audit trail — PARTIALLY CLOSED (login events now logged; full clinical-action instrumentation needs human).
+  - Flag NEXT_PUBLIC_FEATURE_NEXTAUTH defaults OFF (no regression). The middleware still enforces the dzpharm_auth cookie check; the next-auth cookie path is only active when the flag is on.
