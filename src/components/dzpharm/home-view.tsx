@@ -537,6 +537,7 @@ export function HomeView() {
   const favorites = useDzPharm((s) => s.favorites)
   const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
   const recentlyViewed = useDzPharm((s) => s.recentlyViewed)
+  const clearRecent = useDzPharm((s) => s.clearRecent)
   const armoireMembers = useDzPharm((s) => s.armoireMembers)
   const armoireEntries = useDzPharm((s) => s.armoireEntries)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -843,6 +844,16 @@ export function HomeView() {
               <History className="size-4.5 text-primary" aria-hidden />
               Consultés récemment
             </h2>
+            {/* P3-19 (early) — Clear recently-viewed history. */}
+            <button
+              type="button"
+              onClick={() => clearRecent()}
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              aria-label="Effacer l'historique des médicaments consultés récemment"
+            >
+              <X className="size-3.5" aria-hidden />
+              <span>Effacer</span>
+            </button>
           </div>
           <div className="scroll-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
             {recentlyViewed.map((item) => (

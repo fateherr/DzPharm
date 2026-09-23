@@ -427,7 +427,7 @@ export function DirectoryView() {
       </div>
 
       {/* --------------------------- Toolbar Filtres --------------------------- */}
-      <div className="mb-4 rounded-xl border border-border/80 bg-card/85 p-3.5 shadow-sm backdrop-blur-md">
+      <div className="mb-4 rounded-xl border border-border/80 bg-card/85 p-4 shadow-sm backdrop-blur-md">
         {/* Périmètre filter bar */}
         <div className="mb-2.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar px-0.5">
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-0.5">

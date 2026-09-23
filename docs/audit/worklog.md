@@ -464,3 +464,44 @@ Notes:
   - All regions use aria-live="polite" (non-interrupting) — per the brief's gotcha: assertive is reserved for errors (the toast variant="destructive" already handles that).
   - The Copilot region is sr-only (visual design unchanged — the TypingDots animation is the visual indicator, the sr-only span is the screen-reader equivalent).
   - WCAG 4.1.3 (Status Messages) passes.
+
+---
+Card: P1-16 — Fix Chifa simulator: adding drug routes to Comparator
+Date: 2026-09-24 (cron round 4)
+Status: ✅ PASSED (verify-and-close — audit finding STALE)
+Changes: none (verification only)
+Test result:
+  - source verify: src/components/dzpharm/chifa-simulator.tsx line 88 `addLineStore = useDzPharm((s) => s.addChifaLine)`; line 131 `addLine()` calls `addLineStore()`; line 285-286 `onSelect` calls `addLine({ id, brand, dci })`. The drug lands in the Chifa basket, NOT the Comparator. No cross-wiring.
+  - agent-browser: navigated to Outils → Chifa simulator; CHIFA_VIEW=YES (the simulator renders). The autocomplete search-result click needs more specific selectors in headless mode, but the source is definitive.
+Commit: n/a (no changes — already implemented correctly)
+Notes:
+  - The audit bet ("onSelect routes to comparatorAdd") was STALE — the codebase correctly calls the Chifa `addLine` store action. The shared SearchAutocomplete component does NOT share state between Chifa and the Comparator (each consumer passes its own onSelect handler).
+
+---
+Card: P1-24 — Fix shortage report submit returns HTTP 500
+Date: 2026-09-24 (cron round 4)
+Status: ✅ PASSED (verify-and-close — audit finding STALE)
+Changes: none (verification only)
+Test result:
+  - source verify: src/app/api/shortages/route.ts POST handler has validation (brand 2-120 chars → 400, note ≤280 → 400), abuse guard (max 20 per brand per hour → 429), db.shortageReport.create(), returns 201 on success. The only 500 is the catch-all error handler (line 41).
+  - runtime (curl): POST /api/shortages with {brand:"DOLIPRANE", note:"Test"} → HTTP 201 + report JSON (id, brand, status:"SIGNALEE"). Abuse guard: 21 rapid requests → 429 at request 21.
+Commit: n/a (no changes — already implemented correctly)
+Notes:
+  - The audit finding "submit returns 500" is STALE. The shortage POST is fully implemented with validation + abuse guard + 201 response. The 500 path is only the catch-all for unexpected Prisma errors.
+
+---
+Card: UI-POLISH-2 + P3-19 (early) — directory toolbar padding + clear-recent button
+Date: 2026-09-24 (cron round 4)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/directory-view.tsx (filter toolbar padding p-3.5 → p-4 for consistency with home-view stat cards)
+  - src/components/dzpharm/home-view.tsx (NEW "Effacer" button in the "Consultés récemment" header — calls clearRecent() store action; aria-label="Effacer l'historique des médicaments consultés récemment"; styled with X icon + destructive hover. This is the P3-19 card delivered early — the store already had clearRecent().)
+  - screenshots/cron-r4-qa.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser: dashboard renders (H1="Tableau de bord", --state-danger=#e70044, screenshot 205KB). The "Effacer" button renders conditionally when recentlyViewed.length > 0 (the section is gated). clearRecent store action is wired.
+Commit: pending (this entry)
+Notes:
+  - P3-19 ("Effacer l'historique" button) was scheduled for Phase 4 but the store already had clearRecent() — shipping it now is a cheap, additive, high-value user-facing feature (satisfies requirement #5).
+  - The directory toolbar padding standardization (p-4) aligns with the home-view stat cards (p-4) for visual consistency (requirement #4).
