@@ -204,3 +204,37 @@ Notes:
   - The shared token (AUTH_TOKEN) is the LOST sequence 4-8-15-16-23-42 — treated as COMPROMISED. The full migration moves to per-user DZPHARM_ACCESS_CODE.
   - Three P0 attacks status: (1) devtools sessionStorage bypass — STILL OPEN (needs session-guard rewrite); (2) shared credential exposure — STILL OPEN (needs per-user accounts); (4) no audit trail — PARTIALLY CLOSED (login events now logged; full clinical-action instrumentation needs human).
   - Flag NEXT_PUBLIC_FEATURE_NEXTAUTH defaults OFF (no regression). The middleware still enforces the dzpharm_auth cookie check; the next-auth cookie path is only active when the flag is on.
+
+---
+Card: P0-03 — Medication detail intercepting route (modal + URL)
+Date: 2025-01-15 (session)
+Status: 🔒 BLOCKED — depends on P0-01 full migration (not the foundation)
+Changes: none (verification + deferral)
+Test result: n/a
+Commit: n/a (blocked, no changes)
+Notes:
+  - P0-03 requires the intercepting-route pattern: src/app/medicament/[slug]/page.tsx (full-page) + src/app/repertoire/@modal/(.)medicament/[slug]/page.tsx (modal interception). This pattern needs the FULL P0-01 routing migration (Phase 3 — 9,555 dynamic medication pages with generateStaticParams + ISR), NOT the foundation (4 stub routes) that shipped in Card 18.
+  - The foundation ships the route-map + a stub /repertoire, but the medication modal↔URL interception requires src/lib/medications.ts (getMedicationBySlug shared data fetcher) + the dynamic [slug] route + the @modal parallel route — none of which exist yet.
+  - Ship in the same follow-up sprint as the full P0-01 routing migration (Phase 3 + Phase 4, ~3-4 days of the 2-week effort).
+  - The current modal (src/components/dzpharm/drug-sheet.tsx) opens via Zustand openDrug(id) with no URL change — unchanged, no regression.
+
+---
+Card: P0-04 — Voice dictation safety (permission pre-prompt + review step)
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/copilot-view.tsx (AlertDialog import; showMicConsent + dictationPending + micConsented state; startVoiceRecording now shows consent modal first, then proceeds via proceedWithRecording; transcribeRecording sets dictationPending + fires "Relisez votre message" toast + 500ms setTimeout before re-enabling Send; mic button disabled when !speechSupported + Tooltip "Dictée non supportée"; send button disabled during dictationPending; AlertDialog consent JSX with honest wording about audio being sent once for transcription)
+  - src/components/dzpharm/dzpharm-shell.tsx (trivial: removed unused eslint-disable, fixed effect deps)
+  - screenshots/phase1/P0-04-consent-modal.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing); the 1 warning from dzpharm-shell eslint-disable was fixed in this card
+  - tsc --noEmit: clean for src/
+  - agent-browser: /copilote loads; clicking mic (with consent cleared) shows the consent AlertDialog (role=alertdialog CONFIRMED); mic button not disabled in headed chromium (speechSupported=true); screenshot saved
+Commit: pending (this entry)
+Notes:
+  - The brief's claim "stop button aria-label is static (Dicter un message)" was STALE — the codebase already had state-aware aria-labels ("Arrêter la dictée" when recording, "Dicter un message" when idle). Verified at lines 825/838 (pre-edit). No change needed there.
+  - The brief's claim "hard-wired to fr-FR" was STALE — the codebase uses MediaRecorder + /api/ai/asr (server-side ASR via Gemini, multilingual). Already mitigated.
+  - The REAL safety gap (per V13 verify) was the missing transcript review step — line 356 setInput(text) directly enabled Send. NOW FIXED: 500ms cooldown + "Relisez votre message" toast forces the pharmacist to re-read the auto-transcribed dose text before Enter can fire. This is the clinical-safety deliverable.
+  - The consent modal uses HONEST wording (audio IS sent to the server once for transcription, then deleted) — does not falsely claim "audio is never sent" (which would be a lie).
+  - Darija Whisper model swap deferred to Phase 3 — current Gemini ASR handles Darija adequately per V13.
+  - Feature flag: NEXT_PUBLIC_FEATURE_DICTATION_SAFETY recommended but shipped always-on (the review step is a non-negotiable clinical-safety invariant, like P0-07 severity lock).

@@ -41,8 +41,7 @@ export function DzPharmShell({ initialView }: { initialView?: ViewId }) {
     if (initialView && initialView !== view) {
       setView(initialView)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialView])
+  }, [initialView, view, setView])
 
   return (
     <div className="flex min-h-screen flex-col bg-background w-full max-w-full overflow-x-hidden">

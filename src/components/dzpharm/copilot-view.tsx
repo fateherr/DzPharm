@@ -31,6 +31,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { postChat } from './api'
 import type { ChatMessage } from './types'
@@ -160,6 +170,14 @@ export function CopilotView() {
     typeof window !== 'undefined' &&
     typeof window.MediaRecorder !== 'undefined' &&
     Boolean(navigator.mediaDevices?.getUserMedia)
+  // P0-04 — Dictation safety: permission pre-prompt + mandatory review step.
+  const [showMicConsent, setShowMicConsent] = useState(false)
+  // 500 ms cooldown after a transcript lands, before the Send button re-enables,
+  // forcing the pharmacist to re-read the auto-transcribed dose text.
+  const [dictationPending, setDictationPending] = useState(false)
+  const micConsentKey = 'dzpharm_mic_consent_v1'
+  const micConsented =
+    typeof window !== 'undefined' && sessionStorage.getItem(micConsentKey) === '1'
 
   /* 24-c b) Lecture à voix haute — /api/ai/tts, audio mis en cache par message */
   const [playingId, setPlayingId] = useState<number | null>(null)
@@ -270,6 +288,18 @@ export function CopilotView() {
   /* ---------------------------------------------------------------- */
 
   async function startVoiceRecording() {
+    // P0-04 — Permission pre-prompt: show the consent modal the first time
+    // per tab session. After consent, the flag is persisted in sessionStorage
+    // so subsequent clicks go straight to recording.
+    if (!micConsented) {
+      setShowMicConsent(true)
+      return
+    }
+    await proceedWithRecording()
+  }
+
+  /** P0-04 — actual recording logic, called after consent (or directly if already consented). */
+  async function proceedWithRecording() {
     setVoiceError(null)
     if (!speechSupported) {
       setVoiceError('Dictée non supportée par ce navigateur')
@@ -355,6 +385,16 @@ export function CopilotView() {
       // Ajout en fin de saisie (append, sans écraser le texte en cours)
       setInput((prev) => (prev.trim() ? `${prev.trimEnd()} ${text}` : text))
       textareaRef.current?.focus()
+      // P0-04 — Mandatory review step: force the pharmacist to re-read the
+      // auto-transcribed dose text before Send is enabled. 500 ms cooldown
+      // blocks a reflex Enter press on a wrong-transcribed dose (clinical safety).
+      setDictationPending(true)
+      toast({
+        title: 'Relisez votre message avant d’envoyer',
+        description:
+          'La transcription automatique peut contenir des erreurs (chiffres, unités). Vérifiez la dose avant envoi.',
+      })
+      window.setTimeout(() => setDictationPending(false), 500)
     } catch (err) {
       setVoiceError(
         err instanceof Error ? err.message : 'Dictée indisponible — réessayez.'
@@ -789,30 +829,45 @@ export function CopilotView() {
                 <span className="hidden sm:inline">Arrêter</span>
               </Button>
             ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void startVoiceRecording()}
-                disabled={transcribing}
-                className="h-11 shrink-0"
-                aria-label="Dicter un message"
-                title="Dicter un message"
-              >
-                {transcribing ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <Mic className="size-4" aria-hidden />
-                )}
-                {transcribing ? (
-                  <span className="sr-only">Transcription en cours…</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void startVoiceRecording()}
+                    disabled={transcribing || !speechSupported}
+                    className="h-11 shrink-0"
+                    aria-label="Dicter un message"
+                    aria-describedby={speechSupported ? undefined : 'mic-unsupported'}
+                  >
+                    {transcribing ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Mic className="size-4" aria-hidden />
+                    )}
+                    {transcribing ? (
+                      <span className="sr-only">Transcription en cours…</span>
+                    ) : null}
+                    {!speechSupported ? (
+                      <span id="mic-unsupported" className="sr-only">
+                        Dictée non supportée sur ce navigateur
+                      </span>
+                    ) : null}
+                  </Button>
+                </TooltipTrigger>
+                {!speechSupported ? (
+                  <TooltipContent side="top">
+                    Dictée non supportée sur ce navigateur
+                  </TooltipContent>
                 ) : null}
-              </Button>
+              </Tooltip>
             )}
             <Button
               onClick={() => send(input)}
-              disabled={!input.trim() || mutation.isPending}
+              disabled={!input.trim() || mutation.isPending || dictationPending}
               className="h-11 shrink-0 gap-1.5 font-semibold"
               aria-label="Envoyer le message"
+              aria-describedby={dictationPending ? 'send-review-pending' : undefined}
             >
               <Send className="size-4" aria-hidden />
               <span className="hidden sm:inline">Envoyer</span>
@@ -830,6 +885,49 @@ export function CopilotView() {
           </p>
         </div>
       </div>
+
+      {/* P0-04 — Dictation permission pre-prompt (shown once per tab session). */}
+      <AlertDialog
+        open={showMicConsent}
+        onOpenChange={(o) => {
+          setShowMicConsent(o)
+          if (!o) {
+            // User dismissed without consenting — don't record.
+            setVoiceError('Autorisation du microphone refusée.')
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dictée vocale — autorisation du microphone</AlertDialogTitle>
+            <AlertDialogDescription>
+              DzPharm utilise votre microphone pour transcrire votre message. L&apos;audio
+              est transmis <strong>une seule fois</strong> à l&apos;IA pour transcription,
+              puis supprimé immédiatement du serveur. Il n&apos;est ni stocké, ni
+              réutilisé, ni partagé. La transcription automatique peut contenir des
+              erreurs (chiffres, unités) — <strong>relisez toujours la dose avant
+              l&apos;envoi</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                try {
+                  sessionStorage.setItem(micConsentKey, '1')
+                } catch {
+                  // sessionStorage may be unavailable — proceed for this tab.
+                }
+                setShowMicConsent(false)
+                setVoiceError(null)
+                void proceedWithRecording()
+              }}
+            >
+              Autoriser et dicter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
