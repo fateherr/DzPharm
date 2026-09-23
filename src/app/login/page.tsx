@@ -122,6 +122,7 @@ function LoginForm() {
               <div className="relative">
                 <Input
                   id="access-password"
+                  name="password"
                   type={show ? "text" : "password"}
                   placeholder="Entrez votre mot de passe…"
                   value={password}
@@ -131,6 +132,7 @@ function LoginForm() {
                   }}
                   autoFocus
                   autoComplete="current-password"
+                  enterKeyHint="go"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? "pw-error" : undefined}
                   className="h-12 rounded-xl bg-background/80 pe-11 text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"

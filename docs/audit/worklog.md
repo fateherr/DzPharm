@@ -600,3 +600,33 @@ Notes:
   - The full system-prompt construction (registry context, pediatric anchor, 8 safety rules) lives in /api/ai/chat/route.ts (200 lines). Extracting it to a shared helper for the streaming route to reuse is a follow-up refactor (deferred per Rule R6). The streaming route uses a minimal but mode-aware prompt inline.
   - The acceptance test ("first token < 1s, stop button cancels, p50 ≤ 1s") requires a working Gemini key — the sandbox's GEMINI_API_KEY returns 400. 👤 NEEDS HUMAN (run with a real key + wire the client).
   - Coordinate with P1-10: the useChatStream hook does NOT own message state (the caller does, via the Zustand slice). When the client wiring ships, bridge useChatStream's onDelta to append tokens to the assistant message in the Zustand slice (debounced to avoid write amplification).
+
+---
+Card: P2-11 + P2-04 — Matrice empty-state + result count/filter chips (verify-and-close)
+Date: 2026-09-24 (cron round 10)
+Status: ✅ PASSED (both already implemented — audit findings STALE)
+Changes: none (verification only)
+Test result:
+  - source verify: interactions-view.tsx line 936 `if (basket.length < 2)` renders a proper empty-state with Grid3x3 icon + "La matrice nécessite au moins 2 médicaments" heading + explanation + "Ajouter des médicaments" CTA button. directory-view.tsx line 370 `formatNumber(total) médicament(s) trouvé(s)` result count + line 590 "Jetons de Filtres Actifs (Smart Chips)" with per-filter removable chips (q/status/domain/form/liste/country/lab, each with X button + aria-label) + line 573 "Effacer" button.
+Commit: n/a (no changes — already implemented)
+Notes:
+  - P2-11 (Matrice empty-state) STALE — the codebase has a complete empty-state with icon + heading + explanation + CTA. The V2 audit bet ("tab renders empty below 2-drug threshold") was the empty-state gap, now closed.
+  - P2-04 (result count + filter chips) STALE — the directory-view has both the count line (with aria-live from P1-08) AND per-filter removable chips with a "Tout effacer" control. The audit finding is resolved.
+
+---
+Card: P2-19 + P2-20 — Login page noindex + enterkeyhint + name
+Date: 2026-09-24 (cron round 10)
+Status: ✅ PASSED
+Changes:
+  - src/app/login/layout.tsx (NEW — per-route layout exporting metadata.robots: { index: false, follow: false }. Additive — the root layout's global robots config is unchanged; only /login gets noindex, nofollow. The login page has no value to searchers and indexing it advertises the authentication pattern.)
+  - src/app/login/page.tsx (Input now has name="password" — was missing, makes form serialisation + password-manager behaviour less reliable; enterKeyHint="go" — on iOS/Android the Enter key now reads "Go" instead of Return/checkmark, signalling it submits)
+  - screenshots/cron-r10-p2-19-20.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser: /login has <meta name="robots" content="noindex, nofollow"> CONFIRMED; input name="password" CONFIRMED; input enterkeyhint="go" CONFIRMED; severity lock holds (#e70044).
+Commit: pending (this entry)
+Notes:
+  - P2-19 (login indexable): the root layout.tsx has robots: { index: true, follow: true } globally. The /login route needs noindex — solved with a per-route login/layout.tsx that overrides the metadata. Additive (the root layout is untouched).
+  - P2-20 (enterkeyhint): the Input component passes enterKeyHint through to the DOM (React 19 supports it as a camelCase prop). The mobile Enter key now reads "Go".
+  - P2-21 (already-authed redirect to /) is out of scope here — needs the NextAuth session check (P0-02 dependency). Flagged for follow-up.
