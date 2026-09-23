@@ -1273,6 +1273,39 @@ html[data-design-mode="botanique"].dark .glass-panel {
   background-color: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
 }
 
+/* UI polish — extend the thin custom scrollbar to ALL scrollable areas
+   (any element with Tailwind's overflow-auto / overflow-y-auto / overflow-x-auto
+   class), so long lists look consistent without each caller needing .scroll-thin.
+   The .no-scrollbar utility below still wins for tab bars that want no chrome. */
+[class*="overflow-auto"],
+[class*="overflow-y-auto"],
+[class*="overflow-x-auto"] {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
+}
+[class*="overflow-auto"]::-webkit-scrollbar,
+[class*="overflow-y-auto"]::-webkit-scrollbar,
+[class*="overflow-x-auto"]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+[class*="overflow-auto"]::-webkit-scrollbar-track,
+[class*="overflow-y-auto"]::-webkit-scrollbar-track,
+[class*="overflow-x-auto"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+[class*="overflow-auto"]::-webkit-scrollbar-thumb,
+[class*="overflow-y-auto"]::-webkit-scrollbar-thumb,
+[class*="overflow-x-auto"]::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  border-radius: 999px;
+}
+[class*="overflow-auto"]::-webkit-scrollbar-thumb:hover,
+[class*="overflow-y-auto"]::-webkit-scrollbar-thumb:hover,
+[class*="overflow-x-auto"]::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+}
+
 /* Hide scrollbars for horizontal tab bars */
 .no-scrollbar {
   scrollbar-width: none;

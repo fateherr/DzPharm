@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { DoseVerificationBadge } from '@/components/dzpharm/dose-verification-badge'
+import { rtlProps } from '@/lib/detect-rtl'
 import { postChat } from './api'
 import type { ChatMessage } from './types'
 
@@ -636,7 +637,7 @@ export function CopilotView() {
                     type="button"
                     onClick={() => send(s)}
                     className="rounded-full border border-border bg-background px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    dir="auto"
+                    {...rtlProps(s)}
                   >
                     {s}
                   </button>
@@ -676,7 +677,7 @@ export function CopilotView() {
                   >
                     {message.role === 'assistant' ? (
                       <>
-                        <div className="min-w-0" dir="auto">
+                        <div className="min-w-0" {...rtlProps(message.content)}>
                           <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                             {message.content}
                           </Markdown>
@@ -778,7 +779,7 @@ export function CopilotView() {
                         </footer>
                       </>
                     ) : (
-                      <p className="whitespace-pre-wrap" dir="auto">
+                      <p className="whitespace-pre-wrap" {...rtlProps(message.content)}>
                         {message.content}
                       </p>
                     )}

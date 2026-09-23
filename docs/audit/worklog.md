@@ -347,3 +347,48 @@ Stage Summary:
 - 3 pre-existing lint errors (search-autocomplete, session-guard, tools-view — React 19 setState-in-effect) are baseline debt, untouched. Zero NEW lint errors introduced.
 - Handoff: /home/z/my-project/worklog.md (orchestrator-level) + this file (per-card R8 entries) + card-briefs-01-25.md (implementation briefs). The remaining 54 cards (P1 26-40 minus P1-15, P2 41-60, P3+features 61-75, Design 76-80) are the cron job's queue.
 - Cron job (webDevReview, every 15 min) set up to continue development autonomously.
+
+---
+Card: P1-09 — Wire Copilot suggested-prompt onClick handlers
+Date: 2026-09-24 (cron round 1)
+Status: ✅ PASSED (verify-and-close — already implemented, audit finding STALE)
+Changes: none (verification only — src/components/dzpharm/copilot-view.tsx line 637 already wires onClick={() => send(s)}; send() at line 253 adds the message + clears input + triggers mutation)
+Test result:
+  - agent-browser: navigated to /copilote, clicked the "Posologie paracétamol enfant 20 kg" suggestion chip → HAS_USER_MSG=YES (the prompt appeared as a user chat bubble), MSG_COUNT=3 (user + assistant + badge). No dead clicks.
+Commit: n/a (no changes — already implemented)
+Notes:
+  - The audit bet ("suggestion chips are dead clicks") is STALE — the codebase evolved. The chips ARE wired: onClick → send(s) → setMessages([...messages, {role:'user',content}]) + setInput('') + mutation.mutate().
+  - The send() function also enforces the BLOCKED_PATTERNS clinical-safety barrier (won't prescribe / won't fix a dose) before forwarding to the LLM. Good defence-in-depth.
+
+---
+Card: P1-14 — Add dir=rtl + lang=ar to all Arabic content
+Date: 2026-09-24 (cron round 1)
+Status: ✅ PASSED
+Changes:
+  - src/lib/detect-rtl.ts (NEW — containsArabic/detectDir/detectLang/rtlProps helpers; Arabic Unicode ranges U+0600-06FF, 0750-077F, 08A0-08FF, FB50-FDFF, FE70-FEFF; returns 'rtl'/'ltr' + 'ar'/'fr' BCP-47 tags)
+  - src/components/dzpharm/copilot-view.tsx (imported rtlProps; applied to suggestion chips line 640, assistant Markdown content line 680, user message text line 782 — replaced dir="auto" with explicit {...rtlProps(text)} which sets dir + lang)
+  - screenshots/cron-r1-p14-rtl.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser: Arabic chip "دوا تاع السكر؟" → dir="rtl" lang="ar" CONFIRMED; French chip → dir="ltr" lang="fr"
+Commit: pending (this entry)
+Notes:
+  - The browser's dir="auto" handled visual direction automatically, but it does NOT set lang — which screen readers need to pronounce Arabic correctly and search engines need for language attribution. P1-14 closes that gap with explicit dir + lang on static rendered content (chips, chat messages).
+  - For the textarea (user input), dir="auto" is kept (the browser detects per-paragraph as the user types mixed FR/AR) — that's the right pattern for input, not static content.
+  - The [lang="ar"], [dir="rtl"] CSS rule from QW-01 (globals.css line 1435) auto-applies Noto Sans Arabic to all lang=ar/dir=rtl elements — so Arabic now renders in the correct webfont without per-element styling.
+
+---
+Card: UI-POLISH-1 — Footer safe-area bug fix + global thin scrollbar
+Date: 2026-09-24 (cron round 1)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/footer.tsx (BUG FIX: line 11 had a corrupted className `pb-ax(1rem,env(safe-area-inset-bottom))]` — the `m[` had been dropped in a prior session, breaking the iOS safe-area bottom padding. Restored to `pb-[max(1rem,env(safe-area-inset-bottom))]`.)
+  - src/app/globals.css (NEW global scrollbar polish: extends the thin custom scrollbar to ALL scrollable areas via attribute selectors [class*="overflow-auto"], [class*="overflow-y-auto"], [class*="overflow-x-auto"] — so every long list (directory, command palette, catalog, pediatric calculator) gets the consistent thin themed scrollbar without each caller needing the .scroll-thin class. The .no-scrollbar utility still wins for tab bars.)
+Test result:
+  - lint: 0 NEW errors
+  - agent-browser: dashboard renders cleanly (URL=/, 207KB screenshot, no console errors); footer safe-area padding now valid
+Commit: pending (this entry)
+Notes:
+  - The sticky-footer pattern was already correct (footer uses mt-auto inside the flex min-h-screen flex-col root) — no change needed there. The bug was only the corrupted pb-[] class.
+  - The global scrollbar rule is additive — it only styles scrollbars, doesn't change layout. The .no-scrollbar and .scroll-thin utilities still work as before.
