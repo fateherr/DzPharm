@@ -87,6 +87,11 @@
   --destructive: #dc2626;
   --border: #d0d7e2;
   --input: #d0d7e2;
+  /* P1-03 — Resting input border (neutral slate, NOT primary blue). The old
+     --input value (#d0d7e2) was a near-primary blue, making every input look
+     permanently focused. This token is reserved for the input REST state;
+     --ring is reserved for the focus state. */
+  --input-border-rest: rgba(148, 163, 184, 0.55);
   --ring: #026aa7;
   --chifa: #047857;
   --chifa-foreground: #ffffff;
@@ -177,6 +182,8 @@
   --destructive: #ef4444;
   --border: #253348;
   --input: #253348;
+  /* P1-03 — Resting input border (neutral slate) for dark mode. */
+  --input-border-rest: rgba(148, 163, 184, 0.35);
   --ring: #38bdf8;
   --chifa: #10b981;
   --chifa-foreground: #04121e;

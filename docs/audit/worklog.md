@@ -392,3 +392,39 @@ Commit: pending (this entry)
 Notes:
   - The sticky-footer pattern was already correct (footer uses mt-auto inside the flex min-h-screen flex-col root) — no change needed there. The bug was only the corrupted pb-[] class.
   - The global scrollbar rule is additive — it only styles scrollbars, doesn't change layout. The .no-scrollbar and .scroll-thin utilities still work as before.
+
+---
+Card: P1-03 — Input border colour neutral at rest, accent on focus
+Date: 2026-09-24 (cron round 2)
+Status: ✅ PASSED
+Changes:
+  - src/app/globals.css (:root NEW --input-border-rest: rgba(148,163,184,0.55) — neutral slate-400, NOT the near-primary blue #d0d7e2; .dark NEW --input-border-rest: rgba(148,163,184,0.35); the existing --input is kept for dark bg-input/30 backgrounds only)
+  - src/components/ui/input.tsx (className changed `border-input` → `border-[var(--input-border-rest)]` for the REST state; `focus-visible:border-ring` kept for focus — now the rest→focus transition is neutral-slate → primary-blue, unmistakable)
+  - screenshots/cron-r2-p1-04-h1.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser: --input-border-rest token resolved to #94a3b8 (slate-400) at runtime — neutral grey, distinct from primary blue. The Input component now uses border-[var(--input-border-rest)] at rest.
+Commit: pending (this entry)
+Notes:
+  - The older plan called this "the highest-impact visual fix on the platform per minute spent". Every input no longer looks permanently focused; the focus ring (primary blue, 3px) is now unmistakable.
+  - Kept --input unchanged (still used by dark:bg-input/30 for the input background in dark mode). Only the REST BORDER consumes the new token. Additive — no existing usage of --input broke.
+  - Feature flag: n/a (visual fix, no behaviour change, always on).
+
+---
+Card: P1-04 — Dashboard H1 is a marketing tagline (→ page name "Tableau de bord")
+Date: 2026-09-24 (cron round 2)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/home-view.tsx (standard-mode H1 changed from the tagline "L'intelligence pharmaceutique algérienne" → the page name "Tableau de bord" (gradient on "bord" preserved); the tagline moved to a new <p> subtitle styled text-lg font-medium text-foreground/80; the existing description <p> stays below. Botanique-mode H1 "Herbier d'Officine & Pharmacopée" left as-is — it IS a page name in the botanique context.)
+  - screenshots/cron-r2-p1-04-h1.png
+Test result:
+  - lint: 0 NEW errors
+  - tsc --noEmit: clean for src/
+  - agent-browser: document.querySelector("h1").textContent = "Tableau de bord"; H1_COUNT = 1 (clean heading order, only one H1 renders); tagline "L'intelligence pharmaceutique algérienne" still present (now in a <p>). Screenshot saved (205KB).
+Commit: pending (this entry)
+Notes:
+  - A screen-reader user navigating by heading now hears "Tableau de bord" (the page name) instead of a marketing slogan. The tagline is preserved as a styled subtitle below — the visual design is unchanged.
+  - The botanique-mode H1 "Herbier d'Officine & Pharmacopée" is already a page name (the botanique-themed name for the dashboard) — left as-is.
+  - Follow-up (not blocking): audit the other views (Répertoire, Interactions, Copilote, Stats) to ensure each has its own page-naming H1. The home-view fix is the highest-impact one (it's the landing page).
+  - Feature flag: n/a (semantic a11y fix, always on).

@@ -641,12 +641,15 @@ export function HomeView() {
                   Nomenclature officielle — Juin 2026
                 </span>
                 <h1 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  L&apos;intelligence pharmaceutique{' '}
+                  Tableau de{' '}
                   <span className="bg-gradient-to-r from-sky-400 via-primary to-chifa bg-clip-text text-transparent">
-                    algérienne
+                    bord
                   </span>
                 </h1>
-                <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+                <p className="mx-auto mt-2 max-w-2xl text-lg font-medium text-foreground/80 sm:text-xl">
+                  L&apos;intelligence pharmaceutique algérienne
+                </p>
+                <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
                   Le référentiel national des médicaments enrichi par l&apos;IA : recherche
                   sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
                 </p>
