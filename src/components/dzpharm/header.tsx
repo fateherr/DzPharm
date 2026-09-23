@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
+import { APP_ROUTER_ENABLED, urlForView } from '@/lib/route-map'
 import { motion } from 'framer-motion'
 import {
   DropdownMenu,
@@ -233,7 +234,13 @@ export function Header() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setView(item.id)}
+                  onClick={() => {
+                    setView(item.id)
+                    // P0-01: when the App Router flag is on, also push the real URL
+                    // so the address bar reflects the route (deep-link + shareable).
+                    // Pure <Link> semantics are deferred to the full 2-week migration.
+                    if (APP_ROUTER_ENABLED) router.push(urlForView(item.id))
+                  }}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'relative flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:px-3 lg:text-sm',

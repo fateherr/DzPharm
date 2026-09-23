@@ -154,3 +154,30 @@ Notes:
   - The other two icon-only buttons (Nuancier line 481, Scanner line 413, Lock line 502) already had adequate static aria-labels from prior work; only the theme + botanique toggles needed state-awareness.
   - The Copilot nav entry is a labelled nav item (visible text), not icon-only — out of scope.
   - axe DevTools button-name rule now passes on all 4 header icon buttons (visual confirmation via screenshot).
+
+---
+Card: P0-01 — Real URL routing (22 routes → real Next.js routes)
+Date: 2025-01-15 (session)
+Status: ⚠️ PARTIAL — foundation shipped; full 2-week migration flagged NEEDS HUMAN
+Changes:
+  - src/lib/route-map.ts (NEW — ViewId↔URL map, APP_ROUTER_ENABLED flag, urlForView() helper)
+  - src/components/dzpharm/dzpharm-shell.tsx (NEW — extracted app shell with optional initialView prop for deep-linking)
+  - src/app/page.tsx (refactored to render <DzPharmShell/> — additive, no behaviour change)
+  - src/app/repertoire/page.tsx (NEW stub — view='repertoire')
+  - src/app/prix-chifa/page.tsx (NEW stub — view='catalogue')
+  - src/app/interactions/page.tsx (NEW stub — view='interactions')
+  - src/app/copilote/page.tsx (NEW stub — view='copilote')
+  - src/app/sitemap.ts (NEW — 6 static URLs; 9,555 medication URLs land in Phase 3)
+  - public/sitemap.xml (REMOVED — was a 1-URL static stub conflicting with the dynamic sitemap.ts; the dynamic is a strict superset)
+  - src/components/dzpharm/header.tsx (CORE_NAV onClick now also router.push(urlForView) when APP_ROUTER_ENABLED)
+  - screenshots/phase1/P0-01-repertoire-route.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing in untouched files)
+  - tsc --noEmit: clean for src/
+  - agent-browser: /repertoire, /prix-chifa, /interactions, /copilote all HTTP 200; /sitemap.xml HTTP 200 with 6 URLs; /repertoire deep-link loads DirectoryView after auth
+Commit: pending (this entry)
+Notes:
+  - Per Tool01 deep dive (26 pages), the FULL migration is 4 phases over ~2 weeks: Phase 1 (4 routes, 3 days — DONE as foundation), Phase 2 (7 clinical-tool routes, 2 days — deferred), Phase 3 (9,555 dynamic /medicament/[slug] pages with ISR, 3 days — deferred), Phase 4 (4 supporting pages + intercepting routes, 1 day — deferred, blocks P0-03).
+  - The deep-link stubs work whether the flag is on or off — they set the view via the `initialView` prop. The flag only controls whether the header pushes the URL.
+  - Flag NEXT_PUBLIC_FEATURE_APP_ROUTER defaults OFF (legacy SPA behaviour preserved — no regression risk, Risk #1 mitigation). Roll out 10% → 50% → 100% after human review of the full migration.
+  - REMAINING (needs human, multi-week): the 4 stub routes are client-rendered shells, NOT the SSR/ISR route handlers the deep dive specifies. Pure <Link> semantics in header (vs the current onClick+router.push), URL-driven filter state (?q=...&status=...), the 9,555 medication pages with generateStaticParams, the intercepting-route modal pattern (P0-03), the 7 clinical-tool routes. Flagged NEEDS HUMAN REVIEW — full implementation is 2 weeks.
