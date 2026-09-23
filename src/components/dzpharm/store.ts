@@ -392,7 +392,7 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      version: 2,
+      version: 3,
       /**
        * Migration v0 → v1 : ancien modèle (profils × items imbriqués) vers
        * le modèle du plan (membres + entrées assignables/partagées).
@@ -527,6 +527,15 @@ export const useDzPharm = create<DzPharmStore>()(
           }
         }
 
+        // v2 → v3: P1-12 — add `basket` to the persisted slice (was missing).
+        // Existing users with v2 state won't have `basket` in their persisted
+        // object — default it to an empty array so the store hydrates cleanly.
+        if (version <= 2) {
+          if (!Array.isArray((next as { basket?: unknown }).basket)) {
+            ;(next as { basket?: unknown }).basket = []
+          }
+        }
+
         return next as unknown as DzPharmStore
       },
       // Persiste mode d'usage + favoris + historique récent + armoire v2
@@ -537,6 +546,11 @@ export const useDzPharm = create<DzPharmStore>()(
         audience: state.audience,
         favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,
+        // P1-12 — Persist the interactions basket so it survives refresh.
+        // (was missing from partialize — refresh wiped the list). The URL
+        // param sync (useInteractionListState hook) is the secondary shareable
+        // layer; this localStorage persist is the always-on baseline.
+        basket: state.basket,
         armoireMembers: state.armoireMembers,
         armoireEntries: state.armoireEntries,
         armoireJournal: state.armoireJournal,

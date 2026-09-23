@@ -541,3 +541,22 @@ Notes:
   - The acceptance test ("same query in pro vs patient produces visibly different output") requires a working Gemini key — the sandbox's GEMINI_API_KEY returns 400 Bad Request (pre-existing, flagged in prior rounds). The prompt DIFF is source-verified; the runtime output comparison is 👤 NEEDS HUMAN (run with a real Gemini key after the sandbox).
   - The prompt is clinically safe: it does NOT remove contra-indications, does NOT let the LLM compute doses (defers to the dose engine — P0-05 invariant preserved), and always refers the patient to a pharmacist.
   - The mode toggle in copilot-view.tsx (line 159 setMode, line 203 postChat) already passes mode to the API — no UI change needed.
+
+---
+Card: P1-12 — Persist interactions drug list (localStorage persist + URL params hook)
+Date: 2026-09-24 (cron round 7)
+Status: ✅ PASSED (layer 1 localStorage shipped + verified; layer 2 URL hook source-verified, flag-gated off)
+Changes:
+  - src/hooks/use-interaction-list-state.ts (NEW — useInteractionListState hook; reads ?drugs=8421,1523 from URL search params when APP_ROUTER_ENABLED + INTERACTIONS_URL_FLAG are both on; hydrates the basket from URL if empty on mount; writes basket changes back to URL via router.replace (no history pollution); returns { basket, addToBasket, clearBasket, urlEnabled }. Pure — no fetch in the hook, the interactions-view refetches details by id.)
+  - src/components/dzpharm/store.ts (partialize now includes `basket: state.basket` — the always-on localStorage baseline so refresh no longer wipes the list; persist version bumped 2 → 3; NEW v2→v3 migrate case that defaults `basket` to [] for existing users with v2 state so they hydrate cleanly)
+  - screenshots/cron-r7-p1-12.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing; 2 transient unused-eslint-disable warnings were removed)
+  - tsc --noEmit: clean for src/
+  - agent-browser: dashboard renders (H1="Tableau de bord", --state-danger=#e70044); localStorage dzpharm-store version=3 CONFIRMED (v2→v3 migration ran); raw localStorage includes "basket" CONFIRMED (the key is persisted). The URL-param sync layer (useInteractionListState) is gated on NEXT_PUBLIC_FEATURE_INTERACTIONS_URL + NEXT_PUBLIC_FEATURE_APP_ROUTER (both off by default — no regression; layer 1 localStorage is the always-on baseline).
+Commit: pending (this entry)
+Notes:
+  - Root cause of the refresh-wipes-basket bug: `basket` was missing from the `partialize` list in store.ts (line 534). Only designMode, palette, audience, favorites, recentlyViewed, armoire*, chifa* were persisted. NOW FIXED — basket is in partialize, version bumped to 3 with a v2→v3 migrate defaulting basket to [].
+  - Two-layer design: (1) localStorage persist (always on, survives refresh) + (2) URL ?drugs= sync (shareable links, gated on the routing flags). Layer 1 alone satisfies the acceptance test "refresh lands on the populated list". Layer 2 unlocks the "shareable link to a specific drug pair" + SEO — deferred until the human enables the routing flag.
+  - The hook is additive — it never replaces the Zustand basket as the source of truth; the URL is a secondary projection. Hydration only happens when the basket is empty (don't clobber an active session).
+  - Feature flag NEXT_PUBLIC_FEATURE_INTERACTIONS_URL recommended (gated on NEXT_PUBLIC_FEATURE_APP_ROUTER). Both default off.
