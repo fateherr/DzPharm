@@ -278,3 +278,22 @@ Notes:
   - Bug #1 (decorative single-key hotkeys): the CommandShortcut badges (H/R/P/I/C/S/B/T) were present in the UI but no keydown handler existed for single-key presses (only Cmd+K + Cmd+I were wired). NOW FIXED: a dedicated useEffect listens for single-key presses when the palette is open AND focus is not in the search input AND no modifier keys are held. Maps H→Accueil, R→Répertoire, P→Prix & Chifa, I→Interactions, C→Copilote, S→Scanner, B→Botanique toggle, T→Nuancier.
   - Feature flag NEXT_PUBLIC_FEATURE_CMDK_HOTKEYS recommended but shipped always-on (the hotkeys match the visible CommandShortcut badges — removing them would be a UX regression, not a safety issue).
   - Navigation uses the P0-01 navigateTo helper (router.push when APP_ROUTER_ENABLED, else setView) — the two P0 cards are consistent.
+
+---
+Card: P0-07 — Lock clinical severity colours from palette overrides
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/app/globals.css (:root light-mode --state-* tokens updated to Tool53 canonical values: none #62748e, info #00a5ef, safe #22c55e, warning #f99c00, severe #fe6e00, danger #e70044, unknown #8d54ff — were close-but-non-canonical #64748b/#026aa7/#16a34a/#d97706/#ea580c/#dc2626/#7c3aed; NEW .severity-* + .severity-*-bg classes with !important; NEW defensive :root/.dark/[data-palette] !important block forcing --state-* to canonical values — guarantees no palette CSS can ever repaint them)
+  - screenshots/phase1/P0-07-severity-lock.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing in untouched files)
+  - agent-browser: --state-danger = #e70044 in light (porcelain), dark, sahara-cedar, AND design-brutalist palettes (all 4 identical); --state-safe = #22c55e; --state-warning = #f99c00 — all canonical, palette-immune
+Commit: pending (this entry)
+Notes:
+  - THE SINGLE MOST IMPORTANT SAFETY INVARIANT on the platform (DC-01 in the design constitution). A palette that repaints « contre-indication absolue » is a dispensing hazard — now impossible.
+  - Root cause of the V13 palette-desync finding (Phase 0): the :root (light) tokens had WRONG values (#dc2626 danger etc.) while the .dark block had the CORRECT canonical values. The default porcelain palette's [data-palette="porcelain"] CSS overrode --state-* to the correct values, MASKING the bug in light mode — but switching to a palette that didn't override would have reverted to the wrong :root values. NOW FIXED at the root: :root has canonical values AND the !important block guarantees palette-immunity.
+  - The !important is the THIRD allowed use on the platform (after QW-02 reduced-motion + QW-01 fonts). All three are safety/accessibility invariants.
+  - palettes.ts confirmed (Phase 0 grep) to NOT override --state-* — the defensive !important block is belt-and-suspenders against future regressions.
+  - switchPalette() (palette-sync.tsx) only sets the data-palette attribute — it never touches --state-*. Confirmed safe.
+  - Feature flag NEXT_PUBLIC_FEATURE_SEVERITY_LOCK exists only for rollback if a regression appears; default ON (this is a non-negotiable invariant).

@@ -91,13 +91,16 @@
   --chifa: #047857;
   --chifa-foreground: #ffffff;
   --chifa-gold: #b45309;
-  --state-none: #64748b;
-  --state-info: #026aa7;
-  --state-safe: #16a34a;
-  --state-warning: #d97706;
-  --state-severe: #ea580c;
-  --state-danger: #dc2626;
-  --state-unknown: #7c3aed;
+  /* P0-07 — Clinical severity colours LOCKED to Tool53 canonical values.
+     These 7 hex codes are immune to ALL palette overrides (see .severity-* !important
+     rules at the end of this file). DO NOT change without human review. */
+  --state-none: #62748e;     /* slate    — canonical (was #64748b) */
+  --state-info: #00a5ef;     /* cyan     — canonical (was #026aa7) */
+  --state-safe: #22c55e;     /* green    — canonical (was #16a34a) */
+  --state-warning: #f99c00;  /* amber    — canonical (was #d97706) */
+  --state-severe: #fe6e00;   /* orange   — canonical (was #ea580c) */
+  --state-danger: #e70044;   /* red      — canonical (was #dc2626) */
+  --state-unknown: #8d54ff;  /* purple   — canonical (was #7c3aed) */
   --chart-1: #026aa7;
   --chart-2: #047857;
   --chart-3: #d97706;
@@ -1431,4 +1434,47 @@ code, kbd, samp, pre, .font-mono, [data-mono] {
 }
 [lang="ar"], [dir="rtl"], .font-arabic {
   font-family: var(--font-noto-arabic), var(--font-inter), sans-serif !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* P0-07 — CLINICAL SEVERITY COLOUR LOCK (DC-01 design constitution).  */
+/* The 7 severity colours are IMMUNE to ALL palette overrides. This   */
+/* is the ONLY allowed use of !important on severity classes (besides  */
+/* reduced-motion + fonts). switchPalette() NEVER overrides --state-*.  */
+/* Canonical hex codes per Tool53 Color System Technical Design p.8:    */
+/*   safe=#22C55E warning=#F99C00 danger=#E70044 severe=#FE6E00       */
+/*   info=#00A5EF none=#62748E unknown=#8D54FF                         */
+/* DO NOT remove this block. A palette that repaints « contre-indication */
+/* absolue » is a dispensing hazard.                                   */
+/* ------------------------------------------------------------------ */
+.severity-safe { color: var(--state-safe) !important; }
+.severity-warning { color: var(--state-warning) !important; }
+.severity-danger { color: var(--state-danger) !important; }
+.severity-severe { color: var(--state-severe) !important; }
+.severity-info { color: var(--state-info) !important; }
+.severity-none { color: var(--state-none) !important; }
+.severity-unknown { color: var(--state-unknown) !important; }
+
+.severity-safe-bg { background-color: var(--state-safe) !important; color: #fff !important; }
+.severity-warning-bg { background-color: var(--state-warning) !important; color: #1a1a1a !important; }
+.severity-danger-bg { background-color: var(--state-danger) !important; color: #fff !important; }
+.severity-severe-bg { background-color: var(--state-severe) !important; color: #fff !important; }
+.severity-info-bg { background-color: var(--state-info) !important; color: #fff !important; }
+.severity-none-bg { background-color: var(--state-none) !important; color: #fff !important; }
+.severity-unknown-bg { background-color: var(--state-unknown) !important; color: #fff !important; }
+
+/* Force the --state-* token values themselves to be palette-immune:
+   any palette CSS that tries to redefine --state-* is overridden here.
+   (Defensive: palettes.ts currently does NOT override --state-*, but this
+   guarantees it can never regress.) */
+:root,
+.dark,
+[data-palette] {
+  --state-safe: #22c55e !important;
+  --state-warning: #f99c00 !important;
+  --state-danger: #e70044 !important;
+  --state-severe: #fe6e00 !important;
+  --state-info: #00a5ef !important;
+  --state-none: #62748e !important;
+  --state-unknown: #8d54ff !important;
 }
