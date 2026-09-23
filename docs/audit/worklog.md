@@ -523,3 +523,21 @@ Notes:
   - The V8 audit bet ("lock button behind backdrop, unclickable from inside modal") is now mitigated TWO ways: (1) the Command Palette already had a "Verrouiller" command accessible via Cmd+K (z-50+), and (2) the NEW Ctrl+L shortcut works from anywhere without opening the palette. The z-index hierarchy itself (header z-40, modal backdrop z-50) is unchanged — the fix is additive (a new shortcut), not a z-index rewrite.
   - The brief also mentioned the "lock in modal footer" approach (render a lock button inside each modal's footer). That's a heavier per-modal change — deferred. The Ctrl+L shortcut + the Cmd+K lock command cover the use case more cleanly.
   - P2-32 (lock behaves as logout, not a true lock) is out of scope — flagged for the human. The current "lock" calls handleLogout() which clears sessionStorage + cookie + redirects to /login. A true "lock" would keep the session alive but require re-auth to resume — that's a P0-02 NextAuth migration concern.
+
+---
+Card: P1-11 — Fix Mode patient = Mode pro (upgrade system prompt)
+Date: 2026-09-24 (cron round 6)
+Status: ⚠️ PARTIAL — prompt upgraded (source-verified); runtime acceptance test blocked by sandbox Gemini 400 (pre-existing key/quota issue, not caused by this card)
+Changes:
+  - src/app/api/ai/chat/route.ts (baseModePrompt upgraded from a 1-line generic "langage simple" to a structured MODE PATIENT prompt per Tool36 Chapter 4: LANGAGE (max 15 words/sentence, define jargon in parentheses), NOMS (brand name first, DCI only in parentheses — the patient knows the box, not the molecule), DOSES (never mg/kg maths — refer to the dose engine / pharmacist), CONTENU (5-point structure: usage + how to take + common side effects in plain words + when to seek urgent care + missed-dose guidance), RASSURANT (start with Oui/Non, end with "demandez à votre pharmacien"), SÉCURITÉ (absolute contra-indications in plain words). The mode === 'pro' and mode === 'enfant' prompts are unchanged.)
+  - screenshots/cron-r6-p1-11-mode-toggle.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser: /copilote loads, mode toggle renders (Enfant button confirmed; Pro/Patient buttons present with different text), severity lock holds (#e70044). The chat route POST /api/ai/chat returns 500 — but the dev.log shows it's a Gemini upstream "400 Bad Request" (GEMINI_API_KEY quota/placeholder issue in the sandbox), NOT a code error. The route parses mode === 'patient' correctly at line 190-195 + the prompt is mode-aware at line 357-373.
+Commit: pending (this entry)
+Notes:
+  - The audit finding ("mode patient ≈ mode pro — thin 1-line prompt") was VALID. The patient prompt is now structured: 5-point content structure (usage / how-to-take / side-effects / urgent-care / missed-dose), brand-name-first naming, no-mg/kg-maths rule (delegates to the dose engine), plain-language contra-indications.
+  - The acceptance test ("same query in pro vs patient produces visibly different output") requires a working Gemini key — the sandbox's GEMINI_API_KEY returns 400 Bad Request (pre-existing, flagged in prior rounds). The prompt DIFF is source-verified; the runtime output comparison is 👤 NEEDS HUMAN (run with a real Gemini key after the sandbox).
+  - The prompt is clinically safe: it does NOT remove contra-indications, does NOT let the LLM compute doses (defers to the dose engine — P0-05 invariant preserved), and always refers the patient to a pharmacist.
+  - The mode toggle in copilot-view.tsx (line 159 setMode, line 203 postChat) already passes mode to the API — no UI change needed.
