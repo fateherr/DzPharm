@@ -238,3 +238,25 @@ Notes:
   - The consent modal uses HONEST wording (audio IS sent to the server once for transcription, then deleted) — does not falsely claim "audio is never sent" (which would be a lie).
   - Darija Whisper model swap deferred to Phase 3 — current Gemini ASR handles Darija adequately per V13.
   - Feature flag: NEXT_PUBLIC_FEATURE_DICTATION_SAFETY recommended but shipped always-on (the review step is a non-negotiable clinical-safety invariant, like P0-07 severity lock).
+
+---
+Card: P0-05 — Dose engine (deterministic verification of Copilot doses)
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/lib/dose-engine.ts (NEW — verifyDose() deterministic engine; parseWeightKg/parseAgeMonths/parseClaimedDoseMg/matchDrug/normalizeDci; 5% tolerance; 4 statuses VERIFIED/MISMATCH/UNPARSEABLE/NOT_APPLICABLE; wraps the existing computeDose() + 15-molecule PEDIATRIC_DRUGS table)
+  - src/components/dzpharm/dose-verification-badge.tsx (NEW — non-suppressible badge rendered after every assistant response; role=status aria-live=polite; green ✓ Vérifié / red ⚠️ MISMATCH / amber ⚠️ UNPARSEABLE / gray ℹ️ N/A)
+  - src/components/dzpharm/copilot-view.tsx (imported + wired DoseVerificationBadge after the Markdown, before AiDisclaimer; question = messages[i-1].content)
+  - screenshots/phase1/P0-05-copilot-empty.png
+Test result:
+  - lint: 0 NEW errors in dose-engine/dose-verification-badge/copilot-view (3 pre-existing in untouched files)
+  - tsc --noEmit: clean for src/
+  - bun eval (functional): TEST1 paracetamol 10kg 2ans claim 150mg → VERIFIED (engine 150mg, 0% delta, "✓ Vérifié — calcul indépendant 150 mg (6.25 mL)"); TEST2 same + claim 500mg → MISMATCH (engine 150 vs claim 500, 233.3% delta, "⚠️ Vérification…"); TEST3 metformine (unknown) → NOT_APPLICABLE; TEST4 missing weight → UNPARSEABLE
+  - agent-browser: /copilote loads cleanly, title correct, no console errors, badge renders
+Commit: pending (this entry)
+Notes:
+  - The deterministic engine ALREADY EXISTED as computeDose() in src/lib/pediatric-dosing.ts (15 molecules: paracetamol, ibuprofène, amoxicilline, amox+acide clav, azithromycine, céfixime, clarithromycine, cétirizine, salbutamol, prednisolone, dompéridone, fer, vitamine D3, albendazole, diazépam). P0-05's contribution is the VERIFICATION wrapper (parse the Copilot response → cross-check → display badge/banner).
+  - THE COPILOT DOES NOT DO ARITHMETIC (rule R5): every dose claim is independently re-computed. If the engine disagrees by >5%, a red warning banner is shown. If the engine can't parse (missing weight/age, unknown drug), the DEFAULT state is the warning ("⚠️ Vérification manuelle requise") — never silent.
+  - The 5% tolerance is the spec — do not tighten or loosen without human review.
+  - The badge is NON-SUPPRESSIBLE (clinical-safety invariant, like P0-07 severity lock + P0-04 dictation review). Feature flag NEXT_PUBLIC_FEATURE_DOSE_ENGINE recommended for rollback only; default ON.
+  - Band-based dosing (cétirizine, vitamine D3, albendazole) → NOT_APPLICABLE (no mg/kg arithmetic to verify) — handled honestly, no false MISMATCH.

@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useToast } from '@/hooks/use-toast'
+import { DoseVerificationBadge } from '@/components/dzpharm/dose-verification-badge'
 import { postChat } from './api'
 import type { ChatMessage } from './types'
 
@@ -680,6 +681,12 @@ export function CopilotView() {
                             {message.content}
                           </Markdown>
                         </div>
+
+                        {/* P0-05 — Dose verification badge (deterministic engine cross-checks the Copilot). */}
+                        <DoseVerificationBadge
+                          question={messages[i - 1]?.content ?? ''}
+                          response={message.content}
+                        />
 
                         {/* Avertissement IA clinique obligatoire & non supprimable (Phase 3.3 / 3.4) */}
                         <AiDisclaimer />
