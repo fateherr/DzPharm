@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
+import { useRouter } from 'next/navigation'
+import { APP_ROUTER_ENABLED, urlForView } from '@/lib/route-map'
 import {
   Baby,
   Barcode,
@@ -71,6 +73,7 @@ export function CommandPalette() {
   const audience = useDzPharm((s) => s.audience)
   const setAudience = useDzPharm((s) => s.setAudience)
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
 
   const [query, setQuery] = useState('')
   const debounced = useDebounce(query.trim(), 200)
@@ -86,6 +89,9 @@ export function CommandPalette() {
     }
     return { cleanQuery: raw, scopePrefix: undefined }
   }, [debounced])
+
+  // P0-06 — Navigation helper is defined below (line ~171) and extended to
+  // push the real URL when the App Router flag is on.
 
   // Écouteur global pour Cmd+K / Ctrl+K (recherche) et Ctrl+I (interactions)
   useEffect(() => {
@@ -103,6 +109,58 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [commandOpen, setCommandOpen, setView])
 
+  // P0-06 (Bug #1) — Single-key hotkeys when the palette is open and focus is
+  // NOT in the search input. Matches the CommandShortcut badges shown in the UI.
+  // H=Accueil, R=Répertoire, P=Prix & Chifa, I=Interactions, C=Copilote,
+  // S=Scanner, B=Botanique toggle, T=Nuancier. Bug #2 (Enter dials wrong service)
+  // is already handled by cmdk's internal selectedIndex.
+  useEffect(() => {
+    if (!commandOpen) return
+    function handleHotkey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null
+      if (target) {
+        const tag = target.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) return
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const key = e.key.toLowerCase()
+      // P0-06 — inline navigation (navigateTo is declared later in the component;
+      // inlining avoids the no-use-before-define error and the dep-array churn).
+      const go = (view: ViewId) => {
+        setView(view)
+        if (APP_ROUTER_ENABLED) router.push(urlForView(view))
+        setCommandOpen(false)
+        setQuery('')
+      }
+      const HOTKEYS: Record<string, () => void> = {
+        h: () => go('accueil'),
+        r: () => go('repertoire'),
+        p: () => go('catalogue'),
+        i: () => go('interactions'),
+        c: () => go('copilote'),
+        s: () => {
+          setScannerOpen(true)
+          setCommandOpen(false)
+        },
+        b: () => {
+          setDesignMode(designMode === 'botanique' ? 'standard' : 'botanique')
+          setCommandOpen(false)
+        },
+        t: () => {
+          setPaletteOpen(true)
+          setCommandOpen(false)
+        },
+      }
+      const action = HOTKEYS[key]
+      if (action) {
+        e.preventDefault()
+        action()
+      }
+    }
+    window.addEventListener('keydown', handleHotkey)
+    return () => window.removeEventListener('keydown', handleHotkey)
+  }, [commandOpen, designMode, setView, setScannerOpen, setPaletteOpen, setDesignMode, setCommandOpen, router])
+
   // Recherche en direct des médicaments
   const { data: drugResults, isLoading: drugsLoading } = useQuery({
     queryKey: ['command-drugs', cleanQuery, scopePrefix],
@@ -114,6 +172,8 @@ export function CommandPalette() {
 
   function navigateTo(view: ViewId) {
     setView(view)
+    // P0-06: push the real URL when the App Router flag is on (deep-link + shareable).
+    if (APP_ROUTER_ENABLED) router.push(urlForView(view))
     setCommandOpen(false)
     setQuery('')
   }

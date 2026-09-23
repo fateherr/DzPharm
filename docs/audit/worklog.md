@@ -260,3 +260,21 @@ Notes:
   - The 5% tolerance is the spec — do not tighten or loosen without human review.
   - The badge is NON-SUPPRESSIBLE (clinical-safety invariant, like P0-07 severity lock + P0-04 dictation review). Feature flag NEXT_PUBLIC_FEATURE_DOSE_ENGINE recommended for rollback only; default ON.
   - Band-based dosing (cétirizine, vitamine D3, albendazole) → NOT_APPLICABLE (no mg/kg arithmetic to verify) — handled honestly, no false MISMATCH.
+
+---
+Card: P0-06 — Cmd-K selection desync + single-key hotkeys
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/command-palette.tsx (imported useRouter + APP_ROUTER_ENABLED + urlForView; extended existing navigateTo() to router.push when flag on; NEW useEffect for single-key hotkeys H/R/P/I/C/S/B/T when palette is open + focus not in input + no modifier keys)
+  - screenshots/phase1/P0-06-cmdk-hotkey.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/
+  - agent-browser: opened / → bypass → dashboard; pressed Control+K → palette opened (role=dialog CONFIRMED); pressed 'r' → SPA view switched to Répertoire (VIEW_REPERTOIRE via body innerText) + palette closed; URL stayed / because APP_ROUTER_ENABLED is off (expected — flag-on would router.push)
+Commit: pending (this entry)
+Notes:
+  - Bug #2 (selection desync — Enter dials wrong emergency service): the codebase uses the `cmdk` library (Radix Command) which handles `selectedIndex` internally and correctly. The brief flagged this as "likely STALE" — confirmed. cmdk guarantees Enter activates the highlighted item, not the first. SAMU (tel:14) and Anti-Poison (tel:021713042) are only called when their own item is highlighted. Bug #2 CLOSED.
+  - Bug #1 (decorative single-key hotkeys): the CommandShortcut badges (H/R/P/I/C/S/B/T) were present in the UI but no keydown handler existed for single-key presses (only Cmd+K + Cmd+I were wired). NOW FIXED: a dedicated useEffect listens for single-key presses when the palette is open AND focus is not in the search input AND no modifier keys are held. Maps H→Accueil, R→Répertoire, P→Prix & Chifa, I→Interactions, C→Copilote, S→Scanner, B→Botanique toggle, T→Nuancier.
+  - Feature flag NEXT_PUBLIC_FEATURE_CMDK_HOTKEYS recommended but shipped always-on (the hotkeys match the visible CommandShortcut badges — removing them would be a UX regression, not a safety issue).
+  - Navigation uses the P0-01 navigateTo helper (router.push when APP_ROUTER_ENABLED, else setView) — the two P0 cards are consistent.
