@@ -1,0 +1,1380 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* DzPharm custom tokens */
+  --color-chifa: var(--chifa);
+  --color-chifa-foreground: var(--chifa-foreground);
+  --color-chifa-gold: var(--chifa-gold);
+  --color-state-none: var(--state-none);
+  --color-state-info: var(--state-info);
+  --color-state-safe: var(--state-safe);
+  --color-state-warning: var(--state-warning);
+  --color-state-severe: var(--state-severe);
+  --color-state-danger: var(--state-danger);
+  --color-state-unknown: var(--state-unknown);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ------------------------------------------------------------------ */
+/* Light theme — Medical Porcelain & Deep Ink (Anti-glare, Swiss minimal) */
+/* ------------------------------------------------------------------ */
+:root {
+  --radius: 0.75rem;
+  --background: #ebedf2;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #026aa7;
+  --primary-foreground: #ffffff;
+  --secondary: #dfe3ea;
+  --secondary-foreground: #0f172a;
+  --muted: #dfe3ea;
+  --muted-foreground: #475569;
+  --accent: #e2e7ef;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
+  --border: #d0d7e2;
+  --input: #d0d7e2;
+  --ring: #026aa7;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --state-none: #64748b;
+  --state-info: #026aa7;
+  --state-safe: #16a34a;
+  --state-warning: #d97706;
+  --state-severe: #ea580c;
+  --state-danger: #dc2626;
+  --state-unknown: #7c3aed;
+  --chart-1: #026aa7;
+  --chart-2: #047857;
+  --chart-3: #d97706;
+  --chart-4: #6366f1;
+  --chart-5: #64748b;
+  --sidebar: #ebedf2;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #026aa7;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e2e7ef;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #d0d7e2;
+  --sidebar-ring: #026aa7;
+
+  /* Surface elevation layers — light mode (calibrated 4-level depth) */
+  --surface-0: #ebedf2;
+  --surface-1: #ffffff;
+  --surface-2: #dfe3ea;
+  --surface-3: #e2e7ef;
+
+  /* Shadow system — multi-layer ambient shadows that lift cards cleanly without muddy edges */
+  --shadow-xs:  0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm:  0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md:  0 4px 12px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg:  0 12px 28px -4px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --shadow-glow-primary: 0 0 24px -6px color-mix(in srgb, var(--primary) 28%, transparent);
+  --shadow-glow-chifa:   0 0 24px -6px color-mix(in srgb, var(--chifa) 25%, transparent);
+  --shadow-glow-danger:  0 0 20px -4px color-mix(in srgb, var(--state-danger) 25%, transparent);
+
+  /* Brand gradient */
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #026aa7 50%, #047857 100%);
+
+  /* Z-Index Scale */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 40;
+  --z-sticky: 50;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-drawer: 300;
+  --z-popover: 400;
+  --z-tooltip: 500;
+  --z-critical: 9999;
+
+  /* Focus ring tokens */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--primary);
+  --focus-ring-shadow: 0 0 0 var(--focus-ring-offset) var(--background),
+                       0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark theme — executive obsidian with richer elevation layers        */
+/* ------------------------------------------------------------------ */
+.dark {
+  --radius: 0.75rem;
+  --background: #070b14;
+  --foreground: #f1f5f9;
+  --card: #0c1525;
+  --card-foreground: #f1f5f9;
+  --popover: #111d35;
+  --popover-foreground: #f1f5f9;
+  --primary: #38bdf8;
+  --primary-foreground: #04121e;
+  --secondary: #142036;
+  --secondary-foreground: #f1f5f9;
+  --muted: #111c33;
+  --muted-foreground: #94a3b8;
+  --accent: #192742;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --border: #253348;
+  --input: #253348;
+  --ring: #38bdf8;
+  --chifa: #10b981;
+  --chifa-foreground: #04121e;
+  --chifa-gold: #fbbf24;
+  --state-none: #62748e;
+  --state-info: #00a5ef;
+  --state-safe: #22c55e;
+  --state-warning: #f99c00;
+  --state-severe: #fe6e00;
+  --state-danger: #e70044;
+  --state-unknown: #8d54ff;
+  --chart-1: #38bdf8;
+  --chart-2: #10b981;
+  --chart-3: #fbbf24;
+  --chart-4: #818cf8;
+  --chart-5: #94a3b8;
+  --sidebar: #0a1122;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #04121e;
+  --sidebar-accent: #142036;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #253348;
+  --sidebar-ring: #38bdf8;
+
+  /* Surface elevation layers — dark mode (3 distinct levels) */
+  --surface-0: #070b14;
+  --surface-1: #0c1525;
+  --surface-2: #111d35;
+  --surface-3: #172645;
+
+  /* Shadow system — dark mode */
+  --shadow-xs:  0 1px 2px 0 rgba(0,0,0,0.30);
+  --shadow-sm:  0 2px 6px -1px rgba(0,0,0,0.40), 0 1px 2px -1px rgba(0,0,0,0.25);
+  --shadow-md:  0 4px 16px -4px rgba(0,0,0,0.50), 0 2px 6px -2px rgba(0,0,0,0.30);
+  --shadow-lg:  0 12px 32px -8px rgba(0,0,0,0.60), 0 4px 12px -4px rgba(0,0,0,0.40);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --shadow-glow-primary: 0 0 24px -4px color-mix(in srgb, var(--primary) 40%, transparent);
+  --shadow-glow-chifa:   0 0 24px -4px color-mix(in srgb, var(--chifa) 35%, transparent);
+  --shadow-glow-danger:  0 0 20px -4px color-mix(in srgb, var(--state-danger) 40%, transparent);
+
+  /* Brand gradient — dark mode uses lighter tones */
+  --brand-gradient: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 45%, #10b981 100%);
+
+  --focus-ring-shadow: 0 0 0 var(--focus-ring-offset) var(--background),
+                       0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+}
+
+/* ------------------------------------------------------------------ */
+/* 10 PALETTES DE DESIGN THÉMATIQUES (SÉLECTIONNABLES EN TEMPS RÉEL)   */
+/* ------------------------------------------------------------------ */
+
+/* 1. Porcelaine Suisse & Saphir (Défaut) */
+html:not(.dark)[data-palette="porcelain"] {
+  --background: #ebedf2;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #026aa7;
+  --primary-foreground: #ffffff;
+  --secondary: #dfe3ea;
+  --secondary-foreground: #0f172a;
+  --muted: #dfe3ea;
+  --muted-foreground: #475569;
+  --accent: #e2e7ef;
+  --accent-foreground: #0f172a;
+  --border: #d0d7e2;
+  --input: #d0d7e2;
+  --ring: #026aa7;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #026aa7 50%, #047857 100%);
+}
+html.dark[data-palette="porcelain"],
+.dark[data-palette="porcelain"] {
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 2. Lin Nordique & Encre Noire (Éditorial Papier Chaud — 100% Anti-éblouissement) */
+html:not(.dark)[data-palette="nordic-linen"] {
+  --background: #f0ede6;
+  --foreground: #1c1917;
+  --card: #faf8f5;
+  --card-foreground: #1c1917;
+  --popover: #faf8f5;
+  --popover-foreground: #1c1917;
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --secondary: #e6e1d6;
+  --secondary-foreground: #1c1917;
+  --muted: #e6e1d6;
+  --muted-foreground: #57534e;
+  --accent: #eae4d8;
+  --accent-foreground: #1c1917;
+  --border: #d8d1c3;
+  --input: #d8d1c3;
+  --ring: #1d4ed8;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #047857 100%);
+}
+html.dark[data-palette="nordic-linen"],
+.dark[data-palette="nordic-linen"] {
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+}
+
+/* 3. Zinc Satiné & Glacier (Style Linear / Raycast Studio) */
+html:not(.dark)[data-palette="zinc-studio"] {
+  --background: #e8ebf0;
+  --foreground: #090d16;
+  --card: #ffffff;
+  --card-foreground: #090d16;
+  --popover: #ffffff;
+  --popover-foreground: #090d16;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #dbe0e8;
+  --secondary-foreground: #090d16;
+  --muted: #dbe0e8;
+  --muted-foreground: #525d6f;
+  --accent: #e1e6ee;
+  --accent-foreground: #090d16;
+  --border: #cad2de;
+  --input: #cad2de;
+  --ring: #0284c7;
+  --chifa: #059669;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #059669 100%);
+}
+html.dark[data-palette="zinc-studio"],
+.dark[data-palette="zinc-studio"] {
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 4. Sauge Thérapeutique & Pin (Sérénité & Phytothérapie) */
+html:not(.dark)[data-palette="sage-botanical"] {
+  --background: #edf2ee;
+  --foreground: #14221b;
+  --card: #f9fbf9;
+  --card-foreground: #14221b;
+  --popover: #f9fbf9;
+  --popover-foreground: #14221b;
+  --primary: #16654f;
+  --primary-foreground: #ffffff;
+  --secondary: #dce4de;
+  --secondary-foreground: #14221b;
+  --muted: #dce4de;
+  --muted-foreground: #485a50;
+  --accent: #e2ebe3;
+  --accent-foreground: #14221b;
+  --border: #c9d5cb;
+  --input: #c9d5cb;
+  --ring: #16654f;
+  --chifa: #059669;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #10b981 0%, #16654f 50%, #047857 100%);
+}
+html.dark[data-palette="sage-botanical"],
+.dark[data-palette="sage-botanical"] {
+  --primary: #34d399;
+  --ring: #34d399;
+  --sidebar-primary: #34d399;
+  --sidebar-ring: #34d399;
+}
+
+/* 5. Craie & Cobalt (Codex Officine Pharmacie) */
+html:not(.dark)[data-palette="french-cobalt"] {
+  --background: #f1f3f7;
+  --foreground: #0b1329;
+  --card: #ffffff;
+  --card-foreground: #0b1329;
+  --popover: #ffffff;
+  --popover-foreground: #0b1329;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #e1e5ee;
+  --secondary-foreground: #0b1329;
+  --muted: #e1e5ee;
+  --muted-foreground: #4c566a;
+  --accent: #e6eaf3;
+  --accent-foreground: #0b1329;
+  --border: #cfd5e3;
+  --input: #cfd5e3;
+  --ring: #2563eb;
+  --chifa: #059669;
+  --chifa-gold: #d97706;
+  --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #059669 100%);
+}
+html.dark[data-palette="french-cobalt"],
+.dark[data-palette="french-cobalt"] {
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+}
+
+/* 6. Dune Saharienne & Cèdre (Héritage Algérien Solaire) */
+html:not(.dark)[data-palette="sahara-cedar"] {
+  --background: #f4f0e8;
+  --foreground: #211c16;
+  --card: #fbf9f5;
+  --card-foreground: #211c16;
+  --popover: #fbf9f5;
+  --popover-foreground: #211c16;
+  --primary: #2d5a36;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e2d4;
+  --secondary-foreground: #211c16;
+  --muted: #e8e2d4;
+  --muted-foreground: #61584c;
+  --accent: #ede6d8;
+  --accent-foreground: #211c16;
+  --border: #d8cfbe;
+  --input: #d8cfbe;
+  --ring: #2d5a36;
+  --chifa: #059669;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #d97706 0%, #2d5a36 50%, #059669 100%);
+}
+html.dark[data-palette="sahara-cedar"],
+.dark[data-palette="sahara-cedar"] {
+  --primary: #4ade80;
+  --ring: #4ade80;
+  --sidebar-primary: #4ade80;
+  --sidebar-ring: #4ade80;
+}
+
+/* 7. Gris Minéral & Graphite (Minimalisme Industriel Dieter Rams) */
+html:not(.dark)[data-palette="braun-mineral"] {
+  --background: #eeeee9;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #0e7490;
+  --primary-foreground: #ffffff;
+  --secondary: #deded8;
+  --secondary-foreground: #18181b;
+  --muted: #deded8;
+  --muted-foreground: #52525b;
+  --accent: #e4e4dd;
+  --accent-foreground: #18181b;
+  --border: #cbcbc4;
+  --input: #cbcbc4;
+  --ring: #0e7490;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #06b6d4 0%, #0e7490 50%, #047857 100%);
+}
+html.dark[data-palette="braun-mineral"],
+.dark[data-palette="braun-mineral"] {
+  --primary: #22d3ee;
+  --ring: #22d3ee;
+  --sidebar-primary: #22d3ee;
+  --sidebar-ring: #22d3ee;
+}
+
+/* 8. Brume Polaire & Indigo (Biotech & Intelligence IA) */
+html:not(.dark)[data-palette="polar-indigo"] {
+  --background: #eceff5;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #4338ca;
+  --primary-foreground: #ffffff;
+  --secondary: #dbe1ec;
+  --secondary-foreground: #0f172a;
+  --muted: #dbe1ec;
+  --muted-foreground: #4f5a70;
+  --accent: #e1e7f2;
+  --accent-foreground: #0f172a;
+  --border: #c8d1e0;
+  --input: #c8d1e0;
+  --ring: #4338ca;
+  --chifa: #0f766e;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 50%, #0f766e 100%);
+}
+html.dark[data-palette="polar-indigo"],
+.dark[data-palette="polar-indigo"] {
+  --primary: #818cf8;
+  --ring: #818cf8;
+  --sidebar-primary: #818cf8;
+  --sidebar-ring: #818cf8;
+}
+
+/* 9. Perle & Azur d’Alger (Fraîcheur Maritime) */
+html:not(.dark)[data-palette="mediterranean-azure"] {
+  --background: #ebf0f5;
+  --foreground: #0c1a2e;
+  --card: #ffffff;
+  --card-foreground: #0c1a2e;
+  --popover: #ffffff;
+  --popover-foreground: #0c1a2e;
+  --primary: #0369a1;
+  --primary-foreground: #ffffff;
+  --secondary: #d8e2ed;
+  --secondary-foreground: #0c1a2e;
+  --muted: #d8e2ed;
+  --muted-foreground: #485c74;
+  --accent: #dfe7f0;
+  --accent-foreground: #0c1a2e;
+  --border: #c2d2e3;
+  --input: #c2d2e3;
+  --ring: #0369a1;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #047857 100%);
+}
+html.dark[data-palette="mediterranean-azure"],
+.dark[data-palette="mediterranean-azure"] {
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 10. Ivoire Impérial & Émeraude (Apothicaire de Prestige) */
+html:not(.dark)[data-palette="ivory-emerald"] {
+  --background: #f2efe7;
+  --foreground: #172017;
+  --card: #faf8f3;
+  --card-foreground: #172017;
+  --popover: #faf8f3;
+  --popover-foreground: #172017;
+  --primary: #065f46;
+  --primary-foreground: #ffffff;
+  --secondary: #e5dfd2;
+  --secondary-foreground: #172017;
+  --muted: #e5dfd2;
+  --muted-foreground: #5a6358;
+  --accent: #ece6da;
+  --accent-foreground: #172017;
+  --border: #d4ccbd;
+  --input: #d4ccbd;
+  --ring: #065f46;
+  --chifa: #047857;
+  --chifa-gold: #b45309;
+  --brand-gradient: linear-gradient(135deg, #047857 0%, #065f46 50%, #b45309 100%);
+}
+html.dark[data-palette="ivory-emerald"],
+.dark[data-palette="ivory-emerald"] {
+  --primary: #34d399;
+  --ring: #34d399;
+  --sidebar-primary: #34d399;
+  --sidebar-ring: #34d399;
+}
+
+/* ================================================================== */
+/* CATÉGORIE 2 : SYSTÈMES & ARCHITECTURES DE DESIGN (10 DESIGNS COMPLETS) */
+/* ------------------------------------------------------------------ */
+
+/* 11. Néo-Brutalisme Chirurgical (Angles 0px & Ombres Dures) */
+html:not(.dark)[data-palette="design-brutalist"] {
+  --radius: 0px;
+  --background: #f4f5f8;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #475569;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --border: #94a3b8;
+  --input: #94a3b8;
+  --ring: #1d4ed8;
+  --chifa: #059669;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --shadow-xs: 1px 1px 0px rgba(15, 23, 42, 0.15);
+  --shadow-sm: 2px 2px 0px rgba(15, 23, 42, 0.18);
+  --shadow-md: 4px 4px 0px rgba(15, 23, 42, 0.22);
+  --shadow-lg: 6px 6px 0px rgba(15, 23, 42, 0.25);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #059669 100%);
+}
+html.dark[data-palette="design-brutalist"],
+.dark[data-palette="design-brutalist"] {
+  --radius: 0px;
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+  --shadow-sm: 2px 2px 0px rgba(0, 0, 0, 0.6);
+  --shadow-md: 4px 4px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* 12. Verre Liquide & Aéro (Translucidité & Rayon 20px) */
+html:not(.dark)[data-palette="design-liquid-glass"] {
+  --radius: 1.25rem;
+  --background: #eef3fa;
+  --foreground: #0b1b30;
+  --card: #ffffff;
+  --card-foreground: #0b1b30;
+  --popover: #ffffff;
+  --popover-foreground: #0b1b30;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #dce7f5;
+  --secondary-foreground: #0b1b30;
+  --muted: #dce7f5;
+  --muted-foreground: #435b78;
+  --accent: #e2eef9;
+  --accent-foreground: #0b1b30;
+  --border: #c2d5ec;
+  --input: #c2d5ec;
+  --ring: #0284c7;
+  --chifa: #10b981;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #f59e0b;
+  --shadow-xs: 0 2px 8px rgba(31, 38, 135, 0.05);
+  --shadow-sm: 0 8px 24px -4px rgba(31, 38, 135, 0.08);
+  --shadow-md: 0 16px 40px -6px rgba(31, 38, 135, 0.12);
+  --shadow-lg: 0 24px 60px -8px rgba(31, 38, 135, 0.16);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #10b981 100%);
+}
+html.dark[data-palette="design-liquid-glass"],
+.dark[data-palette="design-liquid-glass"] {
+  --radius: 1.25rem;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 13. Terminal d’Officine Pro (Micro-coins 4px & Densité Maximale) */
+html:not(.dark)[data-palette="design-compact-dense"] {
+  --radius: 0.25rem;
+  --background: #ebedf2;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0369a1;
+  --primary-foreground: #ffffff;
+  --secondary: #dfe4ec;
+  --secondary-foreground: #0f172a;
+  --muted: #dfe4ec;
+  --muted-foreground: #475569;
+  --accent: #e3e8f0;
+  --accent-foreground: #0f172a;
+  --border: #c8d1de;
+  --input: #c8d1de;
+  --ring: #0369a1;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: 0 1px 1px 0 rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 6px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #047857 100%);
+}
+html.dark[data-palette="design-compact-dense"],
+.dark[data-palette="design-compact-dense"] {
+  --radius: 0.25rem;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 14. Galet Organique & Silicone (Formes Rondes 24px) */
+html:not(.dark)[data-palette="design-soft-pebble"] {
+  --radius: 1.5rem;
+  --background: #f1f4f8;
+  --foreground: #131b2e;
+  --card: #ffffff;
+  --card-foreground: #131b2e;
+  --popover: #ffffff;
+  --popover-foreground: #131b2e;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #131b2e;
+  --muted: #e2e8f0;
+  --muted-foreground: #4f5a70;
+  --accent: #eaeff6;
+  --accent-foreground: #131b2e;
+  --border: #d4dce7;
+  --input: #d4dce7;
+  --ring: #4f46e5;
+  --chifa: #059669;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --shadow-xs: 0 2px 4px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 12px 32px -4px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 20px 48px -6px rgba(15, 23, 42, 0.11);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #059669 100%);
+}
+html.dark[data-palette="design-soft-pebble"],
+.dark[data-palette="design-soft-pebble"] {
+  --radius: 1.5rem;
+  --primary: #818cf8;
+  --ring: #818cf8;
+  --sidebar-primary: #818cf8;
+  --sidebar-ring: #818cf8;
+}
+
+/* 15. Ligne Pure & 0 Ombre (Swiss Flat Design) */
+html:not(.dark)[data-palette="design-flat-architect"] {
+  --radius: 0.5rem;
+  --background: #ecf0f4;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --secondary: #dde3eb;
+  --secondary-foreground: #0f172a;
+  --muted: #dde3eb;
+  --muted-foreground: #475569;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --border: #cad5e2;
+  --input: #cad5e2;
+  --ring: #0f766e;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: 0 0 0 1px var(--border);
+  --shadow-card: none;
+  --shadow-popover: 0 0 0 1px var(--border);
+  --brand-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #047857 100%);
+}
+html.dark[data-palette="design-flat-architect"],
+.dark[data-palette="design-flat-architect"] {
+  --radius: 0.5rem;
+  --primary: #2dd4bf;
+  --ring: #2dd4bf;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-ring: #2dd4bf;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-card: none;
+}
+
+/* 16. Élévation Volumétrique 3D (Floating Depth) */
+html:not(.dark)[data-palette="design-volumetric-card"] {
+  --radius: 0.85rem;
+  --background: #e9ecf2;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --secondary: #d8e0eb;
+  --secondary-foreground: #0f172a;
+  --muted: #d8e0eb;
+  --muted-foreground: #475569;
+  --accent: #e0e7f1;
+  --accent-foreground: #0f172a;
+  --border: #c5d0e0;
+  --input: #c5d0e0;
+  --ring: #1e40af;
+  --chifa: #047857;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: 0 2px 4px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 16px 36px -6px rgba(15, 23, 42, 0.14), 0 6px 14px -3px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 24px 56px -8px rgba(15, 23, 42, 0.18), 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 50%, #047857 100%);
+}
+html.dark[data-palette="design-volumetric-card"],
+.dark[data-palette="design-volumetric-card"] {
+  --radius: 0.85rem;
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+  --shadow-md: 0 16px 40px -6px rgba(0, 0, 0, 0.7);
+}
+
+/* 17. Haute Accessibilité Médicale (WCAG AAA & Bordures 2px) */
+html:not(.dark)[data-palette="design-high-contrast"] {
+  --radius: 0.5rem;
+  --background: #e5e9f0;
+  --foreground: #090d16;
+  --card: #ffffff;
+  --card-foreground: #090d16;
+  --popover: #ffffff;
+  --popover-foreground: #090d16;
+  --primary: #025a9e;
+  --primary-foreground: #ffffff;
+  --secondary: #d1d9e4;
+  --secondary-foreground: #090d16;
+  --muted: #d1d9e4;
+  --muted-foreground: #334155;
+  --accent: #dbe3ed;
+  --accent-foreground: #090d16;
+  --border: #64748b;
+  --input: #64748b;
+  --ring: #025a9e;
+  --chifa: #036044;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #a16207;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.2);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #025a9e 50%, #036044 100%);
+}
+html.dark[data-palette="design-high-contrast"],
+.dark[data-palette="design-high-contrast"] {
+  --radius: 0.5rem;
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --sidebar-primary: #38bdf8;
+  --sidebar-ring: #38bdf8;
+}
+
+/* 18. Cockpit Télémétrique & HUD (Moniteur Médical 3px) */
+html:not(.dark)[data-palette="design-telemetry-hud"] {
+  --radius: 0.2rem;
+  --background: #e8edf3;
+  --foreground: #0b1524;
+  --card: #ffffff;
+  --card-foreground: #0b1524;
+  --popover: #ffffff;
+  --popover-foreground: #0b1524;
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+  --secondary: #d6e0ea;
+  --secondary-foreground: #0b1524;
+  --muted: #d6e0ea;
+  --muted-foreground: #3b4e66;
+  --accent: #dde6ef;
+  --accent-foreground: #0b1524;
+  --border: #94a3b8;
+  --input: #94a3b8;
+  --ring: #0284c7;
+  --chifa: #059669;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --shadow-xs: 0 1px 2px rgba(2, 132, 199, 0.08);
+  --shadow-sm: 0 1px 4px rgba(2, 132, 199, 0.12);
+  --shadow-md: 0 4px 14px -2px rgba(2, 132, 199, 0.16);
+  --shadow-lg: 0 8px 24px -4px rgba(2, 132, 199, 0.2);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #00d4ff 0%, #0284c7 50%, #059669 100%);
+}
+html.dark[data-palette="design-telemetry-hud"],
+.dark[data-palette="design-telemetry-hud"] {
+  --radius: 0.2rem;
+  --primary: #00d4ff;
+  --ring: #00d4ff;
+  --sidebar-primary: #00d4ff;
+  --sidebar-ring: #00d4ff;
+}
+
+/* 19. Fiches Bristol d’Officine (Papier d’Apothicaire) */
+html:not(.dark)[data-palette="design-paper-codex"] {
+  --radius: 0.6rem;
+  --background: #eee9df;
+  --foreground: #1f1a14;
+  --card: #fcfbfa;
+  --card-foreground: #1f1a14;
+  --popover: #fcfbfa;
+  --popover-foreground: #1f1a14;
+  --primary: #1e3a8a;
+  --primary-foreground: #ffffff;
+  --secondary: #e4dcce;
+  --secondary-foreground: #1f1a14;
+  --muted: #e4dcce;
+  --muted-foreground: #5a5043;
+  --accent: #eadecd;
+  --accent-foreground: #1f1a14;
+  --border: #d5ccbe;
+  --input: #d5ccbe;
+  --ring: #1e3a8a;
+  --chifa: #2e6930;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: 0 1px 2px 0 rgba(70, 50, 20, 0.04);
+  --shadow-sm: 0 1px 4px 0 rgba(70, 50, 20, 0.06);
+  --shadow-md: 0 4px 16px -2px rgba(70, 50, 20, 0.10);
+  --shadow-lg: 0 10px 28px -4px rgba(70, 50, 20, 0.14);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #2e6930 100%);
+}
+html.dark[data-palette="design-paper-codex"],
+.dark[data-palette="design-paper-codex"] {
+  --radius: 0.6rem;
+  --primary: #60a5fa;
+  --ring: #60a5fa;
+  --sidebar-primary: #60a5fa;
+  --sidebar-ring: #60a5fa;
+}
+
+/* 20. Monochrome Industriel (Rams Braun) */
+html:not(.dark)[data-palette="design-monochrome-braun"] {
+  --radius: 0.35rem;
+  --background: #eeeeea;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #d97706;
+  --primary-foreground: #ffffff;
+  --secondary: #deded8;
+  --secondary-foreground: #18181b;
+  --muted: #deded8;
+  --muted-foreground: #52525b;
+  --accent: #e4e4dd;
+  --accent-foreground: #18181b;
+  --border: #c8c8c2;
+  --input: #c8c8c2;
+  --ring: #d97706;
+  --chifa: #15803d;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #d97706;
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 10px 24px -4px rgba(0, 0, 0, 0.15);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #15803d 100%);
+}
+html.dark[data-palette="design-monochrome-braun"],
+.dark[data-palette="design-monochrome-braun"] {
+  --radius: 0.35rem;
+  --primary: #f59e0b;
+  --ring: #f59e0b;
+  --sidebar-primary: #f59e0b;
+  --sidebar-ring: #f59e0b;
+}
+
+/* ================================================================== */
+/* UNIVERS DE DESIGN : PHARMACOPÉE ROYALE & BOTANIQUE                */
+/* ================================================================== */
+html[data-design-mode="botanique"]:not(.dark) {
+  --radius: 0.875rem;
+  --background: #f7f5ed;
+  --foreground: #182019;
+  --card: #fcfbf8;
+  --card-foreground: #182019;
+  --popover: #fcfbf8;
+  --popover-foreground: #182019;
+  --primary: #1b4332;
+  --primary-foreground: #ffffff;
+  --secondary: #eae4d5;
+  --secondary-foreground: #182019;
+  --muted: #eae4d5;
+  --muted-foreground: #555f52;
+  --accent: #f0e9dc;
+  --accent-foreground: #182019;
+  --destructive: #dc2626;
+  --border: #dcd4c5;
+  --input: #dcd4c5;
+  --ring: #2d6a4f;
+  --chifa: #15803d;
+  --chifa-foreground: #ffffff;
+  --chifa-gold: #b45309;
+  --shadow-xs: 0 1px 3px rgba(27, 67, 50, 0.05);
+  --shadow-sm: 0 3px 10px -2px rgba(27, 67, 50, 0.08);
+  --shadow-md: 0 8px 24px -4px rgba(27, 67, 50, 0.12);
+  --shadow-lg: 0 16px 40px -6px rgba(27, 67, 50, 0.16);
+  --shadow-card: var(--shadow-sm);
+  --shadow-popover: var(--shadow-md);
+  --brand-gradient: linear-gradient(135deg, #1b4332 0%, #2d6a4f 55%, #d9486c 100%);
+}
+
+html[data-design-mode="botanique"].dark,
+.dark[data-design-mode="botanique"] {
+  --radius: 0.875rem;
+  --background: #060c09;
+  --foreground: #f1f7f3;
+  --card: #0b1611;
+  --card-foreground: #f1f7f3;
+  --popover: #0f1d16;
+  --popover-foreground: #f1f7f3;
+  --primary: #34d399;
+  --primary-foreground: #031c11;
+  --secondary: #13241c;
+  --secondary-foreground: #f1f7f3;
+  --muted: #13241c;
+  --muted-foreground: #829c8e;
+  --accent: #192d23;
+  --accent-foreground: #f1f7f3;
+  --border: #1a2f24;
+  --input: #1a2f24;
+  --ring: #34d399;
+  --chifa: #10b981;
+  --chifa-gold: #fbbf24;
+  --shadow-card: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 8px 32px -4px rgba(0, 0, 0, 0.7);
+  --brand-gradient: linear-gradient(135deg, #5eead4 0%, #34d399 50%, #fb7185 100%);
+}
+
+/* Texture & Filigranes Botaniques */
+html[data-design-mode="botanique"] body {
+  background-color: #f5f2ea;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(190, 24, 93, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(27, 67, 50, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(180, 83, 9, 0.02) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+html[data-design-mode="botanique"].dark body {
+  background-color: #040906;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(251, 113, 133, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(52, 211, 153, 0.06) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Animations Particules : Feuilles de Sauge & Pétales de Rose Damascena */
+@keyframes floatFall {
+  0% {
+    transform: translateY(-80px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(28vh) translateX(35px) rotate(45deg);
+  }
+  50% {
+    transform: translateY(58vh) translateX(-30px) rotate(90deg);
+  }
+  75% {
+    transform: translateY(85vh) translateX(25px) rotate(140deg);
+  }
+  100% {
+    transform: translateY(118vh) translateX(0px) rotate(190deg);
+  }
+}
+
+@keyframes leafSway {
+  0%, 100% {
+    transform: rotateY(0deg) rotateZ(-12deg) scale(1);
+  }
+  50% {
+    transform: rotateY(180deg) rotateZ(16deg) scale(0.92);
+  }
+}
+
+.floating-leaf-track {
+  animation-name: floatFall;
+  animation-timing-function: cubic-bezier(0.35, 0.1, 0.25, 1);
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.floating-leaf-body {
+  animation-name: leafSway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Éléments Graphiques Exclusifs du Mode Botanique */
+html[data-design-mode="botanique"] .glass-panel {
+  background: rgba(255, 254, 250, 0.88);
+  border: 1px solid rgba(220, 212, 197, 0.75);
+  box-shadow: 0 4px 20px -2px rgba(27, 67, 50, 0.06), 0 1px 3px rgba(190, 24, 93, 0.04);
+}
+html[data-design-mode="botanique"].dark .glass-panel {
+  background: rgba(9, 21, 16, 0.85);
+  border: 1px solid rgba(26, 47, 36, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 0 12px rgba(52, 211, 153, 0.04);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+  ::selection {
+    background-color: color-mix(in srgb, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Glassmorphic card surface with subtle specular border               */
+/* ------------------------------------------------------------------ */
+.glass-panel {
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@supports not (backdrop-filter: blur(0)) {
+  .glass-panel {
+    background: var(--card);
+  }
+  .glass-card {
+    background: var(--card);
+  }
+}
+
+/* Subtle dot noise texture overlay */
+.surface-noise {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Accessible Shape Encoding for Clinical Severity (WCAG 1.4.1)        */
+/* ------------------------------------------------------------------ */
+.severity-shape-1::before { content: "ℹ "; }
+.severity-shape-2::before { content: "⚠ "; }
+.severity-shape-3::before { content: "⛔ "; }
+.severity-shape-4::before { content: "☠ "; }
+.severity-shape-unknown::before { content: "? "; }
+
+/* ------------------------------------------------------------------ */
+/* Card interaction — lift + primary glow shadow on hover              */
+/* ------------------------------------------------------------------ */
+.card-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08),
+              0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* 4-Quadrant Clinical Summary matrix card                             */
+/* ------------------------------------------------------------------ */
+.clinical-quadrant {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  padding: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+.clinical-quadrant::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 25%, transparent), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.clinical-quadrant:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow: 0 4px 20px -4px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+.clinical-quadrant:hover::after {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* Fixed Bottom Action Dock for clinical sheets & forms                */
+/* ------------------------------------------------------------------ */
+.bottom-action-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  box-shadow: 0 -8px 24px -6px rgba(0, 0, 0, 0.08);
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile Bottom Sheet touch pull indicator handle                     */
+/* ------------------------------------------------------------------ */
+.touch-sheet-handle {
+  width: 44px;
+  height: 4.5px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  margin: 0.5rem auto 0.25rem auto;
+  transition: background-color 0.2s ease, width 0.2s ease;
+}
+.touch-sheet-handle:hover {
+  width: 52px;
+  background: color-mix(in srgb, var(--primary) 60%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Pulse status beacon for active live indicators                      */
+/* ------------------------------------------------------------------ */
+@keyframes beacon-ping {
+  0% { transform: scale(1); opacity: 0.8; }
+  70%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.beacon-ping {
+  animation: beacon-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/* Animated dot-pulse for ACTIF status badges                          */
+/* ------------------------------------------------------------------ */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--state-safe) 50%, transparent); }
+  50% { opacity: 0.85; transform: scale(1.1); box-shadow: 0 0 0 4px color-mix(in srgb, var(--state-safe) 0%, transparent); }
+}
+.dot-pulse {
+  animation: dot-pulse 2.5s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll utilities                                                    */
+/* ------------------------------------------------------------------ */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent) color-mix(in srgb, var(--muted) 40%, transparent);
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+  border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
+}
+
+/* Hide scrollbars for horizontal tab bars */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero glow accents — calibrated for both light and dark modes        */
+/* ------------------------------------------------------------------ */
+.hero-glow {
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 68%),
+    radial-gradient(ellipse 55% 50% at 88% 5%, color-mix(in srgb, var(--chifa) 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 50% 100%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
+}
+
+/* Subtle dot-grid texture — whisper quiet to avoid visual noise */
+.hero-grid {
+  background-image:
+    radial-gradient(circle, color-mix(in srgb, var(--foreground) 4.5%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, black 20%, transparent 70%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Typing dots for the AI copilote                                     */
+/* ------------------------------------------------------------------ */
+@keyframes dz-bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: dz-bounce 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ------------------------------------------------------------------ */
+/* Section accent rule — left-border visual hook for major headings    */
+/* ------------------------------------------------------------------ */
+.section-heading-accent {
+  padding-left: 0.75rem;
+  border-left: 3px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Typographie clinique & monospacée (Section 2.3)                     */
+/* ------------------------------------------------------------------ */
+.text-clinical {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.01em;
+}
+
+.text-dci {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.text-price {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Impression — monographie médicament (A4, noir & blanc)              */
+/* ------------------------------------------------------------------ */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  body > *:not(.print-monograph):not(.print-rcp):not(.print-counter) {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .print-monograph,
+  .print-rcp,
+  .print-counter {
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+}
+
+@keyframes scanLaser {
+  0% { top: 10%; opacity: 0.8; }
+  50% { top: 88%; opacity: 1; }
+  100% { top: 10%; opacity: 0.8; }
+}
+
+.scanner-laser {
+  animation: scanLaser 2s ease-in-out infinite;
+}

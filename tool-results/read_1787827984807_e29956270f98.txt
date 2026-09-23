@@ -1,0 +1,679 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useRef, useState } from 'react'
+     4→import { useQuery } from '@tanstack/react-query'
+     5→import { motion } from 'framer-motion'
+     6→import {
+     7→  Baby,
+     8→  Ban,
+     9→  Bone,
+    10→  Brain,
+    11→  Bug,
+    12→  Building2,
+    13→  Clock,
+    14→  CreditCard,
+    15→  Droplet,
+    16→  Ear,
+    17→  Eye,
+    18→  Factory,
+    19→  FlaskConical,
+    20→  GitCompareArrows,
+    21→  Heart,
+    22→  History,
+    23→  Layers,
+    24→  Leaf,
+    25→  Microscope,
+    26→  Moon,
+    27→  Plane,
+    28→  Pill,
+    29→  ShieldAlert,
+    30→  ShieldPlus,
+    31→  Soup,
+    32→  Sparkles,
+    33→  Star,
+    34→  Stethoscope,
+    35→  TrendingUp,
+    36→  Waves,
+    37→  Wind,
+    38→  X,
+    39→  Zap,
+    40→  type LucideIcon,
+    41→} from 'lucide-react'
+    42→import { cn } from '@/lib/utils'
+    43→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    44→import { Skeleton } from '@/components/ui/skeleton'
+    45→import { fetchStats } from './api'
+    46→import { formatNumber } from './status-badge'
+    47→import { SearchAutocomplete } from './search-autocomplete'
+    48→import { useDzPharm } from './store'
+    49→
+    50→/* ------------------------------------------------------------------ */
+    51→/* Compteur animé                                                      */
+    52→/* ------------------------------------------------------------------ */
+    53→
+    54→function useCountUp(target: number, duration = 900): number {
+    55→  const [value, setValue] = useState(0)
+    56→  useEffect(() => {
+    57→    if (target <= 0) return
+    58→    let raf = 0
+    59→    const start = performance.now()
+    60→    const tick = (now: number) => {
+    61→      const p = Math.min(1, (now - start) / duration)
+    62→      const eased = 1 - Math.pow(1 - p, 3)
+    63→      setValue(Math.round(target * eased))
+    64→      if (p < 1) raf = requestAnimationFrame(tick)
+    65→    }
+    66→    raf = requestAnimationFrame(tick)
+    67→    return () => cancelAnimationFrame(raf)
+    68→  }, [target, duration])
+    69→  return value
+    70→}
+    71→
+    72→interface KpiAccent {
+    73→  text: string
+    74→  bg: string
+    75→  gradient: string
+    76→}
+    77→
+    78→const KPI_ACCENTS: Record<string, KpiAccent> = {
+    79→  safe: { text: 'text-state-safe', bg: 'bg-state-safe/10', gradient: 'via-state-safe/60' },
+    80→  primary: { text: 'text-primary', bg: 'bg-primary/10', gradient: 'via-primary/60' },
+    81→  chifa: { text: 'text-chifa', bg: 'bg-chifa/10', gradient: 'via-chifa/60' },
+    82→  danger: { text: 'text-state-danger', bg: 'bg-state-danger/10', gradient: 'via-state-danger/60' },
+    83→}
+    84→
+    85→function KpiCard({
+    86→  icon: Icon,
+    87→  label,
+    88→  value,
+    89→  suffix,
+    90→  hint,
+    91→  accentKey,
+    92→  delay,
+    93→}: {
+    94→  icon: LucideIcon
+    95→  label: string
+    96→  value: number
+    97→  suffix?: string
+    98→  hint?: string
+    99→  accentKey: keyof typeof KPI_ACCENTS
+   100→  delay: number
+   101→}) {
+   102→  const count = useCountUp(value)
+   103→  const accent = KPI_ACCENTS[accentKey]
+   104→  return (
+   105→    <motion.div
+   106→      initial={{ opacity: 0, y: 14 }}
+   107→      animate={{ opacity: 1, y: 0 }}
+   108→      transition={{ duration: 0.4, delay }}
+   109→    >
+   110→      <Card className="group relative overflow-hidden transition-colors hover:border-primary/40">
+   111→        <div
+   112→          className={cn(
+   113→            'absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
+   114→            accent.gradient
+   115→          )}
+   116→          aria-hidden
+   117→        />
+   118→        <CardContent className="flex items-start justify-between gap-3 p-5">
+   119→          <div className="min-w-0">
+   120→            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+   121→              {label}
+   122→            </p>
+   123→            <p className="mt-1.5 text-3xl font-bold tracking-tight text-foreground tabular-nums">
+   124→              {formatNumber(count)}
+   125→              {suffix ? <span className={cn('ml-1 text-lg font-semibold', accent.text)}>{suffix}</span> : null}
+   126→            </p>
+   127→            {hint ? <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p> : null}
+   128→          </div>
+   129→          <span
+   130→            className={cn(
+   131→              'flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105',
+   132→              accent.bg
+   133→            )}
+   134→            aria-hidden
+   135→          >
+   136→            <Icon className={cn('size-5', accent.text)} />
+   137→          </span>
+   138→        </CardContent>
+   139→      </Card>
+   140→    </motion.div>
+   141→  )
+   142→}
+   143→
+   144→/* ------------------------------------------------------------------ */
+   145→/* Icônes par domaine thérapeutique                                    */
+   146→/* ------------------------------------------------------------------ */
+   147→
+   148→const DOMAIN_ICONS: Record<string, LucideIcon> = {
+   149→  Cardiologie: Heart,
+   150→  'Antalgiques & Anti-inflammatoires': Pill,
+   151→  Oncologie: FlaskConical,
+   152→  'Anti-infectieux': ShieldPlus,
+   153→  'Gastro-entérologie': Soup,
+   154→  'Vitamines & Minéraux': Leaf,
+   155→  'Psychiatrie & Psychotropes': Brain,
+   156→  'Diabétologie & Endocrinologie': Droplet,
+   157→  'Neurologie & Antiépileptiques': Zap,
+   158→  'Pneumologie & Antiasthmatiques': Wind,
+   159→  Antibiotiques: Bug,
+   160→  ORL: Ear,
+   161→  Urologie: Waves,
+   162→  Dermatologie: Layers,
+   163→  Ophtalmologie: Eye,
+   164→  'Antifongiques & Antiparasitaires': Microscope,
+   165→  'Gynécologie & Obstétrique': Baby,
+   166→  Rhumatologie: Bone,
+   167→}
+   168→
+   169→function domainIcon(domain: string): LucideIcon {
+   170→  return DOMAIN_ICONS[domain] ?? Stethoscope
+   171→}
+   172→
+   173→/* ------------------------------------------------------------------ */
+   174→/* Vue Accueil                                                         */
+   175→/* ------------------------------------------------------------------ */
+   176→
+   177→const QUICK_CHIPS = [
+   178→  'Paracétamol',
+   179→  'Amoxicilline',
+   180→  'Metformine',
+   181→  'Amlodipine',
+   182→  'Cétirizine',
+   183→  'Oméprazole',
+   184→]
+   185→
+   186→export function HomeView() {
+   187→  const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+   188→  const openDrug = useDzPharm((s) => s.openDrug)
+   189→  const setView = useDzPharm((s) => s.setView)
+   190→  const favorites = useDzPharm((s) => s.favorites)
+   191→  const toggleFavorite = useDzPharm((s) => s.toggleFavorite)
+   192→  const recentlyViewed = useDzPharm((s) => s.recentlyViewed)
+   193→  const searchInputRef = useRef<HTMLInputElement>(null)
+   194→
+   195→  const { data: stats, isLoading } = useQuery({
+   196→    queryKey: ['stats'],
+   197→    queryFn: ({ signal }) => fetchStats(signal),
+   198→    staleTime: 30 * 60 * 1000,
+   199→  })
+   200→
+   201→  // Cmd/Ctrl + K pour focus la recherche
+   202→  useEffect(() => {
+   203→    function onKeyDown(e: KeyboardEvent) {
+   204→      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+   205→        e.preventDefault()
+   206→        searchInputRef.current?.focus()
+   207→      }
+   208→    }
+   209→    window.addEventListener('keydown', onKeyDown)
+   210→    return () => window.removeEventListener('keydown', onKeyDown)
+   211→  }, [])
+   212→
+   213→  const localPct = stats && stats.actifs > 0 ? Math.round((stats.local / stats.actifs) * 100) : 0
+   214→  const domains = stats?.domains.slice(0, 12) ?? []
+   215→  const topDci = stats?.topDci.slice(0, 8) ?? []
+   216→  const topLabs = stats?.topLabs.slice(0, 8) ?? []
+   217→  const maxDci = topDci.length > 0 ? topDci[0].count : 1
+   218→
+   219→  return (
+   220→    <div>
+   221→      {/* ------------------------------ Hero ------------------------------ */}
+   222→      <section className="hero-glow relative overflow-hidden border-b border-border/60">
+   223→        <div className="hero-grid pointer-events-none absolute inset-0" aria-hidden />
+   224→        <div className="relative mx-auto max-w-4xl px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24 sm:pb-20">
+   225→          <motion.div
+   226→            initial={{ opacity: 0, y: 16 }}
+   227→            animate={{ opacity: 1, y: 0 }}
+   228→            transition={{ duration: 0.5 }}
+   229→          >
+   230→            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+   231→              <Stethoscope className="size-3.5" aria-hidden />
+   232→              Nomenclature officielle — Juin 2026
+   233→            </span>
+   234→            <h1 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+   235→              L&apos;intelligence pharmaceutique{' '}
+   236→              <span className="bg-gradient-to-r from-primary to-chifa bg-clip-text text-transparent">
+   237→                algérienne
+   238→              </span>
+   239→            </h1>
+   240→            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+   241→              Le référentiel national des médicaments enrichi par l&apos;IA : recherche
+   242→              sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
+   243→            </p>
+   244→          </motion.div>
+   245→
+   246→          <motion.div
+   247→            initial={{ opacity: 0, y: 16 }}
+   248→            animate={{ opacity: 1, y: 0 }}
+   249→            transition={{ duration: 0.5, delay: 0.15 }}
+   250→            className="mt-8"
+   251→          >
+   252→            <SearchAutocomplete
+   253→              size="hero"
+   254→              autoFocus={false}
+   255→              inputRef={searchInputRef}
+   256→              id="hero-search"
+   257→              onSelect={(drug) => openDrug(drug.id)}
+   258→              onSubmitQuery={(q) => gotoDirectory({ q })}
+   259→              rightHint={
+   260→                <span className="hidden shrink-0 items-center gap-1.5 sm:flex" aria-hidden>
+   261→                  <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+   262→                    Cmd K
+   263→                  </kbd>
+   264→                  <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+   265→                    Entrée ⏎
+   266→                  </kbd>
+   267→                </span>
+   268→              }
+   269→            />
+   270→            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+   271→              {QUICK_CHIPS.map((chip) => (
+   272→                <button
+   273→                  key={chip}
+   274→                  type="button"
+   275→                  onClick={() => gotoDirectory({ q: chip })}
+   276→                  className="rounded-full border border-border bg-card/60 px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   277→                >
+   278→                  {chip}
+   279→                </button>
+   280→              ))}
+   281→            </div>
+   282→          </motion.div>
+   283→        </div>
+   284→      </section>
+   285→
+   286→      {/* ------------------------------ KPI ------------------------------- */}
+   287→      <section aria-label="Indicateurs clés" className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+   288→        {isLoading || !stats ? (
+   289→          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   290→            {Array.from({ length: 4 }).map((_, i) => (
+   291→              <Skeleton key={i} className="h-32 rounded-xl" />
+   292→            ))}
+   293→          </div>
+   294→        ) : (
+   295→          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   296→            <KpiCard
+   297→              icon={Heart}
+   298→              label="Médicaments actifs"
+   299→              value={stats.actifs}
+   300→              hint="AMM en cours de validité"
+   301→              accentKey="safe"
+   302→              delay={0}
+   303→            />
+   304→            <KpiCard
+   305→              icon={Factory}
+   306→              label="Production locale"
+   307→              value={stats.local}
+   308→              suffix={`${localPct}%`}
+   309→              hint="Part des actifs fabriqués en Algérie"
+   310→              accentKey="primary"
+   311→              delay={0.08}
+   312→            />
+   313→            <KpiCard
+   314→              icon={Plane}
+   315→              label="Importations"
+   316→              value={stats.imported}
+   317→              hint="Actifs importés"
+   318→              accentKey="chifa"
+   319→              delay={0.16}
+   320→            />
+   321→            <KpiCard
+   322→              icon={Ban}
+   323→              label="Retirés du marché"
+   324→              value={stats.retires}
+   325→              hint="Historique des retraits"
+   326→              accentKey="danger"
+   327→              delay={0.24}
+   328→            />
+   329→          </div>
+   330→        )}
+   331→      </section>
+   332→
+   333→      {/* ------------------------ Récemment consultés -------------------- */}
+   334→      {recentlyViewed.length > 0 ? (
+   335→        <section
+   336→          aria-labelledby="recent-title"
+   337→          className="mx-auto max-w-7xl px-4 pb-8 sm:px-6"
+   338→        >
+   339→          <div className="mb-3.5 flex items-center justify-between gap-4">
+   340→            <h2 id="recent-title" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+   341→              <History className="size-4.5 text-primary" aria-hidden />
+   342→              Consultés récemment
+   343→            </h2>
+   344→          </div>
+   345→          <div className="scroll-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+   346→            {recentlyViewed.map((item) => (
+   347→              <button
+   348→                key={item.id}
+   349→                type="button"
+   350→                onClick={() => openDrug(item.id)}
+   351→                title={`Ouvrir la fiche ${item.brand}`}
+   352→                className="group flex shrink-0 items-center gap-2.5 rounded-xl border border-border bg-card py-2 pr-3 pl-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   353→              >
+   354→                <Clock className="size-4 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary" aria-hidden />
+   355→                <span className="min-w-0 text-left">
+   356→                  <span className="block max-w-44 truncate text-sm font-semibold text-foreground">
+   357→                    {item.brand}
+   358→                  </span>
+   359→                  <span className="block max-w-44 truncate text-[11px] text-muted-foreground">
+   360→                    {item.dci}
+   361→                  </span>
+   362→                </span>
+   363→              </button>
+   364→            ))}
+   365→          </div>
+   366→        </section>
+   367→      ) : null}
+   368→
+   369→      {/* --------------------------- Favoris ----------------------------- */}
+   370→      {favorites.length > 0 ? (
+   371→        <section
+   372→          aria-labelledby="favoris-title"
+   373→          className="mx-auto max-w-7xl px-4 pb-8 pt-2 sm:px-6"
+   374→        >
+   375→          <div className="mb-3.5 flex items-center justify-between gap-4">
+   376→            <h2 id="favoris-title" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+   377→              <Star className="size-4.5 fill-chifa text-chifa" aria-hidden />
+   378→              Mes favoris
+   379→              <span className="rounded-full bg-chifa/10 px-2 py-0.5 text-xs font-semibold text-chifa tabular-nums">
+   380→                {favorites.length}
+   381→              </span>
+   382→            </h2>
+   383→            <button
+   384→              type="button"
+   385→              onClick={() => toggleFavorite(favorites[favorites.length - 1])}
+   386→              className="text-xs text-muted-foreground transition-colors hover:text-state-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   387→            >
+   388→              Retirer le dernier
+   389→            </button>
+   390→          </div>
+   391→          <div className="scroll-thin -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+   392→            {favorites.map((fav) => (
+   393→              <div
+   394→                key={fav.id}
+   395→                className="group relative flex shrink-0 items-center gap-2.5 rounded-xl border border-chifa/25 bg-chifa/5 py-2 pr-8 pl-3 transition-colors hover:border-chifa/50"
+   396→              >
+   397→                <button
+   398→                  type="button"
+   399→                  onClick={() => openDrug(fav.id)}
+   400→                  className="min-w-0 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   401→                  title={`Ouvrir la fiche ${fav.brand}`}
+   402→                >
+   403→                  <span className="block max-w-44 truncate text-sm font-semibold text-foreground">
+   404→                    {fav.brand}
+   405→                  </span>
+   406→                  <span className="block max-w-44 truncate text-[11px] text-muted-foreground">
+   407→                    {fav.dci}
+   408→                  </span>
+   409→                </button>
+   410→                <button
+   411→                  type="button"
+   412→                  onClick={() => toggleFavorite(fav)}
+   413→                  aria-label={`Retirer ${fav.brand} des favoris`}
+   414→                  className="absolute top-1/2 right-1.5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:bg-state-danger/10 hover:text-state-danger focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   415→                >
+   416→                  <X className="size-3.5" />
+   417→                </button>
+   418→              </div>
+   419→            ))}
+   420→          </div>
+   421→        </section>
+   422→      ) : null}
+   423→
+   424→      {/* --------------------------- Outils ------------------------------ */}
+   425→      <section
+   426→        aria-labelledby="outils-title"
+   427→        className="mx-auto max-w-7xl px-4 pb-10 sm:px-6"
+   428→      >
+   429→        <div className="mb-4 flex items-end justify-between gap-4">
+   430→          <div>
+   431→            <h2 id="outils-title" className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+   432→              Outils cliniques
+   433→            </h2>
+   434→            <p className="mt-1 text-sm text-muted-foreground">
+   435→              Aides à la dispensation adaptées aux spécificités algériennes
+   436→            </p>
+   437→          </div>
+   438→        </div>
+   439→        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+   440→          {[
+   441→            {
+   442→              icon: Baby,
+   443→              title: 'Posologies pédiatriques',
+   444→              desc: 'Calculateur pondéral (mg/kg → mL) avec les formes locales : sirops, sachets, suppositoires.',
+   445→              view: 'outils' as const,
+   446→              accent: 'primary' as const,
+   447→            },
+   448→            {
+   449→              icon: CreditCard,
+   450→              title: 'Simulateur Chifa',
+   451→              desc: 'Reste à charge CNAS / ALD 100 % : tarif de référence, ticket modérateur, taux par produit.',
+   452→              view: 'outils' as const,
+   453→              accent: 'chifa' as const,
+   454→            },
+   455→            {
+   456→              icon: Moon,
+   457→              title: 'Adaptateur Ramadan',
+   458→              desc: 'Décalez les prises autour de l\u2019Iftar et du Suhoor — chronopharmacologie par wilaya.',
+   459→              view: 'outils' as const,
+   460→              accent: 'chifa' as const,
+   461→            },
+   462→            {
+   463→              icon: GitCompareArrows,
+   464→              title: 'Comparateur',
+   465→              desc: 'Comparez 2-3 médicaments côte à côte : dosage, laboratoire, statut, équivalences.',
+   466→              view: 'outils' as const,
+   467→              accent: 'primary' as const,
+   468→            },
+   469→            {
+   470→              icon: ShieldAlert,
+   471→              title: 'Contrôle d\u2019interactions',
+   472→              desc: 'Moteur local instantané + analyse IA approfondie sur votre panier de médicaments.',
+   473→              view: 'interactions' as const,
+   474→              accent: 'danger' as const,
+   475→            },
+   476→            {
+   477→              icon: Sparkles,
+   478→              title: 'Copilote IA',
+   479→              desc: 'Assistant clinique FR / arabe / darija, modes professionnel et patient.',
+   480→              view: 'copilote' as const,
+   481→              accent: 'primary' as const,
+   482→            },
+   483→          ].map((tool, i) => (
+   484→            <motion.button
+   485→              key={tool.title}
+   486→              type="button"
+   487→              initial={{ opacity: 0, y: 10 }}
+   488→              animate={{ opacity: 1, y: 0 }}
+   489→              transition={{ duration: 0.3, delay: 0.05 * i }}
+   490→              onClick={() => setView(tool.view)}
+   491→              className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   492→            >
+   493→              <span
+   494→                className={cn(
+   495→                  'absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
+   496→                  tool.accent === 'chifa'
+   497→                    ? 'via-chifa/60'
+   498→                    : tool.accent === 'danger'
+   499→                      ? 'via-state-danger/60'
+   500→                      : 'via-primary/60'
+   501→                )}
+   502→                aria-hidden
+   503→              />
+   504→              <span
+   505→                className={cn(
+   506→                  'flex size-10 items-center justify-center rounded-lg',
+   507→                  tool.accent === 'chifa'
+   508→                    ? 'bg-chifa/10 text-chifa'
+   509→                    : tool.accent === 'danger'
+   510→                      ? 'bg-state-danger/10 text-state-danger'
+   511→                      : 'bg-primary/10 text-primary'
+   512→                )}
+   513→                aria-hidden
+   514→              >
+   515→                <tool.icon className="size-5" />
+   516→              </span>
+   517→              <span className="mt-3 block text-sm font-semibold text-foreground">
+   518→                {tool.title}
+   519→              </span>
+   520→              <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+   521→                {tool.desc}
+   522→              </span>
+   523→            </motion.button>
+   524→          ))}
+   525→        </div>
+   526→      </section>
+   527→
+   528→      {/* --------------------------- Domaines ----------------------------- */}
+   529→      <section
+   530→        aria-labelledby="domaines-title"
+   531→        className="mx-auto max-w-7xl px-4 pb-10 sm:px-6"
+   532→      >
+   533→        <div className="mb-5 flex items-end justify-between gap-4">
+   534→          <div>
+   535→            <h2 id="domaines-title" className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+   536→              Domaines thérapeutiques
+   537→            </h2>
+   538→            <p className="mt-1 text-sm text-muted-foreground">
+   539→              Explorez le répertoire par spécialité médicale
+   540→            </p>
+   541→          </div>
+   542→        </div>
+   543→        {isLoading || !stats ? (
+   544→          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+   545→            {Array.from({ length: 8 }).map((_, i) => (
+   546→              <Skeleton key={i} className="h-24 rounded-xl" />
+   547→            ))}
+   548→          </div>
+   549→        ) : (
+   550→          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+   551→            {domains.map((domain, i) => {
+   552→              const Icon = domainIcon(domain.key)
+   553→              return (
+   554→                <motion.button
+   555→                  key={domain.key}
+   556→                  type="button"
+   557→                  initial={{ opacity: 0, y: 10 }}
+   558→                  animate={{ opacity: 1, y: 0 }}
+   559→                  transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3) }}
+   560→                  onClick={() => gotoDirectory({ domain: domain.key })}
+   561→                  className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   562→                >
+   563→                  <span
+   564→                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15"
+   565→                    aria-hidden
+   566→                  >
+   567→                    <Icon className="size-5" />
+   568→                  </span>
+   569→                  <span className="min-w-0">
+   570→                    <span
+   571→                      className="line-clamp-2 text-sm leading-snug font-semibold text-foreground"
+   572→                      title={domain.key}
+   573→                    >
+   574→                      {domain.key}
+   575→                    </span>
+   576→                    <span className="block text-xs text-muted-foreground">
+   577→                      {formatNumber(domain.count)} références
+   578→                    </span>
+   579→                  </span>
+   580→                </motion.button>
+   581→              )
+   582→            })}
+   583→          </div>
+   584→        )}
+   585→      </section>
+   586→
+   587→      {/* ------------------- DCI & Laboratoires --------------------------- */}
+   588→      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
+   589→        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+   590→          {/* DCI */}
+   591→          <Card>
+   592→            <CardHeader>
+   593→              <CardTitle className="flex items-center gap-2 text-base">
+   594→                <Pill className="size-4 text-primary" aria-hidden />
+   595→                DCI les plus prescrites
+   596→              </CardTitle>
+   597→            </CardHeader>
+   598→            <CardContent className="space-y-3.5">
+   599→              {isLoading || !stats
+   600→                ? Array.from({ length: 6 }).map((_, i) => (
+   601→                    <Skeleton key={i} className="h-8 w-full" />
+   602→                  ))
+   603→                : topDci.map((dci, i) => (
+   604→                    <button
+   605→                      key={dci.key}
+   606→                      type="button"
+   607→                      onClick={() => gotoDirectory({ q: dci.key })}
+   608→                      className="group block w-full text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   609→                    >
+   610→                      <span className="mb-1 flex items-baseline justify-between gap-3">
+   611→                        <span
+   612→                          className="truncate text-sm font-medium text-foreground group-hover:text-primary"
+   613→                          title={dci.key}
+   614→                        >
+   615→                          {i + 1}. {dci.key}
+   616→                        </span>
+   617→                        <span className="shrink-0 text-xs font-semibold text-muted-foreground tabular-nums">
+   618→                          {formatNumber(dci.count)}
+   619→                        </span>
+   620→                      </span>
+   621→                      <span className="block h-1.5 w-full overflow-hidden rounded-full bg-muted">
+   622→                        <span
+   623→                          className="block h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all"
+   624→                          style={{ width: `${Math.max(4, (dci.count / maxDci) * 100)}%` }}
+   625→                        />
+   626→                      </span>
+   627→                    </button>
+   628→                  ))}
+   629→            </CardContent>
+   630→          </Card>
+   631→
+   632→          {/* Laboratoires */}
+   633→          <Card>
+   634→            <CardHeader>
+   635→              <CardTitle className="flex items-center gap-2 text-base">
+   636→                <Building2 className="size-4 text-chifa" aria-hidden />
+   637→                Laboratoires leaders
+   638→              </CardTitle>
+   639→            </CardHeader>
+   640→            <CardContent className="space-y-1">
+   641→              {isLoading || !stats
+   642→                ? Array.from({ length: 8 }).map((_, i) => (
+   643→                    <Skeleton key={i} className="h-9 w-full" />
+   644→                  ))
+   645→                : topLabs.map((lab, i) => (
+   646→                    <button
+   647→                      key={lab.key}
+   648→                      type="button"
+   649→                      onClick={() => gotoDirectory({ lab: lab.key })}
+   650→                      className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   651→                      title={`Rechercher ${lab.key}`}
+   652→                    >
+   653→                      <span className="flex min-w-0 items-center gap-2.5">
+   654→                        <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-chifa/10 text-[10px] font-bold text-chifa tabular-nums">
+   655→                          {i + 1}
+   656→                        </span>
+   657→                        <span className="truncate text-sm font-medium text-foreground">
+   658→                          {lab.key}
+   659→                        </span>
+   660→                      </span>
+   661→                      <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground tabular-nums">
+   662→                        <TrendingUp className="size-3 text-state-safe" aria-hidden />
+   663→                        {formatNumber(lab.count)}
+   664→                      </span>
+   665→                    </button>
+   666→                  ))}
+   667→            </CardContent>
+   668→          </Card>
+   669→        </div>
+   670→
+   671→        <p className="mt-8 text-center text-xs text-muted-foreground">
+   672→          Source des données : Nomenclature nationale des produits pharmaceutiques —
+   673→          Ministère de l&apos;Industrie Pharmaceutique (Juin 2026).
+   674→        </p>
+   675→      </section>
+   676→    </div>
+   677→  )
+   678→}
+   679→

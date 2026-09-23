@@ -1,0 +1,694 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useMemo, useRef, useState } from 'react'
+     4→import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+     5→import {
+     6→  Activity,
+     7→  Clock3,
+     8→  Loader2,
+     9→  MapPin,
+    10→  MessageSquarePlus,
+    11→  Send,
+    12→  TriangleAlert,
+    13→  X,
+    14→} from 'lucide-react'
+    15→import { cn } from '@/lib/utils'
+    16→import { Button } from '@/components/ui/button'
+    17→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    18→import { Input } from '@/components/ui/input'
+    19→import { Label } from '@/components/ui/label'
+    20→import {
+    21→  Select,
+    22→  SelectContent,
+    23→  SelectItem,
+    24→  SelectTrigger,
+    25→  SelectValue,
+    26→} from '@/components/ui/select'
+    27→import { Skeleton } from '@/components/ui/skeleton'
+    28→import { Textarea } from '@/components/ui/textarea'
+    29→import { toast } from '@/hooks/use-toast'
+    30→import { WILAYAS } from '@/lib/wilayas'
+    31→import { SafetyNote } from './safety-note'
+    32→import { useDzPharm } from './store'
+    33→
+    34→/* ------------------------------------------------------------------ */
+    35→/* Types & fetchers locaux (auto-contenu)                              */
+    36→/* ------------------------------------------------------------------ */
+    37→
+    38→interface ShortageReportDto {
+    39→  id: number
+    40→  drugId: number | null
+    41→  brand: string
+    42→  dci: string | null
+    43→  wilaya: string | null
+    44→  note: string | null
+    45→  status: string
+    46→  createdAt: string
+    47→  drug: { id: number; brand: string; dci: string | null; status: string } | null
+    48→}
+    49→
+    50→interface ShortageStats {
+    51→  total: number
+    52→  active: number
+    53→  resolved: number
+    54→  last48h: number
+    55→  topDrugs: Array<{ brand: string; dci: string | null; count: number }>
+    56→}
+    57→
+    58→interface ShortagesResponse {
+    59→  reports: ShortageReportDto[]
+    60→  stats: ShortageStats
+    61→}
+    62→
+    63→interface DrugSuggestion {
+    64→  id: number
+    65→  brand: string
+    66→  dci: string | null
+    67→  dosage: string | null
+    68→  status: string
+    69→}
+    70→
+    71→async function fetchShortages(signal?: AbortSignal): Promise<ShortagesResponse> {
+    72→  const res = await fetch('/api/shortages', { signal })
+    73→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+    74→  return (await res.json()) as ShortagesResponse
+    75→}
+    76→
+    77→async function fetchDrugSuggestions(q: string, signal?: AbortSignal): Promise<DrugSuggestion[]> {
+    78→  const res = await fetch(`/api/drugs?q=${encodeURIComponent(q)}&pageSize=8`, { signal })
+    79→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+    80→  const data = (await res.json()) as { drugs: DrugSuggestion[] }
+    81→  return data.drugs
+    82→}
+    83→
+    84→async function postShortage(payload: {
+    85→  drugId?: number
+    86→  brand: string
+    87→  dci?: string | null
+    88→  wilaya?: string | null
+    89→  note?: string | null
+    90→}): Promise<void> {
+    91→  const res = await fetch('/api/shortages', {
+    92→    method: 'POST',
+    93→    headers: { 'Content-Type': 'application/json' },
+    94→    body: JSON.stringify(payload),
+    95→  })
+    96→  if (!res.ok) {
+    97→    const data = (await res.json().catch(() => null)) as { error?: string } | null
+    98→    throw new Error(data?.error ?? 'Échec du signalement')
+    99→  }
+   100→}
+   101→
+   102→/** Temps relatif en français (« il y a 2 h »). */
+   103→function relativeTimeFr(iso: string): string {
+   104→  const diff = Date.now() - new Date(iso).getTime()
+   105→  const min = Math.floor(diff / 60_000)
+   106→  if (min < 1) return "à l'instant"
+   107→  if (min < 60) return `il y a ${min} min`
+   108→  const h = Math.floor(min / 60)
+   109→  if (h < 24) return `il y a ${h} h`
+   110→  const j = Math.floor(h / 24)
+   111→  if (j < 31) return `il y a ${j} j`
+   112→  const mois = Math.floor(j / 30)
+   113→  return `il y a ${mois} mois`
+   114→}
+   115→
+   116→function useDebounce<T>(value: T, delay: number): T {
+   117→  const [debounced, setDebounced] = useState(value)
+   118→  useEffect(() => {
+   119→    const t = setTimeout(() => setDebounced(value), delay)
+   120→    return () => clearTimeout(t)
+   121→  }, [value, delay])
+   122→  return debounced
+   123→}
+   124→
+   125→const STATUS_DOT: Record<string, string> = {
+   126→  ACTIF: 'bg-state-safe',
+   127→  NON_RENOUVELE: 'bg-state-warning',
+   128→  RETRIE: 'bg-state-danger',
+   129→}
+   130→
+   131→/* ------------------------------------------------------------------ */
+   132→/* Autocomplétation médicament (locale)                                */
+   133→/* ------------------------------------------------------------------ */
+   134→
+   135→function DrugAutocomplete({
+   136→  selected,
+   137→  onSelect,
+   138→  onChange,
+   139→}: {
+   140→  selected: DrugSuggestion | null
+   141→  onSelect: (drug: DrugSuggestion | null) => void
+   142→  onChange: (value: string) => void
+   143→}) {
+   144→  const [value, setValue] = useState('')
+   145→  const [open, setOpen] = useState(false)
+   146→  const wrapperRef = useRef<HTMLDivElement>(null)
+   147→  const debounced = useDebounce(value, 300)
+   148→  const trimmed = debounced.trim()
+   149→
+   150→  const { data: results, isFetching } = useQuery({
+   151→    queryKey: ['shortage-drug-search', trimmed],
+   152→    queryFn: ({ signal }) => fetchDrugSuggestions(trimmed, signal),
+   153→    enabled: trimmed.length >= 2,
+   154→    placeholderData: keepPreviousData,
+   155→  })
+   156→
+   157→  useEffect(() => {
+   158→    function onDocMouseDown(e: MouseEvent) {
+   159→      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+   160→        setOpen(false)
+   161→      }
+   162→    }
+   163→    document.addEventListener('mousedown', onDocMouseDown)
+   164→    return () => document.removeEventListener('mousedown', onDocMouseDown)
+   165→  }, [])
+   166→
+   167→  const isOpen = open && trimmed.length >= 2 && !selected
+   168→
+   169→  function handleSelect(drug: DrugSuggestion) {
+   170→    onSelect(drug)
+   171→    setValue('')
+   172→    setOpen(false)
+   173→    onChange(drug.brand)
+   174→  }
+   175→
+   176→  return (
+   177→    <div ref={wrapperRef} className="relative">
+   178→      <div
+   179→        className={cn(
+   180→          'flex items-center gap-2 rounded-xl border bg-card transition-colors',
+   181→          'border-border focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/20'
+   182→        )}
+   183→      >
+   184→        {selected ? (
+   185→          <div className="flex h-11 w-full items-center justify-between gap-2 rounded-xl bg-primary/10 px-3">
+   186→            <span className="min-w-0">
+   187→              <span className="block truncate text-sm font-semibold text-foreground">
+   188→                {selected.brand}
+   189→              </span>
+   190→              <span className="block truncate text-xs text-muted-foreground">
+   191→                {selected.dci}
+   192→                {selected.dosage ? ` · ${selected.dosage}` : ''}
+   193→              </span>
+   194→            </span>
+   195→            <Button
+   196→              type="button"
+   197→              variant="ghost"
+   198→              size="icon"
+   199→              className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
+   200→              onClick={() => {
+   201→                onSelect(null)
+   202→                onChange('')
+   203→              }}
+   204→              aria-label="Effacer le médicament sélectionné"
+   205→            >
+   206→              <X className="size-4" aria-hidden />
+   207→            </Button>
+   208→          </div>
+   209→        ) : (
+   210→          <Input
+   211→            type="text"
+   212→            role="combobox"
+   213→            aria-expanded={isOpen}
+   214→            aria-autocomplete="list"
+   215→            aria-label="Nom du médicament en pénurie"
+   216→            placeholder="Ex : DOLIPRANE, AUGMENTIN…"
+   217→            value={value}
+   218→            onChange={(e) => {
+   219→              setValue(e.target.value)
+   220→              onChange(e.target.value)
+   221→              setOpen(true)
+   222→            }}
+   223→            onFocus={() => setOpen(true)}
+   224→            autoComplete="off"
+   225→            spellCheck={false}
+   226→            className="h-11 border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+   227→          />
+   228→        )}
+   229→        {isFetching && isOpen ? (
+   230→          <Loader2 className="mr-3 size-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+   231→        ) : null}
+   232→      </div>
+   233→
+   234→      {isOpen ? (
+   235→        <div
+   236→          role="listbox"
+   237→          aria-label="Suggestions de médicaments"
+   238→          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-64 overflow-y-auto rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
+   239→        >
+   240→          {!results || results.length === 0 ? (
+   241→            <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+   242→              {isFetching ? 'Recherche…' : `Aucun médicament trouvé pour « ${trimmed} »`}
+   243→            </p>
+   244→          ) : (
+   245→            results.map((drug) => (
+   246→              <button
+   247→                key={drug.id}
+   248→                type="button"
+   249→                role="option"
+   250→                aria-selected={false}
+   251→                onClick={() => handleSelect(drug)}
+   252→                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent"
+   253→              >
+   254→                <span className="min-w-0">
+   255→                  <span className="block truncate text-sm font-semibold text-foreground">
+   256→                    {drug.brand}
+   257→                  </span>
+   258→                  <span className="block truncate text-xs text-muted-foreground">
+   259→                    {drug.dci}
+   260→                    {drug.dosage ? ` · ${drug.dosage}` : ''}
+   261→                  </span>
+   262→                </span>
+   263→                <span
+   264→                  className={cn(
+   265→                    'flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground',
+   266→                  )}
+   267→                >
+   268→                  <span
+   269→                    className={cn('size-1.5 rounded-full', STATUS_DOT[drug.status] ?? 'bg-muted-foreground')}
+   270→                    aria-hidden
+   271→                  />
+   272→                  {drug.status === 'ACTIF'
+   273→                    ? 'Actif'
+   274→                    : drug.status === 'RETRIE'
+   275→                      ? 'Retiré'
+   276→                      : drug.status === 'NON_RENOUVELE'
+   277→                        ? 'Non renouvelé'
+   278→                        : drug.status}
+   279→                </span>
+   280→              </button>
+   281→            ))
+   282→          )}
+   283→        </div>
+   284→      ) : null}
+   285→    </div>
+   286→  )
+   287→}
+   288→
+   289→/* ------------------------------------------------------------------ */
+   290→/* Centre pénuries                                                     */
+   291→/* ------------------------------------------------------------------ */
+   292→
+   293→export function ShortageCenter() {
+   294→  const openDrug = useDzPharm((s) => s.openDrug)
+   295→  const queryClient = useQueryClient()
+   296→
+   297→  const [selectedDrug, setSelectedDrug] = useState<DrugSuggestion | null>(null)
+   298→  const [brandInput, setBrandInput] = useState('')
+   299→  const [wilaya, setWilaya] = useState('')
+   300→  const [note, setNote] = useState('')
+   301→  const [submitting, setSubmitting] = useState(false)
+   302→
+   303→  const { data, isLoading } = useQuery({
+   304→    queryKey: ['shortages'],
+   305→    queryFn: ({ signal }) => fetchShortages(signal),
+   306→  })
+   307→
+   308→  const stats = data?.stats
+   309→  const reports = data?.reports ?? []
+   310→
+   311→  const noteCount = useMemo(() => note.length, [note])
+   312→
+   313→  async function handleSubmit(e: React.FormEvent) {
+   314→    e.preventDefault()
+   315→    const brand = (selectedDrug?.brand ?? brandInput).trim()
+   316→    if (brand.length < 2) {
+   317→      toast({
+   318→        title: 'Médicament requis',
+   319→        description: 'Indiquez le nom du médicament en tension (au moins 2 caractères).',
+   320→        variant: 'destructive',
+   321→      })
+   322→      return
+   323→    }
+   324→    setSubmitting(true)
+   325→    try {
+   326→      await postShortage({
+   327→        drugId: selectedDrug?.id,
+   328→        brand,
+   329→        dci: selectedDrug?.dci ?? null,
+   330→        wilaya: wilaya || null,
+   331→        note: note.trim() || null,
+   332→      })
+   333→      toast({
+   334→        title: 'Signalement enregistré',
+   335→        description: `Merci ! Le signalement pour ${brand} a bien été ajouté à la liste communautaire.`,
+   336→      })
+   337→      setSelectedDrug(null)
+   338→      setBrandInput('')
+   339→      setWilaya('')
+   340→      setNote('')
+   341→      await queryClient.invalidateQueries({ queryKey: ['shortages'] })
+   342→    } catch (err) {
+   343→      toast({
+   344→        title: 'Signalement impossible',
+   345→        description: err instanceof Error ? err.message : 'Une erreur est survenue. Réessayez.',
+   346→        variant: 'destructive',
+   347→      })
+   348→    } finally {
+   349→      setSubmitting(false)
+   350→    }
+   351→  }
+   352→
+   353→  return (
+   354→    <div className="space-y-6">
+   355→      {/* En-tête */}
+   356→      <Card className="border-state-warning/30 bg-gradient-to-br from-state-warning/10 via-state-warning/5 to-transparent">
+   357→        <CardHeader className="p-5 pb-4 sm:p-6 sm:pb-4">
+   358→          <CardTitle className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-foreground">
+   359→            <span
+   360→              className="flex size-9 items-center justify-center rounded-xl bg-state-warning/15"
+   361→              aria-hidden
+   362→            >
+   363→              <TriangleAlert className="size-5 text-state-warning" />
+   364→            </span>
+   365→            Centre de signalement des pénuries
+   366→          </CardTitle>
+   367→          <CardDescription className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+   368→            Les tensions d&apos;approvisionnement sont une réalité nationale. Signalez un médicament
+   369→            introuvable en officine et consultez les signalements de la communauté DzPharm pour
+   370→            anticiper vos recherches. Chaque signalement aide les patients et les professionnels à
+   371→            trouver des alternatives (équivalents génériques, même DCI).
+   372→          </CardDescription>
+   373→        </CardHeader>
+   374→      </Card>
+   375→
+   376→      {/* Mini-cartes statistiques */}
+   377→      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+   378→        {isLoading ? (
+   379→          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
+   380→        ) : (
+   381→          <>
+   382→            <Card className="transition-colors hover:border-primary/40">
+   383→              <CardContent className="flex items-center gap-3 p-4">
+   384→                <span
+   385→                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+   386→                  aria-hidden
+   387→                >
+   388→                  <MessageSquarePlus className="size-5 text-primary" />
+   389→                </span>
+   390→                <div className="min-w-0">
+   391→                  <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   392→                    Total signalements
+   393→                  </p>
+   394→                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+   395→                    {stats?.total ?? 0}
+   396→                  </p>
+   397→                </div>
+   398→              </CardContent>
+   399→            </Card>
+   400→            <Card className="transition-colors hover:border-state-warning/40">
+   401→              <CardContent className="flex items-center gap-3 p-4">
+   402→                <span
+   403→                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-state-warning/10"
+   404→                  aria-hidden
+   405→                >
+   406→                  <TriangleAlert className="size-5 text-state-warning" />
+   407→                </span>
+   408→                <div className="min-w-0">
+   409→                  <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   410→                    Actifs
+   411→                  </p>
+   412→                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+   413→                    {stats?.active ?? 0}
+   414→                  </p>
+   415→                </div>
+   416→              </CardContent>
+   417→            </Card>
+   418→            <Card className="transition-colors hover:border-chifa/40">
+   419→              <CardContent className="flex items-center gap-3 p-4">
+   420→                <span
+   421→                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-chifa/10"
+   422→                  aria-hidden
+   423→                >
+   424→                  <Clock3 className="size-5 text-chifa" />
+   425→                </span>
+   426→                <div className="min-w-0">
+   427→                  <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   428→                    48 dernières heures
+   429→                  </p>
+   430→                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+   431→                    {stats?.last48h ?? 0}
+   432→                  </p>
+   433→                </div>
+   434→              </CardContent>
+   435→            </Card>
+   436→            <Card className="transition-colors hover:border-state-safe/40">
+   437→              <CardContent className="flex items-center gap-3 p-4">
+   438→                <span
+   439→                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-state-safe/10"
+   440→                  aria-hidden
+   441→                >
+   442→                  <Activity className="size-5 text-state-safe" />
+   443→                </span>
+   444→                <div className="min-w-0">
+   445→                  <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+   446→                    Résolus
+   447→                  </p>
+   448→                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+   449→                    {stats?.resolved ?? 0}
+   450→                  </p>
+   451→                </div>
+   452→              </CardContent>
+   453→            </Card>
+   454→          </>
+   455→        )}
+   456→      </div>
+   457→
+   458→      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+   459→        {/* Formulaire de signalement */}
+   460→        <Card className="lg:col-span-2">
+   461→          <CardHeader className="p-5 pb-4 sm:p-6 sm:pb-4">
+   462→            <CardTitle className="text-base font-semibold text-foreground">
+   463→              Signaler une pénurie
+   464→            </CardTitle>
+   465→            <CardDescription>
+   466→              Médicament introuvable ? Indiquez-le en quelques secondes.
+   467→            </CardDescription>
+   468→          </CardHeader>
+   469→          <CardContent>
+   470→            <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulaire de signalement de pénurie">
+   471→              <div>
+   472→                <Label htmlFor="shortage-drug" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+   473→                  Médicament <span className="text-state-danger">*</span>
+   474→                </Label>
+   475→                <DrugAutocomplete
+   476→                  selected={selectedDrug}
+   477→                  onSelect={setSelectedDrug}
+   478→                  onChange={setBrandInput}
+   479→                />
+   480→                <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+   481→                  Sélectionnez une spécialité du registre (recommandé — relie le signalement à sa
+   482→                  fiche) ou saisissez un nom libre.
+   483→                </p>
+   484→              </div>
+   485→
+   486→              <div>
+   487→                <Label htmlFor="shortage-wilaya" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+   488→                  Wilaya
+   489→                </Label>
+   490→                <Select value={wilaya} onValueChange={setWilaya}>
+   491→                  <SelectTrigger
+   492→                    id="shortage-wilaya"
+   493→                    className="h-11 w-full text-sm"
+   494→                    aria-label="Sélectionner votre wilaya"
+   495→                  >
+   496→                    <SelectValue placeholder="Sélectionner une wilaya (optionnel)" />
+   497→                  </SelectTrigger>
+   498→                  <SelectContent className="max-h-72">
+   499→                    {WILAYAS.map((w) => (
+   500→                      <SelectItem key={w} value={w}>
+   501→                        {w}
+   502→                      </SelectItem>
+   503→                    ))}
+   504→                  </SelectContent>
+   505→                </Select>
+   506→              </div>
+   507→
+   508→              <div>
+   509→                <Label htmlFor="shortage-note" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+   510→                  Note (optionnel)
+   511→                </Label>
+   512→                <Textarea
+   513→                  id="shortage-note"
+   514→                  value={note}
+   515→                  onChange={(e) => setNote(e.target.value.slice(0, 280))}
+   516→                  placeholder="Ex : aucune boîte trouvée depuis 2 semaines dans les officines du centre-ville…"
+   517→                  rows={3}
+   518→                  className="resize-none text-sm"
+   519→                  aria-describedby="shortage-note-count"
+   520→                />
+   521→                <p id="shortage-note-count" className="mt-1 text-right text-[11px] text-muted-foreground tabular-nums">
+   522→                  {noteCount}/280
+   523→                </p>
+   524→              </div>
+   525→
+   526→              <Button
+   527→                type="submit"
+   528→                size="lg"
+   529→                disabled={submitting}
+   530→                className="h-11 w-full text-sm font-semibold"
+   531→              >
+   532→                {submitting ? (
+   533→                  <>
+   534→                    <Loader2 className="size-4 animate-spin" aria-hidden />
+   535→                    Envoi…
+   536→                  </>
+   537→                ) : (
+   538→                  <>
+   539→                    <Send className="size-4" aria-hidden />
+   540→                    Signaler la pénurie
+   541→                  </>
+   542→                )}
+   543→              </Button>
+   544→            </form>
+   545→          </CardContent>
+   546→        </Card>
+   547→
+   548→        {/* Derniers signalements + plus signalés */}
+   549→        <div className="space-y-6 lg:col-span-3">
+   550→          <Card>
+   551→            <CardHeader className="p-5 pb-4 sm:p-6 sm:pb-4">
+   552→              <CardTitle className="flex items-center justify-between text-base font-semibold text-foreground">
+   553→                <span className="flex items-center gap-2">
+   554→                  <Clock3 className="size-4 text-primary" aria-hidden />
+   555→                  Derniers signalements
+   556→                </span>
+   557→                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary tabular-nums">
+   558→                  {reports.length}
+   559→                </span>
+   560→              </CardTitle>
+   561→              <CardDescription>
+   562→                Signalements communautaires non vérifiés — indicatifs, ils ne remplacent pas les
+   563→                communications officielles du ministère.
+   564→              </CardDescription>
+   565→            </CardHeader>
+   566→            <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
+   567→              {isLoading ? (
+   568→                <div className="space-y-2.5">
+   569→                  {Array.from({ length: 4 }).map((_, i) => (
+   570→                    <Skeleton key={i} className="h-16 rounded-lg" />
+   571→                  ))}
+   572→                </div>
+   573→              ) : reports.length === 0 ? (
+   574→                <div className="rounded-xl border border-dashed border-border p-8 text-center">
+   575→                  <TriangleAlert className="mx-auto size-8 text-muted-foreground/50" aria-hidden />
+   576→                  <p className="mt-3 text-sm font-medium text-foreground">
+   577→                    Aucun signalement pour le moment
+   578→                  </p>
+   579→                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+   580→                    Soyez le premier à signaler une tension d&apos;approvisionnement — votre
+   581→                    signalement sera visible par toute la communauté.
+   582→                  </p>
+   583→                </div>
+   584→              ) : (
+   585→                <ul className="scroll-thin max-h-96 space-y-2.5 overflow-y-auto pr-1" aria-label="Liste des derniers signalements de pénurie">
+   586→                  {reports.map((r) => (
+   587→                    <li
+   588→                      key={r.id}
+   589→                      className="rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/30"
+   590→                    >
+   591→                      <div className="flex flex-wrap items-start justify-between gap-2">
+   592→                        {r.drugId ? (
+   593→                          <button
+   594→                            type="button"
+   595→                            onClick={() => openDrug(r.drugId as number)}
+   596→                            className="text-left text-sm font-semibold text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+   597→                            aria-label={`Ouvrir la fiche de ${r.brand}`}
+   598→                          >
+   599→                            {r.brand}
+   600→                          </button>
+   601→                        ) : (
+   602→                          <span className="text-sm font-semibold text-foreground">{r.brand}</span>
+   603→                        )}
+   604→                        <span
+   605→                          className={cn(
+   606→                            'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+   607→                            r.status === 'RESOLUE'
+   608→                              ? 'border-state-safe/30 bg-state-safe/10 text-state-safe'
+   609→                              : 'border-state-warning/30 bg-state-warning/10 text-state-warning'
+   610→                          )}
+   611→                        >
+   612→                          {r.status === 'RESOLUE' ? 'Résolue' : 'Signalée'}
+   613→                        </span>
+   614→                      </div>
+   615→                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+   616→                        {r.dci ? <span className="truncate">{r.dci}</span> : null}
+   617→                        {r.wilaya ? (
+   618→                          <span className="inline-flex items-center gap-1">
+   619→                            <MapPin className="size-3" aria-hidden />
+   620→                            {r.wilaya}
+   621→                          </span>
+   622→                        ) : null}
+   623→                        <span className="tabular-nums">{relativeTimeFr(r.createdAt)}</span>
+   624→                      </div>
+   625→                      {r.note ? (
+   626→                        <p className="mt-2 border-t border-border/50 pt-2 text-xs leading-relaxed text-foreground/80 italic">
+   627→                          « {r.note} »
+   628→                        </p>
+   629→                      ) : null}
+   630→                    </li>
+   631→                  ))}
+   632→                </ul>
+   633→              )}
+   634→            </CardContent>
+   635→          </Card>
+   636→
+   637→          {/* Les plus signalés */}
+   638→          <Card>
+   639→            <CardHeader className="p-5 pb-4 sm:p-6 sm:pb-4">
+   640→              <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
+   641→                <Activity className="size-4 text-chifa" aria-hidden />
+   642→                Les plus signalés
+   643→              </CardTitle>
+   644→              <CardDescription>Top 5 des médicaments signalés par la communauté</CardDescription>
+   645→            </CardHeader>
+   646→            <CardContent className="p-5 pt-0 sm:p-6 sm:pt-0">
+   647→              {isLoading ? (
+   648→                <Skeleton className="h-28 rounded-lg" />
+   649→              ) : !stats || stats.topDrugs.length === 0 ? (
+   650→                <p className="py-4 text-center text-sm text-muted-foreground">
+   651→                  Aucune donnée — les médicaments les plus signalés apparaîtront ici.
+   652→                </p>
+   653→              ) : (
+   654→                <ol className="space-y-2" aria-label="Médicaments les plus signalés">
+   655→                  {stats.topDrugs.map((d, i) => (
+   656→                    <li
+   657→                      key={d.brand}
+   658→                      className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2"
+   659→                    >
+   660→                      <span
+   661→                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-chifa/15 text-[11px] font-bold text-chifa tabular-nums"
+   662→                        aria-hidden
+   663→                      >
+   664→                        {i + 1}
+   665→                      </span>
+   666→                      <span className="min-w-0 flex-1">
+   667→                        <span className="block truncate text-sm font-semibold text-foreground">
+   668→                          {d.brand}
+   669→                        </span>
+   670→                        {d.dci ? (
+   671→                          <span className="block truncate text-xs text-muted-foreground">{d.dci}</span>
+   672→                        ) : null}
+   673→                      </span>
+   674→                      <span className="shrink-0 rounded-full bg-state-warning/10 px-2.5 py-0.5 text-xs font-bold text-state-warning tabular-nums">
+   675→                        {d.count} signal.
+   676→                      </span>
+   677→                    </li>
+   678→                  ))}
+   679→                </ol>
+   680→              )}
+   681→            </CardContent>
+   682→          </Card>
+   683→        </div>
+   684→      </div>
+   685→
+   686→      <SafetyNote>
+   687→        Signalements communautaires non vérifiés — à but indicatif uniquement. Une pénurie
+   688→        signalée ne signifie pas une rupture nationale : vérifiez auprès d&apos;autres officines et
+   689→        demandez conseil à votre pharmacien. En cas d&apos;urgence : SAMU 14.
+   690→      </SafetyNote>
+   691→    </div>
+   692→  )
+   693→}
+   694→

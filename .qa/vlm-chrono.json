@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "PASS\n\n**Verification Details:**\n1.  **Mode Toggle Buttons:** The three buttons 'Par année', **'Cumulé'** (active/highlighted in cyan), and 'Par statut' are present and correctly positioned.\n2.  **Stacked Area Chart:** A stacked area chart is displayed with three distinct colored areas (green at the bottom, amber/orange in the middle, red at the top) showing cumulative growth from 1996 to 2026.\n3.  **Legend:** While partially cut off at the bottom of the screenshot, the visual structure indicates a standard legend placement for these three categories (Actifs, Non renouvelés, Retirés) corresponding to the chart colors.\n4.  **Caption Line:** The text \"Enregistments par année initiale 1996–2026 — date disponible pour 9 516 des 9 555 produits.\" is present below the title.\n\n**Visual Problem:**\n*   **Truncation:** The bottom portion of the chart area is cut off, hiding the X-axis labels (years), the full legend, and potentially the required \"Lecture :\" caption line mentioned in the prompt.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1788046852,
+  "id": "202608300740481c0c3cfff3a44fa5",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202608300740481c0c3cfff3a44fa5",
+  "usage": {
+    "completion_tokens": 244,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 1818,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 2062
+  }
+}

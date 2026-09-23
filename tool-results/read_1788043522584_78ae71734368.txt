@@ -1,0 +1,775 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useMemo, useRef, useState } from 'react'
+     4→import { useQuery } from '@tanstack/react-query'
+     5→import { motion } from 'framer-motion'
+     6→import {
+     7→  ArrowRight,
+     8→  BadgeCheck,
+     9→  ChevronDown,
+    10→  Info,
+    11→  Loader2,
+    12→  PiggyBank,
+    13→  Plus,
+    14→  Search,
+    15→  Sparkles,
+    16→  Trash2,
+    17→  TrendingDown,
+    18→  X,
+    19→} from 'lucide-react'
+    20→import { cn } from '@/lib/utils'
+    21→import { Badge } from '@/components/ui/badge'
+    22→import { Button } from '@/components/ui/button'
+    23→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    24→import { StatusBadge, formatPrice } from './status-badge'
+    25→import { SafetyNote } from './safety-note'
+    26→
+    27→/**
+    28→ * Simulateur d'économies par substitution générique (P1 — plan §).
+    29→ * Auto-contenu : types et fetchers locaux (aucune dépendance aux types/api/store partagés).
+    30→ * 1 à 4 médicaments de marque → équivalent ACTIF le moins cher du même DCI
+    31→ * (même dosage en priorité) → économie par ligne + total du panier.
+    32→ */
+    33→
+    34→/* ------------------------------------------------------------------ */
+    35→/* Types & fetchers locaux                                             */
+    36→/* ------------------------------------------------------------------ */
+    37→
+    38→interface SimDrug {
+    39→  id: number
+    40→  brand: string
+    41→  dci: string
+    42→  dosage: string | null
+    43→  form: string | null
+    44→  packaging?: string | null
+    45→  lab?: string | null
+    46→  status: string
+    47→  price: number | null
+    48→  refundable?: boolean
+    49→}
+    50→
+    51→interface SimEquivalent {
+    52→  id: number
+    53→  brand: string
+    54→  lab?: string | null
+    55→  dosage: string | null
+    56→  form?: string | null
+    57→  status: string
+    58→  price?: number | null
+    59→  refundable?: boolean
+    60→}
+    61→
+    62→interface SimPharmacy {
+    63→  id: number
+    64→  name: string
+    65→  ppa: number | null
+    66→  refundable: boolean
+    67→}
+    68→
+    69→interface SimDetail {
+    70→  drug: SimDrug & { pharmacy?: SimPharmacy[] }
+    71→  equivalents: SimEquivalent[]
+    72→}
+    73→
+    74→const MAX_LINES = 4
+    75→
+    76→async function searchSimDrugs(q: string, signal?: AbortSignal): Promise<SimDrug[]> {
+    77→  const res = await fetch(
+    78→    `/api/drugs?q=${encodeURIComponent(q)}&pageSize=8&status=ACTIF&sort=relevance`,
+    79→    { signal }
+    80→  )
+    81→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+    82→  const data = (await res.json()) as { drugs: SimDrug[] }
+    83→  return data.drugs
+    84→}
+    85→
+    86→async function fetchSimDetail(id: number, signal?: AbortSignal): Promise<SimDetail> {
+    87→  const res = await fetch(`/api/drugs/${id}`, { signal })
+    88→  if (!res.ok) throw new Error(`Requête échouée (${res.status})`)
+    89→  return (await res.json()) as SimDetail
+    90→}
+    91→
+    92→/** Normalisation de dosage (« 850 MG » ≡ « 850MG » ≡ « 0,85G » non converti). */
+    93→function normDosage(d: string | null | undefined): string {
+    94→  return (d ?? '').toUpperCase().replace(/[\s.]/g, '')
+    95→}
+    96→
+    97→/** Cnas badge compact. */
+    98→function CnasBadge({ on }: { on?: boolean }) {
+    99→  if (!on) return null
+   100→  return (
+   101→    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-state-safe/40 bg-state-safe/10 px-2 py-0.5 text-[10px] font-bold text-state-safe">
+   102→      <BadgeCheck className="size-3" aria-hidden />
+   103→      CNAS
+   104→    </span>
+   105→  )
+   106→}
+   107→
+   108→/* ------------------------------------------------------------------ */
+   109→/* Autocomplete local (marques actives + prix)                         */
+   110→/* ------------------------------------------------------------------ */
+   111→
+   112→function useDebounced<T>(value: T, delay: number): T {
+   113→  const [v, setV] = useState(value)
+   114→  useEffect(() => {
+   115→    const t = setTimeout(() => setV(value), delay)
+   116→    return () => clearTimeout(t)
+   117→  }, [value, delay])
+   118→  return v
+   119→}
+   120→
+   121→function SimAutocomplete({ onPick }: { onPick: (drug: SimDrug) => void }) {
+   122→  const [value, setValue] = useState('')
+   123→  const [open, setOpen] = useState(false)
+   124→  const [active, setActive] = useState(-1)
+   125→  const wrapperRef = useRef<HTMLDivElement>(null)
+   126→  const debounced = useDebounced(value, 300)
+   127→  const trimmed = debounced.trim()
+   128→
+   129→  const { data, isFetching } = useQuery({
+   130→    queryKey: ['gen-sim', 'search', trimmed],
+   131→    queryFn: ({ signal }) => searchSimDrugs(trimmed, signal),
+   132→    enabled: trimmed.length >= 2,
+   133→  })
+   134→  const results = useMemo(() => data ?? [], [data])
+   135→
+   136→  useEffect(() => {
+   137→    function onDocMouseDown(e: MouseEvent) {
+   138→      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+   139→        setOpen(false)
+   140→      }
+   141→    }
+   142→    document.addEventListener('mousedown', onDocMouseDown)
+   143→    return () => document.removeEventListener('mousedown', onDocMouseDown)
+   144→  }, [])
+   145→
+   146→  const isOpen = open && trimmed.length >= 2
+   147→
+   148→  function pick(d: SimDrug) {
+   149→    onPick(d)
+   150→    setValue('')
+   151→    setOpen(false)
+   152→    setActive(-1)
+   153→  }
+   154→
+   155→  return (
+   156→    <div ref={wrapperRef} className="relative">
+   157→      <div className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3.5 shadow-sm transition-colors focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/20">
+   158→        <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+   159→        <input
+   160→          type="text"
+   161→          id="gen-sim-input"
+   162→          role="combobox"
+   163→          aria-expanded={isOpen}
+   164→          aria-controls="gen-sim-listbox"
+   165→          aria-label="Ajouter un médicament de marque au simulateur"
+   166→          aria-autocomplete="list"
+   167→          value={value}
+   168→          onChange={(e) => {
+   169→            setValue(e.target.value)
+   170→            setOpen(true)
+   171→            setActive(-1)
+   172→          }}
+   173→          onFocus={() => setOpen(true)}
+   174→          onKeyDown={(e) => {
+   175→            if (e.key === 'ArrowDown' && results.length > 0) {
+   176→              e.preventDefault()
+   177→              setActive((i) => (i + 1) % results.length)
+   178→            } else if (e.key === 'ArrowUp' && results.length > 0) {
+   179→              e.preventDefault()
+   180→              setActive((i) => (i <= 0 ? results.length - 1 : i - 1))
+   181→            } else if (e.key === 'Enter' && active >= 0 && results[active]) {
+   182→              e.preventDefault()
+   183→              pick(results[active])
+   184→            } else if (e.key === 'Escape') {
+   185→              setOpen(false)
+   186→            }
+   187→          }}
+   188→          placeholder="Ajouter un médicament de marque (ex. DOLIPRANE, GLUCOPHAGE…)"
+   189→          autoComplete="off"
+   190→          spellCheck={false}
+   191→          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/70"
+   192→        />
+   193→        {isFetching && isOpen ? (
+   194→          <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+   195→        ) : (
+   196→          <Plus className="size-4 shrink-0 text-muted-foreground/50" aria-hidden />
+   197→        )}
+   198→      </div>
+   199→
+   200→      {isOpen ? (
+   201→        <div
+   202→          id="gen-sim-listbox"
+   203→          role="listbox"
+   204→          className="scroll-thin absolute inset-x-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
+   205→        >
+   206→          {results.length === 0 && !isFetching ? (
+   207→            <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+   208→              Aucun médicament actif trouvé pour «&nbsp;{trimmed}&nbsp;»
+   209→            </p>
+   210→          ) : (
+   211→            results.map((d, i) => (
+   212→              <button
+   213→                key={d.id}
+   214→                type="button"
+   215→                role="option"
+   216→                aria-selected={i === active}
+   217→                onClick={() => pick(d)}
+   218→                onMouseEnter={() => setActive(i)}
+   219→                className={cn(
+   220→                  'flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+   221→                  i === active ? 'bg-primary/10' : 'hover:bg-accent'
+   222→                )}
+   223→              >
+   224→                <span className="min-w-0">
+   225→                  <span className="block truncate text-sm font-semibold text-foreground">
+   226→                    {d.brand}
+   227→                  </span>
+   228→                  <span className="block truncate text-xs text-muted-foreground">
+   229→                    {d.dci}
+   230→                    {d.dosage ? ` · ${d.dosage}` : ''}
+   231→                    {d.form ? ` · ${d.form}` : ''}
+   232→                  </span>
+   233→                </span>
+   234→                <span className="flex shrink-0 flex-col items-end gap-0.5">
+   235→                  {d.price != null ? (
+   236→                    <span className="text-sm font-bold text-foreground tabular-nums">
+   237→                      {formatPrice(d.price)}
+   238→                    </span>
+   239→                  ) : (
+   240→                    <span className="text-[11px] text-muted-foreground">prix n.d.</span>
+   241→                  )}
+   242→                  <CnasBadge on={d.refundable} />
+   243→                </span>
+   244→              </button>
+   245→            ))
+   246→          )}
+   247→        </div>
+   248→      ) : null}
+   249→    </div>
+   250→  )
+   251→}
+   252→
+   253→/* ------------------------------------------------------------------ */
+   254→/* Ligne du panier : marque → équivalent le moins cher                 */
+   255→/* ------------------------------------------------------------------ */
+   256→
+   257→interface LineResult {
+   258→  brandPrice: number | null
+   259→  cheapest: SimEquivalent | null
+   260→  sameDosage: boolean
+   261→  pricedCount: number
+   262→  brandHasPrice: boolean
+   263→}
+   264→
+   265→function useLineResult(drug: SimDrug, detail: SimDetail | undefined): LineResult {
+   266→  return useMemo(() => {
+   267→    const brandPrice =
+   268→      drug.price ?? detail?.drug.pharmacy?.[0]?.ppa ?? null
+   269→    const priced = (detail?.equivalents ?? []).filter(
+   270→      (e) => e.status === 'ACTIF' && e.price != null
+   271→    )
+   272→    const key = normDosage(drug.dosage)
+   273→    const same = key ? priced.filter((e) => normDosage(e.dosage) === key) : []
+   274→    const pool = same.length > 0 ? same : priced
+   275→    const cheapest =
+   276→      pool.length > 0
+   277→        ? pool.reduce((a, b) => ((a.price ?? Infinity) <= (b.price ?? Infinity) ? a : b))
+   278→        : null
+   279→    return {
+   280→      brandPrice,
+   281→      cheapest,
+   282→      sameDosage: same.length > 0,
+   283→      pricedCount: priced.length,
+   284→      brandHasPrice: brandPrice != null,
+   285→    }
+   286→  }, [drug, detail])
+   287→}
+   288→
+   289→function SimLineCard({
+   290→  drug,
+   291→  detail,
+   292→  isLoading,
+   293→  onRemove,
+   294→}: {
+   295→  drug: SimDrug
+   296→  detail: SimDetail | undefined
+   297→  isLoading: boolean
+   298→  onRemove: () => void
+   299→}) {
+   300→  const res = useLineResult(drug, detail)
+   301→
+   302→  const savings =
+   303→    res.brandPrice != null && res.cheapest?.price != null
+   304→      ? res.brandPrice - res.cheapest.price
+   305→      : null
+   306→  const savingsPct =
+   307→    savings != null && res.brandPrice != null && res.brandPrice > 0
+   308→      ? Math.round((savings / res.brandPrice) * 100)
+   309→      : null
+   310→
+   311→  const pharmacyPrices = (detail?.drug.pharmacy ?? [])
+   312→    .map((p) => p.ppa)
+   313→    .filter((p): p is number => p != null)
+   314→
+   315→  return (
+   316→    <motion.div
+   317→      initial={{ opacity: 0, y: 8 }}
+   318→      animate={{ opacity: 1, y: 0 }}
+   319→      transition={{ duration: 0.25 }}
+   320→    >
+   321→      <Card>
+   322→        <CardContent className="p-4">
+   323→          {/* En-tête de ligne */}
+   324→          <div className="flex flex-wrap items-start justify-between gap-2">
+   325→            <div className="min-w-0">
+   326→              <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+   327→                <span className="truncate">{drug.brand}</span>
+   328→                {drug.dosage ? (
+   329→                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+   330→                    {drug.dosage}
+   331→                  </span>
+   332→                ) : null}
+   333→                <StatusBadge status={drug.status} />
+   334→                <CnasBadge on={drug.refundable} />
+   335→              </p>
+   336→              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+   337→                {drug.dci}
+   338→                {drug.lab ? ` · ${drug.lab}` : ''}
+   339→              </p>
+   340→            </div>
+   341→            <Button
+   342→              variant="ghost"
+   343→              size="icon"
+   344→              className="size-8 text-muted-foreground hover:text-state-danger"
+   345→              onClick={onRemove}
+   346→              aria-label={`Retirer ${drug.brand} du simulateur`}
+   347→            >
+   348→              <Trash2 className="size-4" />
+   349→            </Button>
+   350→          </div>
+   351→
+   352→          {/* Comparatif marque → générique */}
+   353→          {isLoading ? (
+   354→            <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+   355→              <Loader2 className="size-4 animate-spin" aria-hidden />
+   356→              Recherche des équivalents même DCI…
+   357→            </p>
+   358→          ) : !detail ? (
+   359→            <p className="mt-3 text-sm text-state-danger">
+   360→              Impossible de charger les équivalents — réessayez plus tard.
+   361→            </p>
+   362→          ) : (
+   363→            <div className="mt-3 grid items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr]">
+   364→              {/* Marque sélectionnée */}
+   365→              <div className="rounded-lg border border-border bg-muted/30 p-3">
+   366→                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+   367→                  Marque sélectionnée
+   368→                </p>
+   369→                <p className="mt-1 text-sm font-semibold text-foreground tabular-nums">
+   370→                  {res.brandPrice != null ? formatPrice(res.brandPrice) : 'Prix non disponible'}
+   371→                </p>
+   372→                {pharmacyPrices.length > 1 ? (
+   373→                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+   374→                    {pharmacyPrices.length} conditionnements prix :{' '}
+   375→                    {formatPrice(Math.min(...pharmacyPrices))} –{' '}
+   376→                    {formatPrice(Math.max(...pharmacyPrices))}
+   377→                  </p>
+   378→                ) : null}
+   379→              </div>
+   380→
+   381→              <div className="flex items-center justify-center" aria-hidden>
+   382→                <ArrowRight className="size-4 rotate-90 text-muted-foreground sm:rotate-0" />
+   383→              </div>
+   384→
+   385→              {/* Générique le moins cher */}
+   386→              <div
+   387→                className={cn(
+   388→                  'rounded-lg border p-3',
+   389→                  res.cheapest
+   390→                    ? 'border-state-safe/40 bg-state-safe/5'
+   391→                    : 'border-dashed border-border bg-transparent'
+   392→                )}
+   393→              >
+   394→                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+   395→                  Équivalent actif le moins cher
+   396→                </p>
+   397→                {res.cheapest ? (
+   398→                  <>
+   399→                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm font-semibold text-foreground">
+   400→                      <span className="truncate">{res.cheapest.brand}</span>
+   401→                      {res.cheapest.dosage ? (
+   402→                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+   403→                          {res.cheapest.dosage}
+   404→                        </span>
+   405→                      ) : null}
+   406→                      <CnasBadge on={res.cheapest.refundable} />
+   407→                    </p>
+   408→                    <p className="text-sm font-bold text-foreground tabular-nums">
+   409→                      {formatPrice(res.cheapest.price ?? null)}
+   410→                    </p>
+   411→                    {!res.sameDosage && normDosage(drug.dosage) ? (
+   412→                      <p className="mt-0.5 text-[11px] text-state-warning">
+   413→                        Dosage différent ({res.cheapest.dosage || 'n.d.'} vs{' '}
+   414→                        {drug.dosage}) — aucun équivalent même dosage avec prix
+   415→                      </p>
+   416→                    ) : null}
+   417→                  </>
+   418→                ) : (
+   419→                  <p className="mt-1 text-sm text-muted-foreground">
+   420→                    {res.pricedCount === 0
+   421→                      ? "Aucun équivalent actif avec prix référencé"
+   422→                      : 'Prix non disponible'}
+   423→                  </p>
+   424→                )}
+   425→              </div>
+   426→            </div>
+   427→          )}
+   428→
+   429→          {/* Économie de la ligne */}
+   430→          {savings != null ? (
+   431→            <p
+   432→              className={cn(
+   433→                'mt-3 flex flex-wrap items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold',
+   434→                savings > 0
+   435→                  ? 'bg-state-safe/10 text-state-safe'
+   436→                  : 'bg-muted text-muted-foreground'
+   437→              )}
+   438→            >
+   439→              {savings > 0 ? (
+   440→                <>
+   441→                  <TrendingDown className="size-4" aria-hidden />
+   442→                  Économie de {formatPrice(savings)}
+   443→                  {savingsPct != null ? ` (−${savingsPct} %)` : ''}
+   444→                </>
+   445→              ) : (
+   446→                <>
+   447→                  <BadgeCheck className="size-4" aria-hidden />
+   448→                  La marque sélectionnée est déjà au meilleur prix du même DCI
+   449→                  {savings < 0 ? ` (+${formatPrice(Math.abs(savings))})` : ''}
+   450→                </>
+   451→              )}
+   452→            </p>
+   453→          ) : res.brandPrice == null && !isLoading ? (
+   454→            <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+   455→              Prix de la marque non disponible — ligne exclue du total.
+   456→            </p>
+   457→          ) : null}
+   458→
+   459→          {/* Alternatives */}
+   460→          {detail?.equivalents ? (
+   461→            <p className="mt-2 text-[11px] text-muted-foreground">
+   462→              {detail.equivalents.filter((e) => e.status === 'ACTIF').length} équivalent(s)
+   463→              actif(s) du même DCI référencé(s) au registre
+   464→              {res.pricedCount > 1 ? ` · ${res.pricedCount} avec prix PPA` : ''}.
+   465→            </p>
+   466→          ) : null}
+   467→        </CardContent>
+   468→      </Card>
+   469→    </motion.div>
+   470→  )
+   471→}
+   472→
+   473→/* ------------------------------------------------------------------ */
+   474→/* Vue principale                                                      */
+   475→/* ------------------------------------------------------------------ */
+   476→
+   477→export function GenericSimulator() {
+   478→  const [lines, setLines] = useState<SimDrug[]>([])
+   479→  const [demoLoading, setDemoLoading] = useState(false)
+   480→
+   481→  const full = lines.length >= MAX_LINES
+   482→
+   483→  function addLine(drug: SimDrug) {
+   484→    setLines((prev) => {
+   485→      if (prev.some((l) => l.id === drug.id) || prev.length >= MAX_LINES) return prev
+   486→      return [...prev, drug]
+   487→    })
+   488→  }
+   489→
+   490→  /** Exemple vérifié : DOLIPRANE 1000MG + GLUCOPHAGE 850MG (résolution par recherche). */
+   491→  async function loadDemo() {
+   492→    setDemoLoading(true)
+   493→    try {
+   494→      const pick = async (q: string, dosage: string): Promise<SimDrug | null> => {
+   495→        const list = await searchSimDrugs(q)
+   496→        return list.find((d) => d.dosage && normDosage(d.dosage) === normDosage(dosage)) ?? list[0] ?? null
+   497→      }
+   498→      const [doliprane, glucophage] = await Promise.all([
+   499→        pick('DOLIPRANE', '1000MG'),
+   500→        pick('GLUCOPHAGE', '850MG'),
+   501→      ])
+   502→      const demo = [doliprane, glucophage].filter((d): d is SimDrug => d !== null)
+   503→      if (demo.length === 0) return
+   504→      setLines((prev) => {
+   505→        const merged = [...prev]
+   506→        for (const d of demo) {
+   507→          if (merged.length >= MAX_LINES) break
+   508→          if (!merged.some((l) => l.id === d.id)) merged.push(d)
+   509→        }
+   510→        return merged
+   511→      })
+   512→    } catch {
+   513→      /* silencieux : l'utilisateur peut ajouter manuellement */
+   514→    } finally {
+   515→      setDemoLoading(false)
+   516→    }
+   517→  }
+   518→
+   519→  // Détails pour le total (une requête par ligne, en parallèle)
+   520→  const details = useQuery({
+   521→    queryKey: ['gen-sim', 'details', lines.map((l) => l.id).join('|')],
+   522→    queryFn: async () => {
+   523→      const entries = await Promise.all(
+   524→        lines.map(async (l) => {
+   525→          const d = await fetchSimDetail(l.id)
+   526→          return [l.id, d] as const
+   527→        })
+   528→      )
+   529→      return new Map(entries)
+   530→    },
+   531→    enabled: lines.length > 0,
+   532→    staleTime: 5 * 60 * 1000,
+   533→  })
+   534→
+   535→  const totals = useMemo(() => {
+   536→    let brandTotal = 0
+   537→    let genericTotal = 0
+   538→    let counted = 0
+   539→    let withoutPrice = 0
+   540→    for (const line of lines) {
+   541→      const detail = details.data?.get(line.id)
+   542→      const brandPrice = line.price ?? detail?.drug.pharmacy?.[0]?.ppa ?? null
+   543→      if (brandPrice == null) {
+   544→        withoutPrice++
+   545→        continue
+   546→      }
+   547→      const priced = (detail?.equivalents ?? []).filter(
+   548→        (e) => e.status === 'ACTIF' && e.price != null
+   549→      )
+   550→      const key = normDosage(line.dosage)
+   551→      const same = key ? priced.filter((e) => normDosage(e.dosage) === key) : []
+   552→      const pool = same.length > 0 ? same : priced
+   553→      const cheapest = pool.length > 0 ? Math.min(...pool.map((e) => e.price as number)) : null
+   554→      brandTotal += brandPrice
+   555→      genericTotal += cheapest ?? brandPrice
+   556→      counted++
+   557→    }
+   558→    const savings = brandTotal - genericTotal
+   559→    const pct = brandTotal > 0 ? Math.round((savings / brandTotal) * 100) : 0
+   560→    return { brandTotal, genericTotal, savings, pct, counted, withoutPrice }
+   561→  }, [lines, details.data])
+   562→
+   563→  return (
+   564→    <div className="space-y-5">
+   565→      {/* En-tête */}
+   566→      <div className="flex flex-wrap items-start justify-between gap-3">
+   567→        <div className="min-w-0">
+   568→          <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
+   569→            <PiggyBank className="size-5 text-primary" aria-hidden />
+   570→            Simulateur d&apos;économies génériques
+   571→          </h2>
+   572→          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+   573→            Sélectionnez 1 à {MAX_LINES} médicaments de marque — DzPharm trouve
+   574→            l&apos;équivalent <strong>actif</strong> le moins cher du même DCI (priorité au
+   575→            même dosage) et chiffre l&apos;économie sur les prix PPA officiels.
+   576→          </p>
+   577→        </div>
+   578→        {lines.length === 0 ? (
+   579→          <Button variant="outline" className="gap-2" onClick={loadDemo} disabled={demoLoading}>
+   580→            {demoLoading ? (
+   581→              <Loader2 className="size-4 animate-spin" aria-hidden />
+   582→            ) : (
+   583→              <Sparkles className="size-4" aria-hidden />
+   584→            )}
+   585→            Charger un exemple
+   586→          </Button>
+   587→        ) : null}
+   588→      </div>
+   589→
+   590→      {/* Ajout + panier de marques */}
+   591→      <Card>
+   592→        <CardHeader className="pb-3">
+   593→          <CardTitle className="flex items-center justify-between text-base">
+   594→            <span className="flex items-center gap-2">
+   595→              <ChevronDown className="size-4 text-primary" aria-hidden />
+   596→              Panier de marques
+   597→            </span>
+   598→            <span
+   599→              className={cn(
+   600→                'rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
+   601→                full ? 'bg-state-warning/15 text-state-warning' : 'bg-primary/10 text-primary'
+   602→              )}
+   603→            >
+   604→              {lines.length}/{MAX_LINES}
+   605→            </span>
+   606→          </CardTitle>
+   607→        </CardHeader>
+   608→        <CardContent className="space-y-3">
+   609→          {!full ? <SimAutocomplete onPick={addLine} /> : null}
+   610→          {full ? (
+   611→            <p className="rounded-lg border border-state-warning/40 bg-state-warning/10 px-3 py-2 text-xs text-state-warning">
+   612→              Maximum de {MAX_LINES} médicaments — retirez une ligne pour en ajouter une autre.
+   613→            </p>
+   614→          ) : null}
+   615→          {lines.length > 0 ? (
+   616→            <ul className="flex flex-wrap gap-2" aria-label="Médicaments du simulateur">
+   617→              {lines.map((l) => (
+   618→                <li key={l.id}>
+   619→                  <span className="flex max-w-full items-center gap-2 rounded-lg border border-border bg-secondary/60 py-1.5 pr-1.5 pl-3 text-sm">
+   620→                    <span className="min-w-0">
+   621→                      <span className="block truncate font-medium text-foreground">
+   622→                        {l.brand}
+   623→                      </span>
+   624→                      <span className="block truncate text-[11px] text-muted-foreground">
+   625→                        {l.dci}
+   626→                        {l.dosage ? ` · ${l.dosage}` : ''}
+   627→                      </span>
+   628→                    </span>
+   629→                    <button
+   630→                      type="button"
+   631→                      onClick={() => setLines((p) => p.filter((x) => x.id !== l.id))}
+   632→                      aria-label={`Retirer ${l.brand}`}
+   633→                      className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-state-danger/10 hover:text-state-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+   634→                    >
+   635→                      <X className="size-3.5" />
+   636→                    </button>
+   637→                  </span>
+   638→                </li>
+   639→              ))}
+   640→            </ul>
+   641→          ) : (
+   642→            <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+   643→              Aucun médicament dans le simulateur. Ajoutez une marque via la recherche
+   644→              ci-dessus, ou chargez l&apos;exemple (DOLIPRANE 1000MG + GLUCOPHAGE 850MG).
+   645→            </p>
+   646→          )}
+   647→        </CardContent>
+   648→      </Card>
+   649→
+   650→      {/* Lignes détaillées */}
+   651→      {lines.map((l) => (
+   652→        <SimLineCard
+   653→          key={l.id}
+   654→          drug={l}
+   655→          detail={details.data?.get(l.id)}
+   656→          isLoading={details.isFetching && !details.data?.has(l.id)}
+   657→          onRemove={() => setLines((p) => p.filter((x) => x.id !== l.id))}
+   658→        />
+   659→      ))}
+   660→
+   661→      {/* Total du panier */}
+   662→      {totals.counted > 0 ? (
+   663→        <motion.div
+   664→          initial={{ opacity: 0, y: 8 }}
+   665→          animate={{ opacity: 1, y: 0 }}
+   666→          transition={{ duration: 0.3 }}
+   667→        >
+   668→          <Card className="border-primary/30 bg-primary/5">
+   669→            <CardHeader className="pb-3">
+   670→              <CardTitle className="flex items-center gap-2 text-base">
+   671→                <PiggyBank className="size-4 text-primary" aria-hidden />
+   672→                Économies sur le panier
+   673→              </CardTitle>
+   674→            </CardHeader>
+   675→            <CardContent className="space-y-4">
+   676→              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+   677→                <div className="rounded-lg border border-border bg-card p-3">
+   678→                  <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+   679→                    Total panier marque
+   680→                  </p>
+   681→                  <p className="mt-1 text-lg font-bold text-foreground tabular-nums">
+   682→                    {formatPrice(totals.brandTotal)}
+   683→                  </p>
+   684→                </div>
+   685→                <div className="rounded-lg border border-border bg-card p-3">
+   686→                  <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+   687→                    Total génériques
+   688→                  </p>
+   689→                  <p className="mt-1 text-lg font-bold text-foreground tabular-nums">
+   690→                    {formatPrice(totals.genericTotal)}
+   691→                  </p>
+   692→                </div>
+   693→                <div
+   694→                  className={cn(
+   695→                    'rounded-lg border p-3',
+   696→                    totals.savings > 0
+   697→                      ? 'border-state-safe/40 bg-state-safe/10'
+   698→                      : 'border-border bg-card'
+   699→                  )}
+   700→                >
+   701→                  <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+   702→                    Économies
+   703→                  </p>
+   704→                  <p
+   705→                    className={cn(
+   706→                      'mt-1 text-lg font-bold tabular-nums',
+   707→                      totals.savings > 0 ? 'text-state-safe' : 'text-muted-foreground'
+   708→                    )}
+   709→                  >
+   710→                    {totals.savings > 0
+   711→                      ? `${formatPrice(totals.savings)} (−${totals.pct} %)`
+   712→                      : 'Déjà au meilleur prix'}
+   713→                  </p>
+   714→                </div>
+   715→              </div>
+   716→
+   717→              {/* Barre animée de gain */}
+   718→              <div>
+   719→                <div
+   720→                  className="h-3 w-full overflow-hidden rounded-full bg-muted"
+   721→                  role="progressbar"
+   722→                  aria-valuenow={Math.max(0, Math.min(100, totals.pct))}
+   723→                  aria-valuemin={0}
+   724→                  aria-valuemax={100}
+   725→                  aria-label="Part du panier économisée avec les génériques"
+   726→                >
+   727→                  <motion.div
+   728→                    initial={{ width: 0 }}
+   729→                    animate={{ width: `${Math.max(0, Math.min(100, totals.pct))}%` }}
+   730→                    transition={{ duration: 0.8, ease: 'easeOut' }}
+   731→                    className={cn(
+   732→                      'h-full rounded-full',
+   733→                      totals.savings > 0
+   734→                        ? 'bg-gradient-to-r from-state-safe/70 to-state-safe'
+   735→                        : 'bg-muted-foreground/40'
+   736→                    )}
+   737→                  />
+   738→                </div>
+   739→                <p className="mt-1.5 text-xs text-muted-foreground">
+   740→                  {totals.savings > 0
+   741→                    ? `${totals.pct} % du montant du panier couvert par les génériques · ${totals.counted} ligne(s) comptabilisée(s)`
+   742→                    : 'Aucune économie possible sur ce panier'}
+   743→                  {totals.withoutPrice > 0
+   744→                    ? ` · ${totals.withoutPrice} ligne(s) sans prix exclu(s)`
+   745→                    : ''}
+   746→                </p>
+   747→              </div>
+   748→            </CardContent>
+   749→          </Card>
+   750→        </motion.div>
+   751→      ) : lines.length > 0 && details.isFetching ? (
+   752→        <p className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+   753→          <Loader2 className="size-4 animate-spin" aria-hidden />
+   754→          Calcul des économies…
+   755→        </p>
+   756→      ) : null}
+   757→
+   758→      {/* Note éducative + sécurité */}
+   759→      <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground/90">
+   760→        <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+   761→        <p>
+   762→          La substitution par générique est encadrée — le pharmacien peut proposer un
+   763→          générique du même DCI (décret exécutif). Les prix affichés sont les PPA
+   764→          officiels.
+   765→        </p>
+   766→      </div>
+   767→      <SafetyNote>
+   768→        Outil d&apos;aide à la dispensation — les économies sont estimées sur les prix PPA
+   769→        officiels du même DCI et ne préjugent pas de l’interchangeabilité thérapeutique,
+   770→        décision qui relève du pharmacien et du prescripteur.
+   771→      </SafetyNote>
+   772→    </div>
+   773→  )
+   774→}
+   775→

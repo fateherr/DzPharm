@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "FAIL\n\n**Visual Problems:**\n1.  **Missing Table Content:** The screenshot cuts off immediately below the search input and stats line. The actual data table (with columns for Laboratoire, Produits, Actifs-Retirés, etc., and the rows for SAIDAL labs) is **not visible**.\n2.  **Missing Visual Elements:** Consequently, the green 'Algérie' badges and the small progress bars for product counts are also missing from view.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1788046860,
+  "id": "20260830074058a8ccd77942324ef5",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "20260830074058a8ccd77942324ef5",
+  "usage": {
+    "completion_tokens": 98,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 1810,
+    "prompt_tokens_details": {
+      "cached_tokens": 2
+    },
+    "total_tokens": 1908
+  }
+}

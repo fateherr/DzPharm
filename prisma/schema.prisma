@@ -1,0 +1,126 @@
+// DzPharm — Prisma schema for the Algerian drug registry
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./custom.db"
+}
+
+model Drug {
+  id             Int      @id @default(autoincrement())
+  regNumber      String? // N° d'enregistrement (AMM)
+  code           String?
+  dci            String?
+  dciKey         String? // uppercase, no accents — for accent-insensitive search
+  brand          String?
+  brandKey       String?
+  form           String?
+  dosage         String?
+  packaging      String?
+  liste          String? // Liste I / II / Tableau A/B/C...
+  p1             String? // HOP / OFF
+  p2             String?
+  obs            String?
+  lab            String? // laboratoire détenteur
+  country        String?
+  regDateInitial String?
+  regDateFinal   String?
+  type           String? // GE / RE ...
+  statut         String? // F / I ...
+  stability      String?
+  withdrawDate   String?
+  withdrawReason String?
+  status         String // ACTIF | NON_RENOUVELE | RETRIE
+  domains        String? // JSON array of therapeutic domains
+  classes        String? // JSON array of pharmacological classes
+  domain         String? // primary domain (denormalized for filtering)
+  views          Int      @default(0) // consultation counter (DzPharm sessions)
+  barcode        String?  // Code-barres commercial d'origine (EAN-13 / GTIN)
+
+  pharmacyProducts PharmacyProduct[]
+  drugBarcodes     DrugBarcode[]
+
+  @@index([dciKey])
+  @@index([brandKey])
+  @@index([barcode])
+  @@index([status])
+  @@index([domain])
+  @@index([lab])
+  @@index([country])
+}
+
+// Product from the pharmacy price list (PPA — Prix Public Algérien).
+// Includes parapharmacy / accessories not present in the drug registry.
+model PharmacyProduct {
+  id         Int     @id @default(autoincrement())
+  name       String // full presentation label as printed on the list
+  nameKey    String // uppercase, accents stripped — search key
+  lab        String?
+  ppa        Float? // price in DA
+  cnasId     Int? // CNAS reimbursement ID — non-null => remboursable
+  class      String? // therapeutic class from the list
+  drugId     Int? // linked registry drug (brand+dosage+form matched)
+  matchScore Int     @default(0) // matching confidence score
+  drug       Drug?   @relation(fields: [drugId], references: [id])
+
+  @@index([nameKey])
+  @@index([class])
+  @@index([drugId])
+  @@index([cnasId])
+}
+
+// Full DCI monograph extracted from the 17 clinical pharmacology books
+model Monograph {
+  id      Int    @id @default(autoincrement())
+  dciKey  String @unique // primary normalized key (label)
+  dci     String // display label
+  domain  String
+  book    String // source docx filename
+  content String // JSON: { sections: { categories, available, mechanism, profile{indications,contraindications,adverse,other}, management, interactions, pregnancy, posology, galenic, advice, notes, pk }, context, alias, domainsExtra }
+}
+
+// Community shortage report ("pénurie") — indicative, unverified signals
+model ShortageReport {
+  id        Int      @id @default(autoincrement())
+  drugId    Int?
+  brand     String
+  dci       String?
+  wilaya    String?
+  note      String?
+  status    String   @default("SIGNALEE") // SIGNALEE | RESOLUE
+  createdAt DateTime @default(now())
+
+  @@index([brand])
+  @@index([drugId])
+  @@index([createdAt])
+}
+
+// Generated RCP (Résumé Caractéristiques du Produit) per product, cached
+model Rcp {
+  id        Int      @id @default(autoincrement())
+  drugId    Int      @unique
+  dciKey    String
+  source    String // BOOK | AI | REGISTRY
+  content   String // JSON RCP document
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dciKey])
+}
+
+// Barcode linking (EAN-13, GTIN-14, GS1 Datamatrix, CBM) to a registered drug
+model DrugBarcode {
+  id        Int      @id @default(autoincrement())
+  barcode   String   @unique
+  drugId    Int
+  note      String?  // Ex: "Boîte de 10", "Packaging 2026", "Conditionnement hôpital"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  drug      Drug     @relation(fields: [drugId], references: [id], onDelete: Cascade)
+
+  @@index([barcode])
+  @@index([drugId])
+}

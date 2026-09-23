@@ -1,0 +1,654 @@
+     1→/**
+     2→ * Moteur local de règles d'interactions médicamenteuses (DzPharm).
+     3→ * Base de référence synthétique des associations cliniquement pertinentes
+     4→ * couramment rencontrées en Algérie. Fonctionne sans IA — réponse instantanée,
+     5→ * utilisée comme premier niveau d'analyse et comme repli si le service IA
+     6→ * d'analyse approfondie est indisponible.
+     7→ *
+     8→ * NB : liste non exhaustive — l'analyse IA complète et la validation
+     9→ * pharmaceutique restent indispensables.
+    10→ */
+    11→
+    12→export type LocalSeverity = 'CONTRE-INDIQUE' | 'MAJEURE' | 'MODEREE' | 'MINEURE'
+    13→
+    14→export interface LocalRule {
+    15→  id: string
+    16→  /** Jetons DCI (majuscules, sans accents) du premier membre de l'association. */
+    17→  left: string[]
+    18→  /** Jetons DCI du second membre. */
+    19→  right: string[]
+    20→  severity: LocalSeverity
+    21→  mechanism: string
+    22→  management: string
+    23→}
+    24→
+    25→/* ------------------------------------------------------------------ */
+    26→/* Jetons de classes pharmacologiques                                  */
+    27→/* ------------------------------------------------------------------ */
+    28→
+    29→const IEC = ['CAPTOPRIL', 'ENALAPRIL', 'LISINOPRIL', 'RAMIPRIL', 'PERINDOPRIL', 'QUINAPRIL', 'FOSINOPRIL', 'TRANDOLAPRIL', 'ZOFENOPRIL']
+    30→const ARA2 = ['LOSARTAN', 'VALSARTAN', 'IRBESARTAN', 'CANDESARTAN', 'TELMISARTAN', 'OLMESARTAN']
+    31→const AINS = ['IBUPROFENE', 'DICLOFENAC', 'KETOPROFENE', 'NAPROXENE', 'PIROXICAM', 'MELOXICAM', 'ACECLOFENAC', 'INDOMETACINE', 'FLURBIPROFENE', 'ASPIRINE']
+    32→const ISRS = ['FLUOXETINE', 'SERTRALINE', 'PAROXETINE', 'CITALOPRAM', 'ESCITALOPRAM', 'FLUVOXAMINE']
+    33→const IMAT = ['PHENELZINE', 'MOCLOBEMIDE', 'IPRONIAZIDE', 'ISOCARBOXAZIDE']
+    34→const MACROLIDES = ['ERYTHROMYCINE', 'CLARITHROMYCINE', 'AZITHROMYCINE', 'ROXITHROMYCINE', 'SPIRAMYCINE']
+    35→const FLUOROQUINOLONES = ['CIPROFLOXACINE', 'OFLOXACINE', 'LEVOFLOXACINE', 'NORFLOXACINE', 'MOXIFLOXACINE']
+    36→const STATINES = ['SIMVASTATINE', 'ATORVASTATINE', 'ROSUVASTATINE', 'PRAVASTATINE', 'FLUVASTATINE']
+    37→const AZOLES = ['KETOCONAZOLE', 'ITRACONAZOLE', 'FLUCONAZOLE', 'VORICONAZOLE']
+    38→const BENZODIAZEPINES = ['DIAZEPAM', 'BROMAZEPAM', 'ALPRAZOLAM', 'LORAZEPAM', 'CLONAZEPAM', 'OXAZEPAM', 'MIDAZOLAM']
+    39→const THIAZIDIQUES = ['HYDROCHLOROTHIAZIDE', 'INDAPAMIDE', 'CHLORTALIDONE']
+    40→const IPP = ['OMEPRAZOLE', 'ESOMEPRAZOLE', 'PANTOPRAZOLE', 'LANSOPRAZOLE', 'RABEPRAZOLE']
+    41→const SULFONYLUREES = ['GLIBENCLAMIDE', 'GLICLAZIDE', 'GLIMEPIRIDE', 'GLIPIZIDE']
+    42→const INDUCTEURS_ENZYMATIQUES = ['RIFAMPICINE', 'CARBAMAZEPINE', 'PHENYTOINE', 'PHENOBARBITAL', 'PRIMIDONE']
+    43→const OPIOIDES_FORTS = ['MORPHINE', 'TRAMADOL', 'FENTANYL', 'OXYCODONE', 'CODEINE']
+    44→const NITRES = ['TRINITRINE', 'ISOSORBIDE', 'MOLSIDOMINE']
+    45→const ANTACIDES = ['CALCIUM', 'MAGNESIUM', 'ALUMINIUM', 'HYDROXYDE D ALUMINIUM', 'CARBONATE DE CALCIUM', 'SIMETICONE']
+    46→const DIGITALIQUES = ['DIGOXINE']
+    47→const SYSTEMIQUES_AZOLES_CYP3A4 = ['KETOCONAZOLE', 'ITRACONAZOLE']
+    48→const SULFAMIDES_ANTIBIO = ['TRIMETHOPRIME', 'TRIMETOPRIME', 'SULFAMETHOXAZOLE', 'COTRIMOXAZOLE', 'COTRIMOXAZOLE TRIMETOPRIME']
+    49→
+    50→/*
+    51→ * AVK — en Algérie, l'antivitamine K commercialisé (SINTROM, AURACENO,
+    52→ * NOVAROL) est l'ACÉNOCOUMAROL ; warfarine/fluindione incluses pour les
+    53→ * ordonnances étrangères. Toutes les règles AVK couvrent la classe entière.
+    54→ * [Étendu lors de l'audit — en attente de validation pharmacienne]
+    55→ */
+    56→const AVK = ['WARFARINE', 'ACENOCOUMAROL', 'FLUINDIONE']
+    57→
+    58→/* Variantes orthographiques du registre officiel
+    59→ * (ex. « ACIDE ACETYLSALICYTIQUE » — graphie du fichier source). */
+    60→const ASPIRINE_TOKENS = ['ASPIRINE', 'ACIDE ACETYLSALICYLIQUE', 'ACIDE ACETYLSALICYTIQUE', 'ACETYLSALICYLATE DE LYSINE']
+    61→
+    62→
+    63→/* ------------------------------------------------------------------ */
+    64→/* Règles                                                              */
+    65→/* ------------------------------------------------------------------ */
+    66→
+    67→export const LOCAL_RULES: LocalRule[] = [
+    68→  // --- Antalgiques / AINS / anticoagulants -------------------------
+    69→  {
+    70→    id: 'aspirine-avk',
+    71→    left: ASPIRINE_TOKENS,
+    72→    right: AVK,
+    73→    severity: 'MAJEURE',
+    74→    mechanism: 'Addition des effets anticoagulants (aspirine : inhibition plaquettaire + lésion de la muqueuse digestive ; warfarine : inhibition de la vitamine K). Risque hémorragique majeur.',
+    75→    management: 'Association déconseillée sauf avis spécialisé. Si nécessaire : INR rapproché, dose minimale d\u2019aspirine, protection gastrique par IPP et surveillance clinique des signes hémorragiques.',
+    76→  },
+    77→  {
+    78→    id: 'paracetamol-avk',
+    79→    left: ['PARACETAMOL'],
+    80→    right: AVK,
+    81→    severity: 'MODEREE',
+    82→    mechanism: 'Le paracétamol à doses répétées (> 2 g/j pendant plusieurs jours) potentialise l\u2019anticoagulant en perturbant la synthèse des facteurs hépatiques.',
+    83→    management: 'Paracétamol préféré aux AINS comme antalgique chez le patient anticoagulé, sans dépasser 2 g/j de façon prolongée. Contrôle de l\u2019INR si prise itérative.',
+    84→  },
+    85→  {
+    86→    id: 'ains-avk',
+    87→    left: AINS.filter((a) => a !== 'ASPIRINE'),
+    88→    right: AVK,
+    89→    severity: 'MAJEURE',
+    90→    mechanism: 'Inhibition plaquettaire + toxicité digestive additive des AINS sur l\u2019anticoagulation par AVK : risque hémorragique (surtout digestif) multiplié.',
+    91→    management: 'Éviter l\u2019association. Antalgique de première intention : paracétamol. Si AINS indispensable : durée courte + IPP + surveillance INR et de l\u2019hémogramme.',
+    92→  },
+    93→  {
+    94→    id: 'aspirine-ibuprofene',
+    95→    left: ASPIRINE_TOKENS,
+    96→    right: ['IBUPROFENE', 'KETOPROFENE', 'DICLOFENAC'],
+    97→    severity: 'MODEREE',
+    98→    mechanism: 'Compétition au niveau du site de liaison de la cyclooxygénase : l\u2019AINS peut réduire l\u2019effet antiagrégant de l\u2019aspirine à faible dose, avec addition de la toxicité digestive.',
+    99→    management: 'Espacer la prise d\u2019aspirine d\u2019au moins 2 h avant l\u2019AINS, ou préférer le paracétamol. Surveillance de la tolérance digestive.',
+   100→  },
+   101→  {
+   102→    id: 'ains-methotrexate',
+   103→    left: AINS,
+   104→    right: ['METHOTREXATE'],
+   105→    severity: 'MAJEURE',
+   106→    mechanism: 'Réduction de l\u2019élimination rénale du méthotrexate (compétition tubulaire) et addition des toxicités digestives : risque de myélotoxicité et mucite.',
+   107→    management: 'Association à éviter. Si co-prescription inévitable à faible dose (polyarthrite) : methotrexate hebdomadaire, NFS et transaminases rapprochées, calcium folinate si besoin.',
+   108→  },
+   109→  {
+   110→    id: 'aod-ains',
+   111→    left: ['RIVAROXABAN', 'DABIGATRAN', 'APIXABAN', 'EDOXABAN'],
+   112→    right: AINS,
+   113→    severity: 'MAJEURE',
+   114→    mechanism: 'Addition du risque hémorragique : anticoagulant oral direct + inhibition plaquettaire et lésions digestives des AINS.',
+   115→    management: 'Éviter. En cas de douleur : paracétamol en première intention. Si association ponctuelle indispensable : dose minimale, durée courte, surveillance de l\u2019hémoglobine et des selles.',
+   116→  },
+   117→
+   118→  // --- Cardio-vasculaire --------------------------------------------
+   119→  {
+   120→    id: 'iec-ains',
+   121→    left: [...IEC, ...ARA2],
+   122→    right: AINS,
+   123→    severity: 'MAJEURE',
+   124→    mechanism: 'Les AINS réduisent la synthèse des prostaglandines vasodilatatrices rénales : chute de l\u2019effet antihypertenseur, risque d\u2019insuffisance rénale aiguë (triple mécanisme avec diurétique).',
+   125→    management: 'Éviter, surtout chez le sujet âgé ou insuffisant rénal. Préférer le paracétamol. Si AINS nécessaire : courte durée, contrôle de la créatinine et de la kaliémie à 7 jours.',
+   126→  },
+   127→  {
+   128→    id: 'iec-spironolactone',
+   129→    left: [...IEC, ...ARA2],
+   130→    right: ['SPIRONOLACTONE', 'EPLERENONE', 'CANRENOATE', 'AMILORIDE'],
+   131→    severity: 'MAJEURE',
+   132→    mechanism: 'Addition de l\u2019effet hyperkaliémiant (inhibition de l\u2019aldostérone + réduction de l\u2019excrétion tubulaire du potassium) : risque d\u2019hyperkaliémie menaçante.',
+   133→    management: 'Association utile dans l\u2019insuffisance cardiaque mais sous surveillance stricte : kaliémie et créatinine à 3-7 jours puis régulièrement. Limiter les apports potassiques.',
+   134→  },
+   135→  {
+   136→    id: 'iec-lithium',
+   137→    left: [...IEC, ...ARA2, ...THIAZIDIQUES],
+   138→    right: ['LITHIUM', 'CARBONATE DE LITHIUM'],
+   139→    severity: 'MAJEURE',
+   140→    mechanism: 'Réduction de la clairance rénale du lithium : augmentation de la lithémie avec risque de toxicité (tremblements, confusion, insuffisance rénale).',
+   141→    management: 'Surveillance clinique et lithémie rapprochée (à 5-7 jours puis toutes les 4-6 semaines). Adapter la posologie du lithium. Éducation du patient aux signes de surdosage.',
+   142→  },
+   143→  {
+   144→    id: 'bêtabloquant-verapamil',
+   145→    left: ['ATENOLOL', 'BISOPROLOL', 'METOPROLOL', 'PROPRANOLOL', 'NEBIVOLOL', 'CARVEDILOL'],
+   146→    right: ['VERAPAMIL', 'DILTIAZEM'],
+   147→    severity: 'MAJEURE',
+   148→    mechanism: 'Addition des effets chronotropes et dromotropes négatifs : bradycardie sévère, troubles de conduction, décompensation cardiaque.',
+   149→    management: 'Association contre-indiquée en cas de dysfonction sinusale ou de trouble de conduction. Si indispensable : ECG, fréquence cardiaque surveillée, doses minimales, éducation aux signes d\u2019intolérance.',
+   150→  },
+   151→  {
+   152→    id: 'amiodarone-digoxine',
+   153→    left: ['AMIODARONE'],
+   154→    right: DIGITALIQUES,
+   155→    severity: 'MAJEURE',
+   156→    mechanism: 'Inhibition du transporteur P-gp par l\u2019amiodarone : augmentation de la digoxinémie (jusqu\u2019à ×2) avec risque de toxicité digitalique.',
+   157→    management: 'Réduire la digoxine de moitié à l\u2019introduction de l\u2019amiodarone. Digoxinémie, ECG (trouble de conduction), surveillance clinique (nausées, troubles visuels, bradycardie).',
+   158→  },
+   159→  {
+   160→    id: 'digoxine-hypokaliemie',
+   161→    left: ['FUROSEMIDE', 'BUMETANIDE', ...THIAZIDIQUES],
+   162→    right: DIGITALIQUES,
+   163→    severity: 'MODEREE',
+   164→    mechanism: 'L\u2019hypokaliémie induite par les diurétiques favorise la liaison de la digoxine à la pompe Na/K-ATPase : potentialisation de la toxicité digitalique.',
+   165→    management: 'Corriger la kaliémie (supplémentation si K+ < 4 mmol/L), surveiller ECG et digoxinémie, éducation aux signes de toxicité digitalique.',
+   166→  },
+   167→  {
+   168→    id: 'amiodarone-avk',
+   169→    left: ['AMIODARONE'],
+   170→    right: AVK,
+   171→    severity: 'MAJEURE',
+   172→    mechanism: 'Inhibition du CYP2C9 par l\u2019amiodarone : augmentation de l\u2019INR avec risque hémorragique (effet retardé de plusieurs jours).',
+   173→    management: 'Réduire la warfarine de 30-50 % à l\u2019introduction. INR rapproché la première semaine puis hebdomadaire jusqu\u2019à stabilisation.',
+   174→  },
+   175→  {
+   176→    id: 'sildenafil-nitres',
+   177→    left: ['SILDENAFIL', 'TADALAFIL', 'VARDENAFIL'],
+   178→    right: NITRES,
+   179→    severity: 'CONTRE-INDIQUE',
+   180→    mechanism: 'Addition des effets vasodilatateurs (IPDE5 + donneur de monoxyde d\u2019azote) : hypotension artérielle profonde, voire état de choc.',
+   181→    management: 'Association formellement contre-indiquée. Délai de 24 h (48 h pour tadalafil) entre la prise d\u2019IPDE5 et tout dérivé nitré. Vérifier systématiquement les traitements du patient.',
+   182→  },
+   183→  {
+   184→    id: 'statines-clarithromycine',
+   185→    left: STATINES,
+   186→    right: ['CLARITHROMYCINE', 'ERYTHROMYCINE'],
+   187→    severity: 'MAJEURE',
+   188→    mechanism: 'Inhibition du CYP3A4 : augmentation importante des concentrations de statine avec risque de rhabdomyolyse (simvastatine/atorvastatine les plus concernées).',
+   189→    management: 'Suspendre la statine pendant le traitement macrolide ou utiliser l\u2019azithromycine (peu inhibitrice). Éducation aux signes : myalgies, urines foncées, faiblesse — dosage CPK si symptômes.',
+   190→  },
+   191→  {
+   192→    id: 'statines-azoles',
+   193→    left: STATINES,
+   194→    right: SYSTEMIQUES_AZOLES_CYP3A4,
+   195→    severity: 'MAJEURE',
+   196→    mechanism: 'Inhibition du CYP3A4 par les azolés systémiques : majoration de la myotoxicité des statines.',
+   197→    management: 'Réduire la dose de statine ou interruption temporaire pendant l\u2019antifongique. Surveillance des CPK et des myalgies. La pravastatine et la rosuvastatine (non métabolisées par CYP3A4) sont préférables.',
+   198→  },
+   199→  {
+   200→    id: 'simvastatine-amlodipine',
+   201→    left: ['SIMVASTATINE'],
+   202→    right: ['AMLODIPINE'],
+   203→    severity: 'MODEREE',
+   204→    mechanism: 'L\u2019amlodipine inhibe modérément le CYP3A4 : exposition accrue à la simvastatine et risque de rhabdomyolyse.',
+   205→    management: 'Ne pas dépasser 20 mg/j de simvastatine en association, ou substituer par une statine non concernée (rosuvastatine, pravastatine). Surveiller myalgies et CPK.',
+   206→  },
+   207→
+   208→  // --- Anti-infectieux ----------------------------------------------
+   209→  {
+   210→    id: 'macrolides-avk',
+   211→    left: MACROLIDES.filter((m) => m !== 'AZITHROMYCINE'),
+   212→    right: AVK,
+   213→    severity: 'MAJEURE',
+   214→    mechanism: 'Inhibition du CYP3A4 et déplacement protéique : majoration de l\u2019effet anticoagulant et de l\u2019INR.',
+   215→    management: 'INR à 3-4 jours après l\u2019initiation. Signes hémorragiques à expliquer au patient. L\u2019azithromycine est l\u2019alternative la plus sûre.',
+   216→  },
+   217→  {
+   218→    id: 'fq-tendinopathie',
+   219→    left: FLUOROQUINOLONES,
+   220→    right: ['PREDNISONE', 'PREDNISOLONE', 'METHYLPREDNISOLONE', 'DEXAMETHASONE', 'BETAMETHASONE', 'CORTICOIDE'],
+   221→    severity: 'MODEREE',
+   222→    mechanism: 'Les fluorquinolones exposent à la tendinopathie (rupture du tendon d\u2019Achille), risque fortement majoré par la corticothérapie systémique, surtout après 60 ans.',
+   223→    management: 'Éviter si possible (alternative antibiotique). Sinon : éviter le sport intensif, arrêt immédiat et avis médical à la moindre douleur tendineuse.',
+   224→  },
+   225→  {
+   226→    id: 'fq-antacides',
+   227→    left: FLUOROQUINOLONES,
+   228→    right: [...ANTACIDES, 'FER', 'SULFATE FERREUX', 'CALCIUM', 'ZINC'],
+   229→    severity: 'MODEREE',
+   230→    mechanism: 'Chélation digestive entre le cation (fer, calcium, magnésium, aluminium) et la fluorquinolone : chute de l\u2019absorption antibiotique et échec thérapeutique.',
+   231→    management: 'Espacer les prises : antibiotique 2 h avant ou 4 h après le sel minéral. Choisir si possible une supplémentation à distance des repas antibiotiques.',
+   232→  },
+   233→  {
+   234→    id: 'cyclines-fer',
+   235→    left: ['DOXYCYCLINE', 'MINOCYCLINE', 'LYMECYCLINE', 'TETRACYCLINE'],
+   236→    right: ['FER', 'SULFATE FERREUX', 'CALCIUM', ...ANTACIDES],
+   237→    severity: 'MODEREE',
+   238→    mechanism: 'Chélation digestive : perte d\u2019efficacité de la cycline par complexation insoluble avec les cations.',
+   239→    management: 'Prendre la cycline 2 h avant ou 4 h après le fer/calcium/antacid. La doxycycline (prise au cours d\u2019un repas léger sans produits laitiers) est la moins sensible.',
+   240→  },
+   241→  {
+   242→    id: 'rifampicine-contraceptifs',
+   243→    left: INDUCTEURS_ENZYMATIQUES,
+   244→    right: ['ETHINYLESTRADIOL', 'LEVNORGESTREL', 'DESOGESTREL', 'DROSPIRENONE', 'CONTRACEPTIF'],
+   245→    severity: 'MAJEURE',
+   246→    mechanism: 'Induction enzymatique hépatique (CYP3A4) : accélération du métabolisme des hormones contraceptives avec risque d\u2019échec de contraception.',
+   247→    management: 'Ajouter une méthode barrier (préservatif) pendant le traitement et 4 à 8 semaines après l\u2019arrêt, ou utiliser un contraceptif adapté (progestatif hors CYP3A4 / DIU).',
+   248→  },
+   249→  {
+   250→    id: 'rifampicine-avk',
+   251→    left: ['RIFAMPICINE', 'RIFABUTINE'],
+   252→    right: AVK,
+   253→    severity: 'MAJEURE',
+   254→    mechanism: 'Induction du CYP2C9 : chute de l\u2019INR et risque thrombotique à l\u2019introduction, effet inverse (surdosage) à l\u2019arrêt.',
+   255→    management: 'Contrôle de l\u2019INR très rapproché (2×/semaine en début et à l\u2019arrêt). Adaptation posologique fréquente et nécessaire.',
+   256→  },
+   257→  {
+   258→    id: 'theophylline-macrolides',
+   259→    left: ['THEOPHYLLINE'],
+   260→    right: ['ERYTHROMYCINE', 'CLARITHROMYCINE', 'CIPROFLOXACINE'],
+   261→    severity: 'MAJEURE',
+   262→    mechanism: 'Inhibition du métabolisme hépatique de la théophylline : risque de surdosage (tachycardie, convulsions, arythmies).',
+   263→    management: 'Réduire la théophylline d\u2019environ 1/3 et surveiller la théophyllinémie. Éducation aux signes de surdosage (palpitations, tremblements, insomnie, vomissements).',
+   264→  },
+   265→  {
+   266→    id: 'griseofulvine-avk',
+   267→    left: ['GRISEOFULVINE'],
+   268→    right: AVK,
+   269→    severity: 'MODEREE',
+   270→    mechanism: 'Induction enzymatique : diminution de l\u2019effet anticoagulant.',
+   271→    management: 'Surveiller l\u2019INR et adapter la posologie de warfarine pendant et après le traitement.',
+   272→  },
+   273→
+   274→  // --- Diabétologie --------------------------------------------------
+   275→  {
+   276→    id: 'metformine-contraste',
+   277→    left: ['METFORMINE'],
+   278→    right: ['PRODUIT DE CONTRASTE', 'CONTRASTE IODE', 'IODIXANOL', 'IOHEXOL', 'IOVERSOL'],
+   279→    severity: 'MAJEURE',
+   280→    mechanism: 'Le produit de contraste iodé peut provoquer une néphropathie induite : accumulation de metformine et risque d\u2019acidose lactique.',
+   281→    management: 'Arrêter la metformine 48 h avant l\u2019examen, ne la reprendre que 48 h après, après contrôle de la créatinine. Hydratation du patient.',
+   282→  },
+   283→  {
+   284→    id: 'sulfamides-fq',
+   285→    left: SULFONYLUREES,
+   286→    right: FLUOROQUINOLONES,
+   287→    severity: 'MODEREE',
+   288→    mechanism: 'Les fluorquinolones potentialisent l\u2019effet hypoglycémiant des sulfamides (effet propre + déplacement protéique) : risque d\u2019hypoglycémie.',
+   289→    management: 'Renforcer l\u2019autosurveillance glycémique pendant l\u2019antibiothérapie, informer le patient des signes d\u2019hypoglycémie (sueurs, tremblements, faim).',
+   290→  },
+   291→  {
+   292→    id: 'insuline-bêtabloquant',
+   293→    left: ['INSULINE'],
+   294→    right: ['ATENOLOL', 'BISOPROLOL', 'METOPROLOL', 'PROPRANOLOL', 'NEBIVOLOL'],
+   295→    severity: 'MODEREE',
+   296→    mechanism: 'Les bêtabloquants masquent les signes adrénergiques d\u2019alerte de l\u2019hypoglycémie (palpitations, tremblements) et peuvent prolonger l\u2019hypoglycémie.',
+   297→    management: 'Préférer un bêtabloquant cardio-sélectif. Autosurveillance glycémique renforcée à l\u2019instauration. Éducation : reconnaître les signes neuroglycopéniques (confusion, sueurs).',
+   298→  },
+   299→
+   300→  // --- Psychotropes ---------------------------------------------------
+   301→  {
+   302→    id: 'isrs-imao',
+   303→    left: ISRS,
+   304→    right: IMAT,
+   305→    severity: 'CONTRE-INDIQUE',
+   306→    mechanism: 'Blocage simultané de la recapture et de la dégradation de la sérotonine : risque de syndrome sérotoninergique grave (hyperthermie, convulsions, rhabdomyolyse).',
+   307→    management: 'Association contre-indiquée. Respecter un délai de wash-out de 2 semaines (5 semaines pour la fluoxétine) entre les deux traitements.',
+   308→  },
+   309→  {
+   310→    id: 'isrs-tramadol',
+   311→    left: ISRS,
+   312→    right: ['TRAMADOL'],
+   313→    severity: 'MAJEURE',
+   314→    mechanism: 'Addition sérotoninergique + diminution de l\u2019efficacité analgésique (compétition métabolique) : risque de syndrome sérotoninergique et de convulsions.',
+   315→    management: 'Éviter l\u2019association. Analgésie alternative (paracétamol ± morphinique direct). Si association maintenue : doses minimales, surveillance clinique étroite (agitation, myoclonies, fièvre).',
+   316→  },
+   317→  {
+   318→    id: 'isrs-ains',
+   319→    left: ISRS,
+   320→    right: AINS,
+   321→    severity: 'MAJEURE',
+   322→    mechanism: 'Les ISRS altèrent l\u2019agrégation plaquettaire (déplétion sérotoninique plaquettaire) et s\u2019additionnent à la toxicité digestive des AINS : hémorragie digestive haute.',
+   323→    management: 'Éviter si possible ; sinon associer un IPP protecteur, privilégier le paracétamol, surveiller méléna et anémie.',
+   324→  },
+   325→  {
+   326→    id: 'isrs-lithium',
+   327→    left: ISRS,
+   328→    right: ['LITHIUM', 'CARBONATE DE LITHIUM'],
+   329→    severity: 'MAJEURE',
+   330→    mechanism: 'Potentialisation sérotoninergique et réduction de la clairance du lithium : risque de syndrome sérotoninergique et de lithiémie élevée.',
+   331→    management: 'Surveillance clinique rapprochée (tremblements, soif, confusion) et lithémie régulière. Doses prudentes des deux molécules.',
+   332→  },
+   333→  {
+   334→    id: 'opioides-benzodiazepines',
+   335→    left: OPIOIDES_FORTS,
+   336→    right: BENZODIAZEPINES,
+   337→    severity: 'MAJEURE',
+   338→    mechanism: 'Dépression additive des centres respiratoires : risque de dépression respiratoire profonde, notamment chez le sujet âgé ou en début de traitement.',
+   339→    management: 'Réserver aux cas sans alternative, aux doses minimales efficaces, durée la plus courte. Informer le patient et l\u2019entourage des signes de surdosage (somnolence excessive, respiration lente). Éviter l\u2019alcool.',
+   340→  },
+   341→  {
+   342→    id: 'carbamazepine-contraceptifs',
+   343→    left: ['CARBAMAZEPINE', 'PHENYTOINE', 'PHENOBARBITAL', 'PRIMIDONE', 'OXCARBAZEPINE'],
+   344→    right: ['ETHINYLESTRADIOL', 'LEVNORGESTREL', 'DESOGESTREL', 'DROSPIRENONE', 'CONTRACEPTIF'],
+   345→    severity: 'MODEREE',
+   346→    mechanism: 'Induction enzymatique : diminution des concentrations hormonales et risque d\u2019échec contraceptif.',
+   347→    management: 'Méthode contraceptive non hormonale ou adaptation (progestatif à forte dose / DIU cuivre). Informer la patiente.',
+   348→  },
+   349→  {
+   350→    id: 'lithium-ains',
+   351→    left: ['LITHIUM', 'CARBONATE DE LITHIUM'],
+   352→    right: AINS,
+   353→    severity: 'MAJEURE',
+   354→    mechanism: 'Les AINS réduisent la filtration glomérulaire et la réabsorption proximale du lithium : augmentation de la lithiémie (jusqu\u2019à +40 %).',
+   355→    management: 'Éviter les AINS (paracétamol en première intention). Si indispensable : demi-dose d\u2019AINS, lithémie de contrôle après 4-5 jours, hydratation correcte.',
+   356→  },
+   357→  {
+   358→    id: 'lithium-thiazidiques',
+   359→    left: ['LITHIUM', 'CARBONATE DE LITHIUM'],
+   360→    right: THIAZIDIQUES,
+   361→    severity: 'MAJEURE',
+   362→    mechanism: 'Réduction de la clairance du lithium par les diurétiques thiazidiques : risque de surdosage progressif.',
+   363→    management: 'Lithémie rapprochée à l\u2019instauration (5-7 jours), réduction préventive de la dose de lithium d\u2019environ 25-50 %, éducation aux signes de toxicité.',
+   364→  },
+   365→
+   366→  // --- Gastro-entérologie --------------------------------------------
+   367→  {
+   368→    id: 'omeprazole-clopidogrel',
+   369→    left: ['CLOPIDOGREL'],
+   370→    right: IPP,
+   371→    severity: 'MAJEURE',
+   372→    mechanism: 'L\u2019oméprazole (et l\u2019ésoméprazole) inhibent le CYP2C19 qui active le clopidogrel : réduction de l\u2019effet antiagrégant et risque thrombotique.',
+   373→    management: 'Préférer le pantoprazole (peu inhibiteur du CYP2C19) si un IPP est nécessaire. Éviter oméprazole et ésoméprazole chez le patient coronarien sous clopidogrel.',
+   374→  },
+   375→  {
+   376→    id: 'omeprazole-methotrexate',
+   377→    left: IPP,
+   378→    right: ['METHOTREXATE'],
+   379→    severity: 'MODEREE',
+   380→    mechanism: 'Compétition de l\u2019élimination tubulaire du méthotrexate : augmentation des concentrations et de la toxicité hématologique.',
+   381→    management: 'Surveillance de la NFS et des transaminases. Discuter de l\u2019arrêt temporaire de l\u2019IPP pendant les cures de méthotrexate.',
+   382→  },
+   383→  {
+   384→    id: 'cisapride-macrolides',
+   385→    left: ['CISAPRIDE'],
+   386→    right: MACROLIDES.concat(AZOLES),
+   387→    severity: 'CONTRE-INDIQUE',
+   388→    mechanism: 'Inhibition du CYP3A4 : accumulation de cisapride et allongement majeur de l\u2019intervalle QT avec risque de torsades de pointes.',
+   389→    management: 'Association contre-indiquée. Utiliser un prokinétique alternatif (dompéridone, sous réserve de l\u2019ECG) et un antibiotique non inhibiteur.',
+   390→  },
+   391→
+   392→  // --- Divers ----------------------------------------------------------
+   393→  {
+   394→    id: 'allopurinol-azathioprine',
+   395→    left: ['ALLOPURINOL'],
+   396→    right: ['AZATHIOPRINE', 'MERCAPTOPURINE'],
+   397→    severity: 'CONTRE-INDIQUE',
+   398→    mechanism: 'Inhibition de la xanthine oxydase : blocage du catabolisme de l\u2019azathioprine et accumulation de métabolites actifs avec myélotoxicité sévère.',
+   399→    management: 'Association contre-indiquée sauf avis hématologique spécialisé avec réduction de la dose d\u2019immunosuppresseur à 25 % et NFS très rapprochée.',
+   400→  },
+   401→  {
+   402→    id: 'colchicine-clarithromycine',
+   403→    left: ['COLCHICINE'],
+   404→    right: ['CLARITHROMYCINE', 'ERYTHROMYCINE', 'CICLOSPORINE', 'ATAZANAVIR', 'RITONAVIR'],
+   405→    severity: 'MAJEURE',
+   406→    mechanism: 'Inhibition de la P-gp et du CYP3A4 : multiplication des concentrations de colchicine avec risque de toxicité mortelle (aplasie médullaire, rhabdomyolyse).',
+   407→    management: 'Réduire fortement la colchicine (dose maximale 0,5 mg/j) et limiter la durée, ou suspendre. NFS, CPK, fonction rénale surveillées.',
+   408→  },
+   409→  {
+   410→    id: 'colchicine-statines',
+   411→    left: ['COLCHICINE'],
+   412→    right: STATINES,
+   413→    severity: 'MODEREE',
+   414→    mechanism: 'Addition des risques musculaires : majoration du risque de rhabdomyolyse, surtout si insuffisance rénale.',
+   415→    management: 'Doses minimales, hydratation, éducation aux myalgies et urines foncées. Dosage CPK si symptômes.',
+   416→  },
+   417→  {
+   418→    id: 'fer-levothyroxine',
+   419→    left: ['LEVOTHYROXINE', 'LIOTHYRONINE'],
+   420→    right: ['FER', 'SULFATE FERREUX', 'FUMARATE FERREUX', ...ANTACIDES, 'CALCIUM'],
+   421→    severity: 'MODEREE',
+   422→    mechanism: 'Chélation digestive et élévation du pH gastrique : chute de l\u2019absorption de l\u2019hormone thyroïdienne avec réapparition de l\u2019hypothyroïdie.',
+   423→    management: 'Espacer les prises d\u2019au moins 4 h (lévothyroxine à jeun à distance). Contrôle de la TSH après 6 semaines.',
+   424→  },
+   425→  {
+   426→    id: 'ip-thiazidiques',
+   427→    left: IPP,
+   428→    right: THIAZIDIQUES,
+   429→    severity: 'MINEURE',
+   430→    mechanism: 'L\u2019hypomagnésémie induite par les IPP majore le risque d\u2019hypokaliémie des diurétiques thiazidiques.',
+   431→    management: 'Surveillance de la kaliémie et de la magnésémie chez les patients fragiles (âgés, digitalisés). Supplémentation si besoin.',
+   432→  },
+   433→  {
+   434→    id: 'prednisone-ias',
+   435→    left: ['PREDNISONE', 'PREDNISOLONE', 'DEXAMETHASONE'],
+   436→    right: ['INSULINE', 'GLIBENCLAMIDE', 'GLICLAZIDE', 'METFORMINE', 'GLIMEPIRIDE'],
+   437→    severity: 'MODEREE',
+   438→    mechanism: 'Les corticoïdes induisent une insulinorésistance : déséquilibre glycémique chez le diabétique.',
+   439→    management: 'Renforcer la surveillance glycémique pendant et après la corticothérapie, adapter transitoirement le traitement antidiabétique (souvent +20-30 %).',
+   440→  },
+   441→  {
+   442→    id: 'tramadol-carbamazepine',
+   443→    left: ['TRAMADOL'],
+   444→    right: ['CARBAMAZEPINE', 'PHENYTOINE', 'PHENOBARBITAL', 'RIFAMPICINE'],
+   445→    severity: 'MODEREE',
+   446→    mechanism: 'Induction enzymatique : réduction de l\u2019efficacité analgésique du tramadol (métabolisme accéléré).',
+   447→    management: 'Antalgie alternative ou adaptation posologique sous contrôle de l\u2019efficacité.',
+   448→  },
+   449→  {
+   450→    id: 'cimetidine-anticoagulants',
+   451→    left: ['CIMETIDINE'],
+   452→    right: [...AVK, 'PHENYTOINE', 'THEOPHYLLINE', 'DIAZEPAM'],
+   453→    severity: 'MODEREE',
+   454→    mechanism: 'Inhibition du CYP3A4/2C9 par la cimétidine : augmentation des concentrations des médicaments métabolisés par ces voies.',
+   455→    management: 'Préférer un IPP ou la famotidine. Si cimétidine nécessaire : surveiller INR, concentrations et effets indésirables.',
+   456→  },
+   457→  {
+   458→    id: 'fer-levodopa',
+   459→    left: ['LEVODOPA', 'CARBIDOPA', 'BENSERAZIDE'],
+   460→    right: ['FER', 'SULFATE FERREUX'],
+   461→    severity: 'MINEURE',
+   462→    mechanism: 'Chélation digestive du fer avec la lévodopa : réduction de l\u2019absorption et de l\u2019efficacité antiparkinsonienne.',
+   463→    management: 'Espacer les prises (fer ≥ 2 h après la lévodopa), surveiller l\u2019efficacité motrice.',
+   464→  },
+   465→  {
+   466→    id: 'metoclopramide-neuroleptiques',
+   467→    left: ['METOCLOPRAMIDE', 'DOMPERIDONE'],
+   468→    right: ['HALOPERIDOL', 'RISPERIDONE', 'OLANZAPINE', 'CHLORPROMAZINE', 'PROCHLORPERAZINE'],
+   469→    severity: 'MODEREE',
+   470→    mechanism: 'Addition du blocage dopaminergique central : risque de syndrome extrapyramidal et de syndrome malin des neuroleptiques.',
+   471→    management: 'Limiter la durée du métoclopramide (≤ 5 jours), doses minimales, surtout chez le sujet âgé. Arrêt aux premiers signes extrapyramidaux.',
+   472→  },
+   473→
+   474→  // --- Règles ajoutées lors de l'audit d'intégrité (couverture classe) ---
+   475→  // [Ajouts cliniques — en attente de validation pharmacienne]
+   476→  {
+   477→    id: 'cotrimoxazole-methotrexate',
+   478→    left: SULFAMIDES_ANTIBIO,
+   479→    right: ['METHOTREXATE'],
+   480→    severity: 'MAJEURE',
+   481→    mechanism: 'Le triméthoprime inhibe le transport tubulaire rénal du méthotrexate et possède un effet antifolique propre : majoration de la myélotoxicité et de la mucite.',
+   482→    management: 'Éviter l’association. Alternative antibiotique à privilégier. Si indispensable : NFS rapprochée, surveillance clinique (aphtes, infections, pâleur).',
+   483→  },
+   484→  {
+   485→    id: 'iec-ara2',
+   486→    left: IEC,
+   487→    right: ARA2,
+   488→    severity: 'MAJEURE',
+   489→    mechanism: 'Double blocage du système rénine-angiotensine : hypotension, syncope, insuffisance rénale aiguë et hyperkaliémie (données ONTARGET).',
+   490→    management: 'Association déconseillée. En cas de besoin (insuffisance cardiaque sous surveillance spécialisée) : contrôles tensionnels, créatinine et kaliémie rapprochés.',
+   491→  },
+   492→  {
+   493→    id: 'statines-gemfibrozil',
+   494→    left: STATINES,
+   495→    right: ['GEMFIBROZIL', 'FENOFIBRATE'],
+   496→    severity: 'MAJEURE',
+   497→    mechanism: 'Inhibition de l’OATP1B1 et du CYP2C8 (gemfibrozil) : multiplication des concentrations de statine avec risque de rhabdomyolyse. Association contre-indiquée avec la simvastatine.',
+   498→    management: 'Éviter, surtout avec simvastatine. Préférer la pravastatine/rosuvastatine à faible dose ou espacer les prises. Éducation aux myalgies et urines foncées ; CPK si symptômes.',
+   499→  },
+   500→  {
+   501→    id: 'ains-diurétiques',
+   502→    left: AINS,
+   503→    right: [...THIAZIDIQUES, 'FUROSEMIDE', 'BUMETANIDE'],
+   504→    severity: 'MODEREE',
+   505→    mechanism: 'Les AINS réduisent la synthèse des prostaglandines rénales vasodilatatrices : chute de l’effet diurétique et antihypertenseur, risque d’insuffisance rénale aiguë.',
+   506→    management: 'Surveillance du poids, de la tension et de la créatinine. Hydratation correcte. Association à risque majoré si IEC/ARA2 associé (triple whammy).',
+   507→  },
+   508→  {
+   509→    id: 'potassium-iec-epargneurs',
+   510→    left: ['POTASSIUM', 'CHLORURE DE POTASSIUM', 'POTASSIUM CHLORURE'],
+   511→    right: [...IEC, ...ARA2, 'SPIRONOLACTONE', 'EPLERENONE', 'AMILORIDE', 'CANRENOATE'],
+   512→    severity: 'MAJEURE',
+   513→    mechanism: 'Apport potassique exogène additionné de l’effet hyperkaliémiant des IEC/ARA2/épargneurs : risque d’hyperkaliémie menaçante (arythmies).',
+   514→    management: 'Éviter l’automédication par suppléments potassiques (y compris sels de régime). Kaliémie de contrôle et ECG si association maintenue.',
+   515→  },
+   516→  {
+   517→    id: 'cyclines-contraceptifs-secours',
+   518→    left: ['RIFAMPICINE', 'RIFABUTINE'],
+   519→    right: ['MIDAZOLAM', 'TRIAZOLAM'],
+   520→    severity: 'MAJEURE',
+   521→    mechanism: 'Induction enzymatique puissante (CYP3A4) par la rifampicine : chute drastique des concentrations de benzodiazépine avec perte d’efficacité (et risque de sevrage).',
+   522→    management: 'Éviter ; utiliser une benzodiazépine non métabolisée par le CYP3A4 (lorazépam) si anxiolyse nécessaire sous rifampicine.',
+   523→  },
+   524→]
+   525→
+   526→/* ------------------------------------------------------------------ */
+   527→/* Moteur de correspondance                                            */
+   528→/* ------------------------------------------------------------------ */
+   529→
+   530→export function normalizeKey(s: string): string {
+   531→  return s
+   532→    .normalize('NFD')
+   533→    .replace(/[\u0300-\u036f]/g, '')
+   534→    .toUpperCase()
+   535→    .replace(/[^A-Z0-9 ]/g, ' ')
+   536→    .replace(/\s+/g, ' ')
+   537→    .trim()
+   538→}
+   539→
+   540→/**
+   541→ * Détecte les règles applicables sur une liste de médicaments.
+   542→ * Chaque médicament est identifié par sa marque (`name` ou `input`) et sa DCI
+   543→ * (l'une des deux peut manquer) ; la correspondance se fait sur les jetons
+   544→ * DCI/marque normalisés.
+   545→ */
+   546→export function matchInteractions(
+   547→  drugs: { name?: string; input?: string; dci?: string | null }[]
+   548→): LocalRule[] {
+   549→  const keysPerDrug = drugs.map((d) => {
+   550→    const label = d.name ?? d.input ?? ''
+   551→    const keys = new Set<string>()
+   552→    if (d.dci) {
+   553→      const k = normalizeKey(d.dci)
+   554→      if (k) keys.add(k)
+   555→      // les DCI composées (« X + Y ») sont éclatées
+   556→      for (const part of k.split(/(?: \+ | ET )/)) {
+   557→        const p = part.trim()
+   558→        if (p.length >= 3) keys.add(p)
+   559→      }
+   560→    }
+   561→    const n = normalizeKey(label)
+   562→    if (n) keys.add(n)
+   563→    return Array.from(keys)
+   564→  })
+   565→
+   566→  const allKeys = new Set(keysPerDrug.flat())
+   567→
+   568→  return LOCAL_RULES.filter((rule) => {
+   569→    const leftHit = rule.left.some((t) => tokenMatch(allKeys, t))
+   570→    const rightHit = rule.right.some((t) => tokenMatch(allKeys, t))
+   571→    // les deux membres doivent être touchés par des médicaments distincts
+   572→    if (!leftHit || !rightHit) return false
+   573→    for (let i = 0; i < drugs.length; i++) {
+   574→      const di = keysPerDrug[i]
+   575→      const leftSelf = rule.left.some((t) => tokenMatch(new Set(di), t))
+   576→      const rightSelf = rule.right.some((t) => tokenMatch(new Set(di), t))
+   577→      if (leftSelf && rightSelf) {
+   578→        // un seul produit couvre les deux membres (ex : association fixe) → non pertinent
+   579→        continue
+   580→      }
+   581→      for (let j = i + 1; j < drugs.length; j++) {
+   582→        const dj = keysPerDrug[j]
+   583→        const pairLeft = rule.left.some((t) => tokenMatch(new Set(di), t))
+   584→        const pairRight = rule.right.some((t) => tokenMatch(new Set(dj), t))
+   585→        const pairLeftR = rule.right.some((t) => tokenMatch(new Set(di), t))
+   586→        const pairRightL = rule.left.some((t) => tokenMatch(new Set(dj), t))
+   587→        if ((pairLeft && pairRight) || (pairLeftR && pairRightL)) return true
+   588→      }
+   589→    }
+   590→    return false
+   591→  })
+   592→}
+   593→
+   594→function tokenMatch(keys: Set<string>, token: string): boolean {
+   595→  if (keys.has(token)) return true
+   596→  const t = ` ${token} `
+   597→  for (const k of keys) {
+   598→    if (k === token) return true
+   599→    if ((` ${k} `).includes(t) && token.length >= 4) return true
+   600→    if ((` ${token} `).includes(` ${k} `) && k.length >= 4) return true
+   601→  }
+   602→  return false
+   603→}
+   604→
+   605→export const SEVERITY_WEIGHT: Record<LocalSeverity, number> = {
+   606→  'CONTRE-INDIQUE': 4,
+   607→  MAJEURE: 3,
+   608→  MODEREE: 2,
+   609→  MINEURE: 1,
+   610→}
+   611→
+   612→export function globalRiskFromPairs(
+   613→  pairs: { severity: LocalSeverity }[]
+   614→): 'FAIBLE' | 'MODERE' | 'ELEVE' | 'CRITIQUE' {
+   615→  if (pairs.length === 0) return 'FAIBLE'
+   616→  const max = Math.max(...pairs.map((p) => SEVERITY_WEIGHT[p.severity]))
+   617→  if (max >= 4) return 'CRITIQUE'
+   618→  if (max === 3) return 'ELEVE'
+   619→  if (max === 2) return 'MODERE'
+   620→  return 'FAIBLE'
+   621→}
+   622→
+   623→/** Associe une règle aux paires de produits concernés (marques lisibles). */
+   624→export function pairsFromRule(
+   625→  rule: LocalRule,
+   626→  drugs: { name?: string; input?: string; dci?: string | null }[]
+   627→): [string, string][] {
+   628→  const result: [string, string][] = []
+   629→  for (let i = 0; i < drugs.length; i++) {
+   630→    for (let j = i + 1; j < drugs.length; j++) {
+   631→      const ki = new Set(
+   632→        [drugs[i].dci, drugs[i].name ?? drugs[i].input]
+   633→          .filter(Boolean)
+   634→          .map((s) => normalizeKey(s as string))
+   635→      )
+   636→      const kj = new Set(
+   637→        [drugs[j].dci, drugs[j].name ?? drugs[j].input]
+   638→          .filter(Boolean)
+   639→          .map((s) => normalizeKey(s as string))
+   640→      )
+   641→      const iL = rule.left.some((t) => tokenMatch(ki, t))
+   642→      const iR = rule.right.some((t) => tokenMatch(ki, t))
+   643→      const jL = rule.left.some((t) => tokenMatch(kj, t))
+   644→      const jR = rule.right.some((t) => tokenMatch(kj, t))
+   645→      if ((iL && jR) || (iR && jL)) {
+   646→        const label = (d: { name?: string; input?: string; dci?: string | null }) =>
+   647→          d.name ?? d.input ?? d.dci ?? '—'
+   648→        result.push([label(drugs[i]), label(drugs[j])])
+   649→      }
+   650→    }
+   651→  }
+   652→  return result
+   653→}
+   654→

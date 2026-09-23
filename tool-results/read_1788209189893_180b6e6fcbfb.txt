@@ -1,0 +1,808 @@
+     1→'use client'
+     2→
+     3→/**
+     4→ * Armoire à Pharmacie Familiale — vue principale (v2, plan complet).
+     5→ *
+     6→ * Architecture conforme au plan « New Feature — Armoire à Pharmacie
+     7→ * Familiale » : membres du foyer (drapeaux cliniques → outils dédiés),
+     8→ * entrées assignables à plusieurs membres, catégories, kits de rangement,
+     9→ * analyse du foyer entier, urgence, réglages de confidentialité.
+    10→ *
+    11→ * Toutes les données restent locales (store persisté + localStorage) ;
+    12→ * aucune donnée nominative ne quitte l'appareil.
+    13→ */
+    14→
+    15→import { useCallback, useEffect, useMemo, useState } from 'react'
+    16→import { motion } from 'framer-motion'
+    17→import {
+    18→  AlertTriangle,
+    19→  Boxes,
+    20→  HeartPulse,
+    21→  Lock,
+    22→  Plus,
+    23→  Printer,
+    24→  ScanLine,
+    25→  ShieldCheck,
+    26→  UserPlus,
+    27→  Users,
+    28→} from 'lucide-react'
+    29→import { toast } from '@/hooks/use-toast'
+    30→import { useDzPharm } from '../store'
+    31→import { Badge } from '@/components/ui/badge'
+    32→import { Button } from '@/components/ui/button'
+    33→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    34→import {
+    35→  Dialog,
+    36→  DialogContent,
+    37→  DialogDescription,
+    38→  DialogFooter,
+    39→  DialogHeader,
+    40→  DialogTitle,
+    41→} from '@/components/ui/dialog'
+    42→import { Input } from '@/components/ui/input'
+    43→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    44→import { cn } from '@/lib/utils'
+    45→import type {
+    46→  ArmoireEntry,
+    47→  ArmoireEntryInput,
+    48→  ArmoireMember,
+    49→  ArmoireMemberInput,
+    50→  ArmoireTab,
+    51→  ExpiryReminders,
+    52→} from './types'
+    53→import {
+    54→  CONSENT_KEY,
+    55→  FIRST_AID_KEY,
+    56→  PIN_KEY,
+    57→  MAX_ENTRIES,
+    58→  MAX_MEMBERS,
+    59→} from './constants'
+    60→import { computeCabinetAlerts, alertsByEntry, readReminders, writeReminders } from './utils'
+    61→import { MemberDialog } from './member-dialog'
+    62→import { EntryDialog } from './entry-dialog'
+    63→import { EntryCard } from './entry-card'
+    64→import { OverviewTab } from './overview-tab'
+    65→import { InventoryTab } from './inventory-tab'
+    66→import { AnalysisTab } from './analysis-tab'
+    67→import { EmergencyTab } from './emergency-tab'
+    68→import { SettingsTab } from './settings-tab'
+    69→import { PrintSummary } from './print-summary'
+    70→
+    71→/* ------------------------------------------------------------------ */
+    72→/* Écran de verrou PIN (plan 3.6 — verrou dédié à l'armoire)           */
+    73→/* ------------------------------------------------------------------ */
+    74→
+    75→function PinLockScreen({
+    76→  onUnlock: onUnlock,
+    77→  onRequestWipe: onRequestWipe,
+    78→}: {
+    79→  onUnlock: () => void
+    80→  onRequestWipe: () => void
+    81→}) {
+    82→  const [pin, setPin] = useState('')
+    83→  const [tries, setTries] = useState(0)
+    84→
+    85→  function tryUnlock() {
+    86→    const stored = localStorage.getItem(PIN_KEY)
+    87→    if (pin && stored && pin === stored) {
+    88→      setPin('')
+    89→      setTries(0)
+    90→      onUnlock()
+    91→    } else {
+    92→      const next = tries + 1
+    93→      setTries(next)
+    94→      setPin('')
+    95→    }
+    96→  }
+    97→
+    98→  return (
+    99→    <div className="mx-auto flex max-w-sm flex-col items-center px-4 pt-16">
+   100→      <Card className="w-full">
+   101→        <CardHeader className="pb-3 text-center">
+   102→          <span
+   103→            className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-state-danger/10"
+   104→            aria-hidden
+   105→          >
+   106→            <Lock className="size-6 text-state-danger" />
+   107→          </span>
+   108→          <CardTitle className="mt-2 text-lg">Armoire verrouillée</CardTitle>
+   109→          <p className="text-sm font-normal text-muted-foreground">
+   110→            Saisissez le code PIN de l’armoire.
+   111→          </p>
+   112→        </CardHeader>
+   113→        <CardContent className="space-y-3">
+   114→          <Input
+   115→            type="password"
+   116→            inputMode="numeric"
+   117→            maxLength={4}
+   118→            value={pin}
+   119→            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+   120→            onKeyDown={(e) => {
+   121→              if (e.key === 'Enter') tryUnlock()
+   122→            }}
+   123→            placeholder="••••"
+   124→            autoFocus
+   125→            aria-label="Code PIN de l’armoire"
+   126→            className="text-center text-lg tracking-[0.5em]"
+   127→          />
+   128→          {tries > 0 ? (
+   129→            <p role="alert" className="text-center text-xs text-state-danger">
+   130→              Code incorrect ({tries}/3)
+   131→            </p>
+   132→          ) : null}
+   133→          <Button onClick={tryUnlock} className="w-full" disabled={pin.length < 4}>
+   134→            Déverrouiller
+   135→          </Button>
+   136→          {tries >= 3 ? (
+   137→            <Button variant="ghost" className="w-full text-xs" onClick={onRequestWipe}>
+   138→              Code oublié ? Réinitialiser l’armoire (efface tout)
+   139→            </Button>
+   140→          ) : (
+   141→            <p className="text-center text-[11px] text-muted-foreground">
+   142→              Verrou de confort local — ne remplace pas une sécurité forte.
+   143→            </p>
+   144→          )}
+   145→        </CardContent>
+   146→      </Card>
+   147→    </div>
+   148→  )
+   149→}
+   150→
+   151→/* ------------------------------------------------------------------ */
+   152→/* Écran de consentement premier usage (plan 3.6)                      */
+   153→/* ------------------------------------------------------------------ */
+   154→
+   155→function ConsentDialog({ onAccept }: { onAccept: () => void }) {
+   156→  return (
+   157→    <Dialog open onOpenChange={(o) => (o ? null : onAccept())}>
+   158→      <DialogContent className="max-w-lg">
+   159→        <DialogHeader>
+   160→          <DialogTitle className="flex items-center gap-2">
+   161→            <ShieldCheck className="size-5 text-primary" aria-hidden />
+   162→            Avant d’utiliser votre armoire familiale
+   163→          </DialogTitle>
+   164→          <DialogDescription asChild>
+   165→            <div className="space-y-3 pt-1 text-sm leading-relaxed text-muted-foreground">
+   166→              <p>
+   167→                L’armoire enregistre <strong className="text-foreground">qui prend quel
+   168→                médicament</strong> dans votre foyer — ce sont des données de santé sensibles.
+   169→              </p>
+   170→              <ul className="space-y-1.5">
+   171→                <li>
+   172→                  <strong className="text-foreground">Stockage 100 % local :</strong> tout reste
+   173→                  sur cet appareil (navigateur). Rien n’est envoyé sur Internet.
+   174→                </li>
+   175→                <li>
+   176→                  <strong className="text-foreground">Aucune donnée nominative en ligne :</strong>{' '}
+   177→                  lors d’une analyse, seuls les noms de médicaments sont transmis aux moteurs
+   178→                  (interactions, grossesse) — jamais les noms de personnes.
+   179→                </li>
+   180→                <li>
+   181→                  <strong className="text-foreground">Zéro publicité, zéro profilage :</strong>{' '}
+   182→                  aucune donnée de santé n’est utilisée à des fins d’analyse ou de publicité.
+   183→                </li>
+   184→                <li>
+   185→                  <strong className="text-foreground">Vos droits :</strong> export et effacement
+   186→                  complet disponibles dans Réglages à tout moment.
+   187→                </li>
+   188→              </ul>
+   189→              <p className="text-xs">
+   190→                Cadre : loi algérienne 18-07 (modifiée 25-11) — les données de santé sont des
+   191→                données sensibles. Une révision juridique reste recommandée avant tout usage
+   192→                professionnel.
+   193→              </p>
+   194→            </div>
+   195→          </DialogDescription>
+   196→        </DialogHeader>
+   197→        <DialogFooter>
+   198→          <Button onClick={onAccept}>J’ai compris et j’accepte</Button>
+   199→        </DialogFooter>
+   200→      </DialogContent>
+   201→    </Dialog>
+   202→  )
+   203→}
+   204→
+   205→/* ------------------------------------------------------------------ */
+   206→/* Vue principale                                                      */
+   207→/* ------------------------------------------------------------------ */
+   208→
+   209→export function ArmoireView() {
+   210→  const members = useDzPharm((s) => s.armoireMembers)
+   211→  const entries = useDzPharm((s) => s.armoireEntries)
+   212→  const journal = useDzPharm((s) => s.armoireJournal)
+   213→  const addMember = useDzPharm((s) => s.addArmoireMember)
+   214→  const updateMember = useDzPharm((s) => s.updateArmoireMember)
+   215→  const deleteMember = useDzPharm((s) => s.deleteArmoireMember)
+   216→  const addEntry = useDzPharm((s) => s.addArmoireEntry)
+   217→  const updateEntry = useDzPharm((s) => s.updateArmoireEntry)
+   218→  const removeEntry = useDzPharm((s) => s.removeArmoireEntry)
+   219→  const addJournalEntry = useDzPharm((s) => s.addArmoireJournalEntry)
+   220→  const wipeData = useDzPharm((s) => s.wipeArmoireData)
+   221→  const openDrug = useDzPharm((s) => s.openDrug)
+   222→  const setView = useDzPharm((s) => s.setView)
+   223→
+   224→  const [tab, setTab] = useState<ArmoireTab>('apercu')
+   225→
+   226→  /* ------------- Confidentialité (plan 3.6) ------------------------ */
+   227→  const [gate, setGate] = useState<'checking' | 'locked' | 'open'>('checking')
+   228→  const [consentOpen, setConsentOpen] = useState(false)
+   229→  const [consentAt, setConsentAt] = useState<string | null>(null)
+   230→  const [pinEnabled, setPinEnabled] = useState(false)
+   231→  const [wipeConfirmOpen, setWipeConfirmOpen] = useState(false)
+   232→  const [reminders, setReminders] = useState<ExpiryReminders>({ d7: true, d30: true, d90: false })
+   233→
+   234→  useEffect(() => {
+   235→    try {
+   236→      const consent = localStorage.getItem(CONSENT_KEY)
+   237→      setConsentAt(consent)
+   238→      if (!consent) setConsentOpen(true)
+   239→      const hasPin = localStorage.getItem(PIN_KEY) !== null
+   240→      setPinEnabled(hasPin)
+   241→      setGate(hasPin ? 'locked' : 'open')
+   242→      setReminders(readReminders())
+   243→    } catch {
+   244→      setGate('open')
+   245→    }
+   246→  }, [])
+   247→
+   248→  /* ------------- Alertes (seuils configurables) -------------------- */
+   249→  const alerts = useMemo(() => computeCabinetAlerts(entries, reminders), [entries, reminders])
+   250→  const perEntryAlerts = useMemo(() => alertsByEntry(entries, reminders), [entries, reminders])
+   251→
+   252→  /* ------------- Dialogues ----------------------------------------- */
+   253→  const [memberDialogOpen, setMemberDialogOpen] = useState(false)
+   254→  const [editingMember, setEditingMember] = useState<ArmoireMember | null>(null)
+   255→  const [entryDialogOpen, setEntryDialogOpen] = useState(false)
+   256→  const [editingEntry, setEditingEntry] = useState<ArmoireEntry | null>(null)
+   257→  const [presetMemberIds, setPresetMemberIds] = useState<string[]>([])
+   258→  const [deleteMemberTarget, setDeleteMemberTarget] = useState<ArmoireMember | null>(null)
+   259→
+   260→  const handleAddMember = useCallback(() => {
+   261→    setEditingMember(null)
+   262→    setMemberDialogOpen(true)
+   263→  }, [])
+   264→
+   265→  const handleEditMember = useCallback((m: ArmoireMember) => {
+   266→    setEditingMember(m)
+   267→    setMemberDialogOpen(true)
+   268→  }, [])
+   269→
+   270→  const handleDeleteMember = useCallback((m: ArmoireMember) => {
+   271→    setDeleteMemberTarget(m)
+   272→  }, [])
+   273→
+   274→  const confirmDeleteMember = useCallback(() => {
+   275→    if (!deleteMemberTarget) return
+   276→    deleteMember(deleteMemberTarget.id)
+   277→    toast({
+   278→      title: 'Membre supprimé',
+   279→      description: `Les entrées de ${deleteMemberTarget.name} restent dans l’inventaire (non assignées).`,
+   280→    })
+   281→    setDeleteMemberTarget(null)
+   282→  }, [deleteMemberTarget, deleteMember])
+   283→
+   284→  const submitMember = useCallback(
+   285→    (input: ArmoireMemberInput) => {
+   286→      if (editingMember) {
+   287→        updateMember(editingMember.id, input)
+   288→        toast({ title: 'Membre mis à jour', description: input.name })
+   289→      } else {
+   290→        const created = addMember(input)
+   291→        if (!created) {
+   292→          toast({
+   293→            title: 'Limite atteinte',
+   294→            description: `Maximum ${MAX_MEMBERS} membres par foyer.`,
+   295→            variant: 'destructive',
+   296→          })
+   297→          return
+   298→        }
+   299→        toast({ title: 'Membre ajouté', description: `${input.name} rejoint le foyer.` })
+   300→      }
+   301→      setMemberDialogOpen(false)
+   302→      setEditingMember(null)
+   303→    },
+   304→    [editingMember, addMember, updateMember]
+   305→  )
+   306→
+   307→  const handleAddEntry = useCallback((presetMemberId?: string) => {
+   308→    setEditingEntry(null)
+   309→    setPresetMemberIds(presetMemberId ? [presetMemberId] : [])
+   310→    setEntryDialogOpen(true)
+   311→  }, [])
+   312→
+   313→  const handleEditEntry = useCallback((e: ArmoireEntry) => {
+   314→    setEditingEntry(e)
+   315→    setPresetMemberIds([])
+   316→    setEntryDialogOpen(true)
+   317→  }, [])
+   318→
+   319→  const submitEntry = useCallback(
+   320→    (input: ArmoireEntryInput) => {
+   321→      if (editingEntry) {
+   322→        updateEntry(editingEntry.uid, input)
+   323→        toast({ title: 'Entrée mise à jour', description: input.brand })
+   324→      } else {
+   325→        const result = addEntry(input)
+   326→        if (result === 'added') {
+   327→          toast({
+   328→            title: 'Ajouté à l’armoire',
+   329→            description: `${input.brand} — pensez à relancer l’analyse du foyer.`,
+   330→          })
+   331→          setTab('analyse')
+   332→        } else if (result === 'duplicate') {
+   333→          toast({
+   334→            title: 'Déjà présent',
+   335→            description: `${input.brand} figure déjà pour ce(s) membre(s) — même médicament, même assignation.`,
+   336→            variant: 'destructive',
+   337→          })
+   338→          return
+   339→        } else {
+   340→          toast({
+   341→            title: 'Armoire pleine',
+   342→            description: `Maximum ${MAX_ENTRIES} entrées.`,
+   343→            variant: 'destructive',
+   344→          })
+   345→          return
+   346→        }
+   347→      }
+   348→      setEntryDialogOpen(false)
+   349→      setEditingEntry(null)
+   350→    },
+   351→    [editingEntry, addEntry, updateEntry]
+   352→  )
+   353→
+   354→  const handleRemoveEntry = useCallback(
+   355→    (uid: string) => {
+   356→      const entry = entries.find((e) => e.uid === uid)
+   357→      removeEntry(uid)
+   358→      if (entry) toast({ title: 'Entrée retirée', description: entry.brand })
+   359→    },
+   360→    [entries, removeEntry]
+   361→  )
+   362→
+   363→  const handleOpenSheet = useCallback(
+   364→    (drugId: number) => {
+   365→      openDrug(drugId)
+   366→    },
+   367→    [openDrug]
+   368→  )
+   369→
+   370→  /** Plan 3.4.14 — lien réassort vers la fiche (prix PPA + équivalents). */
+   371→  const handleRestock = useCallback(
+   372→    (entry: ArmoireEntry) => {
+   373→      if (entry.drugId != null) {
+   374→        setView('catalogue')
+   375→        openDrug(entry.drugId)
+   376→        toast({
+   377→          title: 'Fiche prix ouverte',
+   378→          description: `${entry.brand} — prix public et équivalents génériques.`,
+   379→        })
+   380→      } else {
+   381→        setView('catalogue')
+   382→        toast({
+   383→          title: 'Catalogue ouvert',
+   384→          description: 'Produit hors répertoire — recherchez-le dans le catalogue.',
+   385→        })
+   386→      }
+   387→    },
+   388→    [setView, openDrug]
+   389→  )
+   390→
+   391→  const handleRemindersChange = useCallback((r: ExpiryReminders) => {
+   392→    writeReminders(r)
+   393→    setReminders(r)
+   394→  }, [])
+   395→
+   396→  /* ------------- Confidentialité : actions -------------------------- */
+   397→
+   398→  const acceptConsent = useCallback(() => {
+   399→    const iso = new Date().toISOString()
+   400→    try {
+   401→      localStorage.setItem(CONSENT_KEY, iso)
+   402→    } catch {
+   403→      /* stockage indisponible — le consentement sera redemandé */
+   404→    }
+   405→    setConsentAt(iso)
+   406→    setConsentOpen(false)
+   407→  }, [])
+   408→
+   409→  const enablePin = useCallback((pin: string) => {
+   410→    try {
+   411→      localStorage.setItem(PIN_KEY, pin)
+   412→    } catch {
+   413→      /* ignore */
+   414→    }
+   415→    setPinEnabled(true)
+   416→    toast({
+   417→      title: 'Code PIN activé',
+   418→      description: 'Il sera demandé à chaque ouverture de l’armoire sur cet appareil.',
+   419→    })
+   420→  }, [])
+   421→
+   422→  const disablePin = useCallback(() => {
+   423→    try {
+   424→      localStorage.removeItem(PIN_KEY)
+   425→    } catch {
+   426→      /* ignore */
+   427→    }
+   428→    setPinEnabled(false)
+   429→    toast({ title: 'Code PIN désactivé', description: 'L’armoire s’ouvre désormais sans code.' })
+   430→  }, [])
+   431→
+   432→  /** Export JSON complet (droit d'accès) — inclut membres, entrées, journal. */
+   433→  const exportArmoireData = useCallback(() => {
+   434→    try {
+   435→      const payload = {
+   436→        format: 'dzpharm-armoire-export-v2',
+   437→        app: 'DzPharm',
+   438→        exportedAt: new Date().toISOString(),
+   439→        membres: members,
+   440→        entrees: entries,
+   441→        journal,
+   442→        trousseSecours: readFirstAid(),
+   443→        confidentialite: {
+   444→          consentementAccepteLe: consentAt,
+   445→          pinActif: pinEnabled,
+   446→          rappels: reminders,
+   447→          note: 'Le code PIN n’est volontairelement pas inclus dans l’export.',
+   448→        },
+   449→        note: 'Données enregistrées uniquement sur cet appareil (localStorage) — aucun envoi en ligne.',
+   450→      }
+   451→      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+   452→      const url = URL.createObjectURL(blob)
+   453→      const a = document.createElement('a')
+   454→      a.href = url
+   455→      a.download = `dzpharm-armoire-${new Date().toISOString().slice(0, 10)}.json`
+   456→      document.body.appendChild(a)
+   457→      a.click()
+   458→      a.remove()
+   459→      URL.revokeObjectURL(url)
+   460→      toast({
+   461→        title: 'Export JSON généré',
+   462→        description: 'Toutes les données locales de l’armoire ont été téléchargées.',
+   463→      })
+   464→    } catch {
+   465→      toast({
+   466→        title: 'Échec de l’export',
+   467→        description: 'Une erreur est survenue lors de la génération du fichier JSON.',
+   468→        variant: 'destructive',
+   469→      })
+   470→    }
+   471→  }, [members, entries, journal, consentAt, pinEnabled, reminders])
+   472→
+   473→  /** Effacement définitif (droit d'effacement). */
+   474→  const wipeArmoire = useCallback(() => {
+   475→    setWipeConfirmOpen(false)
+   476→    try {
+   477→      wipeData()
+   478→      localStorage.removeItem(PIN_KEY)
+   479→      localStorage.removeItem(FIRST_AID_KEY)
+   480→      localStorage.removeItem(CONSENT_KEY)
+   481→    } catch {
+   482→      /* ignore */
+   483→    }
+   484→    window.location.reload()
+   485→  }, [wipeData])
+   486→
+   487→  /* --------------------------- Rendu -------------------------------- */
+   488→
+   489→  if (gate === 'checking') return null
+   490→
+   491→  if (gate === 'locked') {
+   492→    return (
+   493→      <div className="pb-10">
+   494→        <PinLockScreen
+   495→          onUnlock={() => setGate('open')}
+   496→          onRequestWipe={() => setWipeConfirmOpen(true)}
+   497→        />
+   498→        <ConfirmWipeDialog open={wipeConfirmOpen} onOpenChange={setWipeConfirmOpen} onConfirm={wipeArmoire} />
+   499→      </div>
+   500→    )
+   501→  }
+   502→
+   503→  const expiringCount = alerts.filter((a) => a.kind === 'expired' || a.kind === 'expiring7').length
+   504→
+   505→  return (
+   506→    <div className="pb-10">
+   507→      {consentOpen ? <ConsentDialog onAccept={acceptConsent} /> : null}
+   508→
+   509→      {/* En-tête */}
+   510→      <section aria-labelledby="armoire-title" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 print:hidden">
+   511→        <div className="flex flex-wrap items-start justify-between gap-4">
+   512→          <div>
+   513→            <h1
+   514→              id="armoire-title"
+   515→              className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+   516→            >
+   517→              <span
+   518→                className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/20"
+   519→                aria-hidden
+   520→              >
+   521→                <Users className="size-5.5 text-primary-foreground" />
+   522→              </span>
+   523→              Armoire familiale
+   524→              <span className="hidden text-base font-normal text-muted-foreground sm:inline">
+   525→                خزانة الأدوية العائلية
+   526→              </span>
+   527→            </h1>
+   528→            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+   529→              Inventaire privé des médicaments du foyer — membres, catégories, rangement,
+   530→              péremptions, analyse d’interactions du foyer entier et fiche d’urgence.
+   531→            </p>
+   532→          </div>
+   533→          <div className="flex flex-wrap items-center gap-2">
+   534→            <Button
+   535→              variant="outline"
+   536→              size="sm"
+   537→              onClick={() => window.print()}
+   538→              disabled={entries.length === 0}
+   539→              className="gap-1.5"
+   540→            >
+   541→              <Printer className="size-3.5" aria-hidden />
+   542→              Exporter (PDF)
+   543→            </Button>
+   544→            <Badge
+   545→              variant="outline"
+   546→              className="gap-1.5 border-primary/25 bg-primary/5 text-primary"
+   547→            >
+   548→              <Lock className="size-3" aria-hidden />
+   549→              Données locales uniquement
+   550→            </Badge>
+   551→          </div>
+   552→        </div>
+   553→      </section>
+   554→
+   555→      {/* Actions rapides + état */}
+   556→      <section
+   557→        aria-label="Actions rapides"
+   558→        className="mx-auto max-w-7xl px-4 pt-5 sm:px-6 print:hidden"
+   559→      >
+   560→        <div className="flex flex-wrap items-center gap-2">
+   561→          <Button size="sm" onClick={() => handleAddEntry()} className="gap-1.5">
+   562→            <Plus className="size-3.5" aria-hidden />
+   563→            Ajouter un médicament
+   564→          </Button>
+   565→          <Button size="sm" variant="outline" onClick={handleAddMember} className="gap-1.5">
+   566→            <UserPlus className="size-3.5" aria-hidden />
+   567→            Ajouter un membre
+   568→          </Button>
+   569→          {members.length === 0 ? null : (
+   570→            <Badge variant="outline" className="gap-1.5 border-border bg-muted/50">
+   571→              <Users className="size-3" aria-hidden />
+   572→              {members.length} membre{members.length > 1 ? 's' : ''}
+   573→            </Badge>
+   574→          )}
+   575→          {entries.length === 0 ? null : (
+   576→            <Badge variant="outline" className="gap-1.5 border-border bg-muted/50">
+   577→              <Boxes className="size-3" aria-hidden />
+   578→              {entries.length} médicament{entries.length > 1 ? 's' : ''}
+   579→            </Badge>
+   580→          )}
+   581→          {expiringCount > 0 ? (
+   582→            <Badge variant="outline" className="gap-1.5 border-state-danger/30 bg-state-danger/10 text-state-danger">
+   583→              <AlertTriangle className="size-3" aria-hidden />
+   584→              {expiringCount} péremption{expiringCount > 1 ? 's' : ''} urgente{expiringCount > 1 ? 's' : ''}
+   585→            </Badge>
+   586→          ) : null}
+   587→          {alerts.some((a) => a.kind === 'controle') ? (
+   588→            <Badge variant="outline" className="gap-1.5 border-state-danger/30 bg-state-danger/10 text-state-danger">
+   589→              <ScanLine className="size-3" aria-hidden />
+   590→              Liste contrôlée
+   591→            </Badge>
+   592→          ) : null}
+   593→          {members.some((m) => m.pregnant) ? (
+   594→            <Badge variant="outline" className="gap-1.5 border-state-danger/30 bg-state-danger/10 text-state-danger">
+   595→              <HeartPulse className="size-3" aria-hidden />
+   596→              Grossesse suivie
+   597→            </Badge>
+   598→          ) : null}
+   599→        </div>
+   600→      </section>
+   601→
+   602→      {/* Onglets */}
+   603→      <Tabs
+   604→        value={tab}
+   605→        onValueChange={(v) => setTab(v as ArmoireTab)}
+   606→        className="mx-auto mt-6 max-w-7xl px-4 sm:px-6"
+   607→      >
+   608→        <TabsList className="w-full justify-start overflow-x-auto">
+   609→          <TabsTrigger value="apercu" className="gap-1.5">
+   610→            Vue d’ensemble
+   611→          </TabsTrigger>
+   612→          <TabsTrigger value="inventaire" className="gap-1.5">
+   613→            Inventaire
+   614→            {entries.length > 0 ? (
+   615→              <span className="rounded-full bg-muted px-1.5 text-[10px] tabular-nums">
+   616→                {entries.length}
+   617→              </span>
+   618→            ) : null}
+   619→          </TabsTrigger>
+   620→          <TabsTrigger value="analyse" className="gap-1.5">
+   621→            Analyse
+   622→            {alerts.length > 0 ? (
+   623→              <span className="rounded-full bg-state-danger/15 px-1.5 text-[10px] text-state-danger tabular-nums">
+   624→                {alerts.length}
+   625→              </span>
+   626→            ) : null}
+   627→          </TabsTrigger>
+   628→          <TabsTrigger value="urgence" className="gap-1.5">
+   629→            Urgence
+   630→          </TabsTrigger>
+   631→          <TabsTrigger value="reglages" className="gap-1.5">
+   632→            Réglages
+   633→          </TabsTrigger>
+   634→        </TabsList>
+   635→
+   636→        <TabsContent value="apercu" className="mt-6">
+   637→          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+   638→            <OverviewTab
+   639→              members={members}
+   640→              entries={entries}
+   641→              alerts={alerts}
+   642→              journal={journal}
+   643→              hasPin={pinEnabled}
+   644→              onAddEntry={() => handleAddEntry()}
+   645→              onAddMember={handleAddMember}
+   646→              onGoTab={setTab}
+   647→            />
+   648→          </motion.div>
+   649→        </TabsContent>
+   650→
+   651→        <TabsContent value="inventaire" className="mt-6">
+   652→          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+   653→            <InventoryTab
+   654→              members={members}
+   655→              entries={entries}
+   656→              onAddEntry={handleAddEntry}
+   657→              onEdit={handleEditEntry}
+   658→              onRemove={handleRemoveEntry}
+   659→              onOpenSheet={handleOpenSheet}
+   660→              onRestock={handleRestock}
+   661→              onManageMembers={handleAddMember}
+   662→            />
+   663→          </motion.div>
+   664→        </TabsContent>
+   665→
+   666→        <TabsContent value="analyse" className="mt-6">
+   667→          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+   668→            <AnalysisTab
+   669→              members={members}
+   670→              entries={entries}
+   671→              onJournal={addJournalEntry}
+   672→              onOpenSheet={handleOpenSheet}
+   673→            />
+   674→          </motion.div>
+   675→        </TabsContent>
+   676→
+   677→        <TabsContent value="urgence" className="mt-6">
+   678→          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+   679→            <EmergencyTab members={members} entries={entries} />
+   680→          </motion.div>
+   681→        </TabsContent>
+   682→
+   683→        <TabsContent value="reglages" className="mt-6">
+   684→          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+   685→            <SettingsTab
+   686→              consentAt={consentAt}
+   687→              pinEnabled={pinEnabled}
+   688→              onEnablePin={enablePin}
+   689→              onDisablePin={disablePin}
+   690→              onExport={exportArmoireData}
+   691→              onWipe={() => setWipeConfirmOpen(true)}
+   692→              members={members}
+   693→              entries={entries}
+   694→              journal={journal}
+   695→              onAddMember={handleAddMember}
+   696→              onEditMember={handleEditMember}
+   697→              onDeleteMember={handleDeleteMember}
+   698→              onRemindersChange={handleRemindersChange}
+   699→            />
+   700→          </motion.div>
+   701→        </TabsContent>
+   702→      </Tabs>
+   703→
+   704→      {/* Dialogues */}
+   705→      <MemberDialog
+   706→        open={memberDialogOpen}
+   707→        onOpenChange={setMemberDialogOpen}
+   708→        editing={editingMember}
+   709→        onSubmit={submitMember}
+   710→        onDelete={handleDeleteMember}
+   711→      />
+   712→      <EntryDialog
+   713→        open={entryDialogOpen}
+   714→        onOpenChange={setEntryDialogOpen}
+   715→        members={members}
+   716→        editing={editingEntry}
+   717→        presetMemberIds={presetMemberIds}
+   718→        onSubmit={submitEntry}
+   719→      />
+   720→
+   721→      {/* Confirmation suppression membre */}
+   722→      <Dialog
+   723→        open={deleteMemberTarget != null}
+   724→        onOpenChange={(o) => (o ? null : setDeleteMemberTarget(null))}
+   725→      >
+   726→        <DialogContent className="max-w-sm">
+   727→          <DialogHeader>
+   728→            <DialogTitle>Supprimer {deleteMemberTarget?.name} ?</DialogTitle>
+   729→          </DialogHeader>
+   730→          <p className="text-sm text-muted-foreground">
+   731→            Les médicaments restent dans l’inventaire mais ne seront plus assignés à ce membre.
+   732→          </p>
+   733→          <DialogFooter>
+   734→            <Button variant="ghost" onClick={() => setDeleteMemberTarget(null)}>
+   735→              Annuler
+   736→            </Button>
+   737→            <Button variant="destructive" onClick={confirmDeleteMember}>
+   738→              Supprimer
+   739→            </Button>
+   740→          </DialogFooter>
+   741→        </DialogContent>
+   742→      </Dialog>
+   743→
+   744→      <ConfirmWipeDialog
+   745→        open={wipeConfirmOpen}
+   746→        onOpenChange={setWipeConfirmOpen}
+   747→        onConfirm={wipeArmoire}
+   748→      />
+   749→
+   750→      {/* Résumé imprimable (plan 3.4.15) */}
+   751→      <PrintSummary members={members} entries={entries} journal={journal} alerts={alerts} />
+   752→    </div>
+   753→  )
+   754→}
+   755→
+   756→/* ------------------------------------------------------------------ */
+   757→/* Confirmation d'effacement complet                                   */
+   758→/* ------------------------------------------------------------------ */
+   759→
+   760→function ConfirmWipeDialog({
+   761→  open,
+   762→  onOpenChange,
+   763→  onConfirm,
+   764→}: {
+   765→  open: boolean
+   766→  onOpenChange: (o: boolean) => void
+   767→  onConfirm: () => void
+   768→}) {
+   769→  return (
+   770→    <Dialog open={open} onOpenChange={onOpenChange}>
+   771→      <DialogContent className="max-w-sm">
+   772→        <DialogHeader>
+   773→          <DialogTitle className="flex items-center gap-2">
+   774→            <AlertTriangle className="size-5 text-state-danger" aria-hidden />
+   775→            Tout effacer ?
+   776→          </DialogTitle>
+   777→        </DialogHeader>
+   778→        <p className="text-sm text-muted-foreground">
+   779→          Membres, médicaments, journal, trousse de secours et code PIN seront définitivement
+   780→          supprimés de cet appareil. Les favoris et le panier Chifa des autres vues sont conservés.
+   781→        </p>
+   782→        <DialogFooter>
+   783→          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+   784→            Annuler
+   785→          </Button>
+   786→          <Button variant="destructive" onClick={onConfirm}>
+   787→            Effacer définitivement
+   788→          </Button>
+   789→        </DialogFooter>
+   790→      </DialogContent>
+   791→    </Dialog>
+   792→  )
+   793→}
+   794→
+   795→/* ------------------------------------------------------------------ */
+   796→/* Helpers locaux                                                      */
+   797→/* ------------------------------------------------------------------ */
+   798→
+   799→function readFirstAid(): string[] {
+   800→  try {
+   801→    const raw = localStorage.getItem(FIRST_AID_KEY)
+   802→    if (raw) return JSON.parse(raw) as string[]
+   803→  } catch {
+   804→    /* ignore */
+   805→  }
+   806→  return []
+   807→}
+   808→
