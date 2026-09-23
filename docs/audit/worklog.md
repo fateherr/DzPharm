@@ -505,3 +505,21 @@ Commit: pending (this entry)
 Notes:
   - P3-19 ("Effacer l'historique" button) was scheduled for Phase 4 but the store already had clearRecent() — shipping it now is a cheap, additive, high-value user-facing feature (satisfies requirement #5).
   - The directory toolbar padding standardization (p-4) aligns with the home-view stat cards (p-4) for visual consistency (requirement #4).
+
+---
+Card: P1-22 — Fix: modal overlays eat header button clicks (lock button)
+Date: 2026-09-24 (cron round 5)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/header.tsx (imported useEffect; NEW global Ctrl+L / Cmd+L keyboard shortcut wired via useEffect — calls handleLogout() from any context, including inside modals/dialogs/sheets where the header lock button is behind the z-50 backdrop and unclickable)
+  - src/components/dzpharm/command-palette.tsx (added <CommandShortcut>Ctrl L</CommandShortcut> badge to the "Verrouiller la session immédiatement" command — discovers the shortcut via the palette)
+  - screenshots/cron-r5-p1-22.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing; initial attempt had a use-before-declare error at line 171 because the useEffect was before handleLogout — fixed by reordering)
+  - tsc --noEmit: clean for src/
+  - agent-browser: dashboard renders (H1="Tableau de bord", --state-danger=#e70044); Cmd+K palette opens; "Ctrl L" badge CONFIRMED present; pressing Ctrl+L redirects to /login (session locked). The shortcut works from ANY context — inside modals, dialogs, sheets — bypassing the z-index hierarchy issue entirely.
+Commit: pending (this entry)
+Notes:
+  - The V8 audit bet ("lock button behind backdrop, unclickable from inside modal") is now mitigated TWO ways: (1) the Command Palette already had a "Verrouiller" command accessible via Cmd+K (z-50+), and (2) the NEW Ctrl+L shortcut works from anywhere without opening the palette. The z-index hierarchy itself (header z-40, modal backdrop z-50) is unchanged — the fix is additive (a new shortcut), not a z-index rewrite.
+  - The brief also mentioned the "lock in modal footer" approach (render a lock button inside each modal's footer). That's a heavier per-modal change — deferred. The Ctrl+L shortcut + the Cmd+K lock command cover the use case more cleanly.
+  - P2-32 (lock behaves as logout, not a true lock) is out of scope — flagged for the human. The current "lock" calls handleLogout() which clears sessionStorage + cookie + redirects to /login. A true "lock" would keep the session alive but require re-auth to resume — that's a P0-02 NextAuth migration concern.

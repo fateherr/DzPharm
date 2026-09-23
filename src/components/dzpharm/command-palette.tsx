@@ -532,6 +532,7 @@ export function CommandPalette() {
           >
             <Lock className="size-4" />
             <span>Verrouiller la session immédiatement</span>
+            <CommandShortcut>Ctrl L</CommandShortcut>
           </CommandItem>
         </CommandGroup>
       </CommandList>

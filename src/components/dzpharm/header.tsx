@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
@@ -172,6 +173,20 @@ export function Header() {
     router.push('/login')
     router.refresh()
   }
+
+  // P1-22 — Global Ctrl+L / Cmd+L keyboard shortcut for session lock.
+  // Works from ANY context (inside modals, dialogs, sheets) where the header
+  // lock button may be behind the z-50 backdrop and unclickable.
+  useEffect(() => {
+    function handleLockShortcut(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'l') {
+        e.preventDefault()
+        void handleLogout()
+      }
+    }
+    window.addEventListener('keydown', handleLockShortcut)
+    return () => window.removeEventListener('keydown', handleLockShortcut)
+  }, [router])
 
   // Vérifier si un élément du menu déroulant est actif
   const isSecondaryActive =
