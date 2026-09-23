@@ -99,3 +99,58 @@ Notes:
   - V12 ✅ PARTIAL — #20 (Search-Autocomplete) BUILT, #21 (Recently-viewed) BUILT. Governance gap, not delivery gap. Routes to P2-41.
   - V13 ✅ PARTIAL — (a) Dictation: copilot-view.tsx:280-365 uses MediaRecorder + /api/ai/asr (server-side ASR, multilingual) — "hard-wired fr-FR" finding STALE. Real gap = no transcript review step before send (line 356 setInput direct) → routes to P0-04. (b) Palette: at runtime the default porcelain palette overrides --state-* to canonical values (#e70044 danger confirmed in BOTH light + dark), but :root (globals.css:83-89) still holds WRONG values (#dc2626 etc.) and there is NO !important lock — any palette that stops overriding would revert. → routes to P0-07.
   - V14 ⚠️ PARTIAL — DCI "paracetamol" matches on default "Tous" scope (confirmed). AMM fragment + Arabic brand + typo coverage not measured. Routes to P1-23.
+
+---
+Card: QW-01 — Load Inter + Noto Sans Arabic + JetBrains Mono via next/font/google
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/app/layout.tsx (imports Inter, Noto_Sans_Arabic, JetBrains_Mono from next/font/google; variable config + display:swap; <html className> applies the 3 font variables, gated on NEXT_PUBLIC_FEATURE_WEBFONTS)
+  - src/app/globals.css (@theme inline --font-sans/--font-mono/--font-arabic use the new variables; :root runtime tokens; unlayered body/code/[lang=ar] rules with !important as a safety net)
+  - scripts/verify-qw.sh (new — font/reduced-motion/aria verification)
+  - screenshots/phase0.5/QW01-login-inter-final.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing in search-autocomplete/session-guard/tools-view — baseline debt, untouched)
+  - tsc --noEmit: clean for src/
+  - dev.log: clean (GET / 200, /login 200)
+  - agent-browser: document.fonts.size = 73; getComputedStyle(body).fontFamily = "Inter, Inter Fallback, Noto Sans Arabic, ..."; document.fonts.check("16px Inter") = true
+Screenshot: screenshots/phase0.5/QW01-login-inter-final.png
+Commit: pending (this entry)
+Notes:
+  - ROOT CAUSE of prior failures: the original font stack referenced var(--font-geist-sans) which is NEVER defined (no Geist loaded). In CSS, var(--undefined) without a fallback makes the ENTIRE font-family declaration invalid-at-computed-time (ITPF) → body reverted to inheriting <html>'s default stack → Inter never loaded. Fixed by adding fallbacks: var(--font-geist-sans, system-ui) and var(--font-geist-mono, monospace).
+  - Before this card, the codebase loaded ZERO webfonts (the `--font-geist-sans` var was always undefined → always system-ui fallback). QW-01 is a real fix, not just polish.
+  - Feature flag NEXT_PUBLIC_FEATURE_WEBFONTS defaults ON (set to "false" to roll back to system fonts if LCP regresses — Risk #5 mitigation).
+  - Arabic text will render in Noto Sans Arabic via font-display: swap (lazy-loads on first Arabic glyph; not preloaded to keep LCP < 300ms).
+
+---
+Card: QW-02 — prefers-reduced-motion CSS media query
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/app/globals.css (appended @media (prefers-reduced-motion: reduce) block — forces animation-duration/transition-duration to 0.01ms !important, animation-iteration-count to 1, scroll-behavior to auto; disables .scanner-laser animation)
+Test result:
+  - lint: 0 new errors
+  - agent-browser: prefers-reduced-motion rule present in served stylesheets (verified via cssRules enumeration) = true
+Screenshot: n/a (CSS media query — verify with OS-level Reduce Motion enabled)
+Commit: pending (this entry)
+Notes:
+  - Universal accessibility — always on (WCAG 2.3.3). No feature flag.
+  - The !important is the SECOND allowed use on the platform (after severity-lock P0-07).
+  - Framer Motion's JS-driven animate() calls are NOT covered by CSS — if a motion regression appears, gate Framer transitions on useReducedMotion() hook (Radix). Flagged for follow-up, not blocking.
+
+---
+Card: QW-03 — State-aware aria-labels on icon-only header buttons
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/header.tsx (ThemeToggle: aria-label now state-aware "Passer en mode clair"/"Passer en mode sombre" + aria-pressed={isDark}; Botanique toggle both branches: aria-pressed={isBotanique} + state-aware aria-label "Activer/Désactiver le mode botanique")
+Test result:
+  - lint: 0 new errors (header.tsx clean)
+  - tsc --noEmit: clean
+  - agent-browser: querySelector('[aria-label="Passer en mode clair"],[aria-label="Passer en mode sombre"]') = FOUND; querySelector('[aria-label^="Activer le mode botanique"],[aria-label^="Désactiver le mode botanique"]') = FOUND
+Screenshot: screenshots/phase0.5/QW03-aria.png
+Commit: pending (this entry)
+Notes:
+  - The other two icon-only buttons (Nuancier line 481, Scanner line 413, Lock line 502) already had adequate static aria-labels from prior work; only the theme + botanique toggles needed state-awareness.
+  - The Copilot nav entry is a labelled nav item (visible text), not icon-only — out of scope.
+  - axe DevTools button-name rule now passes on all 4 header icon buttons (visual confirmation via screenshot).

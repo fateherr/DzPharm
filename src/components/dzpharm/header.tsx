@@ -78,14 +78,16 @@ const SECONDARY_NAV: NavItem[] = [
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      aria-label="Changer de thème"
+      aria-label={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+      aria-pressed={isDark}
       className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 hover:rotate-12 active:rotate-45"
-      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
     >
       <Sun className="hidden size-4 dark:block" aria-hidden />
       <Moon className="block size-4 dark:hidden" aria-hidden />
@@ -443,6 +445,8 @@ export function Header() {
                   <Button
                     variant="outline"
                     size="sm"
+                    aria-pressed={isBotanique}
+                    aria-label="Désactiver le mode botanique — revenir au design Clinique Standard"
                     onClick={() => setDesignMode('standard')}
                     className="h-8 gap-1.5 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
@@ -454,6 +458,8 @@ export function Header() {
                   <Button
                     variant="outline"
                     size="sm"
+                    aria-pressed={isBotanique}
+                    aria-label="Activer le mode botanique — design Pharmacopée Royale & Botanique"
                     onClick={() => setDesignMode('botanique')}
                     className="h-8 gap-1.5 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >

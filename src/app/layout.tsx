@@ -1,8 +1,40 @@
 import type { Metadata } from "next";
+import { Inter, Noto_Sans_Arabic, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/dzpharm/providers";
 import { PwaProvider } from "@/components/dzpharm/pwa-provider";
+
+/**
+ * QW-01 — Webfonts via next/font/google (audit §04 P1-01).
+ * Inter (latin UI), Noto Sans Arabic (Arabic brand/DCI names, Darija),
+ * JetBrains Mono (dosages, AMM codes, reg numbers).
+ * `display: 'swap'` prevents FOIT; variable fonts keep payload to 1 file each.
+ * Feature flag NEXT_PUBLIC_FEATURE_WEBFONTS defaults ON (rollback if LCP regresses).
+ */
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-inter",
+});
+const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-noto-arabic",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-jetbrains-mono",
+});
+
+const webfontsOn = process.env.NEXT_PUBLIC_FEATURE_WEBFONTS !== "false";
+const webfontClassName = webfontsOn
+  ? `${inter.variable} ${notoSansArabic.variable} ${jetbrainsMono.variable}`
+  : "";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dzpharm.dz/"),
@@ -83,7 +115,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning className={webfontClassName}>
       <head>
         <script
           dangerouslySetInnerHTML={{
