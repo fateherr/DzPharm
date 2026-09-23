@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DzPharm — Design System Exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Literata:wght@400;500;600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBF6EC; --paper-2:#F3EAD6; --paper-3:#EADFC4;
+  --ink:#241C15; --ink-2:#5B4F3E; --ink-3:#8C8066;
+  --rule:#E1D3B4; --rule-2:#CBB98F;
+  --teal:#0F6B5F; --teal-soft:#DEEEE9; --on-teal:#FBF6EC;
+  --clay:#BD5E2A; --clay-soft:#F5E3D4;
+  --serif:'Literata',Georgia,serif; --display:'Fraunces','Literata',Georgia,serif;
+  --sans:'Instrument Sans','Helvetica Neue',Arial,sans-serif;
+  --sev-ok-fg:#12643F; --sev-ok-bg:#DBF1E5;
+  --sev-caution-fg:#7A5A05; --sev-caution-bg:#F5E9C6;
+  --sev-avoid-fg:#8F3E0F; --sev-avoid-bg:#F6DBC5;
+  --sev-danger-fg:#7A2020; --sev-danger-bg:#F6D8D8;
+  --z-tip:80; --z-toast:70; --z-modal:60; --z-pop:50; --z-bar:20;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#181310; --paper-2:#1F1913; --paper-3:#292018;
+    --ink:#F1E7D6; --ink-2:#BDAE94; --ink-3:#8A7C64;
+    --rule:#332A20; --rule-2:#493C2A;
+    --teal:#48C7B4; --teal-soft:#12312C; --on-teal:#0B211D;
+    --clay:#E28A50; --clay-soft:#2E2013;
+    --sev-ok-fg:#7EE6B4; --sev-ok-bg:#123024;
+    --sev-caution-fg:#E9CE79; --sev-caution-bg:#302A12;
+    --sev-avoid-fg:#F0A672; --sev-avoid-bg:#32200F;
+    --sev-danger-fg:#F1A0A0; --sev-danger-bg:#341515;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#181310; --paper-2:#1F1913; --paper-3:#292018;
+  --ink:#F1E7D6; --ink-2:#BDAE94; --ink-3:#8A7C64;
+  --rule:#332A20; --rule-2:#493C2A;
+  --teal:#48C7B4; --teal-soft:#12312C; --on-teal:#0B211D;
+  --clay:#E28A50; --clay-soft:#2E2013;
+  --sev-ok-fg:#7EE6B4; --sev-ok-bg:#123024;
+  --sev-caution-fg:#E9CE79; --sev-caution-bg:#302A12;
+  --sev-avoid-fg:#F0A672; --sev-avoid-bg:#32200F;
+  --sev-danger-fg:#F1A0A0; --sev-danger-bg:#341515;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62}
+h1,h2,h3,h4{font-family:var(--display);font-weight:600;line-height:1.15;margin:0}
+.ui{font-family:var(--sans)}
+a{color:var(--teal);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:2px}
+::selection{background:var(--teal);color:var(--on-teal)}
+
+.wrap{display:grid;grid-template-columns:268px minmax(0,1fr);max-width:1440px;margin:0 auto}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;border-right:1px solid var(--rule);padding:26px 20px 40px;font-family:var(--sans);font-size:13.5px;line-height:1.45}
+.rail .mark{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 2px}
+.rail .sub{color:var(--ink-3);font-size:11.5px;margin:0 0 22px}
+.rail nav a{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:baseline;padding:6px 8px;margin:0 -8px;border-radius:4px;color:var(--ink-2);text-decoration:none}
+.rail nav a:hover{background:var(--paper-2);color:var(--ink)}
+.rail nav a .n{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:11.5px}
+.rail hr{border:0;border-top:1px solid var(--rule);margin:18px 0}
+main{padding:0 clamp(18px,4vw,64px) 130px;min-width:0}
+section{padding-top:62px;scroll-margin-top:22px}
+
+.hero{padding:50px 0 30px;border-bottom:1px solid var(--rule)}
+.hero .kicker{font-family:var(--sans);font-size:12.5px;color:var(--ink-3);margin:0 0 14px}
+.hero h1{font-size:clamp(30px,4.8vw,50px);letter-spacing:-.02em;max-width:20ch}
+.hero h1 em{font-style:italic;color:var(--teal)}
+.hero .lede{font-size:clamp(16.5px,1.9vw,18.5px);color:var(--ink-2);max-width:68ch;margin:18px 0 0}
+.hero .caveat{margin-top:20px;font-family:var(--sans);font-size:13px;color:var(--ink-3);max-width:68ch;border-left:2px solid var(--rule-2);padding-left:12px}
+.hero .askback{margin-top:18px;font-family:var(--sans);font-size:12.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:7px}
+.hero .askback span{background:var(--paper-2);border:1px solid var(--rule);border-radius:20px;padding:3px 10px}
+
+.sec-head{border-top:2px solid var(--ink);padding-top:15px;margin-bottom:22px}
+.sec-head .idx{font-family:var(--sans);font-size:12px;color:var(--teal);display:block;margin-bottom:8px;font-weight:600}
+.sec-head h2{font-size:clamp(23px,3vw,32px);letter-spacing:-.015em}
+.sec-head p{color:var(--ink-2);max-width:70ch;margin:11px 0 0;font-size:16px}
+h3{font-size:19px;margin:30px 0 4px;letter-spacing:-.005em}
+h4{font-size:15.5px;margin:0 0 4px;font-weight:600}
+p{max-width:72ch;margin:0 0 14px}
+.cap{font-family:var(--sans);font-size:13px;color:var(--ink-3);margin:8px 0 0;max-width:60ch}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em;background:var(--paper-3);padding:1px 5px;border-radius:3px}
+
+/* ── generic panel & layout utilities ───────────────── */
+.panel{border:1px solid var(--rule);border-radius:9px;background:var(--paper-2);padding:20px 22px;margin:16px 0}
+.panel-t{font-family:var(--sans);font-size:11.5px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;margin:0 0 14px;text-transform:uppercase}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.row.center{align-items:center}
+.row.end{align-items:flex-end}
+.cols{display:grid;gap:14px}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.cols-4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.cols-5{grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+@media (max-width:680px){.cols-2{grid-template-columns:1fr}}
+.swatch{border-radius:6px;height:52px;width:100%}
+.note{border-left:3px solid var(--clay);background:var(--clay-soft);padding:14px 17px;border-radius:0 6px 6px 0;margin:18px 0;max-width:74ch}
+.note .lbl{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--clay);display:block;margin-bottom:5px}
+.note p:last-child{margin-bottom:0}
+
+/* ── severity badges (LOCKED — never palette-controlled) */
+.sevrow{display:flex;flex-wrap:wrap;gap:8px}
+.sev{font-family:var(--sans);font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.sev::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.sev-ok{color:var(--sev-ok-fg);background:var(--sev-ok-bg)}
+.sev-caution{color:var(--sev-caution-fg);background:var(--sev-caution-bg)}
+.sev-avoid{color:var(--sev-avoid-fg);background:var(--sev-avoid-bg)}
+.sev-danger{color:var(--sev-danger-fg);background:var(--sev-danger-bg)}
+
+/* ── role skeleton (sec 01) ──────────────────────────── */
+.roleskel{display:flex;flex-direction:column;gap:6px;max-width:520px}
+.rk{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;font-family:var(--sans);font-size:12.5px}
+.rk .lab{color:var(--ink-2)}
+.rk .bar{height:26px;border-radius:5px;border:1px solid var(--rule-2)}
+
+/* ── the live palette stage (sec 02) ─────────────────── */
+.stage{
+  --s-bg:#F3F1E7;--s-surface:#fff;--s-ink:#17222B;--s-ink2:#51606B;--s-border:#DAD6C4;
+  --s-accent:#1D6F8C;--s-on-accent:#fff;--s-accentsoft:#DCEEF3;
+  background:var(--s-bg);color:var(--s-ink);border:1px solid var(--s-border);border-radius:16px;
+  padding:22px 22px 24px;max-width:360px;transition:background .3s,color .3s,border-color .3s;
+  font-family:var(--sans);
+}
+.stage[data-pal="zellige"]{--s-bg:#F3F1E7;--s-surface:#fff;--s-ink:#17222B;--s-ink2:#51606B;--s-border:#DAD6C4;--s-accent:#1D6F8C;--s-on-accent:#fff;--s-accentsoft:#DCEEF3}
+.stage[data-pal="zellige"][data-mode="dark"]{--s-bg:#10181D;--s-surface:#16222A;--s-ink:#E7EEF1;--s-ink2:#9DB0BA;--s-border:#253440;--s-accent:#4FB8D9;--s-on-accent:#08161B;--s-accentsoft:#163540}
+.stage[data-pal="hammam"]{--s-bg:#F7EFE6;--s-surface:#FFFBF6;--s-ink:#3A2E24;--s-ink2:#7A6754;--s-border:#E7D7C4;--s-accent:#B9714E;--s-on-accent:#fff;--s-accentsoft:#F3DFD1}
+.stage[data-pal="hammam"][data-mode="dark"]{--s-bg:#1C1611;--s-surface:#241C15;--s-ink:#F1E4D5;--s-ink2:#BDA890;--s-border:#3A2E22;--s-accent:#D98F68;--s-on-accent:#201209;--s-accentsoft:#3A2419}
+.stage[data-pal="corniche"]{--s-bg:#EFF6F6;--s-surface:#fff;--s-ink:#122C2E;--s-ink2:#4C6E70;--s-border:#CFE4E4;--s-accent:#0E8C8C;--s-on-accent:#fff;--s-accentsoft:#D7F0EF}
+.stage[data-pal="corniche"][data-mode="dark"]{--s-bg:#0C1A1B;--s-surface:#12262A;--s-ink:#E4F3F2;--s-ink2:#8FB4B4;--s-border:#1E3436;--s-accent:#3FD6CC;--s-on-accent:#06201F;--s-accentsoft:#143634}
+.stage[data-pal="cuivre"]{--s-bg:#F6EFE3;--s-surface:#FFFBF3;--s-ink:#2E2013;--s-ink2:#6D5A42;--s-border:#E3D2B4;--s-accent:#A6652B;--s-on-accent:#fff;--s-accentsoft:#F0DFC5}
+.stage[data-pal="cuivre"][data-mode="dark"]{--s-bg:#1A140D;--s-surface:#221A11;--s-ink:#F2E5D2;--s-ink2:#C2A87F;--s-border:#362A1B;--s-accent:#E0A354;--s-on-accent:#221304;--s-accentsoft:#3B2A15}
+.stage[data-pal="ivoire"]{--s-bg:#F7F5F0;--s-surface:#fff;--s-ink:#1B1B18;--s-ink2:#5C5A50;--s-border:#E2DFD3;--s-accent:#1B1B18;--s-on-accent:#F7F5F0;--s-accentsoft:#E7E4D9}
+.stage[data-pal="ivoire"][data-mode="dark"]{--s-bg:#121210;--s-surface:#1A1A17;--s-ink:#F3F1E9;--s-ink2:#AFAA98;--s-border:#2B2A24;--s-accent:#F3F1E9;--s-on-accent:#121210;--s-accentsoft:#26251F}
+.stage[data-pal="nuit"]{--s-bg:#F4F4F5;--s-surface:#fff;--s-ink:#0D0D0F;--s-ink2:#55555C;--s-border:#E1E1E4;--s-accent:#0E9A78;--s-on-accent:#fff;--s-accentsoft:#DFF3EC}
+.stage[data-pal="nuit"][data-mode="dark"]{--s-bg:#000;--s-surface:#0D0D0F;--s-ink:#EDEDED;--s-ink2:#9A9A9E;--s-border:#1E1E22;--s-accent:#23E0B0;--s-on-accent:#001510;--s-accentsoft:#0E2A22}
+
+.stage-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.stage-brand{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14.5px}
+.stage-brand svg{width:18px;height:18px;color:var(--s-accent)}
+.stage-modebtn{background:var(--s-surface);border:1px solid var(--s-border);color:var(--s-ink2);border-radius:20px;padding:4px 9px;font-size:11.5px;cursor:pointer;font-family:var(--sans)}
+.stage-stat b{font-family:var(--display);font-size:28px;display:block;line-height:1}
+.stage-stat span{font-size:12px;color:var(--s-ink2)}
+.stage-body{font-size:13px;color:var(--s-ink2);margin:10px 0 14px;line-height:1.5}
+.stage-field{display:block;font-size:12px;color:var(--s-ink2);margin-bottom:14px}
+.stage-field input{width:100%;margin-top:5px;font:inherit;font-size:13.5px;padding:9px 11px;border-radius:7px;border:1px solid var(--s-border);background:var(--s-surface);color:var(--s-ink)}
+.stage-field input:focus-visible{outline:2px solid var(--s-accent);outline-offset:1px;border-color:var(--s-accent)}
+.stage-actions{display:flex;gap:8px}
+.stage-btn{font:inherit;font-size:13px;font-weight:600;padding:9px 14px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+.stage-btn-primary{background:var(--s-accent);color:var(--s-on-accent)}
+.stage-btn-ghost{background:transparent;color:var(--s-ink2);border-color:var(--s-border)}
+.stage-sevrow{margin:14px 0}
+
+.palchips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.palchip{font-family:var(--sans);font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:20px;border:1px solid var(--rule-2);background:var(--paper);color:var(--ink-2);cursor:pointer;display:flex;align-items:center;gap:7px}
+.palchip i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.palchip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.palnote{font-family:var(--sans);font-size:13px;color:var(--ink-2);min-height:2.6em;max-width:420px}
+
+/* ── static palette gallery cards ────────────────────── */
+.ramp{border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--paper-2)}
+.ramp .chips{display:flex;height:50px}
+.ramp .chips i{flex:1}
+.ramp .info{padding:11px 13px}
+.ramp .info b{font-family:var(--sans);font-size:13.5px;display:block;margin-bottom:3px}
+.ramp .info span{font-family:var(--sans);font-size:12px;color:var(--ink-3);line-height:1.45;display:block}
+
+/* ── distribution bar (60-30-10 style) ───────────────── */
+.distbar{display:flex;height:34px;border-radius:8px;overflow:hidden;max-width:560px;font-family:var(--sans);font-size:12px;font-weight:600}
+.distbar span{display:flex;align-items:center;justify-content:center;color:#fff}
+
+/* ── icon demos ───────────────────────────────────────── */
+.iconrow{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap}
+.iconitem{text-align:center}
+.iconitem svg{color:var(--teal);display:block;margin:0 auto}
+.iconitem .lbl{font-family:var(--sans);font-size:11.5px;color:var(--ink-3);margin-top:7px}
+.icongrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:11px}
+.iconcard{border:1px solid var(--rule);border-radius:7px;background:var(--paper-2);padding:15px 8px;text-align:center}
+.iconcard svg{width:34px;height:34px;color:var(--teal);stroke-width:1.6}
+.iconcard .lbl{font-family:var(--sans);font-size:11.5px;color:var(--ink-2);margin-top:7px;line-height:1.3}
+
+/* ── card anatomy / species / states ─────────────────── */
+.anat{border:1.5px dashed var(--rule-2);border-radius:12px;padding:24px;position:relative;max-width:320px;background:var(--paper)}
+.anat-inner{border:1px solid var(--rule);border-radius:8px;padding:14px;background:var(--paper-2)}
+.anatlegend{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);margin:14px 0 0;list-style:none;padding:0}
+.anatlegend li{display:flex;gap:8px;margin-bottom:5px}
+.anatlegend b{color:var(--ink);min-width:64px;display:inline-block}
+
+.mcard{border:1px solid var(--rule);border-radius:9px;background:var(--paper-2);padding:15px 16px;transition:box-shadow .15s,transform .15s,border-color .15s}
+.mcard.stat b{font-family:var(--display);font-size:23px;display:block}
+.mcard.stat span{font-family:var(--sans);font-size:12px;color:var(--ink-3)}
+.mcard.row2{display:flex;align-items:center;gap:11px}
+.mcard.row2 svg{width:20px;height:20px;color:var(--teal);flex-shrink:0}
+.mcard.row2 .t{font-family:var(--sans);font-size:14px;font-weight:600}
+.mcard.row2 .m{font-family:var(--sans);font-size:12px;color:var(--ink-3)}
+.mcard.alert{display:flex;gap:10px;align-items:flex-start;background:var(--sev-caution-bg);border-color:transparent}
+.mcard.alert svg{width:18px;height:18px;color:var(--sev-caution-fg);flex-shrink:0;margin-top:1px}
+.mcard.alert span{font-family:var(--sans);font-size:13px;color:var(--sev-caution-fg)}
+
+.stdemo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stdemo .mcard{cursor:pointer}
+.stdemo .mcard:hover{box-shadow:0 6px 18px -8px rgba(0,0,0,.25);transform:translateY(-2px);border-color:var(--teal)}
+.stdemo .sel{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
+.stdemo .dis{opacity:.45;pointer-events:none}
+.stlabel{font-family:var(--sans);font-size:11px;color:var(--ink-3);text-align:center;margin-top:6px}
+
+/* ── spacing ruler ────────────────────────────────────── */
+.ruler{display:flex;flex-direction:column;gap:9px;max-width:640px}
+.rul-row{display:grid;grid-template-columns:52px 1fr 190px;gap:12px;align-items:center;font-family:var(--sans);font-size:12.5px}
+.rul-row .px{color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right}
+.rul-bar{height:14px;background:var(--teal);border-radius:3px}
+.rul-row .use{color:var(--ink-3)}
+
+.denscompare{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.denscard{border:1px solid var(--rule);border-radius:8px;background:var(--paper-2);text-align:center}
+.denscard .lbl{font-family:var(--sans);font-size:11.5px;color:var(--ink-3);padding-top:9px}
+.denscard .inner{margin:9px;border:1px solid var(--rule-2);border-radius:6px;font-family:var(--sans);font-size:12px;color:var(--ink-2)}
+.dp-compact .inner{padding:8px 10px}
+.dp-standard .inner{padding:14px 16px}
+.dp-access .inner{padding:20px 22px;font-size:13.5px}
+
+/* ── borders ──────────────────────────────────────────── */
+.bwrow{display:flex;flex-direction:column;gap:14px;max-width:420px}
+.bwitem{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:14px;font-family:var(--sans);font-size:12.5px;color:var(--ink-2)}
+.bwitem .ln{border-top:1px solid var(--ink)}
+.colorstep{display:flex;gap:0;max-width:420px;border-radius:8px;overflow:hidden}
+.colorstep div{flex:1;height:60px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-family:var(--sans);font-size:11px}
+.divdemo{display:flex;flex-direction:column;gap:20px;max-width:420px}
+.div-full{border-top:1px solid var(--rule-2)}
+.div-inset{border-top:1px solid var(--rule-2);margin-left:24px}
+.div-label{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-family:var(--sans);font-size:12px}
+.div-label::before,.div-label::after{content:"";flex:1;border-top:1px solid var(--rule-2)}
+.div-dash{border-top:1.5px dashed var(--rule-2)}
+.divdemo .dtag{font-family:var(--sans);font-size:11px;color:var(--ink-3);margin-top:5px}
+
+.focusrow{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.fbtn2{font:inherit;font-family:var(--sans);font-size:13.5px;padding:9px 15px;border-radius:7px;border:1px solid var(--rule-2);background:var(--paper);color:var(--ink);cursor:pointer}
+.finput{font:inherit;font-family:var(--sans);font-size:13.5px;padding:9px 12px;border-radius:7px;border:1px solid var(--rule-2);background:var(--paper);color:var(--ink)}
+
+.inputstack{display:flex;flex-direction:column;gap:12px;max-width:340px}
+.ifield{font-family:var(--sans)}
+.ifield label{font-size:12px;color:var(--ink-3);display:block;margin-bottom:5px}
+.ifield input{width:100%;font:inherit;font-size:13.5px;padding:9px 11px;border-radius:7px;background:var(--paper)}
+.if-rest input{border:1px solid var(--rule-2)}
+.if-hover input{border:1px solid var(--ink-3)}
+.if-focus input{border:1px solid var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
+.if-error input{border:1px solid var(--sev-danger-fg)}
+.if-error .msg{color:var(--sev-danger-fg);font-size:11.5px;margin-top:4px}
+.if-disabled input{border:1px solid var(--rule);opacity:.5}
+
+/* ── popups & overlays ────────────────────────────────── */
+.dbtn{font:inherit;font-family:var(--sans);font-size:13px;font-weight:600;padding:9px 15px;border-radius:7px;border:1px solid var(--rule-2);background:var(--paper);color:var(--ink);cursor:pointer}
+.dbtn-primary{background:var(--teal);color:var(--on-teal);border-color:var(--teal)}
+.dbtn-danger{background:var(--sev-danger-fg);color:#fff;border-color:var(--sev-danger-fg)}
+.dbtn-ghost{background:transparent}
+[data-tip]{position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--ink);color:var(--paper);font-family:var(--sans);font-size:11.5px;padding:5px 10px;border-radius:5px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:var(--z-tip)}
+[data-tip]::before{content:"";position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--ink);opacity:0;transition:opacity .15s;z-index:var(--z-tip)}
+[data-tip]:hover::after,[data-tip]:focus-visible::after,[data-tip]:hover::before,[data-tip]:focus-visible::before{opacity:1;transform:translateX(-50%) translateY(0)}
+.iconbtn{width:38px;height:38px;border-radius:8px;border:1px solid var(--rule-2);background:var(--paper);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-2)}
+.iconbtn svg{width:18px;height:18px}
+
+.toast-stack{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:var(--z-toast);display:flex;flex-direction:column;gap:8px;max-width:320px}
+.toast{font-family:var(--sans);font-size:13.5px;display:flex;align-items:center;gap:9px;padding:11px 15px;border-radius:8px;background:var(--ink);color:var(--paper);box-shadow:0 10px 30px -10px rgba(0,0,0,.4);opacity:0;transform:translateY(8px) scale(.98);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateY(0) scale(1)}
+.toast svg{width:16px;height:16px;flex-shrink:0}
+.t-success{background:var(--sev-ok-fg)}
+.t-info{background:var(--teal)}
+.t-warn{background:var(--sev-caution-fg)}
+.t-danger{background:var(--sev-danger-fg)}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,12,8,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:var(--z-modal);padding:20px}
+.modal-backdrop[hidden]{display:none}
+.modal{background:var(--paper);border-radius:12px;padding:24px 26px;max-width:380px;width:100%;box-shadow:0 30px 60px -15px rgba(0,0,0,.35)}
+.modal h3{font-size:18px;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--ink-2);margin-bottom:18px}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px}
+.modal.danger{border-top:4px solid var(--sev-danger-fg)}
+
+.popwrap{position:relative;display:inline-block}
+.popover{position:absolute;top:calc(100% + 8px);left:0;background:var(--paper);border:1px solid var(--rule);border-radius:9px;box-shadow:0 16px 40px -12px rgba(0,0,0,.3);min-width:190px;padding:6px;z-index:var(--z-pop)}
+.popover[hidden]{display:none}
+.pop-item{display:block;width:100%;text-align:left;background:none;border:0;font:inherit;font-family:var(--sans);font-size:13.5px;padding:9px 11px;border-radius:6px;cursor:pointer;color:var(--ink)}
+.pop-item:hover{background:var(--paper-2)}
+.pop-item.pop-danger{color:var(--sev-danger-fg)}
+.pop-div{border-top:1px solid var(--rule);margin:5px 2px}
+
+.backdroprow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.bd-demo{position:relative;height:110px;border-radius:8px;overflow:hidden;border:1px solid var(--rule)}
+.bd-behind{position:absolute;inset:0;background:repeating-linear-gradient(45deg,var(--teal-soft),var(--teal-soft) 10px,var(--paper-3) 10px,var(--paper-3) 20px)}
+.bd-front{position:absolute;inset:12px;border-radius:6px;background:var(--paper)}
+.bd-scrim{position:absolute;inset:0}
+.bd-dim .bd-scrim{background:rgba(15,12,8,.55)}
+.bd-blur .bd-scrim{backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.bd-both .bd-scrim{background:rgba(15,12,8,.4);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.bd-cap{font-family:var(--sans);font-size:12px;color:var(--ink-3);margin-top:7px;text-align:center}
+
+/* ── shadows, buttons, forms, viz, motion, loading ───── */
+.shrow{display:flex;gap:18px;flex-wrap:wrap}
+.shbox{width:96px;height:66px;border-radius:9px;background:var(--paper);display:flex;align-items:flex-end;justify-content:center;padding-bottom:7px;font-family:var(--sans);font-size:11px;color:var(--ink-3)}
+.sh0{box-shadow:none;border:1px solid var(--rule)}
+.sh1{box-shadow:0 1px 3px rgba(0,0,0,.10),0 1px 2px rgba(0,0,0,.06)}
+.sh2{box-shadow:0 6px 16px -4px rgba(0,0,0,.18)}
+.sh3{box-shadow:0 20px 45px -12px rgba(0,0,0,.30)}
+
+.btngrid{display:grid;grid-template-columns:auto repeat(4,1fr);gap:10px;align-items:center;font-family:var(--sans);font-size:12px;color:var(--ink-3)}
+.btngrid .rl{text-align:right;padding-right:6px}
+.bt{font:inherit;font-family:var(--sans);font-size:13px;font-weight:600;padding:9px 4px;border-radius:7px;text-align:center;cursor:pointer;border:1px solid transparent}
+.bt-primary{background:var(--teal);color:var(--on-teal)}
+.bt-secondary{background:var(--paper);color:var(--ink);border-color:var(--rule-2)}
+.bt-ghost{background:transparent;color:var(--ink-2)}
+.bt-danger{background:var(--sev-danger-fg);color:#fff}
+.bt.hoverable:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.bt.disabled{opacity:.4;pointer-events:none}
+.bt.loading{position:relative;color:transparent!important}
+.bt.loading::after{content:"";position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.ffield{max-width:320px;font-family:var(--sans)}
+.ffield label{font-size:12.5px;font-weight:600;display:flex;gap:4px;margin-bottom:5px}
+.ffield .req{color:var(--sev-danger-fg)}
+.ffield input{width:100%;font:inherit;font-size:13.5px;padding:9px 11px;border-radius:7px;border:1px solid var(--rule-2);background:var(--paper)}
+.ffield .help{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+
+.vizramp{height:26px;border-radius:5px;display:flex;overflow:hidden}
+.vizramp span{flex:1}
+
+.easetrack{position:relative;height:26px;background:var(--paper-3);border-radius:20px;margin:8px 0 4px}
+.easedot{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--teal)}
+
+.skel{max-width:280px}
+.skline{height:11px;border-radius:4px;background:linear-gradient(90deg,var(--paper-3) 25%,var(--rule) 37%,var(--paper-3) 63%);background-size:400% 100%;animation:shimmer 1.6s ease infinite;margin-bottom:9px}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.caploader{width:34px;height:16px;border-radius:9px;background:conic-gradient(from 0deg,var(--teal) 0 50%,var(--paper-3) 0);animation:capspin 1s linear infinite}
+@keyframes capspin{to{transform:rotate(360deg)}}
+
+/* ── final composed screen ───────────────────────────── */
+.finalscreen{--f-bg:#EFF6F6;--f-surface:#fff;--f-ink:#122C2E;--f-ink2:#4C6E70;--f-border:#CFE4E4;--f-accent:#0E8C8C;--f-on-accent:#fff;
+  background:var(--f-bg);border:1px solid var(--f-border);border-radius:14px;padding:20px;max-width:520px;font-family:var(--sans)}
+.fs-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.fs-brand{font-weight:700;color:var(--f-ink);display:flex;align-items:center;gap:7px}
+.fs-brand svg{width:18px;height:18px;color:var(--f-accent)}
+.fs-search{background:var(--f-surface);border:1px solid var(--f-border);border-radius:8px;padding:9px 12px;color:var(--f-ink2);font-size:13px;margin-bottom:14px}
+.fs-card{background:var(--f-surface);border:1px solid var(--f-border);border-radius:10px;padding:13px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.fs-card .t{color:var(--f-ink);font-weight:600;font-size:14px}
+.fs-card .m{color:var(--f-ink2);font-size:12px;margin-top:2px}
+.fs-btn{background:var(--f-accent);color:var(--f-on-accent);border:0;border-radius:6px;padding:7px 12px;font-size:12.5px;font-weight:600}
+
+.themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:90;font-family:var(--sans);font-size:12px;padding:8px 11px;border:1px solid var(--rule-2);background:var(--paper-2);color:var(--ink-2);border-radius:20px;cursor:pointer}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:8px;top:8px;z-index:95;background:var(--teal);color:var(--on-teal);padding:9px 13px;border-radius:4px;font-family:var(--sans)}
+footer{border-top:2px solid var(--ink);margin-top:80px;padding:26px 0 0;font-family:var(--sans);font-size:13px;color:var(--ink-3)}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:20px clamp(18px,4vw,64px)}
+  .rail nav{columns:2;column-gap:26px}
+  html{scroll-padding-top:16px}
+}
+@media (max-width:620px){
+  body{font-size:16px}.rail nav{columns:1}
+  .btngrid{grid-template-columns:1fr;text-align:left}
+  .btngrid .rl{text-align:left;padding:6px 0 0}
+  .rul-row{grid-template-columns:40px 1fr;grid-template-areas:"px bar" ". use"}
+  .rul-row .px{grid-area:px}.rul-row .rul-bar{grid-area:bar}.rul-row .use{grid-area:use}
+  .denscompare{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media print{.rail,.themebtn,.toast-stack{display:none}.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<button class="themebtn ui" id="themebtn" aria-label="Switch colour theme">Theme</button>
+
+<div class="wrap">
+<aside class="rail">
+  <p class="mark">DzPharm — Part III</p>
+  <p class="sub">Design system exploration · live &amp; interactive</p>
+  <nav aria-label="Document sections">
+    <a href="#read"><span class="n">00</span><span>How to read this</span></a>
+    <a href="#formula"><span class="n">01</span><span>Colour — the formula</span></a>
+    <a href="#gallery"><span class="n">02</span><span>Colour — palette gallery</span></a>
+    <a href="#combos"><span class="n">03</span><span>Colour — combination rules</span></a>
+    <a href="#symbols"><span class="n">04</span><span>Symbols</span></a>
+    <a href="#boxes"><span class="n">05</span><span>Boxes</span></a>
+    <a href="#space"><span class="n">06</span><span>Empty space</span></a>
+    <a href="#borders"><span class="n">07</span><span>Borders</span></a>
+    <a href="#popups"><span class="n">08</span><span>Popups &amp; overlays</span></a>
+    <a href="#rest"><span class="n">09</span><span>Everything else</span></a>
+    <a href="#together"><span class="n">10</span><span>Bringing it together</span></a>
+  </nav>
+  <hr>
+  <p class="sub" style="margin:0">Parts I (audit) and II (feature brainstorm) are separate documents in this same set.</p>
+</aside>
+
+<main id="main">
+
+<header class="hero">
+  <p class="kicker ui">Part III · pure visual design, taken as far as it goes</p>
+  <h1>Every choice a <em>design system</em> makes, laid on the table.</h1>
+  <p class="lede">Colour and palette combinations, symbols, boxes, how empty space is managed, borders, and popups — each one opened up, explained as a small formula rather than a taste, and mostly rendered live so you can see and touch it rather than read about it. Where something in here directly resolves a defect from Part I's audit, I've said so.</p>
+  <p class="caveat ui">Specific hex values below are proposals for you to react to, not a transcript of the platform's real production tokens — I named the existing Nuancier by its actual palette names in Part I (Craie &amp; Cobalt, Perle &amp; Azur d'Alger and others) but didn't have their exact hex codes to hand, so everything here is drawn fresh. And as with Part II: not everything should be built. This is a menu, not a mandate.</p>
+  <div class="askback ui"><span>colours &amp; palettes</span><span>combinations</span><span>symbols</span><span>boxes</span><span>empty space</span><span>borders</span><span>popups</span><span>+ everything else "design" touches</span></div>
+</header>
+
+<!-- ══ 00 ══════════════════════════════════════════════ -->
+<section id="read">
+  <div class="sec-head">
+    <span class="idx ui">Section 00</span>
+    <h2>How to read this</h2>
+    <p>Almost everything below is a live element, not a picture of one. Hover the icon buttons in Section 08. Tab through the inputs in Section 07. Click a palette chip in Section 02 and watch the little app preview actually restyle itself. Trigger a toast. Open a modal. The goal is for you to feel each decision, not take my word for it.</p>
+  </div>
+</section>
+
+<!-- ══ 01 COLOUR FORMULA ═══════════════════════════════ -->
+<section id="formula">
+  <div class="sec-head">
+    <span class="idx ui">Section 01</span>
+    <h2>Colour — the formula before the palette</h2>
+    <p>A palette isn't a handful of pretty hues. It's a small set of <i>roles</i>, each with a job. Get the roles right and almost any hue can become a coherent palette — which is exactly how the platform's existing twenty-strong Nuancier scales without each one being hand-tuned from nothing.</p>
+  </div>
+
+  <h3>The nine roles every palette needs</h3>
+  <div class="panel">
+    <div class="roleskel ui">
+      <div class="rk"><span class="lab">Canvas</span><span class="bar" style="background:#EDEDED"></span></div>
+      <div class="rk"><span class="lab">Surface</span><span class="bar" style="background:#F7F7F7"></span></div>
+      <div class="rk"><span class="lab">Surface, raised</span><span class="bar" style="background:#FFFFFF"></span></div>
+      <div class="rk"><span class="lab">Ink — primary</span><span class="bar" style="background:#2B2B2B"></span></div>
+      <div class="rk"><span class="lab">Ink — secondary</span><span class="bar" style="background:#6B6B6B"></span></div>
+      <div class="rk"><span class="lab">Ink — tertiary</span><span class="bar" style="background:#9C9C9C"></span></div>
+      <div class="rk"><span class="lab">Border</span><span class="bar" style="background:#D8D8D8"></span></div>
+      <div class="rk"><span class="lab">Accent</span><span class="bar" style="background:#3B6EF6"></span></div>
+      <div class="rk"><span class="lab">Accent, soft</span><span class="bar" style="background:#DCE6FD"></span></div>
+    </div>
+    <p class="cap">This skeleton is hue-less on purpose. Section 02 fills it in nine different ways — the roles never change, only the hue poured into them.</p>
+  </div>
+
+  <h3>The lightness-step method</h3>
+  <p>Rather than picking nine colours by eye, step one hue through consistent lightness increments. In dark mode: canvas around L8–10%, surface L14–16%, raised surface L20–22%, ink L92%+. In light mode, invert it: canvas L96–98%, surface white or L99%, ink L15–18%. Because every step is a fixed distance from its neighbour, contrast is correct by construction rather than by luck — and any future palette can be generated by picking one hue and running it through the same steps.</p>
+
+  <div class="note">
+    <span class="lbl ui">The one rule that overrides every palette below</span>
+    <p>Seven clinical severity levels are shown here compressed to four for space. Whichever hues a palette uses for decoration, these badges never participate — they are drawn from a locked, separate set of tokens that no Nuancier selection can touch. That's <code>P0-12</code> from the audit, and every demo from here on proves it by leaving these untouched no matter what else changes on the page.</p>
+    <div class="sevrow" style="margin-top:10px">
+      <span class="sev sev-ok">Compatible</span>
+      <span class="sev sev-caution">Prudence</span>
+      <span class="sev sev-avoid">Déconseillé</span>
+      <span class="sev sev-danger">Contre-indiqué</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 02 PALETTE GALLERY ══════════════════════════════ -->
+<section id="gallery">
+  <div class="sec-head">
+    <span class="idx ui">Section 02</span>
+    <h2>Colour — the palette gallery</h2>
+    <p>Nine directions, each chosen for a reason rather than a mood. Six are wired into the live preview below — pick a chip, and watch every role from Section 01 restyle a small working interface in real time, in both its light and dark form.</p>
+  </div>
+
+  <div class="row" style="align-items:flex-start;gap:26px">
+    <div>
+      <div class="stage" id="stage" data-pal="zellige" data-mode="light">
+        <div class="stage-top">
+          <div class="stage-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg>DzPharm</div>
+          <button class="stage-modebtn" id="stageMode" type="button">☾ Sombre</button>
+        </div>
+        <div class="stage-stat"><b>9 555</b><span>médicaments référencés</span></div>
+        <p class="stage-body">Aperçu en direct — choisissez une palette pour voir chaque rôle se repeindre.</p>
+        <div class="stage-sevrow sevrow">
+          <span class="sev sev-ok">Compatible</span>
+          <span class="sev sev-danger">Contre-indiqué</span>
+        </div>
+        <label class="stage-field">Rechercher un médicament
+          <input type="text" placeholder="DOLIPRANE 500mg...">
+        </label>
+        <div class="stage-actions">
+          <button class="stage-btn stage-btn-primary">Analyser</button>
+          <button class="stage-btn stage-btn-ghost">Annuler</button>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:240px">
+      <div class="palchips" role="group" aria-label="Choose a palette to preview">
+        <button class="palchip" data-pal="zellige" aria-pressed="true"><i style="background:#1D6F8C"></i>Zellige Nuit</button>
+        <button class="palchip" data-pal="hammam" aria-pressed="false"><i style="background:#B9714E"></i>Hammam</button>
+        <button class="palchip" data-pal="corniche" aria-pressed="false"><i style="background:#0E8C8C"></i>Corniche</button>
+        <button class="palchip" data-pal="cuivre" aria-pressed="false"><i style="background:#A6652B"></i>Souk Cuivre</button>
+        <button class="palchip" data-pal="ivoire" aria-pressed="false"><i style="background:#1B1B18"></i>Encre &amp; Ivoire</button>
+        <button class="palchip" data-pal="nuit" aria-pressed="false"><i style="background:#0E9A78"></i>Nuit Saharienne</button>
+      </div>
+      <p class="palnote ui" id="palNote">Cobalt tilework against ochre grout, the way Algiers courtyards read after dark. A cooler, more architectural alternative to a default blue for users who find blue too soft for a clinical tool.</p>
+    </div>
+  </div>
+
+  <h3>Three more directions</h3>
+  <p class="cap" style="margin-bottom:14px">Shown as static swatches rather than wired into the stage — breadth without over-engineering the demo.</p>
+  <div class="cols cols-3">
+    <div class="ramp">
+      <div class="chips"><i style="background:#1A2E22"></i><i style="background:#3D6B4A"></i><i style="background:#9AB98A"></i><i style="background:#E8EDDF"></i></div>
+      <div class="info"><b class="ui">Tell Vert</b><span>The Kabyle highlands rather than the Sahara. Every other direction here leans desert or coastal — this one gives the botanical audience mode a home that isn't borrowed from the clinical palette next door.</span></div>
+    </div>
+    <div class="ramp">
+      <div class="chips"><i style="background:#332622"></i><i style="background:#B97A73"></i><i style="background:#E6D6C9"></i><i style="background:#F6EEE6"></i></div>
+      <div class="info"><b class="ui">Sirocco</b><span>Sand and dusty rose — the desert wind, not the desert heat. A gentler, quieter neutral for anyone who finds even Hammam a little assertive.</span></div>
+    </div>
+    <div class="ramp">
+      <div class="chips"><i style="background:#1B0F10"></i><i style="background:#C7495A"></i><i style="background:#B98D8A"></i><i style="background:#F3E3E1"></i></div>
+      <div class="info"><b class="ui">Grenade</b><span>Pomegranate red, dark-leaning and premium. Ships only after a specific check: place this accent directly beside the locked danger-red above and confirm a pharmacist can tell them apart in under a second. If not, shift toward magenta until they cleanly separate.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 03 COMBINATION RULES ════════════════════════════ -->
+<section id="combos">
+  <div class="sec-head">
+    <span class="idx ui">Section 03</span>
+    <h2>Colour — combination rules</h2>
+    <p>Nine good palettes can still produce a bad screen. These are the rules that keep any one of them disciplined once real content lands on top.</p>
+  </div>
+
+  <h3>70 / 25 / 5, not 60 / 30 / 10</h3>
+  <p>The classic decorating rule assumes a living room. A data-dense clinical table needs more neutral surface and less everything else — closer to seventy percent canvas and surface, twenty-five percent structural ink and borders, and accent rationed down to five percent: essentially one button, one link colour, one focus ring.</p>
+  <div class="distbar ui">
+    <span style="background:var(--paper-3);color:var(--ink-2);flex:70">70% — canvas &amp; surface</span>
+    <span style="background:var(--ink-3);flex:25">25% — ink &amp; borders</span>
+    <span style="background:var(--teal);flex:5">5%</span>
+  </div>
+
+  <h3>Never let decoration and meaning share a hue family</h3>
+  <p>If a decorative accent and the "compatible / OK" severity colour sit in the same green family, a user's eye can no longer tell a stylistic choice from a clinical verdict. Look at these two side by side — one is decoration, one is a clinical result, and at a glance they're doing the same job on the retina even though they mean completely different things:</p>
+  <div class="row center" style="gap:22px">
+    <div style="text-align:center"><button class="dbtn" style="background:#2E9F6E;color:#fff;border-color:#2E9F6E">Bouton décoratif</button><div class="cap ui" style="margin-top:6px">Just a themed button</div></div>
+    <div style="text-align:center"><span class="sev sev-ok">Compatible</span><div class="cap ui" style="margin-top:6px">An actual clinical verdict</div></div>
+  </div>
+  <p class="cap">This is precisely why the locked severity tokens exist as their own set rather than "whichever green the active palette happens to use."</p>
+
+  <h3>Gradients, used rarely and never on meaning</h3>
+  <ul>
+    <li>Fine on a large hero surface or a subtle background wash.</li>
+    <li>Never on body text, never on a small icon, and never anywhere near a severity badge — a gradient softens exactly the sharp edge a safety signal needs.</li>
+  </ul>
+
+  <h3>A worked comparison</h3>
+  <div class="cols cols-2">
+    <div class="panel" style="border-color:#D9A0A0">
+      <span class="panel-t" style="color:#A83A3A">Common mistake — accent everywhere</span>
+      <div class="mcard" style="border-color:#3B6EF6"><div class="row center" style="justify-content:space-between"><span class="ui" style="font-weight:600;color:#3B6EF6">AMOXICILLINE 500mg</span><span class="sev" style="background:#DCE6FD;color:#3B6EF6">En stock</span></div><p class="cap" style="margin:8px 0 0"><a href="#" style="color:#3B6EF6">Voir la fiche</a> · <a href="#" style="color:#3B6EF6">Comparer</a></p></div>
+      <p class="cap">Border, badge, both links and the price are all the same blue. Nothing is emphasised because everything is.</p>
+    </div>
+    <div class="panel" style="border-color:var(--teal)">
+      <span class="panel-t" style="color:var(--teal)">Corrected — one accent, clear hierarchy</span>
+      <div class="mcard"><div class="row center" style="justify-content:space-between"><span class="ui" style="font-weight:600">AMOXICILLINE 500mg</span><span class="sev sev-ok">En stock</span></div><p class="cap" style="margin:8px 0 0">Voir la fiche · <a href="#">Comparer les prix</a></p></div>
+      <p class="cap">Neutral border, locked-token badge, one accent link. The eye knows exactly where to act.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 04 SYMBOLS ══════════════════════════════════════ -->
+<section id="symbols">
+  <div class="sec-head">
+    <span class="idx ui">Section 04</span>
+    <h2>Symbols</h2>
+    <p>Part II sketched nine pharmacy-specific icons Lucide simply doesn't have. Before adding more, three style axes need deciding — stroke, fill and size — because every icon that follows should answer them the same way.</p>
+  </div>
+
+  <h3>Stroke weight</h3>
+  <div class="iconrow">
+    <div class="iconitem"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">1.25 — too light</div></div>
+    <div class="iconitem"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">1.75</div></div>
+    <div class="iconitem"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">2.25 — too heavy</div></div>
+  </div>
+  <p class="cap">2px matches the existing 118-icon set exactly. Stay there for anything living beside them — a mismatched stroke reads as a different icon family even when the shapes agree.</p>
+
+  <h3>Fill treatment</h3>
+  <div class="iconrow">
+    <div class="iconitem"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">Outline — default UI</div></div>
+    <div class="iconitem"><svg width="40" height="40" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="6" rx="3" fill="currentColor"/><line x1="12" y1="9" x2="12" y2="15" stroke="var(--paper)" stroke-width="1.8"/></svg><div class="lbl ui">Filled — active / selected</div></div>
+    <div class="iconitem"><svg width="40" height="40" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3" fill="currentColor" fill-opacity="0.22"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">Duotone — empty states only</div></div>
+  </div>
+
+  <h3>Size scale</h3>
+  <div class="iconrow" style="gap:20px">
+    <div class="iconitem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">16 — inline</div></div>
+    <div class="iconitem"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">20 — buttons</div></div>
+    <div class="iconitem"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">24 — nav / standalone</div></div>
+    <div class="iconitem"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">32 — feature callouts</div></div>
+    <div class="iconitem"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="lbl ui">48 — empty states</div></div>
+  </div>
+
+  <h3>Ten more icons, extending Part II's nine</h3>
+  <p class="cap" style="margin-bottom:14px">Direction sketches for a designer to redraw properly on a real grid — not final assets, same honest caveat as before.</p>
+  <div class="icongrid">
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="10.5" width="11" height="3" rx="1"/><path d="M13 10.5h3l3-3"/><path d="M17.5 6l1.5 1.5"/><path d="M4.5 13.5L2 19"/></svg><div class="lbl ui">Seringue</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="2" width="4" height="13" rx="2"/><circle cx="12" cy="18.5" r="3.5"/><path d="M12 15v3.5"/></svg><div class="lbl ui">Thermomètre</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v3h3"/><path d="M8 10h8M8 13h8M8 16h5"/></svg><div class="lbl ui">Ordonnance</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg><div class="lbl ui">Croix pharmacie</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8v3.5c1.2.4 2 1.5 2 2.8V20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8.3c0-1.3.8-2.4 2-2.8V2z"/><path d="M6 11h12"/></svg><div class="lbl ui">Flacon</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10l1.5 5A4 4 0 0 1 14.7 13H9.3A4 4 0 0 1 5.5 8L7 3z"/><path d="M12 13v4"/><circle cx="12" cy="19" r="2"/></svg><div class="lbl ui">Poche IV</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5v3.3c0 .9-.4 1.8-1 2.4L5 15h14l-1-1.3c-.6-.6-1-1.5-1-2.4V8a5 5 0 0 0-5-5z"/><path d="M10 18a2 2 0 0 0 4 0"/><rect x="15" y="1.6" width="6" height="3" rx="1.5" transform="rotate(28 18 3.1)"/></svg><div class="lbl ui">Rappel de dose</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 3v6c0 5-3.4 8.5-7 11-3.6-2.5-7-6-7-11V5l7-3z"/><path d="M8.7 12l2.4 2.4 4.4-4.8"/></svg><div class="lbl ui">Vérifié</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3"/><path d="M5 6h14"/><path d="M5 6l-3 6a3.2 3.2 0 0 0 6 0L5 6z"/><path d="M19 6l-3 6a3.2 3.2 0 0 0 6 0L19 6z"/><path d="M8 21h8"/><path d="M12 6v15"/></svg><div class="lbl ui">Posologie</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14 4.5a7.5 7.5 0 1 0 0 15 9 9 0 0 1 0-15z"/></svg><div class="lbl ui">Compatible jeûne</div></div>
+  </div>
+
+  <h3>How far an icon stretches into illustration</h3>
+  <div class="panel row center" style="gap:20px">
+    <svg width="88" height="88" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="6" fill="var(--teal)" fill-opacity="0.15"/><line x1="14.5" y1="14.5" x2="20" y2="20"/><line x1="7" y1="10" x2="13" y2="10" stroke-dasharray="1.4 2.2"/></svg>
+    <div><h4 class="ui" style="margin-bottom:4px">Same DNA, larger stage</h4><p class="cap" style="margin:0">Duotone fill, identical stroke weight, just scaled to 88px for an empty search-results state. No new style is invented for illustration — it's the same icon language turned up.</p></div>
+  </div>
+</section>
+
+<!-- ══ 05 BOXES ════════════════════════════════════════ -->
+<section id="boxes">
+  <div class="sec-head">
+    <span class="idx ui">Section 05</span>
+    <h2>Boxes</h2>
+    <p>Every card, panel, badge and table cell on the platform is a box. These are the anatomy, the elevation ladder, and the five shapes a box actually takes in this product.</p>
+  </div>
+
+  <h3>Anatomy</h3>
+  <div class="row" style="gap:24px;align-items:flex-start">
+    <div class="anat">
+      <div class="anat-inner">
+        <div class="ui" style="font-weight:600;font-size:14px;margin-bottom:5px">AMOXICILLINE 500mg</div>
+        <div class="cap" style="margin:0">Comprimé pelliculé · Boîte de 12</div>
+      </div>
+    </div>
+    <ul class="anatlegend ui">
+      <li><b>Padding</b> 20px desktop, 16px mobile — the dashed outer line above.</li>
+      <li><b>Radius</b> 8–9px for cards, one step down from a modal's 12–14px.</li>
+      <li><b>Border</b> 1px solid, a token sitting exactly between surface and ink — see Section 07.</li>
+      <li><b>Shadow</b> none at rest; see the elevation ladder below for what each state adds.</li>
+      <li><b>Gap</b> 16px between sibling cards, 8–9px between elements inside one.</li>
+    </ul>
+  </div>
+
+  <h3>Elevation ladder</h3>
+  <div class="shrow">
+    <div class="shbox sh0">Bordered — resting card</div>
+    <div class="shbox sh1">Subtle — hovered row</div>
+    <div class="shbox sh2">Raised — dragged / active card</div>
+    <div class="shbox sh3">Overlay — modal, popover</div>
+  </div>
+  <p class="cap">Four levels, not forty. A fifth would be invisible; a third would collapse hover and modal into the same weight.</p>
+
+  <h3>Five species, one system</h3>
+  <div class="cols cols-3">
+    <div class="mcard stat"><b>9 555</b><span class="ui">médicaments référencés</span></div>
+    <div class="mcard row2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg><div><div class="t">Répertoire</div><div class="m">9 555 fiches</div></div></div>
+    <div class="mcard alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L2.7 17a2 2 0 0 0 1.8 3h15a2 2 0 0 0 1.8-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>Interaction modérée détectée</span></div>
+  </div>
+  <p class="cap" style="margin-top:14px">Stat card, navigation card, alert card — same border, radius and padding tokens throughout. Only the internal content layout and, for the alert, the locked severity colour, ever change.</p>
+
+  <h3>States — try hovering</h3>
+  <div class="stdemo">
+    <div><div class="mcard row2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="t">Default</div></div><div class="stlabel ui">Rest</div></div>
+    <div><div class="mcard row2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="t">Hover me</div></div><div class="stlabel ui">Live — mouse over it</div></div>
+    <div><div class="mcard row2 sel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="t">Selected</div></div><div class="stlabel ui">Teal ring, inset</div></div>
+    <div><div class="mcard row2 dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/></svg><div class="t">Disabled</div></div><div class="stlabel ui">45% opacity, inert</div></div>
+  </div>
+
+  <h3>Nesting</h3>
+  <div class="mcard" style="max-width:360px">
+    <div class="t ui" style="margin-bottom:9px">Comparateur — 2 produits</div>
+    <div class="mcard" style="box-shadow:none;background:var(--paper);padding:10px 12px"><span class="ui" style="font-size:13px">DOLIPRANE 1000mg — 285 DA</span></div>
+  </div>
+  <p class="cap">A card inside a card drops its own border weight to hairline and its shadow to none — nesting should never compound visual weight.</p>
+</section>
+
+<!-- ══ 06 EMPTY SPACE ══════════════════════════════════ -->
+<section id="space">
+  <div class="sec-head">
+    <span class="idx ui">Section 06</span>
+    <h2>Empty space</h2>
+    <p>Whitespace is the one design tool that costs nothing to implement and is the easiest to get wrong under deadline pressure. A fixed scale, used with intent, is what separates "spacious" from "just under-filled."</p>
+  </div>
+
+  <h3>The scale</h3>
+  <div class="ruler ui">
+    <div class="rul-row"><span class="px">4</span><span class="rul-bar" style="width:4%"></span><span class="use">icon-to-label gap</span></div>
+    <div class="rul-row"><span class="px">8</span><span class="rul-bar" style="width:8%"></span><span class="use">internal card gap</span></div>
+    <div class="rul-row"><span class="px">12</span><span class="rul-bar" style="width:12%"></span><span class="use">related field group</span></div>
+    <div class="rul-row"><span class="px">16</span><span class="rul-bar" style="width:16%"></span><span class="use">card-to-card gap</span></div>
+    <div class="rul-row"><span class="px">24</span><span class="rul-bar" style="width:24%"></span><span class="use">component-to-component</span></div>
+    <div class="rul-row"><span class="px">32</span><span class="rul-bar" style="width:32%"></span><span class="use">card padding, subsection gap</span></div>
+    <div class="rul-row"><span class="px">48</span><span class="rul-bar" style="width:48%"></span><span class="use">section gap</span></div>
+    <div class="rul-row"><span class="px">64</span><span class="rul-bar" style="width:64%"></span><span class="use">major section break</span></div>
+    <div class="rul-row"><span class="px">96</span><span class="rul-bar" style="width:96%"></span><span class="use">hero / top-of-page breathing room</span></div>
+  </div>
+
+  <h3>Micro versus macro</h3>
+  <p>Anything under 16px is holding related things together. Anything 32px and up is telling the eye "this is a new idea." The most common real-world mistake is a value from the middle of the scale — 20 or 24px — used for both jobs at once, which reads as merely inconsistent rather than intentional in either direction.</p>
+
+  <h3>Density modes, made tangible</h3>
+  <div class="denscompare">
+    <div class="denscard dp-compact"><div class="lbl ui">Compact ×0.8</div><div class="inner">AMOXICILLINE 500mg</div></div>
+    <div class="denscard dp-standard"><div class="lbl ui">Standard ×1</div><div class="inner">AMOXICILLINE 500mg</div></div>
+    <div class="denscard dp-access"><div class="lbl ui">Accessible ×1.25</div><div class="inner">AMOXICILLINE 500mg</div></div>
+  </div>
+  <p class="cap">Same content, same scale, one multiplier — this is what the density setting already sitting unused in the store (Part I, <code>P3-02</code>) should actually do once it has a switch.</p>
+
+  <div class="note">
+    <span class="lbl ui">The exception that matters most</span>
+    <p>A contre-indication banner keeps standard-or-greater spacing even in compact mode. Compact density is a convenience for browsing; it should never be allowed to compress the one kind of content where a rushed glance is exactly the failure mode to design against.</p>
+  </div>
+</section>
+
+<!-- ══ 07 BORDERS ══════════════════════════════════════ -->
+<section id="borders">
+  <div class="sec-head">
+    <span class="idx ui">Section 07</span>
+    <h2>Borders</h2>
+    <p>A border's job is to separate two surfaces without shouting. Three weights, one colour rule, four divider styles, and the input-state fix the audit already flagged.</p>
+  </div>
+
+  <h3>Weight scale</h3>
+  <div class="bwrow">
+    <div class="bwitem"><span>Hairline · 1px</span><span class="ln" style="border-top-width:1px"></span></div>
+    <div class="bwitem"><span>Defined · 1.5px</span><span class="ln" style="border-top-width:1.5px"></span></div>
+    <div class="bwitem"><span>Emphasis · 2px — focus &amp; selection only</span><span class="ln" style="border-top-width:2px;border-top-color:var(--teal)"></span></div>
+  </div>
+
+  <h3>Colour sits between surface and ink, never at either end</h3>
+  <div class="colorstep ui">
+    <div style="background:var(--paper-2);color:var(--ink-2)">Surface</div>
+    <div style="background:var(--rule-2);color:var(--ink)">Border</div>
+    <div style="background:var(--ink);color:var(--paper)">Ink</div>
+  </div>
+  <p class="cap">A border darker than this reads as a box drawn with a marker. Lighter, and it disappears entirely in bright light — exactly the "every input looks permanently focused" defect the audit flagged as <code>P2-36</code>, caused by a border token pulled too close to the accent instead of sitting here.</p>
+
+  <h3>Four dividers, four different jobs</h3>
+  <div class="divdemo">
+    <div><div class="div-full"></div><div class="dtag ui">Full-bleed — separates unrelated sections</div></div>
+    <div><div class="div-inset"></div><div class="dtag ui">Inset — separates rows within one list, aligned to content</div></div>
+    <div><div class="div-label ui">ou</div><div class="dtag ui">Labelled — alternative paths, e.g. login options</div></div>
+    <div><div class="div-dash"></div><div class="dtag ui">Dashed — reserved: provisional or draft content only</div></div>
+  </div>
+
+  <h3>Focus ring — tab through these</h3>
+  <div class="focusrow">
+    <button class="fbtn2">Bouton</button>
+    <input class="finput" placeholder="Champ de saisie">
+    <a href="#">Un lien</a>
+  </div>
+
+  <h3>Input states</h3>
+  <div class="inputstack">
+    <div class="ifield if-rest"><label>Rest</label><input value="DOLIPRANE"></div>
+    <div class="ifield if-hover"><label>Hover</label><input value="DOLIPRANE"></div>
+    <div class="ifield if-focus"><label>Focus</label><input value="DOLIPRANE"></div>
+    <div class="ifield if-error"><label>Error</label><input value="dolipran"><div class="msg">Aucun résultat — vérifiez l'orthographe</div></div>
+    <div class="ifield if-disabled"><label>Disabled</label><input value="DOLIPRANE" disabled></div>
+  </div>
+</section>
+
+<!-- ══ 08 POPUPS ═══════════════════════════════════════ -->
+<section id="popups">
+  <div class="sec-head">
+    <span class="idx ui">Section 08</span>
+    <h2>Popups &amp; overlays</h2>
+    <p>Tooltips, toasts, modals, dropdowns — four different weights of interruption, and each should feel like a different amount of "stop what you're doing." Everything here is live.</p>
+  </div>
+
+  <h3>Tooltip — hover or focus the icons</h3>
+  <div class="row center" style="gap:12px">
+    <button class="iconbtn" data-tip="Mode botanique"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21c-4-1-7-5-7-10a7 7 0 0 1 14 0c0 5-3 9-7 10z"/><path d="M12 21V9"/></svg></button>
+    <button class="iconbtn" data-tip="Changer de palette"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="13.5" cy="17.5" r="1.4"/><path d="M12 12A9 9 0 1 1 3 3"/></svg></button>
+    <button class="iconbtn" data-tip="Ouvrir le Copilote IA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4z"/><path d="M6 12v1a6 6 0 0 0 12 0v-1M12 19v2"/></svg></button>
+  </div>
+  <p class="cap">Lightest touch of the four — appears on hover with no click, dismisses itself, never blocks anything.</p>
+
+  <h3>Toast — trigger one</h3>
+  <div class="row">
+    <button class="dbtn" style="background:var(--sev-ok-fg);color:#fff;border-color:var(--sev-ok-fg)" data-toast="success">Succès</button>
+    <button class="dbtn" style="background:var(--teal);color:#fff;border-color:var(--teal)" data-toast="info">Info</button>
+    <button class="dbtn" style="background:var(--sev-caution-fg);color:#fff;border-color:var(--sev-caution-fg)" data-toast="warn">Avertissement</button>
+    <button class="dbtn" style="background:var(--sev-danger-fg);color:#fff;border-color:var(--sev-danger-fg)" data-toast="danger">Danger</button>
+  </div>
+  <p class="cap">Confirms something already happened. Auto-dismisses. Never demands a response — if it needs one, it should have been a modal.</p>
+
+  <h3>Modal — open one</h3>
+  <div class="row">
+    <button class="dbtn dbtn-primary" id="openModalBtn">Ouvrir une boîte de dialogue</button>
+    <button class="dbtn dbtn-danger" id="openDangerBtn">Ouvrir une confirmation destructive</button>
+  </div>
+  <p class="cap">Blocks the page until answered. The destructive variant gets a top accent stripe in the locked danger colour and a red confirm button — never the platform's own accent colour, which would make deletion look like a normal, friendly action.</p>
+
+  <h3>Dropdown / popover</h3>
+  <div class="popwrap">
+    <button class="dbtn" id="openPopBtn" aria-haspopup="menu" aria-expanded="false">Actions ⌄</button>
+    <div class="popover" id="popMenu" role="menu" hidden>
+      <button role="menuitem" class="pop-item">Modifier</button>
+      <button role="menuitem" class="pop-item">Dupliquer</button>
+      <button role="menuitem" class="pop-item">Exporter en PDF</button>
+      <div class="pop-div"></div>
+      <button role="menuitem" class="pop-item pop-danger">Supprimer</button>
+    </div>
+  </div>
+  <p class="cap">Anchored to what opened it, closes on outside click or Escape. Note the danger item is separated by a divider and coloured — never placed loose among ordinary actions.</p>
+
+  <h3>Backdrop treatment</h3>
+  <div class="backdroprow">
+    <div><div class="bd-demo bd-dim"><div class="bd-behind"></div><div class="bd-scrim"></div><div class="bd-front"></div></div><div class="bd-cap ui">Dim only</div></div>
+    <div><div class="bd-demo bd-blur"><div class="bd-behind"></div><div class="bd-scrim"></div><div class="bd-front"></div></div><div class="bd-cap ui">Blur only</div></div>
+    <div><div class="bd-demo bd-both"><div class="bd-behind"></div><div class="bd-scrim"></div><div class="bd-front"></div></div><div class="bd-cap ui">Dim + blur — recommended</div></div>
+  </div>
+  <p class="cap">Dim alone can leave distracting colour showing through; blur alone can leave a modal feeling like it's floating with no separation. Together, at moderate strength, the background reads as "still there, clearly not now."</p>
+
+  <h3>One more rule: stacking order</h3>
+  <p class="cap" style="margin-bottom:0">Tooltip above toast above modal above popover above a sticky header — in that order. A toast should stay visible even if it fires while a modal is open; a tooltip should never be trapped behind anything.</p>
+</section>
+
+<!-- ══ 09 EVERYTHING ELSE ══════════════════════════════ -->
+<section id="rest">
+  <div class="sec-head">
+    <span class="idx ui">Section 09</span>
+    <h2>Everything else the word "design" touches</h2>
+    <p>Shadows, buttons, forms, chart colour, motion and loading — the remaining pieces that don't fit neatly under the headings above but are no less part of the system.</p>
+  </div>
+
+  <h3>Shadow scale</h3>
+  <div class="shrow">
+    <div class="shbox sh0">None</div><div class="shbox sh1">Low</div><div class="shbox sh2">Medium</div><div class="shbox sh3">High</div>
+  </div>
+
+  <h3>Buttons — try hovering the second column</h3>
+  <div class="btngrid ui">
+    <span></span><span>Default</span><span>Hover</span><span>Disabled</span><span>Loading</span>
+    <span class="rl">Primary</span><button class="bt bt-primary">Analyser</button><button class="bt bt-primary hoverable">Analyser</button><button class="bt bt-primary disabled">Analyser</button><button class="bt bt-primary loading">Analyser</button>
+    <span class="rl">Secondary</span><button class="bt bt-secondary">Annuler</button><button class="bt bt-secondary hoverable">Annuler</button><button class="bt bt-secondary disabled">Annuler</button><button class="bt bt-secondary loading" style="color:var(--ink)">Annuler</button>
+    <span class="rl">Ghost</span><button class="bt bt-ghost">Ignorer</button><button class="bt bt-ghost hoverable">Ignorer</button><button class="bt bt-ghost disabled">Ignorer</button><span></span>
+    <span class="rl">Danger</span><button class="bt bt-danger">Supprimer</button><button class="bt bt-danger hoverable">Supprimer</button><button class="bt bt-danger disabled">Supprimer</button><button class="bt bt-danger loading">Supprimer</button>
+  </div>
+
+  <h3>Form field anatomy</h3>
+  <div class="ffield">
+    <label>Poids de l'enfant <span class="req">*</span></label>
+    <input placeholder="16">
+    <div class="help">En kilogrammes — utilisé pour le calcul de posologie.</div>
+  </div>
+  <p class="cap">Label above the field, always. A red asterisk marks required rather than "(optionnel)" tags on every other field — one mark instead of many, since most clinical fields here are required anyway.</p>
+
+  <h3>Chart colour, mapped to what it represents</h3>
+  <div class="cols cols-3">
+    <div><div class="vizramp"><span style="background:#0E8C8C"></span><span style="background:#B9714E"></span><span style="background:#7A4A8C"></span><span style="background:#9A6B14"></span><span style="background:#3D6B4A"></span></div><div class="cap ui">Categorical — distinct classes, colour-blind-safe hues</div></div>
+    <div><div class="vizramp" style="background:linear-gradient(90deg,#DCEEF3,#0E8C8C)"></div><div class="cap ui">Sequential — one metric, e.g. days until expiry</div></div>
+    <div><div class="vizramp" style="background:linear-gradient(90deg,#C23B3B,#F3EAD6,#0E8C8C)"></div><div class="cap ui">Diverging — stock level, shortage ↔ surplus</div></div>
+  </div>
+
+  <h3>Motion — click to preview</h3>
+  <div class="cols cols-3 ui">
+    <div><div class="easetrack" id="ease1"><div class="easedot"></div></div><span class="cap">Standard — most transitions</span><br><button class="dbtn" style="margin-top:6px" data-ease="ease1" data-curve="cubic-bezier(.4,0,.2,1)">Play</button></div>
+    <div><div class="easetrack" id="ease2"><div class="easedot"></div></div><span class="cap">Celebratory — rare, one moment only</span><br><button class="dbtn" style="margin-top:6px" data-ease="ease2" data-curve="cubic-bezier(.34,1.56,.64,1)">Play</button></div>
+    <div><div class="easetrack" id="ease3"><div class="easedot"></div></div><span class="cap">Linear — progress indicators only</span><br><button class="dbtn" style="margin-top:6px" data-ease="ease3" data-curve="linear">Play</button></div>
+  </div>
+
+  <h3>Loading — shape of the content vs. the signature spinner</h3>
+  <div class="row" style="gap:30px;align-items:center">
+    <div class="skel"><div class="skline" style="width:70%"></div><div class="skline" style="width:100%"></div><div class="skline" style="width:85%"></div></div>
+    <div style="text-align:center"><div class="caploader" style="margin:0 auto"></div><div class="cap ui" style="margin-top:8px">The signature capsule loader — action-triggered</div></div>
+  </div>
+  <p class="cap">Skeletons for anything shaped like content about to arrive — a table, a card list. The capsule spinner for anything triggered by a click, so the two never compete for the same meaning.</p>
+</section>
+
+<!-- ══ 10 TOGETHER ═════════════════════════════════════ -->
+<section id="together">
+  <div class="sec-head">
+    <span class="idx ui">Section 10</span>
+    <h2>Bringing it together</h2>
+    <p>One small composed screen, using the Corniche direction from Section 02, applying most of the rules above at once.</p>
+  </div>
+
+  <div class="finalscreen">
+    <div class="fs-top">
+      <div class="fs-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg>DzPharm</div>
+      <span class="cap ui" style="margin:0">Corniche · aperçu</span>
+    </div>
+    <div class="fs-search">Rechercher — « amoxicilline »</div>
+    <div class="fs-card"><div><div class="t">AMOXICILLINE 500mg</div><div class="m">Comprimé · Boîte de 12 · 285 DA</div></div><span class="sev sev-ok">Compatible</span></div>
+    <div class="fs-card"><div><div class="t">AMOXICILLINE 1g</div><div class="m">Comprimé · Boîte de 8 · 340 DA</div></div><button class="fs-btn">Comparer</button></div>
+  </div>
+
+  <h3>If I had to pick just two to ship next</h3>
+  <p><b>Corniche</b> as a fresh, distinct addition to the existing twenty — none of them currently sit in this bright coastal-teal territory. <b>Nuit Saharienne</b> as a genuine OLED night-shift mode rather than a decorative dark theme — battery savings on real hardware, not just a mood.</p>
+
+  <h3>The rules worth remembering after you close this tab</h3>
+  <ul>
+    <li>Nine roles make a palette, not nine colours picked by eye.</li>
+    <li>Seven severity levels are locked, permanently, outside every palette.</li>
+    <li>One accent per screen — 70/25/5, not 60/30/10.</li>
+    <li>A border sits exactly between surface and ink, never at either end.</li>
+    <li>Four popup weights for four different amounts of interruption — tooltip, toast, modal, dropdown, in that order of how much they demand.</li>
+    <li>Compact density shrinks everything except a safety alert.</li>
+  </ul>
+
+  <div class="note">
+    <span class="lbl ui">Last word</span>
+    <p>Parts I and II said what to fix and what to build. This part said how any of it should actually look and feel once built — and, like Part II, it's a set of options to react to, not a spec to follow blindly. Pick, discard, remix. That's what the live pieces above are for.</p>
+  </div>
+</section>
+
+<footer>
+  <p>DzPharm design system exploration · third document in this set, alongside the audit and remediation plan and the feature brainstorm · every interactive element above runs entirely in this page.</p>
+</footer>
+
+</main>
+</div>
+
+<!-- toast stack -->
+<div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
+
+<!-- modal: standard -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle1">
+    <h3 id="modalTitle1">Ajouter aux favoris</h3>
+    <p>AMOXICILLINE 500mg sera ajouté à votre liste de favoris et disponible hors ligne.</p>
+    <div class="modal-actions">
+      <button class="dbtn dbtn-ghost" id="modalCancel1">Annuler</button>
+      <button class="dbtn dbtn-primary" id="modalOk1">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal: destructive -->
+<div class="modal-backdrop" id="dangerBackdrop" hidden>
+  <div class="modal danger" role="dialog" aria-modal="true" aria-labelledby="modalTitle2">
+    <h3 id="modalTitle2">Supprimer cette conversation ?</h3>
+    <p>Cette action est définitive. L'historique du Copilote pour cette conversation sera perdu.</p>
+    <div class="modal-actions">
+      <button class="dbtn dbtn-ghost" id="modalCancel2">Annuler</button>
+      <button class="dbtn dbtn-danger" id="modalOk2">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════ PALETTE STAGE ════════ */
+const PALDESC={
+  zellige:"Cobalt tilework against ochre grout, the way Algiers courtyards read after dark. A cooler, more architectural alternative to a default blue for users who find blue too soft for a clinical tool.",
+  hammam:"Warm plaster, terracotta, sage soap. Deliberately softer and less clinical than the rest — proposed as the default for Mode famille, where a patient should feel spoken to, not diagnosed.",
+  corniche:"The Mediterranean bay rather than the Sahara. Fresh, bright, still professional — a coastal-teal option distinct from anything else in the set.",
+  cuivre:"Hammered copper and brass against dark leather. High-warmth, reads as premium rather than sterile — copper is the Maghreb's own metal in a way gold or silver aren't.",
+  ivoire:"Near-monochrome — the accent literally is the ink colour. The quietest, highest-contrast option, closest to how the platform already looks on a printed page.",
+  nuit:"Dark-first, built for an actual night shift rather than decoration. On OLED hardware the near-black canvas is close to free — this is the only palette here chosen for a battery reason, not a mood."
+};
+(function(){
+  const stage=document.getElementById('stage'), note=document.getElementById('palNote'), modeBtn=document.getElementById('stageMode');
+  document.querySelectorAll('.palchip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      document.querySelectorAll('.palchip').forEach(c=>c.setAttribute('aria-pressed','false'));
+      chip.setAttribute('aria-pressed','true');
+      const pal=chip.dataset.pal;
+      stage.setAttribute('data-pal',pal);
+      note.textContent=PALDESC[pal]||'';
+    });
+  });
+  modeBtn.addEventListener('click',()=>{
+    const dark=stage.getAttribute('data-mode')==='dark';
+    stage.setAttribute('data-mode',dark?'light':'dark');
+    modeBtn.textContent=dark?'☾ Sombre':'☀ Clair';
+  });
+})();
+
+/* ════════ TOASTS ════════ */
+(function(){
+  const stack=document.getElementById('toastStack');
+  const MSG={success:'Ajouté aux favoris',info:'Nouvelle notification reçue',warn:'Connexion instable',danger:'Interaction critique détectée'};
+  const ICON='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  document.querySelectorAll('[data-toast]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const kind=b.dataset.toast;
+      const t=document.createElement('div');
+      t.className='toast t-'+kind;
+      t.innerHTML=ICON+'<span>'+MSG[kind]+'</span>';
+      stack.appendChild(t);
+      requestAnimationFrame(()=>t.classList.add('show'));
+      setTimeout(()=>{
+        t.classList.remove('show');
+        setTimeout(()=>t.remove(),260);
+      },3000);
+    });
+  });
+})();
+
+/* ════════ MODALS ════════ */
+function wireModal(openId,backdropId,cancelId,okId){
+  const open=document.getElementById(openId), bd=document.getElementById(backdropId),
+        cancel=document.getElementById(cancelId), ok=document.getElementById(okId);
+  function show(){ bd.hidden=false; (cancel||ok).focus(); document.addEventListener('keydown',onKey); }
+  function hide(){ bd.hidden=true; document.removeEventListener('keydown',onKey); open.focus(); }
+  function onKey(e){ if(e.key==='Escape') hide(); }
+  open.addEventListener('click',show);
+  cancel.addEventListener('click',hide);
+  ok.addEventListener('click',hide);
+  bd.addEventListener('click',e=>{ if(e.target===bd) hide(); });
+}
+wireModal('openModalBtn','modalBackdrop','modalCancel1','modalOk1');
+wireModal('openDangerBtn','dangerBackdrop','modalCancel2','modalOk2');
+
+/* ════════ POPOVER ════════ */
+(function(){
+  const btn=document.getElementById('openPopBtn'), menu=document.getElementById('popMenu');
+  function close(){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); }
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const willOpen=menu.hidden;
+    menu.hidden=!willOpen;
+    btn.setAttribute('aria-expanded',String(willOpen));
+  });
+  document.addEventListener('click',e=>{ if(!menu.hidden && !menu.contains(e.target) && e.target!==btn) close(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !menu.hidden) close(); });
+})();
+
+/* ════════ EASING DEMO ════════ */
+document.querySelectorAll('[data-ease]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const track=document.getElementById(b.dataset.ease);
+    const dot=track.querySelector('.easedot');
+    const curve=b.dataset.curve;
+    dot.style.transition='none'; dot.style.left='3px';
+    requestAnimationFrame(()=>{
+      dot.style.transition='left .9s '+curve;
+      dot.style.left='calc(100% - 23px)';
+      setTimeout(()=>{ dot.style.transition='left .5s ease'; dot.style.left='3px'; },1000);
+    });
+  });
+});
+
+/* ════════ THEME ════════ */
+(function(){
+  const b=document.getElementById('themebtn');
+  b.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const isDark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
+    try{localStorage.setItem('dzp-theme3',isDark?'light':'dark')}catch(e){}
+  });
+  try{const t=localStorage.getItem('dzp-theme3');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
+})();
+</script>
+</body>
+</html>

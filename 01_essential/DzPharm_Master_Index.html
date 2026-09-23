@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DzPharm — Master Index</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@page { size: 800px 1130px; margin: 0; }
+:root { --c-bg: #0B1120; --c-text: #E2E8F0; --c-text-muted: #94A3B8; --c-text-dim: #64748B; --c-accent: #38BDF8; --c-success: #34D399; --c-warning: #FBBF24; --c-danger: #F87171; --c-border: rgba(148,163,184,0.18); --c-card: rgba(30,41,59,0.55); --font-sans: 'Inter',-apple-system,sans-serif; --font-mono: 'JetBrains Mono',monospace; }
+html, body { margin: 0; padding: 0; width: 800px; background: var(--c-bg); color: var(--c-text); font-family: var(--font-sans); font-size: 13.5px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+@media screen { html { display: flex; justify-content: center; background: #050810; } body { margin: 24px auto; box-shadow: 0 0 80px rgba(56,189,248,0.08); } }
+.cover { width: 800px; height: 1130px; box-sizing: border-box; break-after: page; overflow: hidden; background: radial-gradient(ellipse 65% 50% at 50% 22%, rgba(56,189,248,0.18), transparent 70%), linear-gradient(180deg, #0B1120 0%, #060912 100%); padding: 90px 70px 60px; display: flex; flex-direction: column; justify-content: space-between; }
+.cover-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border: 1px solid rgba(56,189,248,0.35); background: rgba(56,189,248,0.08); border-radius: 100px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; color: var(--c-accent); text-transform: uppercase; }
+.cover-logo { width: 88px; height: 88px; border-radius: 22px; background: linear-gradient(135deg, var(--c-accent), #0EA5E9, #0369A1); display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 60px rgba(56,189,248,0.35); }
+.cover-logo svg { width: 42px; height: 42px; color: #0B1120; }
+.cover-eyebrow { font-size: 12px; color: var(--c-text-muted); letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; margin-bottom: 22px; }
+.cover-title { font-size: 50px; font-weight: 800; line-height: 1.04; letter-spacing: -0.025em; color: #F8FAFC; margin: 0 0 20px; }
+.cover-title .accent { background: linear-gradient(135deg, var(--c-accent), #BAE6FD); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.cover-subtitle { font-size: 16px; color: var(--c-text-muted); max-width: 580px; margin: 0; line-height: 1.55; }
+.cover-stats { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid var(--c-border); border-bottom: 1px solid var(--c-border); padding: 24px 0; margin-top: 50px; }
+.cover-stat { text-align: center; border-right: 1px solid var(--c-border); } .cover-stat:last-child { border-right: none; }
+.cover-stat-num { font-size: 30px; font-weight: 800; color: var(--c-accent); line-height: 1; }
+.cover-stat-num.danger { color: var(--c-danger); } .cover-stat-num.warn { color: var(--c-warning); } .cover-stat-num.success { color: var(--c-success); }
+.cover-stat-label { font-size: 10.5px; color: var(--c-text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px; font-weight: 500; }
+.main-content { padding: 60px 64px 40px; }
+.section-tag { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; color: var(--c-accent); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; }
+.section-tag::before { content: ""; width: 24px; height: 1px; background: var(--c-accent); }
+.section-title { font-size: 26px; font-weight: 800; color: #F8FAFC; letter-spacing: -0.02em; margin: 0 0 8px; }
+.divider { height: 1px; background: linear-gradient(90deg, var(--c-accent) 0%, transparent 60%); margin: 0 0 28px; }
+.priority-header { break-after: avoid; break-inside: avoid; margin-top: 40px; padding: 16px 20px; border-radius: 14px; border-left: 4px solid; }
+.priority-header:first-child { margin-top: 0; }
+.priority-header.p0 { border-color: var(--c-danger); background: rgba(248,113,113,0.08); }
+.priority-header.p1 { border-color: var(--c-warning); background: rgba(251,191,36,0.08); }
+.priority-header.p2 { border-color: var(--c-accent); background: rgba(56,189,248,0.08); }
+.priority-header.p3 { border-color: var(--c-success); background: rgba(52,211,153,0.08); }
+.priority-header.cc { border-color: var(--c-text-dim); background: rgba(100,116,139,0.08); }
+.priority-header h2 { font-size: 20px; font-weight: 800; color: #F8FAFC; margin: 0; }
+.priority-header p { font-size: 12px; color: var(--c-text-muted); margin: 4px 0 0; }
+.report-row { display: grid; grid-template-columns: 40px 50px 1fr 60px; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--c-border); break-inside: avoid; }
+.report-row:hover { background: rgba(56,189,248,0.04); }
+.report-num { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--c-accent); text-align: center; }
+.report-grade { font-size: 16px; font-weight: 800; text-align: center; padding: 4px 8px; border-radius: 6px; }
+.report-info { min-width: 0; }
+.report-title { font-size: 13px; font-weight: 700; color: #F8FAFC; margin: 0 0 2px; }
+.report-summary { font-size: 11.5px; color: var(--c-text-muted); margin: 0; line-height: 1.4; }
+.report-pages { font-family: var(--font-mono); font-size: 10px; color: var(--c-text-dim); text-align: right; }
+.ending { width: 800px; height: 1130px; box-sizing: border-box; break-before: page; background: radial-gradient(ellipse 50% 40% at 50% 30%, rgba(56,189,248,0.12), transparent 70%), linear-gradient(180deg, #0B1120, #060912); padding: 80px 70px; display: flex; flex-direction: column; justify-content: space-between; }
+.ending-mark { font-size: 96px; font-weight: 800; background: linear-gradient(135deg, var(--c-accent), #BAE6FD); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.04em; line-height: 1; }
+.ending-text { font-size: 18px; color: var(--c-text-muted); line-height: 1.5; max-width: 500px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="cover">
+    <div>
+        <div class="cover-badge">MASTER INDEX · COMPLETE REVIEW</div>
+        <div class="cover-logo" style="margin-top: 40px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+        </div>
+        <div style="margin-top: 60px;">
+            <div class="cover-eyebrow">DzPharm Platform Audit</div>
+            <h1 class="cover-title">Master<br><span class="accent">Index</span></h1>
+            <p class="cover-subtitle">A complete catalog of all 59 deep-dive reports covering the 68-item review menu. Reports are classified by priority: P0 Critical (security/clinical blockers), P1 High (significant UX/a11y gaps), P2 Medium (polish), P3 Low (already good), and Cross-Cutting reference reports.</p>
+        </div>
+    </div>
+    <div>
+        <div class="cover-stats">
+            <div class="cover-stat"><div class="cover-stat-num">59</div><div class="cover-stat-label">Total Reports</div></div>
+            <div class="cover-stat"><div class="cover-stat-num danger">2</div><div class="cover-stat-label">P0 Critical</div></div>
+            <div class="cover-stat"><div class="cover-stat-num warn">13</div><div class="cover-stat-label">P1 High Priority</div></div>
+            <div class="cover-stat"><div class="cover-stat-num success">33</div><div class="cover-stat-label">P2+P3 (Medium/Low)</div></div>
+        </div>
+    </div>
+</div>
+<div class="main-content">
+
+    <div class="priority-header p0">
+        <h2>P0 · Critical · 2 reports</h2>
+        <p>Security holes and clinical blockers. Must fix before professional use. These are regulatory blockers — a platform with these gaps cannot be deployed in a regulated pharmacy setting.</p>
+    </div>
+    
+        <div class="report-row">
+            <div class="report-num">#1</div>
+            <div class="report-grade" style="background: #F8717122; color: #F87171;">D</div>
+            <div class="report-info">
+                <p class="report-title">Routing Architecture</p>
+                <p class="report-summary">No URL routing — 22 routes return 404. setState navigation. Breaks deep-links, SEO, sharing, back/forward.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#8</div>
+            <div class="report-grade" style="background: #F8717122; color: #F87171;">D</div>
+            <div class="report-info">
+                <p class="report-title">Authentication Model</p>
+                <p class="report-summary">Single shared code (4815162342), no per-user accounts, no MFA, no audit trail. P0 regulatory blocker.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+    <div class="priority-header p1">
+        <h2>P1 · High Priority · 13 reports</h2>
+        <p>Significant UX gaps, data loss, or WCAG accessibility failures. Fix in the next sprint. These features are broken enough to cause real user frustration or compliance gaps.</p>
+    </div>
+    
+        <div class="report-row">
+            <div class="report-num">#2</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">State Management</p>
+                <p class="report-summary">setState not router.push. Per-tab sync gaps. Drug list not persisted. No Copilot history.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#4</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">SEO & Metadata</p>
+                <p class="report-summary">JSON-LD excellent (MedicalWebPage). Sitemap has 1 URL → 10,000+ pages invisible to Google. No og:image.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#6</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">Internationalization (i18n)</p>
+                <p class="report-summary">French-first correct. Darija is differentiator. Arabic renders WITHOUT dir=rtl (unreadable!). No language switcher.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#9</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B-</div>
+            <div class="report-info">
+                <p class="report-title">Session Management</p>
+                <p class="report-summary">Lock works (corrects #8). No idle timeout (shared-computer risk). No cross-tab sync. No lock-vs-logout.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#22</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">Interactions Checker</p>
+                <p class="report-summary">5 dangerous example pairs. 3 bugs: examples don't populate, drug list not persisted, Matrice doesn't render.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#36</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B</div>
+            <div class="report-info">
+                <p class="report-title">AI Copilot Core</p>
+                <p class="report-summary">Trilingual Darija, 3-mode, structured clinical output. 3 bugs (version, prompts, history) + 11s latency.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#38</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">Voice Dictation</p>
+                <p class="report-summary">4 bugs: Firefox dead button, no permission pre-prompt, stop aria-label, hard-coded lang=fr-FR. Arabic broken.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#39</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B-</div>
+            <div class="report-info">
+                <p class="report-title">Suggested Prompts</p>
+                <p class="report-summary">4 thoughtful trilingual prompts. Dead-click bug — clicking does nothing. 1h fix lifts to B+.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#40</div>
+            <div class="report-grade" style="background: #F8717122; color: #F87171;">D+</div>
+            <div class="report-info">
+                <p class="report-title">Conversation History</p>
+                <p class="report-summary">0/5 patterns implemented. Copilot is stateless — refresh wipes conversation. No persistence, no thread list.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#54</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B</div>
+            <div class="report-info">
+                <p class="report-title">Typography</p>
+                <p class="report-summary">8-step scale with calc() line-heights. But 0 webfonts loaded — entire UI on OS fallback stack. 30-min fix.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#61</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">Accessibility Live Regions</p>
+                <p class="report-summary">1 live region (login role=alert) + 4 missing (Copilot, toast, bell, search). WCAG 4.1.3 fails. 2h fix.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#62</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C</div>
+            <div class="report-info">
+                <p class="report-title">Icon-Only Button Labels</p>
+                <p class="report-summary">6 icon-only buttons, 4 missing/generic labels. WCAG 4.1.2 fails. 25-min fix lifts to A.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#67</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">Reduced Motion Support</p>
+                <p class="report-summary">13 keyframes, 103 transitions, 0 prefers-reduced-motion queries. 5-min CSS fix. Smallest-effort highest-impact.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+    <div class="priority-header p2">
+        <h2>P2 · Medium Priority · 13 reports</h2>
+        <p>Polish items and workflow friction. Fix in the next quarter. The features work but have bugs or missing patterns that degrade the experience.</p>
+    </div>
+    
+        <div class="report-row">
+            <div class="report-num">#7</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Login Flow</p>
+                <p class="report-summary">AAA WCAG 3.3.1 errors. Password-manager friendly. 4 gaps: rate limit, enterkeyhint, noindex, redirect.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#11</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Command Palette (Cmd-K)</p>
+                <p class="report-summary">23 commands, dual-source search, emergency-first. 2 bugs: decorative hotkeys + selection desync (safety risk).</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#23</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B</div>
+            <div class="report-info">
+                <p class="report-title">Interactions Matrix</p>
+                <p class="report-summary">Cross-table view of pairwise interactions. Color-coded severity. Rendering bug in Matrice tab.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#35</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B</div>
+            <div class="report-info">
+                <p class="report-title">Pharmacies de Garde</p>
+                <p class="report-summary">52 pharmacies, 17/58 wilayas. 5 gaps: search predicate, coverage, hours, GPS, freshness. 3.5h lifts to A-.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#37</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B</div>
+            <div class="report-info">
+                <p class="report-title">Copilot Mode System</p>
+                <p class="report-summary">3 modes (pro/patient/enfant). Mode enfant excellent. Mode patient = Mode pro (bug). Not persisted to Zustand.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#41</div>
+            <div class="report-grade" style="background: #FBBF2422; color: #FBBF24;">C+</div>
+            <div class="report-info">
+                <p class="report-title">Streaming Responses</p>
+                <p class="report-summary">3-8s batch render, no streaming. Vercel AI SDK adoption (1 day) lifts to A-. Progressive rendering + early cancel.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#43</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B</div>
+            <div class="report-info">
+                <p class="report-title">Notifications Center</p>
+                <p class="report-summary">Bell + dropdown, 3 notification types. 3 gaps: no push, no filter, no bulk action. 3h lifts to B+.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#44</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Recently Viewed Medications</p>
+                <p class="report-summary">10-item cap, IDs-only schema, Zustand persistence. 3 gaps + privacy gap (no expiration). 3.5h lifts to A-.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#49</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Sharing System</p>
+                <p class="report-summary">Share dialog with WhatsApp/Telegram/Email/copy. Depends on #1 routing for shareable URLs.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#50</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Shortage Reporting</p>
+                <p class="report-summary">9 community reports, 58 wilayas. Submit returns 500 error. Unique public-health feature. Fix API endpoint.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#60</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Motion & Transitions</p>
+                <p class="report-summary">13 keyframes, 3-tier hierarchy, 103/103 elements with transitions. 0 prefers-reduced-motion queries (gap).</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#66</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Color Blindness Support</p>
+                <p class="report-summary">Color+text+icon on every status indicator. 7-state system. 20 Nuancier palettes need verification. 4h fix.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#68</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">200% Zoom & Reflow</p>
+                <p class="report-summary">rem unit system, 200% passes, 400% largely passes. Table reflow gap. 2h lifts to A-.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+    <div class="priority-header p3">
+        <h2>P3 · Low Priority (Already Good) · 20 reports</h2>
+        <p>Already good or excellent. No urgent fixes needed — these are the platform's strengths. Listed for completeness and to document what's working.</p>
+    </div>
+    
+        <div class="report-row">
+            <div class="report-num">#3</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A</div>
+            <div class="report-info">
+                <p class="report-title">Performance Architecture</p>
+                <p class="report-summary">TTFB 80ms, FCP 204ms, 88.8KB transfer. Top decile of healthcare web apps. Lighthouse 90-95.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#5</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A</div>
+            <div class="report-info">
+                <p class="report-title">PWA Capabilities</p>
+                <p class="report-summary">v8 service worker, NETWORK-FIRST strategy, 4 maskable icons, offline tested. 10-min fix lifts to A+.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#10</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Pregnancy & Lactation Checker</p>
+                <p class="report-summary">6 medications tested (Doliprane, Bruflen, Curacne, Glucophage, Lopril, Augmentin). CRAT-based.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#24</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Pediatric Posology Calculator</p>
+                <p class="report-summary">Weight-based dosing, molecule picker, form picker, Algerian brands. Mobile-responsive.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#25</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Chifa Simulator</p>
+                <p class="report-summary">CNAS/CASNOS reimbursement rates. Card type picker (standard/ALD). Algerian-specific.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#26</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A</div>
+            <div class="report-info">
+                <p class="report-title">Ramadan Chronopharmacology</p>
+                <p class="report-summary">12 wilayas, prayer-time-based scheduling. 3-prise adaptation. Unique to Algerian market.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#27</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Medication Comparator</p>
+                <p class="report-summary">Side-by-side comparison up to 3 drugs. Reset functionality. DCI/class/form/pricing compared.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#28</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Clinical Tools Sweep (#28-#34)</p>
+                <p class="report-summary">13 tools: Family Cabinet, Renal Calculator, RCP Library, Clinical Library, Pregnancy, Barcode, + 3 bonus.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#42</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Theme System</p>
+                <p class="report-summary">2 base modes + 20 Nuancier palettes with cultural identities. Instant switching, Zustand persistence.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#45</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Plus Menu (Header Overflow)</p>
+                <p class="report-summary">5 primary + 5 overflow items. ARIA menu-button textbook-correct. Mobile collapse preserves priority.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#46</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Search Autocomplete</p>
+                <p class="report-summary">ARIA combobox textbook. Dual-source (meds + commands). Sub-50ms filter on 9,555 records. 4h lifts to A-.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#47</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Mobile Navigation</p>
+                <p class="report-summary">5 responsive patterns, Tailwind breakpoints. Header/banner/grid/modal all adapt correctly. No Phase 1 fixes.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#48</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Favorites System</p>
+                <p class="report-summary">Zustand + localStorage. Star toggle, favorites dashboard panel. Cross-device sync needs #8 auth.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#51</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Print & Export (#51-#52)</p>
+                <p class="report-summary">Print dialog, CSV export, PDF generation. Dated filenames. UTF-8 BOM for Excel compatibility.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#53</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A</div>
+            <div class="report-info">
+                <p class="report-title">Color System</p>
+                <p class="report-summary">~400 CSS tokens, 12 categories, 7-level state system, 20-palette Nuancier. 11/12 AAA contrast. Crown jewel.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#55</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Spacing & Layout</p>
+                <p class="report-summary">4px base unit, 10 container widths, 4-token radius, 10-layer z-index, Radix-pattern focus ring. Production-grade.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#56</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A</div>
+            <div class="report-info">
+                <p class="report-title">Design Polish Quad (#56-#59)</p>
+                <p class="report-summary">Iconography (118 Lucide), Border Radius (4-token), Nuancier (20 palettes), Visual Hierarchy (clean).</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#63</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A</div>
+            <div class="report-info">
+                <p class="report-title">Skip Link & Landmarks</p>
+                <p class="report-summary">Textbook skip-link + 5 landmarks + 5 modal labels. No fixes needed. Strongest a11y asset.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#64</div>
+            <div class="report-grade" style="background: #34D39922; color: #34D399;">A-</div>
+            <div class="report-info">
+                <p class="report-title">Heading Hierarchy</p>
+                <p class="report-summary">No skipped levels on any page. Dashboard H1 is a tagline, not page descriptor. 30-min fix lifts to A.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">#65</div>
+            <div class="report-grade" style="background: #38BDF822; color: #38BDF8;">B+</div>
+            <div class="report-info">
+                <p class="report-title">Focus Management</p>
+                <p class="report-summary">Radix-pattern focus ring + modal focus traps + correct Tab order. 1 gap (outside-click focus return). 30min fix.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+    <div class="priority-header cc">
+        <h2>Cross-Cutting Reference Reports · 11 reports</h2>
+        <p>Cross-cutting reference reports that cover multiple features in a single document. Some have been superseded by standalone reports but are included for historical context.</p>
+    </div>
+    
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">UX Review Report (Main)</p>
+                <p class="report-summary">The original 17-chapter master audit. Visual design, UX, popups, frontend tech, a11y, competitive benchmark, roadmap.</p>
+            </div>
+            <div class="report-pages">Report</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">FourFeatures Deep-Dive (#11·22·36·8)</p>
+                <p class="report-summary">Consolidated deep-dive of Command Palette, Interactions, Copilot Core, Auth. Now superseded by standalone reports.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">Data Trio Deep-Dive (#17·18·19)</p>
+                <p class="report-summary">Répertoire (9,555 meds), Medication Detail, Prix & Chifa. 3-chapter consolidated report.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">Design System Trio (#53·54·55)</p>
+                <p class="report-summary">Color System, Typography, Spacing & Layout consolidated. Now superseded by standalone #53/#54/#55 reports.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">Discovery Duo Deep-Dive</p>
+                <p class="report-summary">Earlier SEO + routing discovery. Superseded by #1 Routing and #4 SEO standalone reports.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">Nav Layer Quintet (#12·16·etc)</p>
+                <p class="report-summary">5 nav-layer features: search, filter, emergency banner, notifications, mobile nav. Consolidated.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">UX Layer Trio (#42·46·47)</p>
+                <p class="report-summary">Theme System, Search Autocomplete, Mobile Navigation consolidated. Superseded by standalone reports.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">UX Feedback Deep-Dive</p>
+                <p class="report-summary">Toast notifications, loading spinners, empty states, Copilot thinking indicator. Feedback patterns audit.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">Clinical Tools Sweep (#24-#34)</p>
+                <p class="report-summary">11-tool sweep covering posology, Chifa, Ramadan, comparator, renal, RCP, clinical library, pregnancy, barcode.</p>
+            </div>
+            <div class="report-pages">Sweep</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">Login Session Duo (#7·9)</p>
+                <p class="report-summary">Login Flow + Session Management consolidated. Superseded by standalone #7 and #9 reports.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+        <div class="report-row">
+            <div class="report-num">CC</div>
+            <div class="report-grade" style="background: #64748B22; color: #64748B;">—</div>
+            <div class="report-info">
+                <p class="report-title">SEO/PWA/i18n Trio (#4·5·6)</p>
+                <p class="report-summary">SEO + PWA + i18n consolidated. Superseded by standalone #4, #5, #6 reports.</p>
+            </div>
+            <div class="report-pages">DeepDive</div>
+        </div>
+        
+</div>
+<div class="ending">
+    <div>
+        <div class="cover-badge" style="margin-bottom: 30px;">END OF MASTER INDEX</div>
+        <div class="ending-mark">68/68</div>
+        <p class="ending-text">All 68 features in the review menu now have standalone deep-dive reports. This master index classifies them by priority for sprint planning. The complete set is also available as a priority-organized ZIP file.</p>
+    </div>
+    <div>
+        <div class="cover-stats" style="border-color: var(--c-border); margin-top: 40px;">
+            <div class="cover-stat"><div class="cover-stat-num">59</div><div class="cover-stat-label">PDF Reports</div></div>
+            <div class="cover-stat"><div class="cover-stat-num">2</div><div class="cover-stat-label">P0 Critical</div></div>
+            <div class="cover-stat"><div class="cover-stat-num">14</div><div class="cover-stat-label">P1 High</div></div>
+            <div class="cover-stat"><div class="cover-stat-num">13</div><div class="cover-stat-label">P2 Medium</div></div>
+            <div class="cover-stat"><div class="cover-stat-num">20</div><div class="cover-stat-label">P3 Low + CC</div></div>
+        </div>
+    </div>
+</div>
+</body></html>

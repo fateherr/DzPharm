@@ -1,0 +1,1002 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DzPharm — Innovation &amp; Vision Brainstorm v2.0 (No Ceiling Edition)</title>
+<meta name="description" content="The complete idea universe for DzPharm: every feature, design, colour, symbol, system, search and performance idea from all ten source documents — consolidated, deduplicated, sequenced — plus 60+ brand-new ideas. No limits, no ceiling.">
+<style>
+
+:root{
+  --bg:#070B14; --bg2:#0B1220; --surface:#0E1626; --surface2:#121C30; --raised:#182438;
+  --ink:#F1F5F9; --ink2:#B8C4D4; --ink3:#8494A8;
+  --border:rgba(148,163,184,.16); --border2:rgba(148,163,184,.30);
+  --accent:#38BDF8; --accent2:#7DD3FC; --accentSoft:rgba(56,189,248,.12);
+  --danger:#F87171; --dangerBg:rgba(248,113,113,.10);
+  --warn:#FBBF24; --warnBg:rgba(251,191,36,.10);
+  --ok:#34D399; --okBg:rgba(52,211,153,.10);
+  --info:#A78BFA; --infoBg:rgba(167,139,250,.10);
+  --p0:#F87171; --p1:#FB923C; --p2:#FBBF24; --p3:#38BDF8;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
+  --r:14px; --rs:9px; --rx:6px;
+}
+body.light{
+  --bg:#F4F6FA; --bg2:#EDF1F7; --surface:#FFFFFF; --surface2:#F8FAFD; --raised:#EEF2F8;
+  --ink:#0F172A; --ink2:#3E4C60; --ink3:#64748B;
+  --border:rgba(15,23,42,.12); --border2:rgba(15,23,42,.25);
+  --accent:#0284C7; --accent2:#0369A1; --accentSoft:rgba(2,132,199,.08);
+  --dangerBg:rgba(220,38,38,.07); --warnBg:rgba(180,120,0,.08); --okBg:rgba(5,150,105,.07); --infoBg:rgba(124,58,237,.07);
+  --p0:#DC2626; --p1:#EA580C; --p2:#B45309; --p3:#0284C7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#04121E;padding:10px 18px;border-radius:0 0 10px 0;z-index:999;font-weight:700}
+.skip:focus{left:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.topbar .in{max-width:1180px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:16px;white-space:nowrap}
+.logo .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#0EA5E9);display:grid;place-items:center;color:#04121E;font-size:15px;box-shadow:0 0 18px rgba(56,189,248,.35)}
+.topnav{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+.topnav a{color:var(--ink3);font-size:12.5px;font-weight:600;padding:6px 9px;border-radius:8px;white-space:nowrap}
+.topnav a:hover{color:var(--ink);background:var(--accentSoft);text-decoration:none}
+.tbtn{background:var(--surface);border:1px solid var(--border2);color:var(--ink2);font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
+.tbtn:hover{color:var(--ink);border-color:var(--accent)}
+/* ---------- hero ---------- */
+.hero{padding:76px 0 46px;background:
+ radial-gradient(700px 340px at 18% -10%,rgba(56,189,248,.13),transparent 60%),
+ radial-gradient(600px 320px at 88% 8%,rgba(52,211,153,.07),transparent 60%);
+ border-bottom:1px solid var(--border)}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);border:1px solid var(--border2);padding:6px 14px;border-radius:999px;background:var(--accentSoft)}
+.hero h1{font-size:clamp(30px,5vw,52px);line-height:1.08;letter-spacing:-.03em;font-weight:800;margin:22px 0 14px;max-width:900px}
+.hero h1 em{font-style:normal;color:var(--accent2)}
+.hero .sub{color:var(--ink2);font-size:17px;max-width:860px}
+.herostats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:34px}
+.hstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.hstat b{display:block;font-size:26px;letter-spacing:-.02em;line-height:1.1}
+.hstat span{font-size:11.5px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.metabar{margin-top:26px;color:var(--ink3);font-size:13px;display:flex;gap:18px;flex-wrap:wrap}
+/* ---------- sections ---------- */
+section{padding:56px 0 12px}
+.secnum{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.18em;font-weight:700}
+h2.sec{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.02em;line-height:1.15;margin:8px 0 8px;font-weight:800}
+.lede{color:var(--ink2);max-width:900px;margin-bottom:26px;font-size:16px}
+h3{font-size:20px;letter-spacing:-.01em;margin:34px 0 12px;font-weight:750}
+h4{font-size:16px;margin:22px 0 8px;font-weight:700}
+p{margin:10px 0;color:var(--ink2)}
+strong{color:var(--ink)}
+ul.plain,ol.plain{margin:10px 0 10px 22px;color:var(--ink2)}
+ul.plain li,ol.plain li{margin:6px 0}
+code{font-family:var(--mono);font-size:.86em;background:var(--raised);border:1px solid var(--border);padding:1.5px 6px;border-radius:6px;color:var(--accent2)}
+kbd{font-family:var(--mono);font-size:.8em;background:var(--surface2);border:1px solid var(--border2);border-bottom-width:2px;padding:2px 7px;border-radius:6px;color:var(--ink)}
+/* ---------- cards & tables ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin:14px 0}
+.card.glow{box-shadow:0 0 34px -8px rgba(56,189,248,.18)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13.8px;min-width:640px}
+th{background:var(--surface2);color:var(--ink3);text-transform:uppercase;font-size:11px;letter-spacing:.08em;text-align:left;padding:11px 14px;border-bottom:1px solid var(--border2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--accentSoft)}
+td b,td strong{color:var(--ink)}
+/* ---------- chips ---------- */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 10px;border-radius:999px;border:1px solid var(--border2);color:var(--ink2);background:var(--surface2);white-space:nowrap}
+.chip.p0{color:var(--p0);border-color:color-mix(in srgb,var(--p0) 45%,transparent);background:var(--dangerBg)}
+.chip.p1{color:var(--p1);border-color:color-mix(in srgb,var(--p1) 45%,transparent);background:var(--warnBg)}
+.chip.p2{color:var(--p2);border-color:color-mix(in srgb,var(--p2) 40%,transparent);background:var(--warnBg)}
+.chip.p3{color:var(--p3);border-color:color-mix(in srgb,var(--p3) 40%,transparent);background:var(--accentSoft)}
+.chip.safety{color:var(--danger);border-color:var(--danger);background:var(--dangerBg)}
+.chip.newv2{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 50%,transparent);background:var(--okBg)}
+.chip.verify{color:var(--info);border-color:color-mix(in srgb,var(--info) 50%,transparent);background:var(--infoBg)}
+.chip.dim{opacity:.75}
+/* ---------- callouts ---------- */
+.callout{border-left:3px solid var(--accent);background:var(--accentSoft);border-radius:0 var(--rs) var(--rs) 0;padding:14px 18px;margin:16px 0;color:var(--ink2);font-size:14.5px}
+.callout.red{border-color:var(--danger);background:var(--dangerBg)}
+.callout.gold{border-color:var(--warn);background:var(--warnBg)}
+.callout.green{border-color:var(--ok);background:var(--okBg)}
+.callout b{color:var(--ink)}
+/* ---------- register ---------- */
+.filterbar{position:sticky;top:57px;z-index:60;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:18px}
+.filterbar .in{max-width:1180px;margin:0 auto;padding:0 22px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fbtn{font:inherit;font-size:12.5px;font-weight:700;padding:6px 13px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);color:var(--ink2);cursor:pointer}
+.fbtn:hover{border-color:var(--accent);color:var(--ink)}
+.fbtn.on{background:var(--accent);border-color:var(--accent);color:#04121E}
+#regSearch{flex:1;min-width:180px;font:inherit;font-size:13.5px;padding:8px 14px;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:var(--surface);color:var(--ink);outline:none}
+#regSearch:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft)}
+.regstat{font-size:12.5px;color:var(--ink3);font-weight:600;margin-left:auto;white-space:nowrap}
+.issue{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:10px 0;overflow:hidden}
+.issue>summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.issue>summary::-webkit-details-marker{display:none}
+.issue>summary:hover{background:var(--accentSoft)}
+.issue .iid{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink3);padding-top:3px;min-width:52px}
+.issue .ititle{font-weight:700;font-size:15px;color:var(--ink);flex:1;min-width:220px}
+.issue .ibody{padding:2px 20px 18px;border-top:1px solid var(--border)}
+.issue .ibody h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:16px 0 6px;font-weight:700}
+.issue .ibody p,.issue .ibody li{font-size:14px;color:var(--ink2)}
+.issue ol.fix{margin-left:20px}
+.issue ol.fix li{margin:5px 0}
+.issue .test{background:var(--okBg);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent);border-radius:var(--rx);padding:9px 13px;font-size:13.5px;color:var(--ink2)}
+.issue .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.issue .src{font-size:12px;color:var(--ink3);margin-top:10px;font-family:var(--mono)}
+.tickbox{appearance:none;-webkit-appearance:none;width:19px;height:19px;border:2px solid var(--border2);border-radius:6px;cursor:pointer;flex-shrink:0;margin-top:2px;background:var(--surface2);position:relative}
+.tickbox:checked{background:var(--ok);border-color:var(--ok)}
+.tickbox:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#04121E;font-size:13px;font-weight:900}
+.issue.done{opacity:.55}
+.issue.done .ititle{text-decoration:line-through}
+/* ---------- phase timeline ---------- */
+.phase{border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--rs);background:var(--surface);padding:20px 24px;margin:14px 0}
+.phase h4{margin:0 0 2px;font-size:17.5px}
+.phase .when{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.06em}
+.phase ul{margin:10px 0 4px 20px;color:var(--ink2);font-size:14px}
+.phase li{margin:5px 0}
+.phase .goal{font-size:14px;color:var(--ink2);font-style:italic;margin-top:4px}
+/* ---------- dependency graph ---------- */
+pre.ascii{font-family:var(--mono);font-size:12px;line-height:1.5;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:18px;overflow-x:auto;color:var(--ink2);white-space:pre}
+/* ---------- verdict pills ---------- */
+.v{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;padding:3px 10px;border-radius:999px}
+.v.now{background:var(--okBg);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 45%,transparent)}
+.v.next{background:var(--accentSoft);color:var(--accent2);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.v.plan{background:var(--warnBg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 45%,transparent)}
+.v.defer{background:var(--dangerBg);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent)}
+.v.modify{background:var(--infoBg);color:var(--info);border:1px solid color-mix(in srgb,var(--info) 45%,transparent)}
+/* ---------- footer ---------- */
+footer{margin-top:70px;border-top:1px solid var(--border);padding:34px 0 46px;color:var(--ink3);font-size:13px}
+.hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+@media (max-width:720px){ .topnav{display:none} .hero{padding:52px 0 34px} .filterbar{top:52px} }
+@media print{
+  .topbar,.filterbar,.tbtn,.skip{display:none!important}
+  body{background:#fff;color:#111}
+  .hero{background:none}
+  details.issue{page-break-inside:avoid}
+  section{padding:18px 0}
+}
+/* ---- idea cards (doc 2 additions) ---- */
+.swing{border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(160deg,var(--surface),var(--surface2));padding:24px 26px;margin:14px 0;position:relative;overflow:hidden}
+.swing::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent),var(--ok))}
+.swing .no{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:700}
+.swing h3{margin:6px 0 8px;font-size:21px}
+.swing p{font-size:14.5px}
+.swing .foot{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.idea{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);margin:9px 0;overflow:hidden}
+.idea>summary{list-style:none;cursor:pointer;padding:12px 16px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.idea>summary::-webkit-details-marker{display:none}
+.idea>summary:hover{background:var(--accentSoft)}
+.idea .iname{font-weight:700;font-size:14.5px;color:var(--ink);flex:1;min-width:200px}
+.idea .idesc{padding:0 18px 6px;font-size:13.8px;color:var(--ink2)}
+.idea .iwhy{padding:8px 18px 14px;font-size:13.3px;color:var(--ink3);border-top:1px dashed var(--border);margin-top:8px}
+.idea .iwhy b{color:var(--ink2)}
+.hz{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:2.5px 9px;border-radius:999px;white-space:nowrap}
+.hz.now{background:var(--okBg);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 45%,transparent)}
+.hz.next{background:var(--accentSoft);color:var(--accent2);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.hz.long{background:var(--infoBg);color:var(--info);border:1px solid color-mix(in srgb,var(--info) 45%,transparent)}
+.hz.fill{background:var(--surface2);color:var(--ink3);border:1px solid var(--border2)}
+.nz{display:inline-block;font-size:10.5px;font-weight:800;padding:2.5px 9px;border-radius:999px;background:var(--warnBg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 45%,transparent);white-space:nowrap}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.sw{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:999px;padding:4px 12px 4px 5px;font-size:12px;color:var(--ink2);background:var(--surface2)}
+.sw i{width:18px;height:18px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.15)}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:14px 0}
+.dcell{border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;background:var(--surface);font-size:13px;color:var(--ink2)}
+.dcell b{color:var(--ink);display:block;margin-bottom:3px;font-size:13.5px}
+.wont{border-left:3px solid var(--danger);background:var(--dangerBg);border-radius:0 var(--rs) var(--rs) 0;padding:14px 18px;margin:12px 0;font-size:14px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="topbar"><div class="in">
+  <div class="logo"><span class="mark">✦</span> DzPharm <span style="color:var(--ink3);font-weight:600">· Innovation &amp; Vision v2.0</span></div>
+  <nav class="topnav" aria-label="Document sections">
+    <a href="#b0">Big&nbsp;Swings</a><a href="#b1">Design</a><a href="#b2">Colour</a><a href="#b3">Symbols</a><a href="#b4">UI/UX</a><a href="#b5">Brand</a><a href="#b6">Clinical</a><a href="#b7">AI</a><a href="#b8">Search</a><a href="#b9">Speed</a><a href="#b10">System</a><a href="#b11">Inclusion</a><a href="#b12">Community</a><a href="#b13">Business</a><a href="#b14">Reach</a><a href="#b15">Moonshots</a><a href="#b16">Matrix</a>
+  </nav>
+  <button class="tbtn" id="themeBtn" onclick="tog()" aria-label="Toggle light or dark theme">☾ Theme</button>
+  <button class="tbtn" onclick="window.print()" aria-label="Print this document">⎙ Print</button>
+</div></div>
+
+<header class="hero" id="main">
+  <div class="wrap">
+    <span class="kicker" style="color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:var(--okBg)">✦ No limits · no ceiling · the idea universe</span>
+    <h1>If the audit fixed what DzPharm <em>is</em>, this is everything it could <em>become</em>.</h1>
+    <p class="sub">Every feature, design, colour, symbol, system, search and speed idea from all ten source documents — the UX Review's 24, the Ultimate Blueprint's 30 + 8 moonshots, the Design Universe's palettes and symbols, the prior brainstorm's ~70, the exploration's design laws — <strong>consolidated and deduplicated into one filterable catalogue</strong>, plus a new layer of <strong>93 ideas that appear in no prior document</strong>, marked <span class="nz">★ NEW</span>. Every idea is tagged <span class="hz now">NOW</span> <span class="hz next">NEXT</span> <span class="hz long">LONG BET</span> or <span class="hz fill">FILL-IN</span> so nothing here is a mystery about when to act — and one governance anchor that matters as much as the ideas: an explicit <b>won't-do list</b>.</p>
+    <div class="herostats">
+      <div class="hstat"><b>6</b><span>big swings</span></div>
+      <div class="hstat"><b>200</b><span>catalogued ideas</span></div>
+      <div class="hstat"><b>93</b><span>new in v2 ★</span></div>
+      <div class="hstat"><b>16</b><span>domains covered</span></div>
+      <div class="hstat"><b>50+</b><span>palette directions</span></div>
+      <div class="hstat"><b>25+</b><span>custom symbols</span></div>
+      <div class="hstat"><b>15</b><span>moonshots</span></div>
+      <div class="hstat"><b>4</b><span>won't-do rules</span></div>
+    </div>
+    <div class="metabar"><span>Version 2.0 · 22 September 2026</span><span>Companion to: <b>DzPharm Master Audit &amp; Fix Plan v2</b> — the foundation this builds on</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section id="b0">
+  <div class="secnum">SECTION 00 · HOW TO READ THIS</div>
+  <h2 class="sec">A menu assembled by someone who knows the kitchen — not a mandate</h2>
+  <p class="lede">Not everything below should be built, and several ideas compete for the same slice of a pharmacist's attention. Two rules govern the whole catalogue. <b>Rule one — sequence:</b> everything assumes the audit's foundation lands first (routing, identity, a Copilot that never does its own arithmetic); a second storey on an uncured foundation is how platforms die. <b>Rule two — safety lock:</b> whatever gets built, the seven clinical severity colours stay locked outside every palette, every theme and every animation; decoration never shares a hue with a verdict. Ideas cite their audit dependency as « gate » where one exists.</p>
+
+  <h3>The six big swings — three inherited, three new to this edition</h3>
+
+  <div class="swing"><div class="no">BIG SWING 01 · inherited</div>
+    <h3>The compatibility layer</h3>
+    <p>Three quiet fields on every one of the 9,555 records: is the capsule shell gelatin-based and of what origin, does the formulation contain alcohol, can the regimen be adapted to fast safely during Ramadan. Surfaced as one badge per medication, reviewed by a qualified religious-affairs advisor alongside the clinical team — a jurisprudence question as much as a pharmacology one. Every European, American and Gulf platform will fail at this for the Algerian market, because it is not a translation exercise: it requires exactly the local expertise this team already proved with the Ramadan adapter. It generalises one tool into a property of the entire dataset.</p>
+    <div class="foot"><span class="hz next">NEXT</span><span class="chip">effort L · data curation + advisory board</span><span class="chip">gate: none (data work can start now)</span></div>
+  </div>
+
+  <div class="swing"><div class="no">BIG SWING 02 · inherited</div>
+    <h3>A Copilot that speaks first</h3>
+    <p>Today the AI only answers. Every data source on the platform already knows things worth surfacing: the Family Cabinet knows an EpiPen expires in nine days; the shortage centre knows a watched drug is back in stock; the Ramadan adapter knows a schedule needs re-timing before Friday; the dataset knows a favourited drug was just withdrawn. A proactive « Pour vous » panel — populated from existing data, requiring no new clinical judgement — turns four built features into one continuously useful colleague instead of four tools a pharmacist must remember to check.</p>
+    <div class="foot"><span class="hz next">NEXT</span><span class="chip">effort M · rules over existing stores</span><span class="chip">gate: P1-10 history, recall flags (Wave 1)</span></div>
+  </div>
+
+  <div class="swing"><div class="no">BIG SWING 03 · inherited</div>
+    <h3>The counter, not the tab</h3>
+    <p>Barcode scan → Chifa card read → automatic interaction check against everything else on the counter → printed patient handout, as one motion at the point of dispensing. Every piece already exists in isolation (scanner working, Chifa simulator accurate, interactions engine A-grade, print pipeline present); chained, they stop being a reference a pharmacist opens in a spare moment and become the software the counter runs on. A materially different product built entirely from features that already work — plus the high-alert double-check protocol (new below) as its safety spine.</p>
+    <div class="foot"><span class="hz long">LONG BET</span><span class="chip">effort XL · flow design + hardware tolerance</span><span class="chip">gate: P0-01 routing, P1-16 Chifa repair</span></div>
+  </div>
+
+  <div class="swing"><div class="no">BIG SWING 04 · <span class="nz">★ NEW IN V2</span></div>
+    <h3>The official-price guardian</h3>
+    <p>A patient-facing page — no account, no login — where anyone types a medication and sees the <b>official PPA price</b>, the Chifa reimbursement rate, and a calm answer to « est-ce normal ? ». One button: « le prix payé était différent » → a moderated report that feeds a public transparency statistic per wilaya. This is the mass-market trust channel the platform has been missing: prices in Algeria are regulated, so DzPharm can be the citizen's verifier without ever accusing anyone — and every verification is an on-ramp to the family cabinet, the garde list and the Copilot. Nothing in the corpus proposes giving the <em>public</em> a reason to open DzPharm; this is it. Virality is built in: the answer screenshot travels through family WhatsApp groups on its own.</p>
+    <div class="foot"><span class="hz next">NEXT</span><span class="chip">effort M · data exists, moderation pattern exists (P1-24)</span><span class="chip">gate: P0-01 (public route), P2-27 (freshness badges)</span></div>
+  </div>
+
+  <div class="swing"><div class="no">BIG SWING 05 · <span class="nz">★ NEW IN V2</span></div>
+    <h3>The safety net — dispensing-error elimination as a product surface</h3>
+    <p>Three of the world's classic dispensing-error classes, attacked with data the platform already holds: <b>(1) LASA</b> — look-alike/sound-alike pairs (DOPamine/DOBUTamine, CELÉBREX/CERÉZYX…) flagged at search and selection with Tall-Man lettering (« dopaMINE » vs « DOBUtamine »), extended to packaging similarity once the image database exists. <b>(2) High-alert double-check</b> — insulin, methotrexate, anticoagulants and opioids get a mandatory confirm step with the dose restated in words (« vingt unités — 20 UI ») and a printed counter checklist. <b>(3) Duplicate therapy</b> — « DOLIPRANE + DOLIPRANE ADULT = paracetamol ×2 » caught automatically (the corpus's N18) as the basket grows, not after analysis. The audit's deterministic dose engine (P0-08) is the arithmetic backbone. No competitor in the market has any of the three; together they let DzPharm claim the one sentence that matters most in pharmacy: <em>« fewer errors happen where DzPharm is open. »</em></p>
+    <div class="foot"><span class="hz now">START NOW</span><span class="chip">effort M per layer</span><span class="chip">gate: P0-08 engine (LASA list curation can start today)</span></div>
+  </div>
+
+  <div class="swing"><div class="no">BIG SWING 06 · <span class="nz">★ NEW IN V2</span></div>
+    <h3>Self-healing data — the moat that maintains itself</h3>
+    <p>The dataset is the platform, and today it ages silently (prices verified Aug 2026; monographs grew 911→932 mid-audit with no announcement; a withdrawn AMM stays live until a human notices). The self-healing stack: an <b>ANPP/Ministry regulatory-sync bot</b> that crawls official bulletins, diffs against records, flags what went stale and auto-notifies every user who viewed an affected drug; <b>visible freshness</b> (lastVerifiedAt badges everywhere — audit P2-27); a <b>correction-request pipeline</b> where any pharmacist fixes the record and earns credit; weekly <b>price snapshots</b> that quietly build the 24-month history chart's data from today; and the <b>clinical eval harness</b> (200 expert answers, ≥95% forever) that keeps the AI honest as data changes. A dataset that repairs itself is a moat that widens with time instead of draining.</p>
+    <div class="foot"><span class="hz next">NEXT</span><span class="chip">effort L staged · bot + badges + pipeline are independent slices</span><span class="chip">gate: P2-27 skeleton first, P0-02 for credited corrections</span></div>
+  </div>
+</section>
+<!-- ============ SECTION 01 DESIGN ============ -->
+<section id="b1">
+  <div class="secnum">SECTION 01</div>
+  <h2 class="sec">Design language &amp; visual identity — how the platform should feel</h2>
+  <p class="lede">The design constitution, consolidated from The Design Universe and the live design-exploration document, plus new surfaces nobody has touched: sound, daylight, e-ink, and the physical counter. Five principles govern everything below — <b>clinical trust</b> (every pixel communicates competence), <b>Algerian identity</b> (locally rooted, never imported), <b>modern restraint</b> (Linear/Vercel confidence; negative space is the decoration), <b>accessibility first</b> (WCAG is a design constraint that produces better design), and <b>performance as design</b> (a fast page IS a design decision — the 88.8 KB budget is a feature).</p>
+
+  <div class="dgrid">
+    <div class="dcell"><b>Motion that communicates <span class="hz now">NOW</span></b>The 12-interaction motion catalogue as law: card-hover lift 150ms, button press scale(0.97), favourite-star bounce, modal slideUp 300ms on cubic-bezier(0.16,1,0.3,1), toast slide-in, Copilot thinking-dots, streaming tokens. Fast in, slow out; 150–250ms sweet spot; every animation answers a question (« did my click work? ») or it is cut. prefers-reduced-motion respected absolutely.</div>
+    <div class="dcell"><b>One signature loader <span class="hz now">NOW</span></b>Replace every generic spinner with a single two-tone capsule motif that splits and rejoins — recognisable at a glance, used everywhere instead of reinvented per screen. Skeletons (shape of the arriving content) for tables and lists; the capsule only for click-triggered waits. The two never compete for the same meaning.</div>
+    <div class="dcell"><b>The beacon-ping rule <span class="hz now">NOW</span></b>The pulsing emergency-banner dot is reserved for genuine urgency, forever. The moment the same pulse marks a promo badge or a notification, it stops meaning either. Safety animations are a protected species.</div>
+    <div class="dcell"><b>One orchestrated moment <span class="hz next">NEXT</span></b>Instead of ten hover flourishes, one well-built celebration: when a shortage you watch comes back in stock, a quiet checkmark-resolve animation plays. That's it. Delight rationed is delight remembered. (The first-Copilot-query confetti from the corpus stays optional garnish, reduced-motion gated.)</div>
+    <div class="dcell"><b>Sound, used twice, deliberately <span class="hz next">NEXT</span></b>The pharmacy counter is visually busy — a screen half-glanced-at while hands are elsewhere. Two sounds only: a soft two-tone chime on successful barcode scan (distinct from any error tone), and one low unmistakable tone — the only sound the platform ever makes unasked — reserved solely for a contre-indication absolue result. Off by default, one toggle, never reused.</div>
+    <div class="dcell"><b>Haptics on mobile <span class="hz fill">FILL-IN</span></b>navigator.vibrate(50) on favourite-add, submit and error — a native-app feel inside the PWA, invisible on desktop, respectful of the reduced-motion setting (vibration is motion's cousin).</div>
+    <div class="dcell"><b>Print as a designed surface <span class="hz next">NEXT</span></b>The patient handout re-cut to the width of a folded pharmacy-bag receipt — because that is genuinely how it travels home. A pictogram-only variant (sun/moon for morning/evening, plate for with-food, crossed plate for without) for the significant share of patients who read pictures faster than paragraphs in any language. Weight-band A5 counter cards (clinical idea #11) print through the same system.</div>
+    <div class="dcell"><b>Glassmorphism, rationed <span class="hz next">NEXT</span></b>backdrop-blur + translucent surfaces on the overlay layer only — Cmd-K palette, Copilot modal, notification dropdown, toasts (rgba(30,41,59,.8) + blur(12px)). The backdrop formula: rgba(0,0,0,.6) + blur(4px) — dim alone distracts, blur alone disconnects; together the background reads « still there, clearly not now ».</div>
+    <div class="dcell"><b>The 12-box architecture <span class="hz next">NEXT</span></b>Standard, Accent (3px left border), Glow (themed color-mix shadow), Glass, Neumorphic (settings toggles, palette swatches), Outline (CTAs), Danger/Success/Warning/Info (state cards), Minimal (dense list rows — border-bottom only), Hero (gradient landing cards). One internal anatomy for all twelve: header (icon + title + action) / body / optional footer. Four-level elevation ladder — bordered, subtle, raised, overlay — never forty.</div>
+    <div class="dcell"><b>Density as a setting, not a compromise <span class="hz now">NOW</span></b>Compact ×0.8 / Standard ×1.0 / Accessible ×1.25 (the switch already sits unused in the store — audit P2-39), plus the « counter-night » low-glare preset for a dim pharmacy after dark. One exception is law: a contre-indication banner never compresses. Compact density is a browsing convenience, never a licence to shrink safety content.</div>
+    <div class="dcell"><b>Whitespace ladder 4→96 <span class="hz now">NOW</span></b>The rhythm: 4 icon-to-label · 8 inner-card · 12 field group · 16 card-to-card · 24 component · 32 subsection · 48 section · 64 major break · 96 hero breath. Under 16px holds related things together; 32+ tells the eye « new idea ». The most common mistake — a 20px value doing both jobs — reads as inconsistent in either direction. Main content max-width 80rem, centred: the luxury of space.</div>
+    <div class="dcell"><b>★ Daylight mode <span class="nz">NEW</span> <span class="hz next">NEXT</span></b>Algerian counters sit in hard sunlight; a dark UI at noon is a mirror. A high-brightness variant — pure-white surfaces, ink-black text, accent desaturated for glare, badges bordered as well as coloured — auto-offered by time-of-day alongside the sunset/sunrise theme switch. The companion of Nuit Saharienne (true-black OLED for the night shift): one platform, two extremes of the Algerian day, both designed rather than defaulted.</div>
+    <div class="dcell"><b>★ Paper mode <span class="nz">NEW</span> <span class="hz fill">FILL-IN</span></b>An e-ink-flavoured theme: zero animation, zero shadow, zero colour except the locked severity set, maximum typographic contrast — for printing, for low-power devices, and for users who simply want the ink. It doubles as the platform's own reduced-data visual twin (see §11).</div>
+    <div class="dcell"><b>★ The physical design surface <span class="nz">NEW</span> <span class="hz now">NOW</span></b>DzPharm's most-used interface may end up being paper and sticker: the QR counter-kit (bags, shelves — scan → patient leaflet in the right language), the A5 clinical card series, the Ramadan timing poster for pharmacy windows. Design them as first-class brand surfaces with the same tokens — a printed card with the DzPharm mark is the cheapest distribution ever invented.</div>
+    <div class="dcell"><b>Pharmacopée Royale mode <span class="hz long">LONG BET</span></b>The Botanique audience mode deserves its own full design-system switch: serif typography, the 15 botanical icons, a gold/emerald colour philosophy (Saffron Dawn palette), softer cards — a second visual identity inside the same app for traditional-herbal knowledge, honouring the « warm enough to feel Algerian » principle at its most literal.</div>
+    <div class="dcell"><b>★ Motion for wayfinding <span class="nz">NEW</span> <span class="hz next">NEXT</span></b>Shared-element transitions: clicking a search result morphs the row into the detail modal (the intercepting-route architecture makes this natural); the Copilot button breathes once when « Pour vous » has something (Big Swing 2's notification language); palette switches in the Nuancier cross-fade in 200ms so the user sees what they changed. Motion as a map, never as decoration.</div>
+    <div class="dcell"><b>★ Texture of trust <span class="nz">NEW</span> <span class="hz fill">FILL-IN</span></b>Micro-typography rules that signal rigor: tabular numbers (font-variant-numeric) in every price/dose column so digits align; the narrow no-break space in « 9 555 »; AMM numbers in JetBrains Mono; verified-data checkmarks always paired with their verification date. Precision you can see is trust you can feel.</div>
+    <div class="dcell"><b>★ Empty-state illustrations, one DNA <span class="nz">NEW</span> <span class="hz fill">FILL-IN</span></b>The Lucide language scaled to 88px duotone for empty states (magnifier searching, empty cabinet shelf, quiet bell) — same stroke weight, same geometry, no new illustration style invented. Duotone is reserved for empty states only; everywhere else, outline default / filled active.</div>
+  </div>
+</section>
+
+<!-- ============ SECTION 02 COLOUR ============ -->
+<section id="b2">
+  <div class="secnum">SECTION 02</div>
+  <h2 class="sec">The colour universe — 50+ palette directions, one locked law</h2>
+  <p class="lede">The palette system is the platform's showpiece: ~400 tokens, 20 named Nuancier palettes with cultural identities, a 7-level clinical state system, AAA contrast on 11 of 12 measured pairs. This section consolidates every palette direction proposed anywhere in the corpus (24 from The Design Universe, 9 from the live exploration, 3 brand-direction swatch sets from the UX Review) and adds the generation machinery that lets it scale to fifty without fifty hand-tunings.</p>
+
+  <div class="callout red"><b>The one law that overrides every palette below (audit P0-07):</b> the seven clinical severity levels live in a locked token set no Nuancier selection, theme or animation can touch, and they always render as colour + text label + icon. Decoration may never share a hue family with a clinical verdict — if a decorative green and the « compatible » badge do the same job on the retina, one of them is lying. The Grenade palette ships only after a side-by-side separation check against locked danger-red; if a pharmacist can't tell them apart in under a second, it shifts toward magenta until they can.</div>
+
+  <h3>2.1 The formula before the palette</h3>
+  <div class="grid g2">
+    <div class="card" style="margin:6px 0"><h4 style="margin-top:0">Nine roles, not nine colours</h4><p style="font-size:14px">Every palette fills the same hue-less skeleton: <b>canvas · surface · surface-raised · ink-primary · ink-secondary · ink-tertiary · border · accent · accent-soft</b>. Get the roles right and almost any hue becomes coherent — which is exactly how the existing twenty scale.</p>
+    <h4>The lightness-step method</h4><p style="font-size:14px">Don't pick nine colours by eye: step one hue through fixed lightness increments. Dark mode — canvas L8–10%, surface L14–16%, raised L20–22%, ink L92%+. Light mode inverts — canvas L96–98%, ink L15–18%. Because every step is a fixed distance from its neighbour, <b>contrast is correct by construction, not by luck</b> — and any future palette is generated by choosing one hue and running the steps.</p></div>
+    <div class="card" style="margin:6px 0"><h4 style="margin-top:0">Combination rules</h4>
+    <ul class="plain" style="font-size:14px">
+      <li><b>70 / 25 / 5</b> — not the living-room 60/30/10: a data-dense clinical table needs ~70% canvas+surface, 25% structural ink+borders, and accent rationed to 5% — one button, one link colour, one focus ring.</li>
+      <li><b>Contrast hierarchy</b> — priority 1 (body text) gets the highest ratio (14–18:1, AAA); borders get the lowest (non-text, ~1.5:1). Importance is legible before it is read.</li>
+      <li><b>Gradients</b> — fine on a hero wash; never on body text, never on a small icon, never anywhere near a severity badge. A gradient softens exactly the sharp edge a safety signal needs.</li>
+      <li><b>Light mode is tuned, not inverted</b> — the light primary (#026AA7 class) is deliberately darker than dark-mode's (#38BDF8) because accents need more saturation on white. Background lifts to #F4F6FA (audit P2-01).</li>
+    </ul></div>
+  </div>
+
+  <h3>2.2 The consolidated palette atlas — 8 collections, 50+ directions</h3>
+  <p style="font-size:14px">Hexes below are the corpus's proposals (Design Universe + exploration); each ships only through the 5-step contribution checklist — define → contrast-verify both themes → colour-blindness-verify (deuteranopia/protanopia/tritanopia) → register in Storybook with its safety-table row → document. <b>First batch recommended:</b> Corniche and Nuit Saharienne (the exploration's two ship-next picks — coastal teal nobody occupies yet, and true-black OLED as a battery mode, not a mood).</p>
+
+  <h4>Existing — the 20-palette Nuancier (verified first, audit P2-18)</h4>
+  <p style="font-size:13.5px">Named cultural identities already shipping: Craie &amp; Cobalt · Dune &amp; Cèdre de l'Atlas · Perle &amp; Azur d'Alger · Menthe (known 2.1:1 light-theme failure — repair before anything else) · Ivoire Impérial · Gris Minéral · and fourteen more. The default identity: near-black navy #070B14, slate-100 ink, sky-blue #38BDF8 accent — retained and refined (background lifts to #0B1426, accent option sky-300 #7DD3FC for higher contrast, per the UX Review's « Clinical Sky » swatch set).</p>
+
+  <h4>Collection A — Cultural (Algerian geography &amp; heritage)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#1a1a2e"></i><i style="background:#e94560"></i>Sahara Nuit · Tamanrasset skies</span>
+    <span class="sw"><i style="background:#2c1810"></i><i style="background:#e07a5f"></i>Casbah Terracotta</span>
+    <span class="sw"><i style="background:#0d1b0e"></i><i style="background:#52b788"></i>Kabylie Emerald</span>
+    <span class="sw"><i style="background:#1a0a2e"></i><i style="background:#9d4edd"></i>Hoggar Violet · Tuareg indigo</span>
+    <span class="sw"><i style="background:#0a1929"></i><i style="background:#48cae4"></i>Méditerranée Azure</span>
+    <span class="sw"><i style="background:#1c1410"></i><i style="background:#d4a373"></i>Constantine Or</span>
+    <span class="sw"><i style="background:#0a192f"></i><i style="background:#2dd4bf"></i>Corniche ★ ship-first</span>
+    <span class="sw"><i style="background:#000000"></i><i style="background:#dda15e"></i>Nuit Saharienne · OLED ★ ship-first</span>
+  </div>
+
+  <h4>Collection B — Seasonal (auto-switching on the Hijri/solar calendar, opt-in, subtle, reversible)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#0f0c29"></i><i style="background:#e94560"></i>Ramadan Nuit</span>
+    <span class="sw"><i style="background:#1a1208"></i><i style="background:#ffd700"></i>Eid Or</span>
+    <span class="sw"><i style="background:#0d1f0d"></i><i style="background:#83c5be"></i>Printemps Tlemcen</span>
+    <span class="sw"><i style="background:#003049"></i><i style="background:#ffbe0b"></i>Été Béjaïa</span>
+    <span class="sw"><i style="background:#1a1612"></i><i style="background:#bc6c25"></i>Automne Sétif</span>
+    <span class="sw"><i style="background:#1d1d1d"></i><i style="background:#dda15e"></i>Hiver Ghardaïa</span>
+  </div>
+
+  <h4>Collection C — Clinical contexts (functional, not decorative)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#0a0a0a"></i><i style="background:#00ff88"></i>Chirurgie Pure · anti-glare</span>
+    <span class="sw"><i style="background:#1a0000"></i><i style="background:#ff3333"></i>Urgence Rouge</span>
+    <span class="sw"><i style="background:#0a0e1a"></i><i style="background:#4cc9f0"></i>Nuit Pharmacie · circadian</span>
+    <span class="sw"><i style="background:#1e1b4b"></i><i style="background:#fbbf24"></i>Pédiatrie Joy · Mode enfant</span>
+    <span class="sw"><i style="background:#000000"></i><i style="background:#ffffff"></i>Gériatrie Contrast · max</span>
+    <span class="sw"><i style="background:#0f172a"></i><i style="background:#10b981"></i>Télémedecine Calm</span>
+    <span class="sw"><i style="background:#ffffff"></i><i style="background:#0f172a"></i>★ Daylight (new v2)</span>
+    <span class="sw"><i style="background:#faf9f6"></i><i style="background:#111111"></i>★ Paper / e-ink (new v2)</span>
+  </div>
+
+  <h4>Collection D — Materials &amp; places (the exploration's directions)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#141e30"></i><i style="background:#c9a227"></i>Zellige Nuit · tilework after dark</span>
+    <span class="sw"><i style="background:#f5ebe0"></i><i style="background:#a3b18a"></i>Hammam · default for Mode famille</span>
+    <span class="sw"><i style="background:#2b2118"></i><i style="background:#b87333"></i>Souk Cuivre · hammered copper</span>
+    <span class="sw"><i style="background:#0d1b0e"></i><i style="background:#74c69d"></i>Tell Vert · Kabyle highlands, home of Botanique mode</span>
+    <span class="sw"><i style="background:#e7d8c9"></i><i style="background:#b08968"></i>Sirocco · sand &amp; dusty rose</span>
+    <span class="sw"><i style="background:#2a0a12"></i><i style="background:#c2185b"></i>Grenade · separation-check gated</span>
+    <span class="sw"><i style="background:#f8f5f0"></i><i style="background:#1c1c1e"></i>Encre &amp; Ivoire · editorial light</span>
+  </div>
+
+  <h4>Collection E — Experimental (expand the space; may not survive contact)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#0a0a0a"></i><i style="background:#00ffaa"></i>Cyber Sahara</span>
+    <span class="sw"><i style="background:#1a0b2e"></i><i style="background:#ff6ec7"></i>Vaporwave Alger</span>
+    <span class="sw"><i style="background:#000000"></i><i style="background:#f8f8f8"></i>Mono Noir</span>
+    <span class="sw"><i style="background:#0d0a00"></i><i style="background:#ffb700"></i>Saffron Dawn · Pharmacopée Royale</span>
+    <span class="sw"><i style="background:#001220"></i><i style="background:#7fffd4"></i>Glacier Mint · IV-matrix view</span>
+    <span class="sw"><i style="background:#1a0f0a"></i><i style="background:#ff7849"></i>Terracotta Sky</span>
+  </div>
+
+  <h4>Collection F — Accessibility palettes (function first)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#000000"></i><i style="background:#ffff00"></i>High-Contrast AAA (N42) — pure black, white, yellow accents</span>
+    <span class="sw"><i style="background:#111111"></i><i style="background:#eeeeee"></i>Text-Only Monochrome — palette #21, state by label+icon (audit P3-43)</span>
+  </div>
+
+  <h4>Collection G — Brand-direction swatch sets (UX Review Ch. 15, for rebrand conversations)</h4>
+  <div class="swatches">
+    <span class="sw"><i style="background:#0B1426"></i><i style="background:#7DD3FC"></i>Option A « Clinical Sky » — refined current</span>
+    <span class="sw"><i style="background:#0A1A1A"></i><i style="background:#2DD4BF"></i>Option B « Sahel Teal » — Maghreb tilework</span>
+    <span class="sw"><i style="background:#1C1917"></i><i style="background:#F97316"></i>Option C « Sahara Warm » — editorial terracotta</span>
+  </div>
+
+  <h4>Collection H — <span class="nz">★ NEW IN V2</span> machinery, not palettes</h4>
+  <div class="dgrid">
+    <div class="dcell"><b>Palette generator <span class="hz next">NEXT</span></b>Pick one hue → the lightness-step method emits all nine roles for both themes → auto-contrast-repair nudges values to AA minimum → colour-blindness simulation runs → the palette arrives in Storybook with its safety row pre-filled. Fifty palettes become a Tuesday; the contribution checklist becomes the review, not the labour.</div>
+    <div class="dcell"><b>Hue-distance lint <span class="hz now">NOW</span></b>A CI rule with teeth: no decorative token may sit within a defined hue-distance of any locked severity colour in the same lightness band. The P0-07 law, enforced by machine on every palette PR — the Grenade check, automated forever.</div>
+    <div class="dcell"><b>Data-viz colour system <span class="hz next">NEXT</span></b>Categorical (distinct classes, colour-blind-safe), sequential (one metric — days-to-expiry), diverging (shortage ↔ surplus) token sets, all palette-aware. The price-history chart, shortage heatmap and antibiogram grids are coming; charts that recolor per Nuancier while staying legible are a design-system problem to solve <em>before</em> the first chart ships, not after.</div>
+    <div class="dcell"><b>Per-palette preview URLs <span class="hz fill">FILL-IN</span></b>Post-routing, <code>?palette=zellige</code> deep-links a palette state — so a pharmacist can send a colleague the exact look they chose, and palette voting (P3-42 roadmap page) renders live previews instead of descriptions.</div>
+  </div>
+</section>
+
+<!-- ============ SECTION 03 SYMBOLS ============ -->
+<section id="b3">
+  <div class="secnum">SECTION 03</div>
+  <h2 class="sec">Symbols &amp; iconography — the DzPharm icon language beyond Lucide</h2>
+  <p class="lede">118 Lucide instances across 52 names, zero raster images — an excellent, consistent base. But Lucide is generic: it has no Chifa card, no Algerian pharmacy cross, no AMM seal, no wilaya. The corpus specifies 25 custom symbols (15 + 10); this edition adds 10 more for the new features below, and codifies the style axes so every future icon answers the same three questions the same way.</p>
+
+  <div class="grid g2">
+    <div class="card" style="margin:6px 0"><h4 style="margin-top:0">The style axes (law for everything below)</h4>
+    <ul class="plain" style="font-size:14px">
+      <li><b>Grid &amp; stroke:</b> 24×24, 2px stroke, round caps and joins, outline-only, 1.5px optical alignment, <code>stroke="currentColor"</code>. 2px matches the existing 118 exactly — a mismatched stroke reads as a different family even when shapes agree.</li>
+      <li><b>Fill treatment:</b> outline = default UI · filled = active/selected · duotone = empty states only (never mixed within a screen region).</li>
+      <li><b>Size scale:</b> 16 inline · 20 buttons · 24 nav/standalone · 32 feature callouts · 48–88 empty-state illustrations (same DNA, larger stage — no new style invented for illustration).</li>
+      <li><b>Legibility test:</b> every icon must survive 16px and greyscale; negative space is as designed as the stroke.</li>
+    </ul></div>
+    <div class="card" style="margin:6px 0"><h4 style="margin-top:0">Why custom symbols are strategy, not decoration</h4><p style="font-size:14px">A Chifa-card icon, a pharmacy cross with the Algerian crescent, a mortar-and-pestle with local geometry — these do two jobs no Lucide icon can: they tell an Algerian pharmacist « this was built for my practice, not translated into it », and they make screenshots of DzPharm instantly recognisable in the WhatsApp groups where the platform's growth actually happens. Symbols are the smallest possible unit of brand.</p></div>
+  </div>
+
+  <div class="tblwrap"><table>
+    <thead><tr><th>#</th><th>Symbol</th><th>What it depicts</th><th>Where it lives</th><th>Origin</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>chifa-card</b></td><td>The carte Chifa — card with medical cross + « CNAS »</td><td>Chifa simulator, reimbursement blocks</td><td>DU-15</td></tr>
+      <tr><td>2</td><td><b>pharmacy-cross-algeria</b></td><td>The green cross with crescent — distinct from the international cross</td><td>Logo lockup, garde directory, emergency banner</td><td>DU-15</td></tr>
+      <tr><td>3</td><td><b>mortar-pestle</b></td><td>Geometric Algerian mortar &amp; pestle</td><td>About, tools hub, clinical loading state</td><td>DU-15 + expl.</td></tr>
+      <tr><td>4</td><td><b>ramadan-crescent</b></td><td>Crescent moon with a small pill</td><td>Ramadan adapter, seasonal palette activation</td><td>DU-15</td></tr>
+      <tr><td>5</td><td><b>list-one / list-two</b></td><td>Stamped documents « Liste I » / « Liste II »</td><td>Medication detail, regulatory info, Copilot answers</td><td>DU-15</td></tr>
+      <tr><td>6</td><td><b>amine-order</b></td><td>Stamped approval — Ordre des Pharmaciens verification</td><td>Registration, licence badge, admin panel</td><td>DU-15</td></tr>
+      <tr><td>7</td><td><b>medication-bottle-dz</b></td><td>Amber bottle, white cap, FR/AR label</td><td>Detail pages, Répertoire cards, results</td><td>DU-15</td></tr>
+      <tr><td>8</td><td><b>darija-translate</b></td><td>Overlapping speech bubbles « FR » + « ع »</td><td>Copilot mode toggle, i18n switcher, translation tool</td><td>DU-15</td></tr>
+      <tr><td>9</td><td><b>wilaya-pin</b></td><td>Map pin with « 58 »</td><td>Garde directory, shortage heatmap, Ramadan picker, My-wilaya</td><td>DU-15</td></tr>
+      <tr><td>10</td><td><b>barcode-scan-dz</b></td><td>Scanner over an Algerian box outline</td><td>Scanner tool, verification flows, the counter flow</td><td>DU-15</td></tr>
+      <tr><td>11</td><td><b>interaction-cross</b></td><td>Two pills forming an X — more medical than git-compare</td><td>Interactions checker, detail interactions tab</td><td>DU-15</td></tr>
+      <tr><td>12</td><td><b>posology-scale</b></td><td>Balance: pill on one pan, weight on the other</td><td>Pediatric calculator, posology sections</td><td>DU-15</td></tr>
+      <tr><td>13</td><td><b>pregnancy-shield</b></td><td>Shield with pregnant silhouette</td><td>Pregnancy checker, detail pregnancy section</td><td>DU-15</td></tr>
+      <tr><td>14</td><td><b>shortage-alert</b></td><td>Bottle with warning triangle</td><td>Shortage centre, notifications, heatmap</td><td>DU-15</td></tr>
+      <tr><td>15</td><td><b>amm-seal · blister · suppositoire · flacon · seringue · thermomètre · ordonnance · poche-IV · rappel-de-dose · vérifié · sachet · compatible-jeûne</b></td><td>The exploration + brainstorm batches: regulatory seal, pack forms, devices, prescription sheet, IV bag, dose reminder, verified check, sachet, fasting-compatible badge</td><td>Throughout detail pages, tools, compatibility layer badges</td><td>Expl.-10 + prior-9</td></tr>
+      <tr style="background:var(--warnBg)"><td>16</td><td><b>lasa-warning</b> <span class="nz">★</span></td><td>Two near-identical pills with « ! » between them</td><td>Search results and basket on LASA pairs (Big Swing 5)</td><td>NEW v2</td></tr>
+      <tr style="background:var(--warnBg)"><td>17</td><td><b>canicule</b> <span class="nz">★</span></td><td>Sun over a thermometer, heat waves</td><td>Heatwave drug-risk alerts (climate tool below)</td><td>NEW v2</td></tr>
+      <tr style="background:var(--warnBg)"><td>18</td><td><b>driving-1/2/3</b> <span class="nz">★</span></td><td>Car silhouette with level pips (French driving-risk model)</td><td>Every record's safety row</td><td>NEW v2</td></tr>
+      <tr style="background:var(--warn-bg, var(--warnBg))"><td>19</td><td><b>food-interaction · herb-interaction</b> <span class="nz">★</span></td><td>Plate + pill / leaf + pill with interaction spark</td><td>Food &amp; herbal interaction checkers</td><td>NEW v2</td></tr>
+      <tr style="background:var(--warnBg)"><td>20</td><td><b>prix-officiel</b> <span class="nz">★</span></td><td>Stamped price tag with check</td><td>Official-price guardian (Big Swing 4)</td><td>NEW v2</td></tr>
+      <tr style="background:var(--warnBg)"><td>21</td><td><b>vaccin-calendrier · night-shift · cold-chain · teleconsult</b> <span class="nz">★</span></td><td>Calendar+syringe · moon+cross · snowflake+box · phone+cross</td><td>Vaccine tracker, night-shift mode, storage badges, telepharmacy</td><td>NEW v2</td></tr>
+      <tr style="background:var(--warnBg)"><td>22</td><td><b>The dosage pictogram family</b> <span class="nz">★</span></td><td>Sun/moon (morning/evening), plate/crossed-plate (with/without food), glass of water, lying figure — a complete low-literacy instruction language, not single icons</td><td>Printed leaflets, pictogram mode, family cabinet</td><td>NEW v2 (formalises the prior print concept into a symbol system)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>The animated brand mark:</b> the Algerian pharmacy cross (green + crescent), rendered SVG with a slow pulse and radial accent glow — the homepage hero concept's emotional centre, the loading state's signature, and the favicon suite's source (maskable-safe, per audit P3-13). One symbol, four jobs: brand, loader, icon, sticker.</div>
+</section>
+<!-- ============ FILTER BAR ============ -->
+<div class="filterbar" id="ideaFilter"><div class="in">
+  <button class="fbtn on" data-h="all" onclick="hfil(this)">All ideas</button>
+  <button class="fbtn" data-h="now" onclick="hfil(this)">NOW</button>
+  <button class="fbtn" data-h="next" onclick="hfil(this)">NEXT</button>
+  <button class="fbtn" data-h="long" onclick="hfil(this)">LONG BET</button>
+  <button class="fbtn" data-h="fill" onclick="hfil(this)">FILL-IN</button>
+  <button class="fbtn" data-h="new" onclick="hfil(this)">★ New in v2 only</button>
+  <input id="ideaSearch" type="search" placeholder="Search the catalogue — try « lasa », « ramadan », « cache », « tamazight »…" aria-label="Search ideas" oninput="isearch(this.value)">
+  <span class="regstat" id="ideaStat"></span>
+  <button class="fbtn" onclick="iexpand(true)">Expand all</button>
+  <button class="fbtn" onclick="iexpand(false)">Collapse</button>
+</div></div>
+
+<!-- ============ SECTION 04 UI/UX ============ -->
+<section id="b4">
+  <div class="secnum">SECTION 04</div>
+  <h2 class="sec">UI/UX patterns — how the platform behaves moment to moment</h2>
+  <p class="lede">The interaction layer: personalisation, modes, wayfinding and the small mechanics that decide whether a tool feels like a colleague or a form. Every pattern here inherits the audit's repairs (dead clicks wired, empty states taught, focus returned) and then builds on them.</p>
+  <div id="cat-uiux"></div>
+</section>
+
+<!-- ============ SECTION 05 BRAND ============ -->
+<section id="b5">
+  <div class="secnum">SECTION 05</div>
+  <h2 class="sec">Brand, name &amp; homepage — the three-second story</h2>
+  <p class="lede">The Name &amp; Homepage Vision document ran the full exercise: 25+ names scored against five criteria, ten hero concepts, ten taglines, seven wow-factors. Its conclusions, condensed — then the new brand machinery this edition adds.</p>
+  <div class="grid g2">
+    <div class="card" style="margin:6px 0">
+      <h4 style="margin-top:0">The naming verdict (condensed)</h4>
+      <div class="tblwrap" style="margin:8px 0"><table style="min-width:auto">
+        <thead><tr><th>Rank</th><th>Name</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><b>Afiya عافية</b></td><td>The Darija word for wellbeing, used in daily greetings — the most emotionally resonant, most culturally authentic candidate. 9/10 memorability.</td></tr>
+          <tr><td>2</td><td><b>Mizan ميزان</b></td><td>The pharmacist's balance — precision, trust, centuries of practice. Logo writes itself (a scale forming an « M »).</td></tr>
+          <tr><td>3</td><td><b>Shifa شفاء</b></td><td>« Healing » — universally positive; check domain.</td></tr>
+          <tr><td>4</td><td><b>Dawa دوا</b></td><td>One syllable, every Algerian knows it, the Copilot already speaks it.</td></tr>
+          <tr><td>5</td><td><b>DzPharm (keep)</b></td><td>Clear, searchable, real brand equity (60+ documents, a community). The name doesn't have to change — the brand story does.</td></tr>
+        </tbody>
+      </table></div>
+      <p style="font-size:14px"><b>Recommendation (unchanged, endorsed):</b> keep <b>DzPharm</b> as the platform name — the equity is real and a rename mid-transformation adds risk with no clinical payoff — and add the emotional layer it lacks: the tagline below. Revisit <b>Afiya</b> only if a consumer-facing patient product ever splits from the professional platform (the guardian page, Big Swing 4, is exactly where « Afiya by DzPharm » could live).</p>
+      <h4>The tagline</h4>
+      <p style="font-size:15px"><b>« Le médicament, expliqué. »</b> + <b>« الدواء، مشروح »</b> — three words, confident, and it is literally the Copilot's value proposition. Runners-up: « Cherchez. Posez. Découvrez. » (three verbs = three features) and the Darija « تاعك نتا، تاعنا جميعاً » for community surfaces.</p>
+    </div>
+    <div class="card" style="margin:6px 0">
+      <h4 style="margin-top:0">The recommended homepage (synthesis of 10 concepts)</h4>
+      <pre class="ascii" style="font-size:11px">┌──────────────────────────────────────────────┐
+│ SAMU 14 · PC 102 · POLICE 17 · ANTI-POISON   │ ← emergency-first (trust in 0.5s)
+├──────────────────────────────────────────────┤
+│   L'intelligence pharmaceutique algérienne   │ ← minimal dark hero
+│   Le médicament, expliqué.                   │ ← the tagline earns its place
+│  ┌────────────────────────────────────────┐  │
+│  │ 🔍 Rechercher…  « دوا تاع السكر؟ »      │  │ ← glowing search bar, Darija
+│  └────────────────────────────────────────┘  │    placeholder cycling FR→AR→Darija
+│        ou demandez au Copilote IA →          │ ← signature feature visible
+├──────────────────────────────────────────────┤
+│  [💊 Répertoire] [🤖 Copilote] [⚠ Interactions] │ ← three doors (Hick's law)
+├──────────────────────────────────────────────┤
+│  9 555 ↑counting · 52 garde · 13 outils      │ ← living counters (real numbers,
+│                                              │    generated — audit P2-28)
+│  ● Activité: DOLIPRANE cherché à Alger · 2m  │ ← anonymised social proof
+└──────────────────────────────────────────────┘</pre>
+      <p style="font-size:13.5px">The 3-second story: <b>Algerian</b> (name, Darija) → <b>explains, not lists</b> (tagline) → <b>safety first</b> (emergency banner) → <b>premium</b> (dark + glow) → <b>comprehensive</b> (the specific number 9 555, never « 10,000+ ») → <b>alive</b> (activity pulse) → <b>fast</b> (150 ms is a feeling). Seven wow-factors, zero marketing paragraphs. The ten hero concepts (counter, copilot-first, graph-galaxy, emergency, split-screen FR|AR, three-doors, animated cross, activity feed, glow, wilaya map) remain the A/B menu — test two per quarter post-routing, let the tagline and numbers stay constant.</p>
+    </div>
+  </div>
+  <div id="cat-brand"></div>
+</section>
+
+<!-- ============ SECTION 06 CLINICAL ============ -->
+<section id="b6">
+  <div class="secnum">SECTION 06</div>
+  <h2 class="sec">Clinical &amp; professional tools — the depth nobody else has</h2>
+  <p class="lede">Thirteen tools already; the corpus proposed two dozen more. This catalogue carries all of them plus a new layer aimed squarely at the counter: error-elimination (Big Swing 5's LASA and double-check protocols), climate-and-context safety (heatwave, photosensitivity, driving), and the patient-facing trust surfaces (price guardian, passport, leaflets). Clinical-content rule for everything below: curation and pharmacist review are the critical path, never the code.</p>
+  <div id="cat-clinical"></div>
+</section>
+
+<!-- ============ SECTION 07 AI ============ -->
+<section id="b7">
+  <div class="secnum">SECTION 07</div>
+  <h2 class="sec">The intelligence layer — from answering to anticipating, from asserting to showing its work</h2>
+  <p class="lede">The Copilot is the differentiator; these ideas move it up the trust curve. The governing law, from the audit's P0-08: <b>the model extracts, code computes, the eval set judges.</b> Nothing below may let the LLM do arithmetic on a dose again.</p>
+  <div id="cat-ai"></div>
+</section>
+
+<!-- ============ SECTION 08 SEARCH ============ -->
+<section id="b8">
+  <div class="secnum">SECTION 08</div>
+  <h2 class="sec">Search &amp; discovery — how a pharmacist actually thinks under time pressure</h2>
+  <p class="lede">The audit fixes the basics (fuzzy matching, synonyms, zero-result logging, history, highlighting). These push discovery toward intent rather than keywords — and treat every failed search as a sensor for what the dataset is missing.</p>
+  <div id="cat-search"></div>
+</section>
+
+<!-- ============ SECTION 09 PERFORMANCE ============ -->
+<section id="b9">
+  <div class="secnum">SECTION 09</div>
+  <h2 class="sec">Performance &amp; response time — speed is a clinical feature</h2>
+  <p class="lede">A pharmacist with a queue and a phone on 4G experiences latency as distrust. The targets, from the audit's KPI table: first Copilot token &lt; 1 s (p95) · search keystroke &lt; 50 ms · medication page &lt; 300 ms at the edge · offline bundle &lt; 500 KB · Lighthouse mobile &gt; 90 on throttled 4G. Every idea below serves one of those five numbers — or measures them honestly (V9's lesson: warm European edge measurements describe nobody in Algiers).</p>
+  <div id="cat-perf"></div>
+</section>
+
+<!-- ============ SECTION 10 SYSTEM ============ -->
+<section id="b10">
+  <div class="secnum">SECTION 10</div>
+  <h2 class="sec">System, architecture &amp; data governance — the machine under the machine</h2>
+  <p class="lede">Routing, identity, state and CI are the audit's job (register items P0-01, P0-02, P1-10/12, P2-42); this section is what grows on top of them: dataset versioning, correction economics, environments, institutional access, and the governance that must exist before any data leaves the building.</p>
+  <div id="cat-system"></div>
+</section>
+
+<!-- ============ SECTION 11 INCLUSION ============ -->
+<section id="b11">
+  <div class="secnum">SECTION 11</div>
+  <h2 class="sec">Accessibility &amp; inclusion — audiences the interface does not reach today</h2>
+  <p class="lede">The audit certifies WCAG 2.2 AA for the French UI. These ideas go past compliance toward reach: a full Arabic interface, Tamazight (a pharmaceutical first, anywhere), low-literacy instruction, low-bandwidth reality, and voice as a first-class path rather than an assistive afterthought.</p>
+  <div id="cat-a11y"></div>
+</section>
+
+<!-- ============ SECTION 12 COMMUNITY ============ -->
+<section id="b12">
+  <div class="secnum">SECTION 12</div>
+  <h2 class="sec">Community, supply &amp; network effects — pharmacies that can see each other</h2>
+  <p class="lede">Shortage reports, garde crowdsourcing, peer Q&amp;A: DzPharm as the layer that lets 12,000+ Algerian pharmacies act like one organism. The moderation pattern (rate limits, verified-pharmacist weighting, expiry, visible « crowdsourced — verify » framing) is built once in the audit's P1-24 and reused by everything here.</p>
+  <div id="cat-community"></div>
+</section>
+
+<!-- ============ SECTION 13 BUSINESS ============ -->
+<section id="b13">
+  <div class="secnum">SECTION 13</div>
+  <h2 class="sec">Data products &amp; business models — extending the moat without diluting it</h2>
+  <p class="lede">All of it waits for accounts and governance — data ethics before data revenue, every time. And the section ends with the four things DzPharm should never do, because a list of ideas without a list of refusals is just appetite.</p>
+  <div id="cat-business"></div>
+</section>
+
+<!-- ============ SECTION 14 REACH ============ -->
+<section id="b14">
+  <div class="secnum">SECTION 14</div>
+  <h2 class="sec">Distribution &amp; reach — beyond the browser tab</h2>
+  <p class="lede">Where DzPharm shows up matters as much as what it contains — and in this market a meaningful share of the audience is not reachable by a native app at all. The channel ladder: web PWA → WhatsApp → SMS/USSD → paper (yes, paper: the QR kit and poster series out-reach every app store in the interior) → native apps last, behind explicit gates.</p>
+  <div id="cat-reach"></div>
+</section>
+
+<!-- ============ SECTION 15 MOONSHOTS ============ -->
+<section id="b15">
+  <div class="secnum">SECTION 15</div>
+  <h2 class="sec">Moonshots — the ceiling is not the sky, it's the moon</h2>
+  <p class="lede">Fifteen bets that would make DzPharm not just Algeria's reference but a model other markets copy: the Ultimate Blueprint's eight — seven live below, and its wearables idea (M3) reappears in §14 as a disciplined « interruption budget » variant — plus seven this edition adds: new verticals, new rails, and the geographic endgame. Each gets a scoping memo in Wave 3, not before; a moonshot scoped early is a distraction, scoped after foundation is a destiny.</p>
+  <div id="cat-moon"></div>
+</section>
+
+<!-- ============ SECTION 16 MATRIX ============ -->
+<section id="b16">
+  <div class="secnum">SECTION 16</div>
+  <h2 class="sec">The master matrix, the ten picks, and the four refusals</h2>
+  <p class="lede">Impact against effort, the same discipline the audit uses — so this document ends as a set of choices rather than a wish list.</p>
+
+  <div class="grid g2">
+    <div class="card" style="margin:6px 0;border-left:3px solid var(--ok)">
+      <h4 style="margin-top:0;color:var(--ok)">HIGH IMPACT · LOW EFFORT — do alongside the audit's Waves 1–2</h4>
+      <ul class="plain" style="font-size:13.8px">
+        <li><b>Safety Net layer 1+3</b> — LASA list curation + duplicate-therapy catch (rides the interaction basket that exists)</li>
+        <li><b>Instant-answer cache</b> — top few hundred questions pre-computed, &lt;200 ms, survives Gemini outages</li>
+        <li><b>Shift-context pinning</b> — pin the patient once, every tool pre-fills (case-solver v1)</li>
+        <li><b>Recall &amp; withdrawal alerts</b> on favourites/recently-viewed — the flag already exists in the data</li>
+        <li><b>Storage &amp; cold-chain badges</b> — three icons from existing RCP fields</li>
+        <li><b>Canicule mode</b> — weather API + a curated heat-risk drug list + the family cabinet's existing seasonal advice</li>
+        <li><b>My-wilaya personalisation</b> — one setting localises garde, emergencies, Ramadan times, weather</li>
+        <li><b>QR counter-kit + A5 card series</b> — physical distribution for ~zero engineering</li>
+        <li><b>Zero-result logging · synonym map · hover-to-simplify jargon · teaching empty states everywhere</b></li>
+        <li><b>High-contrast AAA palette · dyslexia font option · 4-level font size · counter-night density</b></li>
+        <li><b>Cost-per-treatment-day calculator · interaction receipt PDF · emergency first-5-minutes cards</b></li>
+        <li><b>Real-user monitoring + response-time SLO dashboard</b> — speed you can prove</li>
+      </ul>
+    </div>
+    <div class="card" style="margin:6px 0;border-left:3px solid var(--accent)">
+      <h4 style="margin-top:0;color:var(--accent2)">HIGH IMPACT · HIGH EFFORT — the next two quarters</h4>
+      <ul class="plain" style="font-size:13.8px">
+        <li><b>The compatibility layer</b> (halal / alcohol / fasting fields on 9,555 records + advisory review)</li>
+        <li><b>The Copilot that notices first</b> (« Pour vous » proactive panel)</li>
+        <li><b>Official-price guardian</b> (public trust channel + transparency stats)</li>
+        <li><b>Self-healing data stack</b> (ANPP sync bot · freshness · corrections · snapshots)</li>
+        <li><b>Citation chips + uncertainty language</b> on every Copilot answer</li>
+        <li><b>Full Arabic UI, RTL-native</b> · Tamazight pilot · low-literacy pictogram leaflets</li>
+        <li><b>Formulary-aware substitution</b> · prescription FR→AR translation · paste-prescription hardening → camera OCR</li>
+        <li><b>Renal+hepatic dose bundle · growth-chart plotter · anticoagulation helper · INR nomogram</b></li>
+        <li><b>Ask-the-search-bar natural language</b> · medication image database → pill recognition</li>
+        <li><b>Shortage heatmap</b> (post P1-24) · WhatsApp bot (post P0-08) · wilaya alert groups</li>
+        <li><b>Safety Net layer 2</b> — high-alert double-check protocol wired into the counter flow</li>
+        <li><b>Night-shift companion mode</b> · <b>second-screen counter display</b> (pilot)</li>
+      </ul>
+    </div>
+    <div class="card" style="margin:6px 0;border-left:3px solid var(--ink3)">
+      <h4 style="margin-top:0">LOWER IMPACT · LOW EFFORT — fill sprint capacity</h4>
+      <ul class="plain" style="font-size:13.8px">
+        <li>New Nuancier batches (via the generator) · the 25+ custom symbols, drawn properly · seasonal auto-theming</li>
+        <li>Glassmorphism overlays · animated counters · haptics · Lottie empty states · sparkle cursor (gated on reduced-motion)</li>
+        <li>Undo/redo on the interaction list · drag-and-drop comparator · voice search from the header</li>
+        <li>Filter recipes · barcode-first search affordance · back-to-top · number/date localisation</li>
+        <li>Telegram auto-channel · « drug of the day » micro-learning · embeddable search widget (v1 static)</li>
+        <li>Focus/zen RCP reading mode · paper mode · per-palette preview URLs</li>
+      </ul>
+    </div>
+    <div class="card" style="margin:6px 0;border-left:3px solid var(--info)">
+      <h4 style="margin-top:0;color:var(--info)">HIGH EFFORT · LONGER HORIZON — real bets, sequenced deliberately</h4>
+      <ul class="plain" style="font-size:13.8px">
+        <li><b>The counter, not the tab</b> — the full dispensing flow (Big Swing 3)</li>
+        <li>Darija voice Copilot (85% WER floor) · prescription OCR at scale · drug-image recognition</li>
+        <li>Antibiogram by wilaya (pilot 3) · IV compatibility (data partnership) · medication reconciliation · pharmacogenomics</li>
+        <li>Inter-pharmacy marketplace + near-expiry lane · verified Q&amp;A network · wait-time crowding</li>
+        <li>Native apps (gates: routing ✓ accounts ✓ offline ✓ disclaimer ✓) · true offline delta-sync</li>
+        <li>Public API · open data (facts-only) · national statistics dashboard (conditions a–d from the audit)</li>
+        <li>All fifteen moonshots — scoping memos in Wave 3, build decisions never before accounts+governance</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>If you pick only ten from this entire document</h3>
+  <div class="card glow">
+    <ol class="plain" style="font-size:15px">
+      <li><b>The deterministic dose engine + eval harness</b> (audit P0-08) — not an idea, the precondition for every other AI idea; also the thing that lets you sleep.</li>
+      <li><b>Safety Net layer 1: LASA warnings + duplicate-therapy catch</b> — error elimination visible at the counter within weeks.</li>
+      <li><b>Instant-answer cache</b> — the 200 most-asked questions in &lt;200 ms, and the Copilot keeps answering during a Gemini outage.</li>
+      <li><b>Official-price guardian</b> — the public trust channel; DzPharm's first reason for a <em>patient</em> to open it, and its most viral surface.</li>
+      <li><b>Shift-context pinning</b> — pin age/weight/allergies once per session; every tool and the Copilot pre-fill. The cheapest workflow transformation available.</li>
+      <li><b>Canicule mode</b> — heatwave drug-risk alerts; clinically real (ANSM-class guidance), locally urgent, and nobody on Earth ships it.</li>
+      <li><b>My-wilaya personalisation</b> — one setting that localises garde, emergencies, shortages, Ramadan times and weather; makes « national coverage » a felt experience.</li>
+      <li><b>The compatibility layer, data curation started now</b> — the longest-lead moat in the catalogue; the badge UI can wait, the 9,555-row curation cannot.</li>
+      <li><b>Self-healing data: freshness badges + correction pipeline + weekly price snapshots</b> — the moat that widens with time; snapshots started today are the 2027 price-history chart.</li>
+      <li><b>The QR counter-kit + A5 card series</b> — physical distribution at ~zero engineering cost, in a market that still runs on paper and WhatsApp.</li>
+    </ol>
+  </div>
+
+  <h3>The four refusals — the won't-do list</h3>
+  <div class="wont"><b>1 · No advertising on clinical surfaces. Ever.</b> A sponsored result next to an interaction warning converts the platform's only non-renewable asset — trust — into inventory. If revenue is needed, it comes from Pro/institution tiers and B2B data products with explicit governance, never from the space beside a contre-indication.</div>
+  <div class="wont"><b>2 · No sale or licence of patient-identifiable data.</b> Aggregated, anonymised, governance-reviewed statistics (the national dashboard, conditions a–d) or nothing. The DPIA (audit P1-28) is a ceiling, not a starting point.</div>
+  <div class="wont"><b>3 · No unmoderated drug ratings or reviews.</b> Crowdsourced clinical signal (shortages, antibiogram, syrup acceptability) always ships with moderation, verification weighting, sample-size honesty and expiry. A one-star review on a life-saving drug is misinformation with a UI.</div>
+  <div class="wont"><b>4 · No diagnostic claims.</b> Symptom tools stay guidance-plus-red-flags (« when to call 14/102 »), the Copilot keeps its refusal language, and every surface keeps the P1-27 disclaimer. The app-store strategy and the Law 85-05 posture depend on this line holding.</div>
+
+  <h3>The sequencing laws (repeat them until they are boring)</h3>
+  <ol class="plain">
+    <li><b>Foundation before features.</b> Routing, identity, streaming, the dose engine — then everything else. A second storey on an uncured foundation is how platforms die.</li>
+    <li><b>Streaming before history.</b> Persisting a batch-render message shape means rewriting persistence when streaming lands.</li>
+    <li><b>Coverage before cartography.</b> No garde map below 40/58 wilayas; no heatmap on a broken submit endpoint.</li>
+    <li><b>Contrast before palettes.</b> The existing twenty pass AA in both themes before palette twenty-one exists; severity stays locked forever.</li>
+    <li><b>Accounts before anything that syncs, bills, crowds or claims compliance.</b></li>
+    <li><b>Governance before revenue.</b> Provenance review, DPIA and the won't-do list precede the first dinar of API income.</li>
+    <li><b>The safety triad is never traded.</b> Dictation review (P0-05), palette-E2E (P0-06), the dose engine (P0-08) ship regardless of capacity, quarter or mood.</li>
+  </ol>
+
+  <hr class="hr">
+  <div class="card glow">
+    <h3 style="margin-top:0">The closing word</h3>
+    <p style="font-size:16px;color:var(--ink)">DzPharm already has what no competitor can copy: the dataset, the Darija, the Ramadan adapter, the Chifa simulator, the green cross on the counter of 12,000 pharmacies' imagination. What this catalogue adds is not more ambition — the corpus had plenty — but <em>sequence</em>: the ideas that protect patients first, the ideas that earn public trust second, the ideas that print money last, and the discipline to know which is which. Pick ten. Ship the audit's Phase 0 this week. The ceiling is not the sky; it never was. — <b>بالتوفيق</b></p>
+  </div>
+</section>
+<script>
+const IDEAS = [
+// ================= UI/UX (b4) =================
+{d:"uiux",hz:"now",nw:0,t:"Teaching empty states, everywhere",x:"The Interactions module's pattern — explain the value, then offer the action — becomes the platform's only empty-state grammar: empty favourites, empty notifications, empty comparator, zero-result search, first-run Copilot.",w:"Consistency compounds; each new screen inherits trust instead of inventing it. Codified in Storybook (audit P3-44).",e:"S"},
+{d:"uiux",hz:"now",nw:0,t:"Undo/redo on the interaction list",x:"Accidentally removed a drug from a six-item basket? One click restores it — Gmail-style history stack with a 5-second toast action.",w:"Removes the fear from fast counter work; the basket is expensive to rebuild (3–5 min).",e:"S · 4 h"},
+{d:"uiux",hz:"now",nw:1,t:"Shift-context pinning — the patient pinned once, every tool pre-filled",x:"Pin age, weight, allergies, renal function (or a family-cabinet member, or a prescription photo's patient) at the top of the screen; the posology calculator, interactions checker, pregnancy tool and Copilot all read from the pin until you unpin. Per-shift or per-patient lifetime.",w:"The lightweight v1 of the multi-turn case solver (#6): same clinical value, a fraction of the AI risk, shippable in Wave 1. Also the biggest single time-saver at the counter after search.",e:"M",g:"None client-side; server-pinned profiles gate on P0-02 + P1-28"},
+{d:"uiux",hz:"now",nw:0,t:"Counter-night mode",x:"One tap: low-glare density, muted accent, warm-neutral surfaces, larger touch targets — for the dim pharmacy at 2 a.m. The density and palette machinery already exists; this is a preset.",w:"Night shifts are real, garde pharmacies are a DzPharm constituency, and no reference tool designs for 2 a.m.",e:"S"},
+{d:"uiux",hz:"next",nw:1,t:"My-wilaya personalisation",x:"A single global wilaya setting (auto-suggested by IP, always editable) that localises: garde list and map, emergency numbers (P3-01), shortage reports and heatmap, Ramadan prayer times, weather/caniculé alerts, and the homepage activity feed.",w:"Turns « national coverage » into a felt experience — the platform stops being Algiers-shaped. One setting, six features improved.",e:"M"},
+{d:"uiux",hz:"next",nw:1,t:"Night-shift companion",x:"A functional mode (not just a palette): counter-night visuals + tonight's garde list + emergency numbers enlarged + quick-tools reorder (interactions & posology first) + an optional fatigue-aware break reminder after 4 h of continuous session.",w:"Consolidates what a solo night pharmacist actually needs into one screen; deeply differentiated, cheap once My-wilaya exists.",e:"M"},
+{d:"uiux",hz:"next",nw:0,t:"Onboarding wizard (3 steps)",x:"First visit: choose role (pharmacien / médecin / étudiant / famille) → choose language (FR / AR / Darija preference) → 30-second interactive tour of the three doors. Role drives defaults: tool order, Copilot mode, suggested prompts.",w:"The audience modes exist but nothing asks who you are; asking once personalises everything after.",e:"M · 1 wk"},
+{d:"uiux",hz:"next",nw:0,t:"Role-aware guided tours",x:"Separate 60-second walkthroughs for the pharmacy owner (Chifa, savings simulator, shortages), the assistant (search, interactions, counter flow) and the student (library, quiz mode, Copilot) — re-runnable from Settings.",w:"One onboarding fits nobody; three onboarding fit the three actual jobs.",e:"S"},
+{d:"uiux",hz:"next",nw:0,t:"Copilot mode comparison view",x:"« See this answer as a patient would »: re-runs the current pro answer in patient mode side-by-side, diffing vocabulary and structure.",w:"An educational tool for students AND a trust tool for professionals — it demonstrates the mode system instead of asserting it.",e:"M"},
+{d:"uiux",hz:"next",nw:0,t:"Drag-and-drop comparator & basket",x:"Drag medication cards from the Répertoire into the comparator or the interactions basket (@dnd-kit); keyboard equivalents preserved (add-button on every card).",w:"Visual, tactile, intuitive — the interaction the 2-D layout has been begging for; complements the P3-04 comparator expansion.",e:"M · 1 wk"},
+{d:"uiux",hz:"next",nw:0,t:"Progressive disclosure on medication detail",x:"Summary first (name, DCI, form, PPA, Chifa, severity badges); « Voir plus » unfolds the full RCP; « Voir les interactions » unfolds the pair list. Cognitive load drops; the 60-equivalents panel collapses to « 60 équivalents → ».",w:"The detail view currently shows everything at once — density is for lists, not for reading.",e:"M · 3 d"},
+{d:"uiux",hz:"next",nw:1,t:"Shift-handoff notes",x:"A shared per-pharmacy notebook (post-accounts, per-workspace): « commande de Mme X prête », « AUGMENTIN en rupture aujourd'hui », « frigo: relever température à 16h ». Timestamped, attributed, read-only history.",w:"The counter runs on verbal handoffs today; capturing them is the first genuinely collaborative feature — and the on-ramp to organisation workspaces (B2B).",e:"M",g:"P0-02 + org model"},
+{d:"uiux",hz:"next",nw:1,t:"Filter recipes",x:"Save a filter combination (« Liste I · sirops pédiatriques · remboursés ») as a named recipe, re-runnable in one click, shareable by URL post-routing.",w:"Pharmacists re-run the same queries weekly; recipes turn search into inventory workflow. Uses the URL-state architecture P0-01 builds anyway.",e:"S"},
+{d:"uiux",hz:"long",nw:0,t:"Smart personalised dashboard",x:"The dashboard reorders itself from usage: the posology calculator migrates up for a paediatrics-heavy practice; a « Cardiovasculaire » quick card appears for a cardiac-heavy searcher. Explicit user override always wins.",w:"Machine learning on usage patterns, once P2-25 analytics and P0-02 identity make patterns measurable per user.",e:"L · 3 wks"},
+{d:"uiux",hz:"long",nw:1,t:"Second-screen counter display",x:"A patient-facing view (tablet or spare monitor): the medication being counselled appears with name, price, Chifa rate, pictogram instructions and the « est-ce le prix officiel ? » assurance line — privacy-safe (no other patient data, no history).",w:"Counselling becomes tri-partite (pharmacist–patient–screen); the price guardian's trust message physically faces the patient. Pilot in 3 pharmacies before productising.",e:"L",g:"P0-01, guardian page"},
+{d:"uiux",hz:"long",nw:1,t:"Multi-patient workspace",x:"Hospital-pharmacy layout: several pinned patient contexts in tabs (anonymised IDs), each with its own basket, interaction results and Copilot thread; reconciliation view diffs home vs hospital meds.",w:"The medication-reconciliation tool (N24) needs multi-patient state to be usable in a ward; workspace first, reconciliation on top.",e:"XL"},
+{d:"uiux",hz:"fill",nw:1,t:"Focus / zen reading mode for RCPs",x:"Distraction-free monograph reading: serif face (P3-06), user-chosen width, dimmed chrome, reading-progress hairline, section mini-nav.",w:"911 monographs deserve a reading experience, not a modal. Cheap once the serif and disclosure work lands.",e:"S"},
+{d:"uiux",hz:"fill",nw:0,t:"Voice search from the header",x:"The Copilot's dictation work (P0-05, with its FR/AR toggle and review beat) exposed as a mic icon in the header search — voice becomes how a session starts, not only how it continues.",w:"Gloved hands, busy counters, hands-full parents: the input method matches the environment.",e:"S · 4 h"},
+{d:"uiux",hz:"fill",nw:1,t:"Back-to-top & scroll memory",x:"Floating return affordance on long tables/RCPs (clear of toasts and the mobile bottom bar) + back-navigation that restores page, filters and scroll position (audit P3-25/26 shipped as one felt behaviour).",w:"Deep browsing feels hostile when « back » loses your place in 9,555 rows.",e:"S"},
+{d:"uiux",hz:"fill",nw:1,t:"Command-palette natural language",x:"Type a sentence into Cmd-K instead of a command: « insuline en rupture à oran » → parses to the shortage view, filtered. Falls back to fuzzy command match.",w:"The palette is the power-user door; natural language makes it the everyone door. Rides the N14 embeddings work.",e:"L",g:"N14 / ask-the-search"},
+
+// ================= BRAND (b5) =================
+{d:"brand",hz:"now",nw:1,t:"QR counter-kit",x:"A printable sticker sheet — bag stickers, shelf tags, door decal — each QR resolving to: the patient-facing price guardian, tonight's garde list, or a specific medication's leaflet. Branded, maskable-safe, generated per-pharmacy post-accounts (unique codes → attribution).",w:"Physical distribution in a paper-and-WhatsApp market; every sticker is an install funnel and a trust signal (« vérifiez le prix officiel »).",e:"S"},
+{d:"brand",hz:"now",nw:0,t:"Tagline rollout",x:"« Le médicament, expliqué. » / « الدواء، مشروح » under the header logo, as the homepage H2, in OG templates, in email signatures and app-store copy.",w:"The naming verdict keeps DzPharm; the tagline supplies the emotion the name lacks. One string, everywhere, from Day 1 of the routing rollout.",e:"S"},
+{d:"brand",hz:"now",nw:1,t:"Logo & favicon system",x:"Primary lockup (pill-shield + wordmark), monogram « D+ » capsule mark, Arabic variant دزفارم, the animated pharmacy-cross brand mark, and the full favicon suite (16/32/180/maskable/SVG) — audited P3-13, designed here.",w:"The domain move (P1-26) is the once-in-a-platform moment to standardise every surface a browser or chat app renders.",e:"S"},
+{d:"brand",hz:"next",nw:1,t:"Social content-card generator",x:"Any medication page → « Créer une carte »: branded 9:16 / 1:1 fact cards (name, DCI, key counselling point, price, watermark + QR) ready for pharmacy Instagram/TikTok/WhatsApp status. Templates follow the design tokens; severity-locked colours only where clinical.",w:"Algerian pharmacy Instagram is a real, active channel; DzPharm becomes the content engine behind hundreds of pharmacy pages — acquisition by watermark.",e:"M"},
+{d:"brand",hz:"next",nw:1,t:"The « 9 555 » launch campaign",x:"A PR-able data story: « every registered medication in Algeria, searchable free, in your dialect » — pitched to pharmacy faculties, student associations (the ANEP-type bodies), health press and pharmacist influencers; ambassador program with campus codes; the living-counter homepage as the campaign's visual.",w:"Post-routing, the platform finally has shareable URLs to campaign with. Students are the wedge: they become the counter's assistants in 18 months.",e:"M",g:"P0-01, P1-26"},
+{d:"brand",hz:"next",nw:1,t:"Brand-voice guide (FR / AR / Darija)",x:"One page: how DzPharm speaks — precise without being cold, warm without being casual, never alarmist; the Copilot tone spec per mode; Darija register rules (when « دوا », when « دواء »); error-message voice; the refusal sentence as a brand asset (« hors du référentiel — vérifiez auprès d'un spécialiste »).",w:"The Copilot IS the brand voice at scale; a prompt engineer without this guide will drift it. Also the editorial law for the digest, cards and campaigns.",e:"S"},
+{d:"brand",hz:"next",nw:0,t:"Homepage hero A/B program",x:"Post-launch, test two of the ten hero concepts per quarter (living counter vs copilot-first; glow vs map) with the tagline and numbers held constant; measure time-to-first-search, not bounce.",w:"The synthesis page ships first (Section 05 diagram); the concepts become an evidence-driven menu instead of ten competing opinions.",e:"M",g:"P0-01, P2-25 analytics"},
+{d:"brand",hz:"next",nw:0,t:"The Algeria map hero (productised)",x:"The 58-wilaya SVG map — hero concept #10 — wired to live data: garde counts, shortage pressure, search volume per wilaya (anonymised, aggregated). Click a wilaya, see its pharmaceutical pulse.",w:"Geographic identity as brand AND as the honest coverage dashboard (17/58 garde coverage becomes a public commitment, not a hidden shame).",e:"M",g:"P2-17 coverage progress"},
+{d:"brand",hz:"long",nw:1,t:"« Afiya by DzPharm » — the patient sub-brand",x:"If the price guardian and family surfaces succeed, split the consumer experience under the Afiya name (the naming exercise's #1): warm palette (Hammam default), Darija-first voice, pictogram leaflets — while DzPharm stays the professional instrument.",w:"One brand struggles to be both clinical-authority and family-friend; the naming document already picked the warm one. Decide with guardian-page usage data, not taste.",e:"L",g:"guardian traction data"},
+{d:"brand",hz:"fill",nw:1,t:"Ramadan window poster series",x:"A printable pharmacy-window poster each Ramadan: « prenez vos médicaments correctement pendant le Ramadan » + QR to the chronopharmacology adapter, co-branded with the pharmacy's own name.",w:"The Ramadan adapter is the platform's most unique tool; a poster is how a tool with no competitor announces itself to a whole street.",e:"S"},
+{d:"brand",hz:"fill",nw:1,t:"Public roadmap & « you asked, we shipped »",x:"The audit's P3-42 roadmap page gets a brand job: every release names the community request that triggered it, in the changelog and on social cards.",w:"Attribution is the cheapest loyalty program in existence, and the shortage-report community has already proven it shows up when asked.",e:"S"},
+
+// ================= CLINICAL (b6) =================
+{d:"clinical",hz:"now",nw:1,t:"LASA look-alike / sound-alike warnings",x:"A curated LASA pair list (Tall-Man lettering: dopaMINE vs DOBUtamine, PREDNIsolone vs prednisONE…) flagged inline in search results, the interactions basket and the comparator; packaging-similarity flags added once the image database exists.",w:"Big Swing 5, layer 1. LASA confusion is among the most common dispensing errors worldwide and no Algerian tool addresses it. Curation can start today with the existing dataset.",e:"M"},
+{d:"clinical",hz:"now",nw:1,t:"High-alert double-check protocol",x:"Insulin, methotrexate, oral anticoagulants, opioids and the WHO high-alert list get a mandatory confirm step at dispensing: dose restated in words (« vingt unités — 20 UI »), indication re-asked, printable counter checklist.",w:"Big Swing 5, layer 2 — and the safety spine of the counter flow. A deliberate friction pattern: the only place the platform slows the user down, precisely where slowing down saves lives.",e:"M"},
+{d:"clinical",hz:"now",nw:0,t:"Duplicate-therapy detection",x:"As the basket grows, same-DCI accumulation is caught live: « DOLIPRANE + DOLIPRANE ADULT = paracétamol ×2 — risque hépatotoxique (dose cumulative 3 g/j) », with the running cumulative dose.",w:"Corpus N18 — catches the #1 medication error class before the analysis button is even pressed. Rides the deterministic engine's cumulative-dose maths.",e:"M",g:"P0-08 engine"},
+{d:"clinical",hz:"now",nw:1,t:"Canicule mode — heatwave drug-risk alerts",x:"During heatwaves (weather API + wilaya): a platform-wide alert surfaces drugs that impair thermoregulation or hydratation — neuroleptics, diuretics, anticholinergics, lithium, some AINS — with ANSM-class guidance per record, and hydration counselling copy for the counter. The family cabinet's existing seasonal-heat advice generalises to everyone.",w:"Algerian summers kill through medication interactions with heat; France publishes heatwave drug guidance, Algeria has no digital equivalent. Locally urgent, clinically real, globally novel.",e:"M"},
+{d:"clinical",hz:"now",nw:0,t:"Recall & withdrawal alerts",x:"The withdrawn-product flag already in the data becomes a push: anyone who favourited or recently viewed an affected drug is notified, with equivalents suggested.",w:"Turns a passive field into active protection — the proactive-Copilot pattern's first and easiest instance.",e:"S",g:"notifications (P2-12/13)"},
+{d:"clinical",hz:"now",nw:0,t:"Storage & cold-chain badges",x:"Refrigerate · protect from light · keep below 25°C — three icons sourced from existing RCP fields, surfaced on every record, search result and printed handout.",w:"Cheap extraction of data already in the corpus; feeds the family cabinet, the counter flow and (later) the cold-chain log.",e:"S"},
+{d:"clinical",hz:"now",nw:0,t:"Pediatric weight-band A5 cards",x:"WHO-style weight-band dosing cards for the top 50 paediatric drugs, printable as A5 counter references (verdict #11 — ADOPT NOW).",w:"The fastest way DzPharm becomes physically present at the counter; the posology data is already verified 7/7.",e:"S",g:"P3-02 print base"},
+{d:"clinical",hz:"now",nw:0,t:"Pregnancy & lactation decision-tree layer",x:"Trimester-by-trimester go / no-go / consult-spécialiste recommendations rendered over the existing A− CRAT checker, with the alternatives panel kept verbatim (verdict #10).",w:"Presentation + explicitness over data that exists; the wording goes through the clinical DoD gate.",e:"M"},
+{d:"clinical",hz:"now",nw:1,t:"Cost-per-treatment-day calculator",x:"Any medication: PPA ÷ pack size × daily dose = dinars per day of treatment; chronic patients see « ce traitement coûte ~450 DA/mois, remboursé 80% → 90 DA ».",w:"Pure arithmetic over existing data (and it uses the deterministic engine, never the LLM). Financial toxicity is a real adherence factor; nobody computes it at the counter today.",e:"S"},
+{d:"clinical",hz:"now",nw:1,t:"Interaction receipt PDF",x:"After any interaction check: a timestamped, signed-looking receipt (drugs, result levels, patient context hash, disclaimer, source URL) for the patient dossier or medico-legal file.",w:"Turns an ephemeral screen into a document of record — the first step toward the audit-trail story P0-02 builds, visible to users.",e:"S",g:"P3-02 print"},
+{d:"clinical",hz:"now",nw:1,t:"Emergency « first five minutes » cards",x:"Offline-cached quick-reference protocols for the counter's worst moments: anaphylaxis, severe hypoglycaemia, suspected overdose, febrile seizure — actions, numbers (SAMU 14 / Anti-Poison), and what NOT to do.",w:"The emergency banner gives numbers; this gives the sixty seconds after the call. Cached in the service worker — works when the network doesn't.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Renal + hepatic dose bundle",x:"The renal calculator expands to auto-adjustments for 50+ renally-cleared drugs (verdict #7), and its mirror ships beside it: Child-Pugh → hepatic adjustment for hepatotoxic drugs (verdict #8) — one rules engine, two rule sets, one print template.",w:"Completes the organ-impairment pair; Vidal-parity table stakes for professional credibility. Curation + pharmacist review is the critical path.",e:"L"},
+{d:"clinical",hz:"next",nw:0,t:"Warfarin INR nomogram + titration schedule",x:"Current INR + target + weekly dose → adjustment recommendation with a printed titration calendar (corpus N19).",w:"A genuinely dangerous class to get wrong and currently absent; the deterministic-engine pattern makes it safe to compute.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Anticoagulation reversal protocol",x:"Urgent path: anticoagulant + last dose time + weight → reversal agent (Vit K, PCC, idarucizumab, andexanet) dosing, with the emergency numbers one tap away (corpus N20).",w:"Emergency-grade tool; pairs with the first-five-minutes cards and the beacon-ping motion rule.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Allergy cross-reactivity checker",x:"« Allergie pénicilline déclarée » → all cross-reactive families (céphalosporines, carbapenèmes) with probability ratings, integrated into the interactions basket and the patient pin.",w:"Corpus N22 — prevents the classic allergic-reaction cascade; consumes the shift-context pin's allergy field.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Growth-chart plotter",x:"WHO paediatric curves wired into the posology calculator: weight percentile plotted beside the dose; < 3rd percentile flags « considérer une posologie réduite — avis pédiatrique » (corpus N23 + prior brainstorm).",w:"Same screen, same inputs — a percentile and a dose in one view instead of two tools.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Controlled-substance register (Liste I/II)",x:"Pharmacists log every Liste I/II dispensation; the monthly regulatory report for the Ordre auto-generates (corpus N21).",w:"Converts a legal chore into a platform habit — regulatory infrastructure is the stickiest feature class there is.",e:"L",g:"P0-02 + audit log"},
+{d:"clinical",hz:"next",nw:0,t:"Vaccine schedule tracker (PEV)",x:"The Algerian vaccination calendar tied to family-cabinet member profiles, with due-date reminders and the September back-to-school nudge the prior brainstorm scoped.",w:"Turns a static reference into a reason parents return every few months — the family-mode retention engine.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Pharmacovigilance channel",x:"Adverse-reaction reports structured and routed toward the national pharmacovigilance centre (Alger CAPM), with the reporter's follow-up thread.",w:"Moves DzPharm from reference toward genuine regulatory infrastructure — a materially larger claim, made carefully, with the centre's buy-in.",e:"L",g:"institutional partnership"},
+{d:"clinical",hz:"next",nw:1,t:"Drug–food interaction checker",x:"The third interaction axis nobody built: pamplemousse (statines, immunosuppresseurs), lait/tétracyclines, vitamine K/AVK, tyramine/IMAO, caféine, alcohol-content cross-referenced with the compatibility layer.",w:"Food interactions are the counselling questions pharmacists actually get (« je peux le prendre avec le lait ? »); the data lives in RCPs already.",e:"M"},
+{d:"clinical",hz:"next",nw:1,t:"Herb–drug interaction bridge (Botanique mode)",x:"Pharmacopée Royale entries get evidence-graded interaction warnings: millepertuis × anticoagulants/contraceptifs, ail × AVK, gingembre × antiagrégants, fenugrec × diabète — with the same 4-level severity language.",w:"Joins the platform's two most unique surfaces (Botanique mode + interactions engine). Traditional knowledge deserves respect AND rigor — this is what both look like.",e:"L"},
+{d:"clinical",hz:"next",nw:1,t:"Photosensitivity & UV alerts",x:"Summer + high UV index: photosensibilising drugs (thiazides, quinolones, AINS, phénothiazines…) carry a sun-avoidance counselling badge; the canicule mode's sibling for skin.",w:"Mediterranean sun is a clinical factor six months a year; the RCP data exists, the trigger is a weather API call.",e:"S"},
+{d:"clinical",hz:"next",nw:1,t:"Driving-impairment pictograms",x:"France's three-level driving-warning system (niveau 1/2/3) applied to the Algerian formulary: a pictogram on every record with impairment risk, plus counselling copy.",w:"A public-safety first for the market; instantly legible, poster-ready, and a natural campaign asset (« conduisez informé »).",e:"M · curation-heavy"},
+{d:"clinical",hz:"next",nw:1,t:"Drug passport (per patient, printable + QR)",x:"A one-page passport: current medications, allergies, chronic conditions, emergency contact, QR to the live version — carried by chronic patients, elderly travellers, Hajj pilgrims.",w:"The family cabinet's export becomes a patient-owned artefact; in an emergency, it is the most valuable piece of paper in the room.",e:"M",g:"family cabinet, P3-02"},
+{d:"clinical",hz:"next",nw:1,t:"Counselling-script generator",x:"Per medication, a 30-second counter script in FR/AR/Darija: how to take it, what to avoid, the one red flag that means « come back », storage — generated from the RCP (deterministic template + reviewed copy, not free LLM prose), printable as a bag-receipt-width slip.",w:"Standardises the quality of counselling across 12,000 counters; the translation verdict (#5) and pictogram leaflets feed the same pipeline.",e:"M"},
+{d:"clinical",hz:"next",nw:1,t:"Official-price guardian (the public tool)",x:"Big Swing 4 as a tool: no-login page → drug → official PPA + Chifa rate + « le prix payé était différent ? » moderated report → per-wilaya transparency statistics.",w:"The mass-trust channel; also the patient-mode on-ramp to everything else. Moderation reuses the P1-24 pipeline.",e:"M",g:"P0-01, P2-27"},
+{d:"clinical",hz:"next",nw:1,t:"QR patient leaflets",x:"Every medication gets a printable QR (counter-kit integrated) → mobile leaflet in the scanner's language: pictogram dosing, key warnings, storage, official price, « posologie complète ? demandez au Copilote ».",w:"Paper-to-digital bridge that costs one sticker; leaflet content is generated from existing RCP data + the counselling-script pipeline.",e:"M"},
+{d:"clinical",hz:"next",nw:1,t:"CNAS prior-authorisation assistant",x:"Which drugs need entente préalable, the dossier checklist per drug, common rejection reasons, and appeal-letter templates — the Chifa simulator's missing bureaucratic sibling.",w:"Prior-auth friction is where reimbursement actually dies; helping pharmacies navigate it is direct money-back value.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Chifa card OCR pre-fill",x:"Photograph the carte Chifa → NIN and holder fields extracted → simulator pre-filled; the counter flow's card-read step without dedicated hardware.",w:"Corpus « counter, not tab » assumes a card reader; OCR makes it work on the phone already in the pharmacist's hand.",e:"M",g:"OCR pipeline (#2 paste-first)"},
+{d:"clinical",hz:"next",nw:0,t:"Travel-health + Hajj/Umrah wizard",x:"Destination → required/recommended vaccines, malaria prophylaxis zones, chronic-medication travel-supply planner (insulin cold-chain, quantity limits, customs letter template), heat guidance for Gulf seasons.",w:"Hajj logistics alone touch tens of thousands of Algerian households a year; labour-migration health is underserved everywhere.",e:"M"},
+{d:"clinical",hz:"next",nw:0,t:"Shortage-aware clinical decision support",x:"When a prescribed drug is short in the user's wilaya (heatmap data), the checker and Copilot proactively rank therapeutic alternatives that are in stock nearby (corpus N26 + formulary-aware substitution).",w:"Closes the loop between the platform's two most-loved data surfaces (shortages + equivalents) at the exact moment of need.",e:"M",g:"P1-24, heatmap, formulary"},
+{d:"clinical",hz:"next",nw:0,t:"OTC guidance with red-flag escalation (family mode)",x:"Symptom-level guidance that never diagnoses: « fièvre de l'enfant : ce que vous pouvez faire, les signes qui imposent le 14/102 ou un médecin aujourd'hui » — structured, reviewed, disclaimer-bound.",w:"Family mode's most-asked questions deserve answers; the refusal-to-diagnose framing (won't-do #4) keeps it safe and store-submittable.",e:"M · clinical review heavy"},
+{d:"clinical",hz:"long",nw:0,t:"Antibiogram by wilaya",x:"Crowdsourced + lab-partnered local resistance patterns (« E. coli → amoxicilline, Alger: 47%, n=214 ») with sample-size honesty and suppression below thresholds; pilot in 3 wilayas (verdict #9).",w:"Invaluable for empiric therapy and impossible for a dataset-only competitor to replicate — but it lives or dies on data quality and volume.",e:"XL",g:"P0-02 weighting, P1-24 pipeline"},
+{d:"clinical",hz:"long",nw:0,t:"IV compatibility matrix",x:"Y-site compatibility for hospital-pharmacy IV combinations, sourced via a CHU partnership (Trissel-class references), behind the professional role (verdict #12).",w:"Essential to the hospital segment the platform barely serves; offered by nobody locally.",e:"XL · data partnership"},
+{d:"clinical",hz:"long",nw:0,t:"Medication reconciliation tool",x:"Transitions of care: home meds × hospital meds → omissions, duplications, interactions flagged; the multi-patient workspace's flagship workflow (corpus N24).",w:"Transition errors are a top harm category; this makes DzPharm a hospital tool, not just a counter tool.",e:"XL",g:"workspace"},
+{d:"clinical",hz:"long",nw:0,t:"Pharmacogenomics hooks",x:"CYP2D6/2C19/3A4 genotype fields in the patient pin → dose adjustments for the ~30 drugs where PGx is actionable (corpus N25).",w:"The individualisation endgame; starts as a manual field long before any testing partnership exists.",e:"XL"},
+{d:"clinical",hz:"long",nw:0,t:"Adherence tracking in the family cabinet",x:"Simple trend lines for chronic conditions (diabetes, hypertension) from data the household already enters; gentle streaks, never shaming; the WhatsApp adherence coach (N13) plugs into it.",w:"Adherence is where family-mode retention compounds; gamification stays quiet by design.",e:"L"},
+{d:"clinical",hz:"long",nw:1,t:"Syrup acceptability ratings (moderated)",x:"Parents and pharmacists rate paediatric formulations on taste/texture acceptance — explicitly non-clinical, moderated, sample-sized, and separated visually from all clinical data.",w:"« Which amoxicillin syrup will my child actually take ? » is a real adherence question with no answer anywhere; the moderation pattern keeps it out of won't-do #3's blast radius.",e:"L"},
+{d:"clinical",hz:"long",nw:1,t:"Cabinet photo audit",x:"Photograph the family's medicines spread on a table → each box identified (image recognition) → one-tap import into the family cabinet with expiry dates read from packaging.",w:"Removes the family cabinet's only real friction (manual entry of 15 boxes); the image-recognition investment pays twice.",e:"XL",g:"image DB + recognition (#3)"},
+{d:"clinical",hz:"long",nw:1,t:"Vaccine cold-chain log for pharmacies",x:"Twice-daily fridge temperature entries with excursion alerts, printable log for inspections; the cold-chain badges' operational sibling.",w:"Inspection-ready compliance logging is sticky B2B value; also protects the vaccine tracker's credibility.",e:"L"},
+{d:"clinical",hz:"long",nw:1,t:"Anti-poison portal mode",x:"A structured call worksheet for the Centre Anti-Poison and hospital emergency desks: toxin lookup, weight-based decontamination guidance, case logging with follow-up — built with the CAPM as design partner.",w:"The anti-poison number is already the banner's most-clicked link; serving the people who answer it is the platform's highest-authority partnership available.",e:"XL",g:"institutional partner"},
+{d:"clinical",hz:"long",nw:1,t:"Sport & doping checker",x:"WADA prohibited-list cross-reference per medication, aimed at athletes, gyms and football academies — with the honest caveat that competition-level checks stay with the federation.",w:"An underserved audience with real money and real risk; also a clean content-marketing vertical.",e:"L"}
+];
+</script>
+<script>
+IDEAS.push(
+// ================= AI (b7) =================
+{d:"ai",hz:"now",nw:0,t:"Deterministic dose engine + calculators API",x:"The audit's P0-08, productised: one internal API where the model submits extracted parameters (drug, age, weight, renal/hepatic function) and receives computed doses from the verified posology database — consumed by the Copilot, the tools, the WhatsApp bot and (later) the public API.",w:"Every numeric answer on the platform becomes traceable to code, not to a language model's mood. The single most important engineering decision, and a product surface in its own right.",e:"L",g:"= audit P0-08"},
+{d:"ai",hz:"now",nw:0,t:"Clinical eval harness (living)",x:"200 expert-verified Algerian clinical Q&A (posology, interactions, Liste I/II, pregnancy, Ramadan, paediatrics) running in CI on every prompt/model change — ≥95% pass, never regressing — growing from every production correction and pharmacist flag.",w:"Without it you cannot know whether a prompt edit made the Copilot better or worse. With it, the eval set becomes the Copilot's immune system — and its public pass-rate badge is a trust feature.",e:"M",g:"= audit P0-08 step 4"},
+{d:"ai",hz:"now",nw:0,t:"Instant-answer cache",x:"Pre-compute and edge-cache the top few hundred recurring questions (common paediatric doses, Liste I vs II, classic interaction pairs): <200 ms responses, zero model cost, and the Copilot keeps answering through a Gemini outage.",w:"Speed + resilience + cost in one mechanism; the cache is also P2-24's outage mode. Re-computed on dataset version change (self-healing data).",e:"M"},
+{d:"ai",hz:"now",nw:0,t:"Confidence & refusal language (« say when it isn't sure »)",x:"Out-of-referential or ambiguous queries get an explicit « hors du référentiel DzPharm — vérifiez auprès d'un spécialiste » instead of a confidently formatted guess; uncertainty becomes a signal the system emits, not a tone it defaults to.",w:"The refusal sentence is a brand asset (see the voice guide): a tool that knows its edges is a tool professionals keep open.",e:"S",g:"P0-08 refusal wording"},
+{d:"ai",hz:"now",nw:0,t:"Formulary-aware substitution",x:"A pharmacy uploads its stock list (CSV template, v1); every alternative the interaction checker, generics simulator or shortage-CDS suggests is silently ranked by what THIS pharmacy has on the shelf (verdict #4 — ADOPT NOW).",w:"Saves 5+ minutes per stockout; turns the 60-equivalents graph from information into a decision. Works pre-accounts (local file), improves post-accounts (stored formulary).",e:"L · 3 wks"},
+{d:"ai",hz:"now",nw:0,t:"Prescription translation FR→AR, grounded",x:"Counselling text translated for the ~60% of patients more comfortable in Arabic — drug names and doses NEVER free-translated: numbers pass through the deterministic engine and the drug names through the dataset (verdict #5).",w:"High impact, two weeks, and safely scoped: translate the prose, compute the numbers.",e:"M",g:"P0-08 engine"},
+{d:"ai",hz:"next",nw:0,t:"Citation chips on every answer",x:"Each Copilot claim carries a chip linking to the exact RCP section or monograph passage it drew from (« Source: RCP DOLIPRANE §4.2 Posologie ») — corpus N16 + the prior brainstorm's « show its work ».",w:"Turns « trust me » into « verify me » — the highest-leverage trust feature available, because the underlying content already exists. Also the antidote to hallucination anxiety.",e:"M",g:"streaming (P1-06)"},
+{d:"ai",hz:"next",nw:1,t:"Gemini context caching for the grounding corpus",x:"The RCP/monograph grounding context (the bulk of every request's tokens) cached server-side via the provider's context-caching API: lower latency, lower cost per query, and room to ground on MORE of the 911 RCPs instead of less.",w:"A pure engineering dividend that funds the free tier's growth — the cost stack (P2-38) with one more lever, and it compounds with the instant-answer cache.",e:"M"},
+{d:"ai",hz:"next",nw:1,t:"RCP TL;DR — the 10-second monograph",x:"Every monograph gets a pharmacist-reviewed, cached 10-second summary at the top (« l'essentiel : poso adulte, 2 contre-indications majeures, surveiller… ») with « lire le RCP complet » beneath.",w:"The counter needs the gist; the student needs the whole. Progressive disclosure applied by AI, reviewed by humans — the corpus's N39 made intelligent.",e:"M"},
+{d:"ai",hz:"next",nw:1,t:"ANPP regulatory-sync bot + « Journal Réglementaire »",x:"A crawler over ANPP/Ministry bulletins (new AMMs, withdrawals, price decisions, notes d'information) diffed against the dataset: stale records flagged for review, affected-drug watchers notified, and a weekly digest (email/WhatsApp/Telegram) of what changed in Algerian pharmacy.",w:"Big Swing 6's engine. The digest is also the platform's editorial answer to Medscape's content lead — auto-generated, locally unique, zero-cost.",e:"L"},
+{d:"ai",hz:"next",nw:1,t:"Crowdsourced Darija medical glossary",x:"Community-verified Darija equivalents for clinical terms (« myélosuppression » → the phrase a grandmother in Sétif actually understands), feeding the patient mode, the register-matching and the counselling scripts; verified-pharmacist weighted, moderator-gated.",w:"No dataset on Earth contains this; it is collected by being used. It also makes the patient mode genuinely Darija-native over time.",e:"M",g:"P0-02 weighting"},
+{d:"ai",hz:"next",nw:1,t:"Community clinical pearls (moderated annotations)",x:"Pharmacists attach practical notes to monographs (« se prend à jeun — l'observance chute sinon », local brand quirks), verified-badge weighted, moderator-gated, never mixed into clinical fields — a visually distinct « experience de terrain » layer.",w:"Captures the knowledge that currently dies in WhatsApp groups; every pearl makes the next pharmacist faster. Governance: won't-do #3 applies (moderation non-negotiable).",e:"L"},
+{d:"ai",hz:"next",nw:0,t:"Proactive « Pour vous » panel",x:"Big Swing 2 as a feature: the dashboard panel fed by existing stores — expiring cabinet items, watched shortages back in stock, Ramadan re-timing due, recalls on favourites, price changes on chronic treatments. Rules-based v1; no new clinical judgement required.",w:"Four built features become one continuously useful colleague; the notification centre finally has something worth notifying.",e:"M",g:"P1-10, recall flags"},
+{d:"ai",hz:"next",nw:0,t:"Natural-language medication search (N14)",x:"« quel antalgique pour un enfant de 6 ans ? » typed into the header search returns a ranked, dataset-grounded list with dosing — embeddings over the 9,555 records + Gemini re-ranking, answers always citing records.",w:"Search as the pharmacist thinks; the ask-the-search-bar idea's engine. Falls back to keyword search on any doubt — speed first, intelligence second.",e:"L · 2 wks"},
+{d:"ai",hz:"next",nw:0,t:"AI form completion",x:"The Chifa simulator and posology calculator predict the next field from the current one (« DOLIPRANE 500 mg → taux Chifa standard 80% — remplir ? ») — corpus N15, one keystroke saved at a time.",w:"Form fatigue is real on multi-field clinical tools; prediction with visible confirmation keeps the human in charge.",e:"M"},
+{d:"ai",hz:"next",nw:0,t:"Multi-language handout generation (N17)",x:"One query → three outputs: the pharmacist's French record line, the patient's Arabic instructions, the pictogram slip — generated together so they cannot drift apart.",w:"The counselling-script generator's export arm; one pipeline, three audiences, zero translation drift.",e:"M"},
+{d:"ai",hz:"next",nw:1,t:"Multi-turn case solver v1 (persistent patient object)",x:"The shift-context pin graduates: a patient-case object (age, comorbidities, regimen, renal function) the Copilot reasons against across a whole session — « ajoute maintenant la clarithromycine » without restating the case (verdict #6).",w:"The clinical depth professionals actually talk about when they describe a platform as indispensable; guardrailed by the eval set.",e:"L",g:"P0-02, P1-10, P0-08"},
+{d:"ai",hz:"long",nw:0,t:"Darija voice-first Copilot (#1)",x:"Whisper fine-tuned on a 50-hour Darija corpus (STT) + Gemini reasoning + Darija-native TTS: « واش هو دوا تاع السكر للحامل؟ » asked aloud, answered aloud. TTS ships before STT — output errors are less dangerous than input errors.",w:"Market-first and emotionally the strongest AI idea — gated on the 85% accuracy floor (both risk registers) and the P0-05 review-beat pattern.",e:"XL · 8 wks",g:"research floor"},
+{d:"ai",hz:"long",nw:0,t:"Prescription OCR, paste-first (#2 modified)",x:"Sequence per the verdict: audit and harden the existing paste-a-prescription tool (the deterministic skeleton), then add camera OCR (print-first, handwriting-confidence heatmaps), then the correction-learning loop where every pharmacist fix improves extraction.",w:"Reduces dispensing errors at the intake moment; the learning loop means accuracy compounds with usage.",e:"XL",g:"paste-tool audit (P2-41)"},
+{d:"ai",hz:"long",nw:0,t:"Medication image database + pill/pack recognition (#3, N29)",x:"Photograph every catalogue medication (crowdsourced campaign with gamification + lab partnerships): tablet colour/shape/imprint and packaging → recognition for poison-centre calls, the cabinet photo audit and photo search.",w:"The image DB is the prerequisite three features wait on; start the campaign before the model — data collection is the long pole.",e:"XL"},
+{d:"ai",hz:"long",nw:0,t:"Interaction severity prediction (N11)",x:"Beyond listing: « cette combinaison présente ~73% de probabilité de saignement cliniquement significatif » from pharmacokinetic features + the interaction corpus — a fine-tuned model, eval-set gated, confidence-shown.",w:"Moves the checker from reference toward judgement support — with the honesty machinery (confidence, citations) built first.",e:"XL"},
+{d:"ai",hz:"long",nw:0,t:"Dosage individualisation (N12)",x:"Weight + age + renal + hepatic + concurrent meds + (later) PGx → one individualised recommendation with its reasoning shown (« réduire de 40% : ClCr 35 + vérapamil »).",w:"The dose engine's summit; every layer below it (calculators, pin, case solver) is a step toward this screen.",e:"XL",g:"engine, pin, PGx fields"},
+{d:"ai",hz:"long",nw:0,t:"Adherence coach (N13)",x:"Patient-facing reminders via WhatsApp, side-effect explanations in Darija, quiet streaks — opt-in, family-cabinet integrated, never shaming.",w:"The family-mode retention engine; WhatsApp is the channel because WhatsApp is the country.",e:"XL",g:"#22 bot"},
+{d:"ai",hz:"long",nw:0,t:"Deuxième avis button",x:"Re-runs any high-stakes query with a different framing and flags disagreement between the two runs — cheap once streaming exists, valuable exactly where the stakes are.",w:"Disagreement surfaced is safer than false unanimity; also a beautiful demo of intellectual honesty.",e:"L"},
+{d:"ai",hz:"long",nw:0,t:"Register-matching, fully",x:"A Darija question gets a Darija answer (few-shot examples per the sprint plan), a formal French question gets « vous », a parent's question gets short sentences — the Copilot mirrors how it was actually addressed, in all three languages.",w:"The one-line system-prompt fix (SP P-08-01) extended into a linguistic personality system; the Darija glossary feeds it.",e:"L"},
+{d:"ai",hz:"long",nw:1,t:"AI triage assistant for anti-poison calls",x:"Structured toxin-intake dialogue for the CAPM portal: substance lookup, weight-based decontamination guidance, contraindication checks (charcoal ≠ everything), case-file generation for follow-up.",w:"The anti-poison portal's intelligence layer; where minutes and accuracy matter most, the eval harness earns its keep.",e:"XL",g:"portal partnership"},
+{d:"ai",hz:"long",nw:1,t:"Semantic case similarity (privacy-gated)",x:"For professionals: « cas similaires » — anonymised, aggregated patterns (« 14 pharmaciens ont vérifié cette combinaison ce mois-ci, 3 ont signalé un effet »), never individual traces.",w:"Powerful and dangerous in equal measure: ships only after the DPIA, aggregation thresholds and governance sign-off — or never.",e:"XL",g:"P1-28 + governance"},
+
+// ================= SEARCH (b8) =================
+{d:"search",hz:"now",nw:0,t:"Fuzzy matching + synonym cross-map",x:"The audit's P1-23 as a product feature: « dolipran » → DOLIPRANE; amoxicilline / amoxiciline / أموكسيسيلين resolve to one record; DCI finds brands and brands find DCI (V14 settles the baseline first).",w:"The most common failure a real user hits — fixed with a worker index and a synonym table cheaper than full fuzzy alone.",e:"M"},
+{d:"search",hz:"now",nw:0,t:"Zero-result logging as the data-gap map",x:"Every search that returns nothing is logged (privacy-safe), reviewed weekly, and becomes the dataset's TODO list — missing synonyms, missing products, missing Arabic names.",w:"Simultaneously a bug list, a curation backlog and an honest growth sensor; the KPI target is <3% zero-result rate.",e:"S"},
+{d:"search",hz:"now",nw:0,t:"Hover/tap-to-simplify jargon",x:"Any clinical term inside an RCP — « myélosuppression », « clairance » — underlines dotted; hover or tap surfaces a plain-language gloss inline (from the 92-term glossary + the Darija glossary later), without leaving the page.",w:"The glossary stops being a destination and becomes an ambient layer; reading an RCP in front of a patient becomes possible.",e:"S"},
+{d:"search",hz:"now",nw:1,t:"Barcode-first search affordance",x:"The working scanner promoted into the header search bar as a camera icon — scan-to-search from anywhere, results identical to typed search (with the counter-flow hook: scanned drugs offer « ajouter au panier/comparateur »).",w:"The hardware already works; this is pure placement — and placement is adoption.",e:"S"},
+{d:"search",hz:"now",nw:0,t:"Result-count + active-filter transparency",x:"« 47 résultats · filtres : Liste I, Sirops » with removable chips and « tout effacer » — the audit's P2-05, stated here as the discovery law: the user always knows how big the haystack is and which hands are holding it.",w:"Orientation beats speed in a 9,555-record dataset; also the aria-live announcement surface.",e:"S"},
+{d:"search",hz:"next",nw:0,t:"Search history, highlighting, suggestions",x:"Last-10 recent queries on empty focus (clearable, 30-day expiry), <mark>-highlighted match fragments, and « parce que vous avez vu DOLIPRANE » same-DCI suggestion chips (audit P2-33 bundle).",w:"The three cheap upgrades that make search feel remembered rather than stateless.",e:"M"},
+{d:"search",hz:"next",nw:1,t:"Cross-script near-miss suggestions",x:"Type in Arabic script, get Latin-script records (and vice versa) with transliteration-aware matching — « اموكسيسيلين » surfaces AMOXICILLINE brands even where the record lacks an Arabic alias.",w:"Bilingual typing is the reality of Algerian counters; script-crossing is the fuzzy matching that matters most here.",e:"M"},
+{d:"search",hz:"next",nw:0,t:"Therapeutic-need search",x:"« antalgique enfant fièvre » → a ranked, filterable result of appropriate pediatric options with weight-band dosing one tap away — the keyword index learning to answer intents (bridge to the N14 natural-language engine, shipping deterministic-first).",w:"How a parent at the counter actually phrases the problem; answers with records + dosing, never with a diagnosis (won't-do #4).",e:"L"},
+{d:"search",hz:"long",nw:0,t:"Photo search in the bar",x:"The camera icon grows a second mode: photograph a box or tablet → recognition results inline (the image-recognition investment surfaced where people already look).",w:"Discovery at the speed of pointing; gated on the image database existing.",e:"XL",g:"#3 image DB"},
+{d:"search",hz:"fill",nw:1,t:"AMM-number muscle",x:"Partial AMM matching from any scope (« 17 18 19 » finds the record), with the number formatted and copyable everywhere it appears — the regulatory identifier treated as a first-class search key.",w:"Pharmacists and delegates think in AMM numbers; the UX Review already observed it working — make it effortless.",e:"S"},
+
+// ================= PERFORMANCE (b9) =================
+{d:"perf",hz:"now",nw:1,t:"Real-user monitoring from actual Algerian devices",x:"web-vitals reported from real sessions (opt-out, aggregate, no content — P2-25's taxonomy): TTFB/FCP/LCP/INP per wilaya and connection class, replacing warm European edge measurements as the truth.",w:"V9's lesson institutionalised: you cannot optimise for Algiers on 4G from a Paris edge cache. RUM is how the platform finally meets its users where they are.",e:"S"},
+{d:"perf",hz:"now",nw:1,t:"CDN proximity study for Algeria",x:"Measure where Vercel edge actually serves DZ users from today (likely Marseille/Paris), quantify the gap from Algiers/Oran/Tamanrasset via RUM, and evaluate options: Multi-CDN, Cloudflare in front, SW precaching of the app shell + dataset, or a local mirror partnership.",w:"The 80 ms TTFB crown jewel was measured from Europe; the study finds out what the crown is worth at home — and the answer shapes the offline strategy's priority.",e:"M · study first"},
+{d:"perf",hz:"now",nw:0,t:"Streaming everywhere it matters",x:"Copilot first-token <1 s (P1-06), streaming search suggestions from the worker, progressive rendering of long monographs — the perceived-latency trio.",w:"Perceived speed is 10× the felt improvement of actual speed; the corpus already calls streaming the single largest perceived-performance change available.",e:"M"},
+{d:"perf",hz:"next",nw:1,t:"Response-time SLO dashboard (public)",x:"Public p50/p95 for Copilot first token, search keystroke, page loads + uptime + data freshness — the status page's honest sister: not just « is it up » but « how fast is it, measured from your country ».",w:"Trust through transparency for a clinical tool; also a permanent internal forcing function (you cannot publish a number you fear).",e:"M",g:"P2-25/26"},
+{d:"perf",hz:"next",nw:1,t:"Worker search index + heap diet",x:"The audit's P3-18 as a performance program: search moves into a Web Worker with a compact serialised index (MiniSearch/typed arrays), records hydrate lazily by ID, main-thread heap target <8 MB, keystroke <50 ms on a throttled mid-range Android.",w:"Instant client-side search stays the product decision; the 15.6 MB heap stops being its implementation. The dataset keeps growing — the index must not grow linearly with it.",e:"M"},
+{d:"perf",hz:"next",nw:0,t:"Offline dataset delta-sync",x:"The SW-cached dataset syncs nightly by version-diff (only changed records cross the wire) instead of full re-download; offline banner shows the data's age (« données du 21/09 »).",w:"Rural pharmacies on unreliable connections get a genuinely current offline dataset at a fraction of the bandwidth — the true-offline moonshot's engine, already half-built (v8 SW).",e:"M"},
+{d:"perf",hz:"next",nw:0,t:"Edge-rendered medication pages",x:"N47: /medicament/[slug] rendering at the edge closest to the user (ISR pages + edge middleware), targeting ~20 ms TTFB for Algerian users once the CDN study lands.",w:"The 9,555 SEO pages should be the fastest pages on the site — they are what Google and WhatsApp both reward.",e:"M",g:"CDN study"},
+{d:"perf",hz:"next",nw:0,t:"Predictive prefetch on intent",x:"Hover >500 ms on a nav item or search result → prefetch route data (next/link prefetch + SWR); tap on mobile triggers the same; never prefetches Copilot or authed mutations.",w:"The interaction that makes navigation feel pre-cognisant; bandwidth-bounded by design (prefetch counts against the data budget).",e:"S · 3 d"},
+{d:"perf",hz:"next",nw:1,t:"The <500 KB offline budget",x:"A hard, CI-enforced budget for the offline bundle: app shell + search index + core calculators + emergency cards fit in 500 KB Brotli; everything else streams when connected.",w:"A number makes offline real: 500 KB downloads in seconds on 3G and survives a month of intermittent use. Budgets in CI are how budgets stay kept.",e:"M"},
+{d:"perf",hz:"next",nw:0,t:"Per-route code splitting + budgets",x:"N52 as guardrail: /outils/[tool] pages ≤60 KB each, Copilot chunk lazy-loads only on open, bundle-analyser artefacts per build, CI fails >10% route regressions (audit P3-40).",w:"The 88.8 KB crown survives 200 features only if each feature pays rent at the route level.",e:"M"},
+{d:"perf",hz:"long",nw:0,t:"Real-time shortage push (WebSocket/SSE)",x:"N51: a pharmacist in Oran reports AUGMENTIN short → watchers in Oran see it move within seconds (SSE first; WebSocket only if bidirectional need appears).",w:"The heatmap's nervous system; also the notification centre's first genuinely live source. Battery- and bandwidth-aware backoff mandatory.",e:"L"},
+{d:"perf",hz:"fill",nw:0,t:"Image discipline before images exist",x:"When the image DB lands: AVIF/WebP, srcset, loading=lazy + Intersection Observer, hard per-record image budget, blur-up placeholders (N50) — the policy ships with the first image, not after the thousandth.",w:"Zero raster images today is an achievement; the first image upload is the moment it can be lost.",e:"S"},
+{d:"perf",hz:"fill",nw:1,t:"Top-500 pre-warm",x:"The 500 most-viewed medication pages kept warm at the edge (cron revalidation), so the long tail's head never serves a cold ISR miss.",w:"Cheap insurance for the pages that carry most traffic; the analytics list (P2-25) feeds it automatically.",e:"S"},
+
+// ================= SYSTEM (b10) =================
+{d:"system",hz:"now",nw:0,t:"The three foundations, as designed",x:"Routing (real URLs, intercepting modals, ISR, sitemap), Identity (NextAuth, passkeys, RBAC, 7-year audit trail), State (URL params, Zustand v3, server sync) — fully specified in the audit's P0-01/02 and Phase 2–3; listed here because every idea in this document stands on them.",w:"Not an idea, the ground. The dependency graph in the audit is the build order.",e:"L+XL",g:"= audit Phases 2–3"},
+{d:"system",hz:"now",nw:0,t:"Feature flags + rollout mechanics",x:"Audit P2-44: Edge Config flags, percentage rollouts, documented rollback per flag, removal hygiene — the machinery that makes every risky change below reversible.",w:"Every « ship behind a flag » mitigation in two risk registers presumes this exists; build it in Sprint 1.",e:"S"},
+{d:"system",hz:"now",nw:1,t:"Dataset versioning + weekly « what changed » feed",x:"Semantic version for the dataset (v2026.09.3), per-record diffs, and a public machine-readable changelog: new AMMs, withdrawn products, price moves, monograph additions — the ANPP bot's output even before the bot exists (manual entries first).",w:"A reference platform that cannot say what changed this week is a reference platform nobody can cite. Also the backbone of the digest, the freshness badges and the price snapshots.",e:"M"},
+{d:"system",hz:"now",nw:1,t:"Correction-request pipeline",x:"« Signaler une erreur » on every record → structured form (field, current value, proposed value, source) → triage queue → credited fix in the changelog (« corrigé grâce à @pharmacie_oran »).",w:"Twelve thousand pharmacists are a QA department that costs nothing but respect; credit is the currency that makes it run. Feeds the register process (P2-41).",e:"M"},
+{d:"system",hz:"now",nw:0,t:"Privacy-preserving telemetry design",x:"The P2-25 stack's constitution: aggregate-only events, no clinical content, hashed queries only on zero-results, retention caps per event class, DPIA-reviewed schema, public documentation of what is collected.",w:"Analytics that a Law 18-07 lawyer can read and smile at; also the honest answer when users ask « que savez-vous de moi ? » — which a health platform will be asked.",e:"S"},
+{d:"system",hz:"next",nw:1,t:"Multi-environment strategy",x:"Staging with a production-shaped data subset (anonymised), where the clinical eval set runs against real record shapes; preview deploys per PR (Vercel) with seeded test patients for the pin/case-solver flows.",w:"Clinical software cannot be tested against prod-shaped-by-hope; the eval harness deserves an environment as rigorous as the harness.",e:"M"},
+{d:"system",hz:"next",nw:1,t:"Price-snapshot archive (started this quarter)",x:"Weekly immutable snapshots of the PPA dataset + reimbursement rates, versioned forever — the verdict-#14 modification: the 24-month price-history chart is only possible for teams who started archiving 24 months ago.",w:"One cron job today is an entire data product in 2027; also the evidence base for advocacy and the shortage-prediction model (N32).",e:"S"},
+{d:"system",hz:"next",nw:0,t:"Organisation workspaces (pharmacy as an account)",x:"Post-identity: a pharmacy entity with members (titulaire, assistants), shared formulary, shared handoff notes, per-workspace audit view — the RBAC model extended one level up from user to organisation.",w:"The B2B foundation: inventory layer, white-label and institutional tiers all bill the workspace, not the person.",e:"L",g:"P0-02"},
+{d:"system",hz:"next",nw:0,t:"Server-side state + cross-device sync",x:"SP S-10-01/02 as shipped behaviour: favourites, recently-viewed, Copilot threads, pins and lists sync via Prisma with optimistic updates, 300 ms debounce, merge-on-login, offline queue replay.",w:"Verdict #19 re-rated as THE retention feature: sync is what turns a browser tab into a platform.",e:"L",g:"P0-02 + P1-28 DPIA"},
+{d:"system",hz:"next",nw:1,t:"Machine-readable data governance policy",x:"One public document: what data exists, its provenance (P3-30's page), its licence per layer (facts open / editorial reserved — the verdict-#24 modification), retention per class, who decides changes, how researchers request access.",w:"Every deferred data-revenue idea (#16, #23, #24) has the same unlock condition: governance written down. Write it once, unlock all three.",e:"M"},
+{d:"system",hz:"long",nw:0,t:"Public REST API (tiered)",x:"Free academic keys, paid commercial keys, rate-limited, documented, versioned — the internal calculators API (P0-08) and dataset endpoints exposed under the governance policy; the open-data exports as its bulk sibling.",w:"Revenue + moat: every integration built on DzPharm's API makes DzPharm harder to displace. Sequenced exactly as the verdict says — governance first.",e:"XL",g:"governance + P0-02"},
+{d:"system",hz:"long",nw:0,t:"National statistics dashboard",x:"Anonymised, aggregated, governance-approved public-health signal: search trends by class and wilaya, seasonal patterns, shortage pressure indices — published quarterly, methodology visible.",w:"The platform's civic face and its policy influence; ships only when conditions a–d (accounts, DPIA, 6 months of clean data, anonymisation policy) are all true.",e:"XL",g:"the four conditions"},
+{d:"system",hz:"long",nw:1,t:"Institution SSO + class accounts",x:"Universities and hospital groups get SAML/OIDC federation, cohort accounts (a promotion of 200 students), usage reporting for the institution, per-class eval-set exercises.",w:"The student pipeline becomes an institutional contract; also the cleanest paid-tier boundary that doesn't tax individual pharmacists.",e:"L",g:"P0-02"},
+{d:"system",hz:"long",nw:1,t:"Backup, DR and the restore drill",x:"Audit P3-38 grown up: PITR + nightly logical dumps to separate-credential object storage, annual audit-log cold archives, documented RPO ≤24 h / RTO ≤4 h, monthly drills that are actually performed and dated.",w:"A 7-year regulatory audit trail that cannot survive a dropped database is not an audit trail. Boring, non-negotiable, unglamorous — like all load-bearing walls.",e:"M"}
+);
+</script>
+<script>
+IDEAS.push(
+// ================= INCLUSION (b11) =================
+{d:"a11y",hz:"now",nw:0,t:"High-contrast AAA palette + dyslexia font + 4-level font size",x:"The accessibility trio the corpus rated DO-NOW: pure-black/white/yellow AAA palette (N42), OpenDyslexic or Atkinson Hyperlegible option (N43), and Small/Medium/Large/XL type scaling persisted in the store (N46).",w:"Three small settings that each unlock a whole audience; all ride the token architecture that already exists.",e:"S"},
+{d:"a11y",hz:"next",nw:0,t:"Full Arabic UI, RTL-native",x:"Not translated French — a right-to-left interface built on CSS logical properties from the start, complete next-intl adoption (the audit's Phase 6), header language switcher, Arabic-first information hierarchy where it differs (numbers, dates, names).",w:"The majority-comfort language of the patient audience; also the prerequisite for Arabic-locale sessions >20% (the audit's KPI). A native Arabic reader completing the three core flows unaided is the release gate.",e:"L"},
+{d:"a11y",hz:"next",nw:0,t:"Low-literacy patient mode",x:"Icon-first dosing instructions for everything patient-facing: the pictogram family (sun/moon, plate/crossed-plate, glass, lying figure) as the primary language, text as secondary — leaflets, handouts, the guardian page, family cabinet.",w:"For the real share of patients who read pictures faster than paragraphs, in any language. The pictogram system is also the fastest path to Tamazight and to child comprehension.",e:"M"},
+{d:"a11y",hz:"next",nw:1,t:"Reduced-data mode",x:"One switch (or auto-detected on 2G/slow-3G): no images, no animation, no webfonts beyond a subset, text-only layouts, <100 KB pages — the Paper mode's connectivity twin.",w:"Interior and southern Algeria run on expensive, fragile connections; a reference tool that respects 50 MB monthly caps is a reference tool that stays installed. No competitor has a data-poverty mode.",e:"M"},
+{d:"a11y",hz:"next",nw:0,t:"Screen-reader tutorial mode",x:"First detected screen-reader session: a 30-second audio orientation (« appuyez sur H pour naviguer par titres, ⌘K pour la palette… ») plus a downloadable shortcut sheet in braille-ready format (N41).",w:"Visually impaired pharmacists exist and are employable — the platform should court them, not merely tolerate them.",e:"M"},
+{d:"a11y",hz:"next",nw:0,t:"Voice-controlled navigation",x:"« Aller au Répertoire », « Rechercher Doliprane », « Ouvre le Copilote » — full Web Speech API control of the platform's primary flows (N45), with the P0-05 review discipline (confirm before clinical sends).",w:"Hands-free pharmacy practice for gloved hands; also the rehearsal for the voice-hotline moonshot.",e:"L"},
+{d:"a11y",hz:"next",nw:1,t:"Cognitive-accessibility pass",x:"Consistent icon+label pairs everywhere (never icon-alone in navigation), error-prevention on destructive actions (the design-exploration's destructive-modal rules), plain-language FR/AR microcopy guidelines, one-idea-per-screen audits on the family surfaces.",w:"WCAG's cognitive provisions (3.3.x) are where clinical tools fail quietly under stress — a stressed user is the platform's primary user.",e:"M"},
+{d:"a11y",hz:"next",nw:0,t:"WCAG 2.2 AAA on the three core flows",x:"Beyond AA certification: login → search → medication detail held to AAA (7:1 text, extended targets, full keyboard parity, extended live-region coverage) as a standing CI budget.",w:"AAA on the flows that matter is a defensible public claim (« accessible au niveau AAA sur les parcours essentiels ») and a permanent ratchet against regression.",e:"L",g:"audit Phase 6"},
+{d:"a11y",hz:"long",nw:0,t:"Tamazight support",x:"Kabyle/Chaoui/Tuareg-language layer for the patient surfaces (leaflets, pictogram captions, guardian page, Copilot register) — Tifinagh and Latin variants. No pharmaceutical platform anywhere has done this.",w:"A meaningful signal to Kabylie and the Amazigh-speaking population, and a genuine world-first worth being first at. Start with the 50 highest-traffic leaflet strings, not the whole UI.",e:"XL"},
+{d:"a11y",hz:"long",nw:0,t:"Algerian Sign Language video answers",x:"For the top ~100 patient questions: pre-recorded ASL-interpreter video windows in the Copilot and leaflets; AI-generated signing avatars stay research until they stop being uncanny (N44).",w:"Deaf patients currently get counselling through family members' paraphrase; recorded answers restore their privacy and accuracy. High impact, high effort, zero competition.",e:"XL"},
+{d:"a11y",hz:"long",nw:0,t:"Voice-only flow",x:"Beyond screen-reader compliance: a genuinely voice-driven path (search → detail → interaction check → leaflet) with audio-first output design — the Darija TTS Copilot as its brain.",w:"For visually impaired users AND for the gloved, the busy and the driving; the voice-first future's accessibility foundation.",e:"XL",g:"Darija TTS"},
+{d:"a11y",hz:"fill",nw:1,t:"One-hand / thumb-zone mobile audit",x:"Every primary action reachable in the bottom-third arc at 390×844; the bottom nav (P2-37) is its spine; long-table actions get swipe-revealed thumb targets.",w:"The counter phone lives in one hand; the other is holding a box. Design for the hand that is left.",e:"S"},
+{d:"a11y",hz:"fill",nw:1,t:"Large-text kiosk mode for elderly patients",x:"The family surfaces at 200% type, maximum contrast, pictogram-forward, zero decoration — a shareable link mode (« montre-moi tes médicaments ») a pharmacist can hand across the counter on a tablet.",w:"Grandparents manage chronic regimens on this platform too; the mode is the Accessible density preset pointed at a screen the patient holds.",e:"S"},
+
+// ================= COMMUNITY (b12) =================
+{d:"community",hz:"now",nw:0,t:"Garde crowdsourcing + coverage grind to 58/58",x:"The audit's P2-17 as a community program: submission forms, verified-pharmacist weighting, on-call hours, honest per-wilaya coverage counters, and a « votre wilaya n'est pas encore couverte — soyez le premier » call to action.",w:"Coverage is the feature; the map (P3-05) is only its photograph. The 17/58 number is currently the platform's quietest shame — make it a public climb.",e:"M"},
+{d:"community",hz:"next",nw:0,t:"National shortage heatmap",x:"The nine live reports become a wilaya-coloured map with drug-class filters and week-over-week pressure trends — honest sample sizes, expiry on unconfirmed reports, « signalé par des pharmaciens — vérifiez par téléphone » framing (verdict #13).",w:"Public-health value and the community's visible heartbeat; blocked today only by the 500 error (P1-24) — fix the pipe, then paint the map.",e:"L",g:"P1-24"},
+{d:"community",hz:"next",nw:1,t:"Wilaya WhatsApp alert groups",x:"Opt-in broadcast groups per wilaya: shortage reports over threshold, recalls on locally-common drugs, garde changes — the WhatsApp bot's push sibling, administered through the same Business API.",w:"Alerts that arrive where pharmacists already are beat notifications inside a tab they have to remember to open; per-wilaya scoping keeps signal high.",e:"M",g:"#22 bot infra"},
+{d:"community",hz:"next",nw:0,t:"Verified-pharmacist Q&A network",x:"Edge cases the Copilot flags uncertain (« hors du référentiel ») can be posted to a moderated peer network; accepted answers get attributed, become clinical-pearls annotations, and feed the eval set.",w:"The refusal sentence becomes a door instead of a wall — and every good answer trains the next Copilot version. The corpus's best compounding loop.",e:"L",g:"P0-02 verification"},
+{d:"community",hz:"next",nw:1,t:"Eco-pharmacy: expired-medication collection",x:"A map + directory of collection points for expired medications, safe-disposal guidance for households (« ne jetez jamais… rapportez »), and a family-cabinet nudge when an expiry passes.",w:"A public-health and environmental good with real foot-traffic side effects (the collection point IS the pharmacy); nobody digitalises this today.",e:"M"},
+{d:"community",hz:"long",nw:0,t:"Inter-pharmacy surplus marketplace",x:"Verified pharmacies list surplus (with the near-expiry lane: expiring-in-90-days stock at visible discount) for transfer to neighbours facing stockouts — the corpus's #15 with the low-risk on-ramp the audit recommended (verdict #15).",w:"Reduces waste on one side, closes gaps on the other, builds the trust graph everything B2B later runs on. Needs the legal read on transfer rules (Liste I/II especially).",e:"XL",g:"P0-02 + workspaces + legal"},
+{d:"community",hz:"long",nw:1,t:"Call-ahead hold requests",x:"Patients (or their pharmacist on their behalf) request a hold on a drug at a chosen pharmacy; the pharmacy confirms or declines; both see a small queue. No payment, no delivery — just « don't make the trip for nothing ».",w:"The marketplace's human-scale cousin; solves the shortage era's cruelest micro-problem (the futile round trip) with one confirmed message.",e:"L",g:"workspaces"},
+{d:"community",hz:"long",nw:1,t:"Pharmacy busyness crowding",x:"« Affluence maintenant » — pharmacists tap one of three states (calme / normal / file d'attente); patients see a live-ish indicator before choosing when to go, Google-busyness style but honest about its source.",w:"Genuinely useful in Ramadan and flu season; trivially cheap to collect, needs density to be trustworthy — wilaya-by-wilaya rollout with honest « pas assez de données » states.",e:"L"},
+{d:"community",hz:"long",nw:0,t:"Anonymous peer benchmarking",x:"« Votre top-10 dispensé vs la moyenne de votre wilaya » — private, quiet, never a leaderboard, opt-in (the prior brainstorm's deliberate framing).",w:"Professional insight without turning clinical work into competition; the data also seeds the national statistics dashboard honestly.",e:"L",g:"P0-02 + governance"},
+{d:"community",hz:"long",nw:1,t:"Student mentorship matching",x:"Pharmacy students request mentors by interest (officine, industrie, clinique); verified pharmacists opt in; the platform hosts the intro and nothing more (no chat liability), with the quiz mode as the shared activity.",w:"The student pipeline (campaign, class accounts) matures into professional loyalty; mentorship is the retention story no salary can buy.",e:"M",g:"accounts + verification"},
+{d:"community",hz:"fill",nw:1,t:"Open-data cleanup days",x:"Quarterly community events: fix 100 records, win a badge, appear in the changelog — the correction pipeline's social layer, run with pharmacy student associations.",w:"Data quality as sport; cheap to run, compounds the moat, recruits the next generation of verified contributors.",e:"S"},
+{d:"community",hz:"fill",nw:0,t:"CME credit tracking → DzPharm Academy",x:"Verdict #20's modification: passive time-tracking deferred; badges earned by passing eval-style modules (generated from the eval harness) become the defensible CME evidence, subject to council approval — folded into the gamified academy moonshot (M8).",w:"Credits people earn by demonstrating knowledge survive scrutiny; credits for having a tab open do not.",e:"L",g:"M8 + council"},
+
+// ================= BUSINESS (b13) =================
+{d:"business",hz:"next",nw:1,t:"The tier architecture (pricing memo)",x:"Free core forever (search, interactions, garde, guardian page, family tools — the public-health promise). Pro tier: advanced tools (registers, reconciliation workspace, exports, priority support, whitelist-pinned formulary). Institution tier: SSO, class accounts, usage reports, workspace admin. B2B layer: inventory + white-label.",w:"The monetisation spine every deferred idea assumes; written as a memo now so feature decisions stop being accidental business decisions. Rule zero: no clinical surface ever sits behind a paywall.",e:"M · decisions, not code",g:"P0-02"},
+{d:"business",hz:"long",nw:0,t:"B2B inventory layer",x:"The workspace's operational add-on: stock levels, expiry tracking (the cabinet's engine, professionalised), the smart reorder-point calculator (dispensing velocity → « commander AUGMENTIN avant jeudi »), purchase-order CSVs, monthly accountant exports.",w:"Monetises the operational side without touching clinical trust; the formulary upload (#4) is its trojan horse — pharmacies upload stock for substitution ranking and discover they have an inventory system.",e:"XL",g:"workspaces"},
+{d:"business",hz:"long",nw:0,t:"Embeddable search widget",x:"« Recherche propulsée par DzPharm » — a script tag other Algerian health sites, clinic portals and hospital intranets drop in; queries respect the same scopes, results deep-link back (post-routing URLs make this possible at all).",w:"Reach without headcount; every embed is a citation of the dataset in someone else's trust context.",e:"L",g:"P0-01"},
+{d:"business",hz:"long",nw:1,t:"Insurance & claims helper for pharmacies",x:"Rejection-pattern tracking per pharmacy (which CNAS motifs recur), appeal-letter templates pre-filled from the record, prior-auth dossier status (the clinical tool's business sibling).",w:"Direct money-recovery value — the easiest B2B sell in the catalogue because ROI is denominated in dinars recovered, not features gained.",e:"L",g:"workspaces + CNAS data"},
+{d:"business",hz:"long",nw:0,t:"White-label for chains & groups",x:"Co-branded DzPharm for pharmacy groups and chains: their logo, their formulary pinned, their workspace analytics, same engine and dataset (licence-governed).",w:"One contract covers fifty counters; the design-system's palette/token architecture makes co-branding a config, not a fork.",e:"XL",g:"workspaces + governance"},
+{d:"business",hz:"long",nw:0,t:"Open data exports (facts-only)",x:"Verdict #24 as modified: monthly CSV/JSON of the factual layer (AMM registry, prices + verification dates, shortage stats) under an open licence with attribution; editorial content (RCP text, monograph prose) stays in-product.",w:"Ecosystem goodwill and academic citations without an ownership claim the platform cannot defend; the legal read (P3-30) precedes the first export.",e:"L",g:"governance policy"},
+{d:"business",hz:"long",nw:1,t:"Pharmacy staffing board (remplaçants)",x:"A modest, verified-only job/remplacement board: pharmacies post garde-remplacement needs, verified pharmacists and final-year students respond; the platform hosts introductions, not contracts.",w:"A real pain in a real market, adjacent to verification infrastructure the platform builds anyway; community monetisation that never touches clinical surfaces.",e:"L",g:"verification"},
+{d:"business",hz:"long",nw:1,t:"Pricing-optimisation analytics (non-reimbursed)",x:"M4 demoonshotted: for parapharmacy and non-reimbursed products only, market-aware pricing suggestions (regional demand, comparable PPA bands) — explicitly never touching regulated medication prices.",w:"The B2B layer's analytics upsell; scoped to non-reimbursed goods it stays on the right side of both regulation and the won't-do list.",e:"L",g:"B2B layer"},
+
+// ================= REACH (b14) =================
+{d:"reach",hz:"next",nw:0,t:"WhatsApp Copilot bot (verdict #22)",x:"The grounded assistant inside the channel Algerian pharmacists live in: « posologie amoxicilline enfant 16kg » answered with citations, refusal language and the guardian-page link for prices. Business API applied for in Wave 1; Telegram as fallback; per-number quotas from message one.",w:"Distribution meets the workflow instead of asking it to move — on the POST-P0-08 Copilot only, because a WhatsApp answer has no UI chrome to hide behind and will be screenshotted and forwarded.",e:"L · 3 wks",g:"P0-08 + API approval"},
+{d:"reach",hz:"next",nw:0,t:"True offline mode (the honest PWA)",x:"App shell + full dataset index + core calculators + emergency cards + first-5-minutes protocols, all SW-cached with delta-sync and a visible data-age banner; the Copilot falls back to the instant-answer cache offline.",w:"Rural pharmacies on unreliable connections get a genuinely current reference with zero connectivity — and it is the native-app gate criterion, in the right order (offline before app stores).",e:"L",g:"delta-sync, cache"},
+{d:"reach",hz:"next",nw:1,t:"Telegram auto-channel",x:"The regulatory digest, recall alerts and shortage thresholds auto-post to a public Telegram channel — zero-effort twin of the WhatsApp broadcast for the channel's (large, young, student-heavy) audience.",w:"A cron job and a bot token; student audiences live on Telegram, and students are the campaign wedge.",e:"S"},
+{d:"reach",hz:"next",nw:1,t:"Waiting-area kiosk mode",x:"A locked-down full-screen mode for pharmacy waiting areas: rotating public-health cards (Ramadan timing, canicule advice, vaccine calendar), tonight's garde, the emergency numbers — no interaction needed, no patient data shown.",w:"The platform becomes furniture in 12,000 waiting areas; every card carries the brand and a QR to the guardian page.",e:"M"},
+{d:"reach",hz:"next",nw:0,t:"Chrome extension / bookmarklet",x:"Select any drug name on any page (a PDF prescription, an email, a medical site) → a mini-card with DzPharm's record, price and interaction shortcut; Cmd-K inside the extension popup.",w:"Meets prescribers and students where they already read; trivially small once routing gives every record a URL.",e:"M",g:"P0-01"},
+{d:"reach",hz:"long",nw:0,t:"SMS / USSD short-code (verdict-adjacent)",x:"« DWA DOLIPRANE » to a short code → official price + nearest garde by wilaya; USSD fallback for feature phones. The one channel that reaches every phone in the country, smartphones or not.",w:"The guardian page's no-internet twin; carrier partnership is the long pole, not technology. Public-health framing makes carriers receptive.",e:"XL",g:"carrier deal"},
+{d:"reach",hz:"long",nw:0,t:"Native iOS / Android (gated — verdict #21)",x:"Capacitor-wrapped PWA with the offline bundle, push notifications (recalls, shortages), barcode camera integration and the store-review disclaimer package — shipped only when routing ✓, accounts ✓, offline ✓, disclaimer ✓.",w:"Deliberately last in the channel ladder: an app store review should meet a finished product, and every gate is another document's exit criterion.",e:"XL · 8 wks",g:"the four gates"},
+{d:"reach",hz:"long",nw:1,t:"Night-shift voice hotline",x:"A phone line (IVR + the Copilot's voice stack): dial, speak the question in FR/AR, hear the cited answer — for the 2 a.m. counter with no browser open and the rural poste with no smartphone. Institutional/premium pricing.",w:"Voice-first access for the audience least served by screens; the Darija STT research pays its eventual dividend here, with human-fallback transfer to the anti-poison line baked in.",e:"XL",g:"Darija STT floor"},
+{d:"reach",hz:"long",nw:1,t:"University LMS integrations",x:"DzPharm lookup embedded in pharmacy-faculty portals (LTI or the embeddable widget); class accounts (system §10) with instructor dashboards over the quiz mode; the 92-term glossary as course material.",w:"The student pipeline institutionalised: the cohort that learns on DzPharm graduates onto DzPharm. One faculty partnership is the pilot.",e:"L",g:"institution tier"},
+{d:"reach",hz:"fill",nw:0,t:"Wearables glance (M3-lite)",x:"Wrist notifications for the three events worth an interruption: a watched shortage resolved, a recall on a pinned drug, a contre-indication in a check you ran from your phone. Nothing else, ever.",w:"The corpus's M3 with discipline applied: a watch is an interruption budget, spend it on safety events only.",e:"L",g:"native apps or PWA push"},
+
+// ================= MOONSHOTS (b15) =================
+{d:"moon",hz:"long",nw:0,t:"M1 · DzPharm AR",x:"Point the camera at a medication box → AR overlay: active ingredient, posology, interactions, price, Chifa rate — Google Lens specialised for Algerian medications (WebXR + the image DB).",w:"Revolutionary demo value and a genuine counter tool once recognition accuracy exists; the image database is its true first milestone.",e:"XL · 12 wks"},
+{d:"moon",hz:"long",nw:0,t:"M2 · Blockchain authenticity verification",x:"Serial-number verification against manufacturer-anchored records: scan → « ce médicament est authentique ». Counterfeit medication is a real Algerian-market problem; the partnerships are the product.",w:"Revolutionary trust claim — pursue the pilot with one manufacturer (Saidal as the national candidate) before any chain infrastructure is chosen.",e:"XL · 16 wks"},
+{d:"moon",hz:"long",nw:0,t:"M4 · National pricing intelligence",x:"The pricing-optimisation analytics scaled to a market-intelligence product: PPA trends, demand signals, shortage forecasts (N32's ML on the snapshot archive) sold to labs, distributors and policymakers — governance-gated, aggregate-only.",w:"The price-snapshot archive started this quarter is literally the training data; a moonshot with its first brick already laid.",e:"XL"},
+{d:"moon",hz:"long",nw:0,t:"M5 · DzPharm Télépharmacie",x:"Patient video-calls a pharmacist through the platform: the pharmacist sees the pinned patient context and cabinet (with consent), counsels on camera, generates the handout live — rural patients get pharmacist access without the road.",w:"Revolutionary reach; the second-screen and counselling-script work are its dry runs. Regulation read required before, not after.",e:"XL · 12 wks"},
+{d:"moon",hz:"long",nw:0,t:"M6 · Federated learning for interactions",x:"Pharmacies contribute anonymised interaction-check patterns to a federated model — detection improves with every use while no patient data ever leaves the counter.",w:"The privacy-native answer to « how does the engine get smarter »; technically hard, ethically beautiful, and a publication-grade story for a research partnership.",e:"XL · 16 wks"},
+{d:"moon",hz:"long",nw:0,t:"M7 · Voice skills (Alexa / Google Home)",x:"« OK Google, demande à DzPharm : posologie du Doliprane pour 22 kilos ? » — the calculators API behind a voice skill, with the refusal language and disclaimer read aloud.",w:"Low penetration in Algeria today, near-zero marginal cost once the voice stack exists (hotline sibling); the diaspora kitchen is the real first market.",e:"L · 4 wks"},
+{d:"moon",hz:"long",nw:0,t:"M8 · DzPharm Academy",x:"The gamified training platform: modules (interactions, posology, pregnancy safety, Ramadan), badges from eval-set-style exams, leaderboards opt-in, CME tracking (the modified #20), instructor mode for faculties.",w:"Turns a reference tool into a professional-development ecosystem — and the eval harness already writes half the exam bank.",e:"XL · 8 wks"},
+{d:"moon",hz:"long",nw:1,t:"M9 · Veterinary formulary vertical",x:"The same engine pointed at a dataset nobody has digitised for Algeria: veterinary AMMs, species-specific posology (the mg/kg maths the platform already does, per species), food-animal withdrawal periods, the rural vet's Ramadan-adjacent realities.",w:"Algerian veterinarians have no reference tool at all; the architecture is 80% shared, the moat would be total, and agri-vet is an economy the country is actively investing in.",e:"XL"},
+{d:"moon",hz:"long",nw:1,t:"M10 · Dental formulary module",x:"The dentist's drug guide: antibiotic prophylaxis protocols, anaesthetic interactions (the epinephrine × cardiac-drug matrix), analgesic ladders for dental pain, pregnancy-safe dentistry — a curated vertical inside the existing monograph system.",w:"Dentists prescribe constantly and reference rarely; a small vertical with outsized loyalty, and a template for others (dermatology, ophthalmology…).",e:"L"},
+{d:"moon",hz:"long",nw:1,t:"M11 · CNAS télétransmission rails",x:"The endgame of the Chifa work: DzPharm as the interface layer that prepares, validates and transmits reimbursement claims to CNAS/CASNOS — every dispensation flowing through the platform's rails.",w:"This is the moonshot that stops being a product and becomes infrastructure: unavoidable, regulated, recurring-revenue. Requires the institutional trust every other item builds — hence last, hence worth naming.",e:"XL · multi-year",g:"institutional partnership"},
+{d:"moon",hz:"long",nw:1,t:"M12 · Ministry & regulator dashboard",x:"DzPharm for institutions: the national statistics dashboard (governance-approved), shortage early-warning for the ANPP/MoH, recall-distribution mapping, pharmacovigilance signal aggregation — sold as public-health infrastructure, not software seats.",w:"The data-sovereignty argument in product form: Algerian pharmaceutical intelligence, on Algerian terms, informing Algerian policy. The antibiogram and heatmap are its grassroots feeders.",e:"XL",g:"governance + trust record"},
+{d:"moon",hz:"long",nw:1,t:"M13 · Maghreb expansion",x:"Morocco, Tunisia, Libya: the same engine, per-country datasets, and the Darija continuum as the unfair advantage — the dialects are cousins, the regulatory frameworks are learnable, the Ramadan adapter translates culturally for free.",w:"The corpus's vision sentence (« Africa's reference ») gets its first honest map: start where the language already works. Each country is a dataset project, not a product rewrite.",e:"XL · multi-year"},
+{d:"moon",hz:"long",nw:1,t:"M14 · The francophone-Africa voice network",x:"The hotline + voice Copilot exported to Sahel and West-African francophone pharmacy (Senegal, Mali, Niger, Côte d'Ivoire) where pharmacist density is lowest and voice-first is not a luxury but the only interface that scales.",w:"The export story with the strongest moral core: the platform that was built for Algeria's interior becomes the interior's platform everywhere. Partnerships with pharmacy orders and NGOs, per country.",e:"XL",g:"hotline + Darija-adjacent STT work"},
+{d:"moon",hz:"long",nw:1,t:"M15 · National medication-waste exchange grid",x:"The near-expiry marketplace scaled to a national grid with ministry/NGO partnership: expiring stock routed to where it will be used, collection points for expired stock (eco-pharmacy), waste metrics published as public-health data.",w:"Waste reduction, shortage mitigation and environmental health in one logistics layer — the kind of moonshot a government can co-sign, which is precisely why it needs the trust record first.",e:"XL",g:"marketplace + governance"}
+);
+</script>
+
+<script>
+IDEAS.push(
+{d:"ai",hz:"long",nw:1,t:"AI patient role-play for students",x:"The Copilot plays the patient: a difficult counselling scenario (the sceptic, the forgetful elderly gentleman, the anxious parent) while the student counsels — then grades the session against a counselling checklist (dose, duration, red flags, empathy) and replays the missed points.",w:"Turns the platform's deepest asset (grounded clinical knowledge) into the training simulator Algerian pharmacy faculties have no budget to build; the eval harness writes half the grading rubric. Feeds the Academy moonshot (M8).",e:"L",g:"P0-08 eval discipline"},
+{d:"clinical",hz:"next",nw:1,t:"Spaced-repetition flashcards + « spot the interaction » quiz",x:"Student mode: flashcards auto-generated from the monographs (drug → class, key AE, contraindication) on a spaced-repetition schedule, plus a fast game mode — two drugs on screen, three seconds, dangerous pair or not?",w:"The 9,555-record dataset becomes the largest pharmacy question bank in the Maghreb for free; daily-return habit loop for the student audience the launch campaign recruits. Scores stay private (no leaderboard shaming).",e:"M",g:"P0-02 for per-student progress"},
+{d:"clinical",hz:"fill",nw:1,t:"Drug pronunciation audio",x:"A speaker icon on every DCI and brand name: correct French and Arabic pronunciation (TTS-generated, curated for the hard ones — « clopidogrel », « atorvastatine », Arabic DCIs).",w:"Students mispronounce, delegates correct, counters hesitate — a two-second audio clip removes a daily micro-embarrassment and makes Darija/Arabic DCI names approachable. Trivial with the TTS stack P1-07 builds.",e:"S"},
+{d:"clinical",hz:"long",nw:1,t:"Cross-border medication mapper",x:"An Algerian record ↔ its French/EU/US equivalents (same DCI, closest form & dose): for travellers continuity-of-care letters, diaspora families sending advice home, importers and the Hajj wizard's « bring enough, but know the local name » moment.",w:"Nobody maps the Algerian formulary outward; the equivalence engine already does the hard part within borders — extending the graph across them is a data project with a travel-health payoff.",e:"L"},
+{d:"clinical",hz:"next",nw:1,t:"Pharmacopée evidence grades",x:"Every Botanique-mode entry gets an evidence & safety grade (traditional use / some clinical data / established efficacy / safety warnings — e.g. hepatotoxicity, pregnancy) with citations, curated like any clinical content.",w:"Respect for traditional knowledge AND rigor about it: the Pharmacopée Royale stops being folklore-adjacent and becomes the first referenced evidence database of Algerian herbal medicine — the mode no report ever audited (P2-41) finally gets its spine. Prerequisite trust layer for the herb–drug bridge.",e:"L · curation-heavy"},
+{d:"community",hz:"long",nw:1,t:"Drug-desert advocacy map",x:"Coverage-gap visualisation: wilayas/communes without a nearby pharmacy or with thin garde coverage, assembled from the platform's own garde + search data — published as responsible public-health reporting, shared with authorities and press.",w:"The platform's data doing civic work: « these 40 communes have no night pharmacy » is a headline that changes policy, and it positions DzPharm as the country's pharmaceutical observatory (the M12 ministry dashboard's grassroots proof-of-value).",e:"M",g:"P2-17 coverage + governance"}
+);
+</script>
+
+<script>
+(function(){
+  const HZ = {now:["NOW","now"],next:["NEXT","next"],long:["LONG BET","long"],fill:["FILL-IN","fill"]};
+  const DOMS = {uiux:"cat-uiux",brand:"cat-brand",clinical:"cat-clinical",ai:"cat-ai",search:"cat-search",perf:"cat-perf",system:"cat-system",a11y:"cat-a11y",community:"cat-community",business:"cat-business",reach:"cat-reach",moon:"cat-moon"};
+  let hzF = "all", q = "";
+  function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function render(){
+    Object.keys(DOMS).forEach(function(k){ const el=document.getElementById(DOMS[k]); if(el) el.innerHTML=""; });
+    let shown=0, news=0;
+    IDEAS.forEach(function(it){
+      if (it.nw) news++;
+      let pass=true;
+      if (hzF==="new") pass=!!it.nw; else if (hzF!=="all") pass=it.hz===hzF;
+      if (pass && q){
+        const hay=(it.t+" "+it.x+" "+(it.w||"")+" "+(it.g||"")+" "+it.d).toLowerCase();
+        pass=hay.indexOf(q)>=0;
+      }
+      if(!pass) return;
+      shown++;
+      const el=document.getElementById(DOMS[it.d]); if(!el) return;
+      const hz=HZ[it.hz]||["?","fill"];
+      el.insertAdjacentHTML("beforeend",
+        '<details class="idea">'
+        +'<summary>'
+        +'<span class="hz '+hz[1]+'">'+hz[0]+'</span>'
+        +(it.nw?'<span class="nz">★ NEW</span>':'')
+        +'<span class="iname">'+esc(it.t)+'</span>'
+        +'<span class="chip dim">'+esc(it.e||"—")+'</span>'
+        +'</summary>'
+        +'<div class="idesc">'+esc(it.x)+'</div>'
+        +'<div class="iwhy"><b>Why it matters:</b> '+esc(it.w)+(it.g?' · <b>Gate:</b> '+esc(it.g):'')+'</div>'
+        +'</details>');
+    });
+    const st=document.getElementById("ideaStat");
+    if(st) st.textContent = shown+" of "+IDEAS.length+" ideas shown · "+news+" new in v2";
+    Object.keys(DOMS).forEach(function(k){
+      const el=document.getElementById(DOMS[k]);
+      if(el && !el.children.length) el.innerHTML='<p style="color:var(--ink3);font-size:13.5px">No ideas match this filter in this domain.</p>';
+    });
+  }
+  window.hfil=function(btn){ document.querySelectorAll("#ideaFilter .fbtn[data-h]").forEach(function(b){b.classList.remove("on")}); btn.classList.add("on"); hzF=btn.getAttribute("data-h"); render(); };
+  window.isearch=function(v){ q=v.trim().toLowerCase(); render(); };
+  window.iexpand=function(o){ document.querySelectorAll("details.idea").forEach(function(d){d.open=o}); };
+  window.tog=function(){
+    document.body.classList.toggle("light");
+    const l=document.body.classList.contains("light");
+    document.getElementById("themeBtn").textContent=l?"☀ Theme":"☾ Theme";
+    try{localStorage.setItem("dzpharm-innov-v2-theme",l?"light":"dark")}catch(e){}
+  };
+  try{ if(localStorage.getItem("dzpharm-innov-v2-theme")==="light"){document.body.classList.add("light");document.getElementById("themeBtn").textContent="☀ Theme";} }catch(e){}
+  render();
+})();
+</script>
+
+<footer>
+  <div class="wrap">
+    <p><b>DzPharm — Innovation &amp; Vision Brainstorm · v2.0 (No Ceiling Edition)</b> · 22 September 2026 · consolidates every idea from all ten source documents — the UX Review's 24, the Ultimate Blueprint's 30 + 8 moonshots, the Design Universe's palettes/symbols/boxes/motion, the prior brainstorm's ~70, the design exploration's laws, the Name &amp; Homepage Vision — deduplicated, sequenced and tagged, plus a 93-idea layer new to this edition (★).</p>
+    <p>Six big swings · sixteen domains · 50+ palette directions · 25+ custom symbols · fifteen moonshots · four refusals · seven sequencing laws. Companion document: <b>DzPharm_Master_Audit_Plan_v2.html</b> — the 124-item foundation this catalogue builds on. Ideas are cheap; sequence is the innovation.</p>
+    <p style="color:var(--ink3)">Print-friendly. Every idea names its gate; every gate names an audit item. بالتوفيق — see you at 58/58 wilayas.</p>
+  </div>
+</footer>
+</div>
+</body>
+</html>

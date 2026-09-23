@@ -1,0 +1,374 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DzPharm — Master Audit &amp; Fix Plan v2.0 (The Definitive Edition)</title>
+<meta name="description" content="The definitive consolidated audit of the DzPharm platform: 122-item issue register with fix instructions, 24 feature verdicts, verification protocol, and an 8-phase execution plan. Synthesised from all 10 source documents.">
+<style>
+:root{
+  --bg:#070B14; --bg2:#0B1220; --surface:#0E1626; --surface2:#121C30; --raised:#182438;
+  --ink:#F1F5F9; --ink2:#B8C4D4; --ink3:#8494A8;
+  --border:rgba(148,163,184,.16); --border2:rgba(148,163,184,.30);
+  --accent:#38BDF8; --accent2:#7DD3FC; --accentSoft:rgba(56,189,248,.12);
+  --danger:#F87171; --dangerBg:rgba(248,113,113,.10);
+  --warn:#FBBF24; --warnBg:rgba(251,191,36,.10);
+  --ok:#34D399; --okBg:rgba(52,211,153,.10);
+  --info:#A78BFA; --infoBg:rgba(167,139,250,.10);
+  --p0:#F87171; --p1:#FB923C; --p2:#FBBF24; --p3:#38BDF8;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
+  --r:14px; --rs:9px; --rx:6px;
+}
+body.light{
+  --bg:#F4F6FA; --bg2:#EDF1F7; --surface:#FFFFFF; --surface2:#F8FAFD; --raised:#EEF2F8;
+  --ink:#0F172A; --ink2:#3E4C60; --ink3:#64748B;
+  --border:rgba(15,23,42,.12); --border2:rgba(15,23,42,.25);
+  --accent:#0284C7; --accent2:#0369A1; --accentSoft:rgba(2,132,199,.08);
+  --dangerBg:rgba(220,38,38,.07); --warnBg:rgba(180,120,0,.08); --okBg:rgba(5,150,105,.07); --infoBg:rgba(124,58,237,.07);
+  --p0:#DC2626; --p1:#EA580C; --p2:#B45309; --p3:#0284C7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#04121E;padding:10px 18px;border-radius:0 0 10px 0;z-index:999;font-weight:700}
+.skip:focus{left:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.topbar .in{max-width:1180px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:16px;white-space:nowrap}
+.logo .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#0EA5E9);display:grid;place-items:center;color:#04121E;font-size:15px;box-shadow:0 0 18px rgba(56,189,248,.35)}
+.topnav{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+.topnav a{color:var(--ink3);font-size:12.5px;font-weight:600;padding:6px 9px;border-radius:8px;white-space:nowrap}
+.topnav a:hover{color:var(--ink);background:var(--accentSoft);text-decoration:none}
+.tbtn{background:var(--surface);border:1px solid var(--border2);color:var(--ink2);font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
+.tbtn:hover{color:var(--ink);border-color:var(--accent)}
+/* ---------- hero ---------- */
+.hero{padding:76px 0 46px;background:
+ radial-gradient(700px 340px at 18% -10%,rgba(56,189,248,.13),transparent 60%),
+ radial-gradient(600px 320px at 88% 8%,rgba(52,211,153,.07),transparent 60%);
+ border-bottom:1px solid var(--border)}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);border:1px solid var(--border2);padding:6px 14px;border-radius:999px;background:var(--accentSoft)}
+.hero h1{font-size:clamp(30px,5vw,52px);line-height:1.08;letter-spacing:-.03em;font-weight:800;margin:22px 0 14px;max-width:900px}
+.hero h1 em{font-style:normal;color:var(--accent2)}
+.hero .sub{color:var(--ink2);font-size:17px;max-width:860px}
+.herostats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:34px}
+.hstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.hstat b{display:block;font-size:26px;letter-spacing:-.02em;line-height:1.1}
+.hstat span{font-size:11.5px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.metabar{margin-top:26px;color:var(--ink3);font-size:13px;display:flex;gap:18px;flex-wrap:wrap}
+/* ---------- sections ---------- */
+section{padding:56px 0 12px}
+.secnum{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.18em;font-weight:700}
+h2.sec{font-size:clamp(24px,3.4vw,34px);letter-spacing:-.02em;line-height:1.15;margin:8px 0 8px;font-weight:800}
+.lede{color:var(--ink2);max-width:900px;margin-bottom:26px;font-size:16px}
+h3{font-size:20px;letter-spacing:-.01em;margin:34px 0 12px;font-weight:750}
+h4{font-size:16px;margin:22px 0 8px;font-weight:700}
+p{margin:10px 0;color:var(--ink2)}
+strong{color:var(--ink)}
+ul.plain,ol.plain{margin:10px 0 10px 22px;color:var(--ink2)}
+ul.plain li,ol.plain li{margin:6px 0}
+code{font-family:var(--mono);font-size:.86em;background:var(--raised);border:1px solid var(--border);padding:1.5px 6px;border-radius:6px;color:var(--accent2)}
+kbd{font-family:var(--mono);font-size:.8em;background:var(--surface2);border:1px solid var(--border2);border-bottom-width:2px;padding:2px 7px;border-radius:6px;color:var(--ink)}
+/* ---------- cards & tables ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;margin:14px 0}
+.card.glow{box-shadow:0 0 34px -8px rgba(56,189,248,.18)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13.8px;min-width:640px}
+th{background:var(--surface2);color:var(--ink3);text-transform:uppercase;font-size:11px;letter-spacing:.08em;text-align:left;padding:11px 14px;border-bottom:1px solid var(--border2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--accentSoft)}
+td b,td strong{color:var(--ink)}
+/* ---------- chips ---------- */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 10px;border-radius:999px;border:1px solid var(--border2);color:var(--ink2);background:var(--surface2);white-space:nowrap}
+.chip.p0{color:var(--p0);border-color:color-mix(in srgb,var(--p0) 45%,transparent);background:var(--dangerBg)}
+.chip.p1{color:var(--p1);border-color:color-mix(in srgb,var(--p1) 45%,transparent);background:var(--warnBg)}
+.chip.p2{color:var(--p2);border-color:color-mix(in srgb,var(--p2) 40%,transparent);background:var(--warnBg)}
+.chip.p3{color:var(--p3);border-color:color-mix(in srgb,var(--p3) 40%,transparent);background:var(--accentSoft)}
+.chip.safety{color:var(--danger);border-color:var(--danger);background:var(--dangerBg)}
+.chip.newv2{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 50%,transparent);background:var(--okBg)}
+.chip.verify{color:var(--info);border-color:color-mix(in srgb,var(--info) 50%,transparent);background:var(--infoBg)}
+.chip.dim{opacity:.75}
+/* ---------- callouts ---------- */
+.callout{border-left:3px solid var(--accent);background:var(--accentSoft);border-radius:0 var(--rs) var(--rs) 0;padding:14px 18px;margin:16px 0;color:var(--ink2);font-size:14.5px}
+.callout.red{border-color:var(--danger);background:var(--dangerBg)}
+.callout.gold{border-color:var(--warn);background:var(--warnBg)}
+.callout.green{border-color:var(--ok);background:var(--okBg)}
+.callout b{color:var(--ink)}
+/* ---------- register ---------- */
+.filterbar{position:sticky;top:57px;z-index:60;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:18px}
+.filterbar .in{max-width:1180px;margin:0 auto;padding:0 22px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fbtn{font:inherit;font-size:12.5px;font-weight:700;padding:6px 13px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);color:var(--ink2);cursor:pointer}
+.fbtn:hover{border-color:var(--accent);color:var(--ink)}
+.fbtn.on{background:var(--accent);border-color:var(--accent);color:#04121E}
+#regSearch{flex:1;min-width:180px;font:inherit;font-size:13.5px;padding:8px 14px;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:var(--surface);color:var(--ink);outline:none}
+#regSearch:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft)}
+.regstat{font-size:12.5px;color:var(--ink3);font-weight:600;margin-left:auto;white-space:nowrap}
+.issue{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:10px 0;overflow:hidden}
+.issue>summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.issue>summary::-webkit-details-marker{display:none}
+.issue>summary:hover{background:var(--accentSoft)}
+.issue .iid{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink3);padding-top:3px;min-width:52px}
+.issue .ititle{font-weight:700;font-size:15px;color:var(--ink);flex:1;min-width:220px}
+.issue .ibody{padding:2px 20px 18px;border-top:1px solid var(--border)}
+.issue .ibody h5{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin:16px 0 6px;font-weight:700}
+.issue .ibody p,.issue .ibody li{font-size:14px;color:var(--ink2)}
+.issue ol.fix{margin-left:20px}
+.issue ol.fix li{margin:5px 0}
+.issue .test{background:var(--okBg);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent);border-radius:var(--rx);padding:9px 13px;font-size:13.5px;color:var(--ink2)}
+.issue .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.issue .src{font-size:12px;color:var(--ink3);margin-top:10px;font-family:var(--mono)}
+.tickbox{appearance:none;-webkit-appearance:none;width:19px;height:19px;border:2px solid var(--border2);border-radius:6px;cursor:pointer;flex-shrink:0;margin-top:2px;background:var(--surface2);position:relative}
+.tickbox:checked{background:var(--ok);border-color:var(--ok)}
+.tickbox:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#04121E;font-size:13px;font-weight:900}
+.issue.done{opacity:.55}
+.issue.done .ititle{text-decoration:line-through}
+/* ---------- phase timeline ---------- */
+.phase{border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--rs);background:var(--surface);padding:20px 24px;margin:14px 0}
+.phase h4{margin:0 0 2px;font-size:17.5px}
+.phase .when{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.06em}
+.phase ul{margin:10px 0 4px 20px;color:var(--ink2);font-size:14px}
+.phase li{margin:5px 0}
+.phase .goal{font-size:14px;color:var(--ink2);font-style:italic;margin-top:4px}
+/* ---------- dependency graph ---------- */
+pre.ascii{font-family:var(--mono);font-size:12px;line-height:1.5;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:18px;overflow-x:auto;color:var(--ink2);white-space:pre}
+/* ---------- verdict pills ---------- */
+.v{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;padding:3px 10px;border-radius:999px}
+.v.now{background:var(--okBg);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 45%,transparent)}
+.v.next{background:var(--accentSoft);color:var(--accent2);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.v.plan{background:var(--warnBg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 45%,transparent)}
+.v.defer{background:var(--dangerBg);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent)}
+.v.modify{background:var(--infoBg);color:var(--info);border:1px solid color-mix(in srgb,var(--info) 45%,transparent)}
+/* ---------- footer ---------- */
+footer{margin-top:70px;border-top:1px solid var(--border);padding:34px 0 46px;color:var(--ink3);font-size:13px}
+.hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+@media (max-width:720px){ .topnav{display:none} .hero{padding:52px 0 34px} .filterbar{top:52px} }
+@media print{
+  .topbar,.filterbar,.tbtn,.skip{display:none!important}
+  body{background:#fff;color:#111}
+  .hero{background:none}
+  details.issue{page-break-inside:avoid}
+  section{padding:18px 0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="topbar"><div class="in">
+  <div class="logo"><span class="mark">✚</span> DzPharm <span style="color:var(--ink3);font-weight:600">· Master Audit Plan v2.0</span></div>
+  <nav class="topnav" aria-label="Document sections">
+    <a href="#s0">Sources</a><a href="#s1">Summary</a><a href="#s2">Inventory</a><a href="#s3">Verify&nbsp;First</a><a href="#s4">Register&nbsp;·&nbsp;122</a><a href="#s5">24&nbsp;Verdicts</a><a href="#s6">Roadmap</a><a href="#s7">Quality&nbsp;&amp;&nbsp;Risk</a><a href="#s8">KPIs</a>
+  </nav>
+  <button class="tbtn" id="themeBtn" onclick="tog()" aria-label="Toggle light or dark theme">☾ Theme</button>
+  <button class="tbtn" onclick="window.print()" aria-label="Print this document">⎙ Print</button>
+</div></div>
+
+<header class="hero" id="main">
+  <div class="wrap">
+    <span class="kicker">● The Definitive Edition · supersedes all prior audit documents</span>
+    <h1>Every issue ever recorded against DzPharm — <em>reconciled, re-triaged, and turned into instructions.</em></h1>
+    <p class="sub">Ten source documents, roughly 230 pages of primary audit material (referencing ~800 more), read line by line and merged into one register of <strong>122 numbered items</strong> — each with a root cause, a step-by-step fix, an acceptance test, an effort estimate and its dependencies — plus verdicts on all 24 proposed features and an 8-phase execution plan. Nothing from any report is dropped; where reports contradict each other, the contradiction is flagged and a verification step settles it before a single sprint is planned.</p>
+    <div class="herostats">
+      <div class="hstat"><b>10</b><span>documents analysed</span></div>
+      <div class="hstat"><b>122</b><span>register items</span></div>
+      <div class="hstat"><b>8</b><span>P0 critical</span></div>
+      <div class="hstat"><b>28</b><span>P1 high</span></div>
+      <div class="hstat"><b>42</b><span>P2 medium</span></div>
+      <div class="hstat"><b>44</b><span>P3 minor</span></div>
+      <div class="hstat"><b>14</b><span>verify-first checks</span></div>
+      <div class="hstat"><b>24</b><span>feature verdicts</span></div>
+    </div>
+    <div class="metabar">
+      <span>Version 2.0 · 22 September 2026</span><span>Platform: dz-pharm.vercel.app</span><span>Companion document: <b>DzPharm Innovation &amp; Vision Brainstorm v2</b></span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+
+<!-- ================= SECTION 00 ================= -->
+<section id="s0">
+  <div class="secnum">SECTION 00</div>
+  <h2 class="sec">What was analysed, and how to read this document</h2>
+  <p class="lede">This plan is a synthesis of the complete DzPharm audit corpus — every PDF report and every prior working document in the project folder. It is written to be <em>executed</em>, not admired: Section 03 tells you what to verify before planning, Section 04 is the full register of everything that is wrong or missing, Section 05 delivers a verdict on each of the 24 proposed features, and Section 06 sequences all of it.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>#</th><th>Source document</th><th>What it contains</th><th>How it is used here</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>DzPharm_UX_Review_Report.pdf</b> (46p, 19 Sep 2026)</td><td>The original 17-chapter audit: 14 screens tested on desktop + mobile, performance profile, WCAG 2.2 audit, competitive benchmark, <b>38 issues</b> (4×P0, 8×P1, 8×P2, 6×P3) and <b>24 new feature ideas</b>, annotated mockups, 3 palette proposals, type pairing, risk register.</td><td>Baseline for the register (all 38 items carried) and the subject of Section 05's verdicts (all 24 ideas assessed).</td></tr>
+      <tr><td>2</td><td><b>DzPharm_Ultimate_Audit_Innovation_Blueprint.pdf</b> (32p, 20 Sep 2026)</td><td>Synthesis of the UX review + 59 feature deep-dives + 6 technical designs: <b>68 issues</b> (adds 42 found in deep-dives) and <b>54 feature ideas</b> (24 expanded + 30 new + 8 moonshots), priority matrix.</td><td>Supplies the 42 deep-dive issues and the fix-instruction detail for P0-01/P0-02; its 54 ideas are consolidated in the companion brainstorm document.</td></tr>
+      <tr><td>3</td><td><b>DzPharm_Platform_Transformation_Blueprint.pdf</b> (21p)</td><td>The 6-pillar transformation (Routing, Auth, State, Copilot, Color, Typography), 13-week timeline, dependency graph, ROI model (380× SEO, ~190K monthly organic visits projected), 8 risks, team plan, grade trajectory B− → A+.</td><td>Structural skeleton of the roadmap in Section 06; its risk register is merged into Section 07.</td></tr>
+      <tr><td>4</td><td><b>DzPharm_Sprint_Planning_Document.pdf</b> (19p)</td><td>77 Jira-ready tickets across 13 one-week sprints (R-, A-, S-, C-, T-, P-, D-, PM-, X- prefixes), each with assignee, effort, dependencies, definition-of-done; platform-level DoD; 8 risks.</td><td>Ticket-level fix instructions and DoD text are folded into the register's fix/test fields; the sprint cadence informs Section 06.</td></tr>
+      <tr><td>5</td><td><b>DzPharm_The_Design_Universe.pdf</b> (22p)</td><td>Design philosophy (clinical trust, Algerian identity, modern restraint, accessibility, performance-as-design), 30+ new palette concepts in 6 collections, 15 custom symbols, 12 box variants, whitespace/density system, border tokens, overlay system, motion language, micro-interaction catalogue.</td><td>Feeds the design items in the register (P2-18, P3-07…) and the whole design chapter of the companion brainstorm.</td></tr>
+      <tr><td>6</td><td><b>DzPharm_Name_and_Homepage_Vision.pdf</b> (23p)</td><td>25+ name candidates (top 5: Afiya, Mizan, Shifa, Dawa, keep-DzPharm), 10 homepage hero concepts, the recommended combined homepage, 7 wow-factors, 10 taglines (recommended: « Le médicament, expliqué. »), brand pyramid.</td><td>Referenced in Section 05 verdicts where features touch brand/homepage; fully consolidated in the companion document.</td></tr>
+      <tr><td>7</td><td><b>dzpharm-audit-plan.html</b> (prior working doc)</td><td>Master remediation plan from 62 reports: 106 items, the <b>13-contradiction verification protocol (V1–V13)</b>, the safety re-triage (dictation &amp; palette-desync promoted to P0), the complete platform inventory incl. 3 bonus tools + 1 unaudited tool, 7-phase plan, 12 risks, KPI table.</td><td>Its verification protocol, re-triage logic, inventory and repair list are carried forward and extended (V14 added; register grown to 122 items).</td></tr>
+      <tr><td>8</td><td><b>dzpharm-innovation-brainstorm.html</b> (prior working doc)</td><td>~70 ideas: 3 big swings (compatibility layer, proactive Copilot, «the counter, not the tab»), 4+5 new palettes, 9 icons, sound/print design, trust features (citations, uncertainty), search ideas, community/supply, inclusion (Tamazight, low-literacy), distribution.</td><td>Consolidated idea-by-idea into the companion brainstorm document; its dependency warnings shape Section 06 waves.</td></tr>
+      <tr><td>9</td><td><b>dzpharm-design-exploration.html</b> (prior working doc)</td><td>Live design-system exploration: 9 palette roles, lightness-step method, locked severity tokens rule, 70/25/5 accent rationing, icon style axes, box anatomy/elevation/species, whitespace scale 4–96, density multipliers, border weights, 4 overlay weights, motion curves, skeleton-vs-spinner split, 2 ship-next palettes (Corniche, Nuit Saharienne).</td><td>Its rules are treated as the design constitution; the register enforces them (P0-07 severity lock, P2-18 palette verification, P2-39 density switch).</td></tr>
+      <tr><td>10</td><td><b>name_homepage.html</b> (prior working doc)</td><td>HTML edition of document 6.</td><td>Duplicate of #6; no unique findings.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>Referenced but not present in this folder:</b> the 59 per-feature deep-dive PDFs (~600p), the 6 technical design documents (#1 Routing 26p, #2 State 27p, #8 Auth 28p, #36 Copilot 27p, #53 Color 32p, #54 Typography 29p), the executive presentation (15 slides) and the interactive 68-feature dashboard. Their findings reach this plan through documents 2–4, which quote them extensively; every register item names its provenance so you can trace it back.</div>
+</section>
+
+<!-- ================= SECTION 01 ================= -->
+<section id="s1">
+  <div class="secnum">SECTION 01</div>
+  <h2 class="sec">Executive summary — the whole picture on one screen</h2>
+  <p class="lede">DzPharm is a technically excellent, clinically ambitious platform — 9,555 medication records, a trilingual Darija-capable AI Copilot, 17 tools, a ~400-token design system, and top-decile performance — wearing a prototype's skeleton. The defects are debts of speed, not of skill, and every one of them has a scoped fix.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--ok)">✓ What is genuinely strong (protect at all costs)</h4>
+      <ul class="plain">
+        <li><b>Performance crown jewels</b> — TTFB 80 ms, FCP 204 ms, 88.8 KB HTML transfer, 17 resources, zero console errors across 14 screens (but see V9: re-measure on throttled mobile before believing "top decile").</li>
+        <li><b>The dataset is the moat</b> — 9,555 AMM records, 911 ANSM-format RCPs, 932 DCI monographs across 30 domains, 1,791 parapharmacy products with PPA pricing, 24 source books, 60 same-DCI equivalents on DOLIPRANE alone. No competitor in the Maghreb has this.</li>
+        <li><b>Trilingual AI Copilot</b> — Gemini Flash grounded in Algerian data (answers Liste I vs II questions a generic LLM cannot), FR/AR/Darija with « دوا تاع السكر؟ » genuinely understood, three audience modes, 4-section structured clinical output.</li>
+        <li><b>Culturally unique tools</b> — Ramadan chronopharmacology adapter (nobody on Earth offers this), Chifa/CNAS reimbursement simulator, family cabinet (خزانة الأدوية العائلية, the only bilingual UI), Pharmacopée Royale botanical mode.</li>
+        <li><b>Power-user layer</b> — Cmd-K palette with 23 commands, single-key hotkeys, emergency numbers ordered first; skip-link, ARIA combobox/tablist patterns better than 90% of healthcare sites.</li>
+        <li><b>The design system is the second moat</b> — ~400 CSS tokens, 7-level clinical state system, 20-palette Nuancier with cultural names, 8-step type scale with calc() line-heights, 118 Lucide icons, zero raster images, 11/12 contrast pairs AAA.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--danger)">✗ What blocks professional deployment (the eight P0s)</h4>
+      <ul class="plain">
+        <li><b>P0-01 No real routing</b> — every non-home view 404s on direct URL. Kills deep-linking, sharing, SEO (9,555 pages invisible), back button, refresh.</li>
+        <li><b>P0-02 Single-factor shared-code auth</b> — one code for everyone (and it is the LOST sequence 4-8-15-16-23-42, i.e. effectively public), sessionStorage-based session, no accounts, no MFA, no audit trail → non-compliant with Law 85-05 traceability and indefensible if a clinical incident occurs.</li>
+        <li><b>P0-03 Medication detail is a URL-less modal</b> — a pharmacist cannot send a colleague the drug they are worried about.</li>
+        <li><b>P0-04/05/06/07 Clinical-safety cluster</b> — dictation hard-wired to fr-FR with no review step (Arabic doses become confident nonsense); Cmd-K selection desync can dial the <em>wrong emergency service</em>; Nuancier palettes may repaint clinical severity colours; login error announcement needs verification.</li>
+        <li><b>P0-08 The Copilot does arithmetic</b> — an LLM computing doses with no deterministic cross-check is the single largest harm vector on the platform.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>The five findings this edition adds that no prior document caught</h3>
+  <ol class="plain">
+    <li><b>V14 — a fourteenth contradiction:</b> the UX Review documents a 5-scope search filter (Tous / DCI / Marque / Laboratoire / N° AMM), yet the Ultimate Blueprint's P3-15 states search "matches brand name only". Both cannot be true. One is a stale finding; settle it in Phase 0 before building the synonym layer on the wrong assumption.</li>
+    <li><b>Stat drift is now a registered defect (P2-28):</b> the corpus quotes 911 DCI monographs in one document and 932 in another (the dataset grew mid-audit); homepage and metadata numbers are hard-coded and will keep lying by degrees. They must be generated from the dataset.</li>
+    <li><b>The shared access code must be treated as compromised (folded into P0-02):</b> it appears verbatim in a distributed PDF report, and it is a famous pop-culture number — the two worst properties a secret can have.</li>
+    <li><b>There is no measurement stack (P2-25/26):</b> every plan document ends with a KPI table, yet no analytics, error-tracking, uptime monitoring or status page exists anywhere in the corpus. You cannot manage the 380× SEO claim or the &lt;0.05% error gate with manual curl checks.</li>
+    <li><b>Domain-before-SEO sequencing (P1-26):</b> the sprint plan submits the sitemap from "dzpharm.dz <em>or the vercel URL for now</em>". Submitting 9,570 URLs on a <code>*.vercel.app</code> host and re-submitting after the domain move wastes the entire indexing runway. Buy the domain in Week 1, or delay submission — but never do it twice.</li>
+  </ol>
+  <div class="callout gold"><b>The verdict in one sentence (carried from the original audit, still true):</b> roughly 6–8 weeks of focused work on routing, authentication, typography and accessibility moves DzPharm from "impressive demo" to "trustworthy clinical infrastructure" — and none of it requires a rewrite; every fix is additive on the existing Next.js + Tailwind + Zustand foundation. This v2 plan says it is <b>13 weeks to A+ with two engineers</b> (or the same sequence stretched, never reordered, for a solo builder), because the deep-dives doubled the issue count since that sentence was written.</div>
+  <h3>How severity is defined in this register</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Tier</th><th>Meaning</th><th>Response</th><th>Count</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip p0">P0</span></td><td>Blocks production/clinical use, or can contribute to patient harm, or is a regulatory non-compliance.</td><td>This fortnight. No feature work starts ahead of the safety cluster.</td><td><b>8</b></td></tr>
+      <tr><td><span class="chip p1">P1</span></td><td>Materially harms UX, trust, revenue paths or brand; or a broken core action of a shipped tool.</td><td>Next sprint cycle (weeks 1–6 of the plan).</td><td><b>28</b></td></tr>
+      <tr><td><span class="chip p2">P2</span></td><td>Degrades polish, reliability or governance; contradicted findings awaiting verification land here.</td><td>This quarter, in parallel tracks.</td><td><b>42</b></td></tr>
+      <tr><td><span class="chip p3">P3</span></td><td>Enhancement-grade; the platform is fine without it, better with it.</td><td>Backlog — sprint fillers, each under ~4h.</td><td><b>44</b></td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:13.5px;color:var(--ink3)">Tags used throughout: <span class="chip safety">CLINICAL SAFETY</span> = can touch patient harm; <span class="chip verify">VERIFY</span> = source reports contradict, settle in Phase 0; <span class="chip newv2">NEW IN V2</span> = surfaced by this edition's cross-analysis, absent from all ten sources.</p>
+</section>
+
+<!-- ================= SECTION 02 ================= -->
+<section id="s2">
+  <div class="secnum">SECTION 02</div>
+  <h2 class="sec">The complete platform inventory — everything the website offers</h2>
+  <p class="lede">Assembled from every report, including three tools discovered mid-audit that the review menu itself did not list, and one genuinely novel tool that no report ever audited. This is the baseline of record: anything not on this list is either unbuilt or undiscovered.</p>
+
+  <h3>2.1 Data assets — the moat</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Asset</th><th>Scale</th><th>Notes from the audits</th></tr></thead>
+    <tbody>
+      <tr><td><b>Medication registry (AMM)</b></td><td>9,555 records</td><td>Each with Autorisation de Mise sur le Marché number; 5-scope search (see V14); 7-column sortable table; CSV export with UTF-8 BOM + French semicolons; table/card views.</td></tr>
+      <tr><td><b>DCI monographs</b></td><td>911 → 932 (grew mid-audit)</td><td>Across 30 therapeutic domains; sourced from 24 pharmacology reference books. Count drift is now item P2-28.</td></tr>
+      <tr><td><b>ANSM-format RCPs</b></td><td>911 full summaries</td><td>Surfaced per medication in the detail modal's second tab (« RCP &amp; Monographie Livre »).</td></tr>
+      <tr><td><b>Parapharmacy catalogue</b></td><td>1,791 products with PPA pricing</td><td>675 currently unreachable through the broken category filter (P1-17).</td></tr>
+      <tr><td><b>Pharmaceutical glossary</b></td><td>92 terms</td><td>Part of the clinical library.</td></tr>
+      <tr><td><b>Patient education guides</b></td><td>10 guides</td><td>Family-mode content.</td></tr>
+      <tr><td><b>On-call pharmacies (garde)</b></td><td>52 pharmacies · 17 of 58 wilayas</td><td>tel: links, SAMU banner, verify-by-phone disclaimer; the only public-facing tool; coverage gap is P2-17.</td></tr>
+      <tr><td><b>Community shortage reports</b></td><td>9 live reports · 58-wilaya selector</td><td>Crowdsourced pénurie pipeline; <b>submit currently returns HTTP 500</b> (P1-24) — the platform's only two-way public-health channel is closed.</td></tr>
+      <tr><td><b>Pricing &amp; reimbursement model</b></td><td>PPA in DA (verified Aug 2026)</td><td>CNAS 80% général / ALD-chronique 100% / CASNOS 80% / non-remboursé 0%. Staleness risk is P2-27.</td></tr>
+      <tr><td><b>Equivalence graph</b></td><td>60 same-DCI equivalents on DOLIPRANE</td><td>Unique depth in the market; the seed of the visual equivalence-graph idea in the companion doc.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>2.2 The tool suite — 17 surfaces</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Tool</th><th>What it does</th><th>State per audits</th><th>Register links</th></tr></thead>
+    <tbody>
+      <tr><td><b>Pediatric posology calculator</b></td><td>15 molecules × 11 classes, mg/kg → mL, local Algerian brands per form, molecule-specific vigilance, hard guardrail &lt; 3 kg. Maths verified 7/7 on spot-checks.</td><td><b>A−</b></td><td>—</td></tr>
+      <tr><td><b>Chifa simulator</b></td><td>Four card types modelling CNAS/CASNOS with ticket modérateur. Regulatorily accurate.</td><td><b>Core action broken</b> — adding a drug routes to the Comparator (shared-component handler bug)</td><td>P1-16</td></tr>
+      <tr><td><b>Ramadan chronopharmacology adapter</b></td><td>Iftar/Suhoor-aligned dosing, 12 wilayas prayer times, 4 rhythm patterns, 9 drug-class guidance sections. No competitor anywhere offers this.</td><td><b>A</b> — but « Copier le plan » fails</td><td>P1-19</td></tr>
+      <tr><td><b>Medication comparator</b></td><td>2–3 drugs side-by-side across 15 regulatory characteristics, generic suggestions, withdrawn-product warning, substitution advisory.</td><td><b>A−</b></td><td>P3-04 (expand to 4+)</td></tr>
+      <tr><td><b>Renal function calculator</b></td><td>Cockcroft-Gault + MDRD simultaneously, CKD staging, 10 drug classes with dose guidance, triple-whammy warning (NSAID + IEC + diuretic).</td><td><b>Working</b></td><td>—</td></tr>
+      <tr><td><b>Pregnancy &amp; lactation checker</b></td><td>CRAT/ANSM classification, trimester breakdowns, milk/plasma ratios, infant dose %, literature citations, explicit alternatives.</td><td><b>A−</b></td><td>Feature verdict #10 extends it</td></tr>
+      <tr><td><b>Family cabinet (خزانة الأدوية العائلية)</b></td><td>Per-member profiles, PIN lock, PDF export, expiry + duplicate-DCI conformity checks, seasonal heat advice, 100% local data with consent gate. The only bilingual UI on the platform.</td><td><b>Untested with real data</b></td><td>P2-41 (audit gap), P1-28 (before any server sync)</td></tr>
+      <tr><td><b>Barcode scanner</b></td><td>Camera + USB scanner + counter keypad; EAN-13, CIP, DataMatrix.</td><td><b>Working</b></td><td>—</td></tr>
+      <tr><td><b>Interactions checker</b></td><td>Sequential Vérificateur + N×N Matrice; official ANSM/MIPH 4-level classification; patient-context input; 5 pre-set killer pairs (AINS+AVK, Méthotrexate+AINS, paracetamol doubling, statine+macrolide, IEC+spironolactone).</td><td><b>C+ → A− path</b>: list lost on refresh; Matrice empty below 2-drug threshold without an empty-state message</td><td>P1-12, P2-11</td></tr>
+      <tr><td><b>AI Copilot</b></td><td>Gemini Flash grounded in the DzPharm dataset; FR/AR/Darija; 3 modes (pro/patient/enfant); voice dictation; 4 suggested prompts; feedback buttons; TTS; 4-section structured output with LaTeX dose maths and Algerian brand names.</td><td><b>B</b>: no streaming (3–11 s frozen), history lost, mode patient = mode pro, prompts dead-click, version label inconsistent, fr-FR dictation</td><td>P0-05, P0-08, P1-06…P1-15</td></tr>
+      <tr><td><b>Command palette (Cmd-K)</b></td><td>23 commands, 8 single-key hotkeys (H R P I C S B T), dual-source search (drugs + commands), emergency numbers first.</td><td><b>Hotkeys decorative; selection desync dials wrong target on Enter</b></td><td>P0-06</td></tr>
+      <tr><td><b>RCP library</b></td><td>911 ANSM-format monographs surfaced per medication.</td><td><b>Working</b></td><td>P3-06 (serif reading face)</td></tr>
+      <tr><td><b>Clinical library</b></td><td>932 monographs, 92-term glossary, 10 patient guides, 30 domains.</td><td><b>Working</b> — grew by 21 entries mid-audit</td><td>P2-28</td></tr>
+      <tr><td><b>Generics savings simulator</b> <span class="chip newv2">NOT ON MENU</span></td><td>Takes 1–4 branded drugs, finds cheapest same-DCI equivalent at matching dosage, totals the PPA saving.</td><td><b>Undocumented</b> — discovered mid-audit</td><td>P2-41</td></tr>
+      <tr><td><b>Shortage reporting centre</b> <span class="chip newv2">NOT ON MENU</span></td><td>Crowdsourced pénurie reports with clinical notes, 58-wilaya selector, watch subscriptions, top-5 ranking.</td><td><b>Submit returns 500</b></td><td>P1-24</td></tr>
+      <tr><td><b>Pharmacies de garde</b> <span class="chip newv2">NOT ON MENU</span></td><td>52 pharmacies, tel: links, SAMU banner, verify-by-phone disclaimer.</td><td><b>Sparse data</b> (17/58 wilayas)</td><td>P2-17, P3-05</td></tr>
+      <tr><td><b>Prescription verification (paste)</b> <span class="chip verify">NEVER AUDITED</span></td><td>Paste a whole prescription, one drug per line — it identifies and cross-checks every drug in one pass. Genuinely novel; no competitor has it; it is the natural stepping stone to Prescription OCR (verdict #2).</td><td><b>Unaudited</b> — in no report</td><td>P2-41</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>2.3 Navigation, audience modes &amp; platform chrome</h3>
+  <ul class="plain">
+    <li><b>Répertoire</b> — 7-column sortable table over 9,555 records, five faceted filters with reference counts, table/card toggle, CSV export. <b>Prix &amp; Chifa</b> — unified medication + parapharmacy catalogue with PPA, class, registry status, CSV export.</li>
+    <li><b>Emergency banner</b> — SAMU <b>14</b>, Protection Civile <b>102</b>, Police <b>17</b>, Centre Anti-Poison d'Alger <b>021 71 30 42</b> as real <code>tel:</code> links; collapsible (« Réduire le bandeau »); persistent across pages. Model design; extend per-wilaya (P3-01).</li>
+    <li><b>Audience modes</b> — Pro / Famille / Botanique header toggle; Botanique is tied to the « Pharmacopée Royale » traditional-herbal knowledge mode. <span class="chip verify">No report ever examined Botanique mode</span> — audit gap P2-41.</li>
+    <li><b>Session chrome</b> — « Verrouiller la session » lock button (works from dashboard; clicks eaten inside modals → P1-22; lock currently behaves as logout → P2-32), notifications region labelled F8 (binding unverified → P2-02), Plus dropdown (focus-return bug → P2-15; Paramètres placeholder → P2-16), theme toggle (no tooltip → P2-07; binary, no system tri-state → P2-30).</li>
+    <li><b>Nuancier</b> — 20 named palettes (Craie &amp; Cobalt, Dune &amp; Cèdre de l'Atlas, Perle &amp; Azur d'Alger, Menthe, Ivoire Impérial, Gris Minéral…) switching the whole ~400-token architecture. Two known problems: Menthe fails contrast 2.1:1 in light theme (P2-18), and palettes may repaint clinical severity colours (P0-07).</li>
+  </ul>
+
+  <h3>2.4 Infrastructure &amp; tech stack (detected)</h3>
+  <div class="grid g2">
+    <div class="card" style="margin:6px 0">
+      <ul class="plain" style="margin-top:0">
+        <li><b>Framework:</b> Next.js App Router on Turbopack, hosted on Vercel Edge (warm TTFB 80 ms).</li>
+        <li><b>Styling:</b> Tailwind CSS v4+ (<code>color-mix()</code> gradients), next-themes (class strategy, FOUC-free inline script, <code>prefers-color-scheme</code> respected).</li>
+        <li><b>State:</b> React state + partial URL query (<code>?q=</code> only) + Zustand with schema-versioned persistence.</li>
+        <li><b>UI kit:</b> Lucide (118 instances / 52 names), Sonner toaster (exists — see V4), Radix-pattern focus ring.</li>
+      </ul>
+    </div>
+    <div class="card" style="margin:6px 0">
+      <ul class="plain" style="margin-top:0">
+        <li><b>AI:</b> Google Gemini Flash — labelled 3.8 in Cmd-K, 3.6 in the Copilot header (V11); ~$0.0008/query, optimisable to ~$0.0004.</li>
+        <li><b>PWA:</b> v8 service worker with tested offline mode; manifest served at <code>/manifest.webmanifest</code> but the <code>&lt;link rel="manifest"&gt;</code> tag is missing from <code>&lt;head&gt;</code> (V1 → P2-20); apple-mobile-web-app-capable + black-translucent status bar.</li>
+        <li><b>Fonts:</b> <code>document.fonts.size === 0</code> — system stack only (P1-01).</li>
+        <li><b>Locale/metadata:</b> <code>og:locale fr_DZ</code>, lang <code>fr</code>, app-name « DzPharm »; Arabic content renders without <code>dir="rtl"</code> (P1-14).</li>
+        <li><b>Compliance context:</b> Law 85-05 (pharmacy practice, Art. 52 traceability), Law 18-07 (data protection). Currently non-compliant on traceability; partial on 18-07 (P0-02, P1-27, P1-28).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout green"><b>Say it plainly, because it matters for morale:</b> a team that ships schema-versioned Zustand persistence, calc()-derived line-heights, a correct ARIA combobox and a tested offline service worker did not build this platform carelessly. The register below is long because the product is ambitious and moved fast — not because the foundations are weak. Almost everything here is additive.</div>
+</section>
+<!-- ================= SECTION 03 ================= -->
+<section id="s3">
+  <div class="secnum">SECTION 03</div>
+  <h2 class="sec">Verify first — fourteen contradictions to settle before you plan a single sprint</h2>
+  <p class="lede">The reports were written over several days and the later ones corrected the earlier ones <em>without the earlier ones being withdrawn</em>. Fourteen findings now contradict each other or were never verified. Planning on contradictory evidence burns engineering time on bugs that are already fixed and leaves real ones untouched. This is half a day of work and it is the highest-value half day in the entire plan. Run each check against the live build, record the answer <b>and the commit SHA</b>, and only then open the register.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th style="min-width:44px">#</th><th style="min-width:230px">The contradiction</th><th>How to settle it in under 5 minutes</th><th style="min-width:220px">The prior this plan bets on (bet with a browser, not with me)</th></tr></thead>
+    <tbody>
+      <tr><td><b>V1</b></td><td><b>PWA manifest.</b> Reports #1/#8: <code>/manifest.json</code> 404s, PWA broken. Report #5: v8 service worker live, offline tested, manifest at <code>/manifest.webmanifest</code> — grade A.</td><td>Fetch both paths. DevTools → Application → Manifest. Check whether <code>&lt;link rel="manifest"&gt;</code> is actually in <code>&lt;head&gt;</code>.</td><td>#5 is right about the file; the missing <code>&lt;link&gt;</code> tag is the real gap. → <b>P2-20</b>.</td></tr>
+      <tr><td><b>V2</b></td><td><b>Interactions Matrice.</b> Report #22: tab renders empty (render bug). Report #23: tested 3×3 matrix, five severity levels, zero bugs, grade A.</td><td>Add DOLIPRANE + BRUFEN + LOPRIL → click Matrice. Then click Matrice with fewer than two drugs in the basket.</td><td>Both are right: below the two-drug threshold the tab is empty with no explanation. That is an empty-state bug, not a render bug — a much cheaper fix. → <b>P2-11</b>.</td></tr>
+      <tr><td><b>V3</b></td><td><b>Sharing.</b> Report #49: no copyable URL, no dialog, <code>navigator.share</code> undefined. Report #18: full share dialog, 7/7 completeness. Master index claims WhatsApp/Telegram/email/copy buttons.</td><td>Open a medication → click Partager → screenshot. On mobile run <code>typeof navigator.share</code>.</td><td>The dialog exists; what is missing is a <em>link inside it</em> — because no link exists until routing lands. Reframe as a routing dependency. → <b>P2-21</b>.</td></tr>
+      <tr><td><b>V4</b></td><td><b>Toasts.</b> Main report + #11/#22/#36: no toast system. UX Feedback report: working Sonner toaster, three types verified live.</td><td>Favourite a medication. If a toast appears, the toaster exists.</td><td>Sonner is there. Delete "build a toast system" from the backlog — what remains is wiring it to every mutating action + ARIA + undo. → <b>P1-05</b>.</td></tr>
+      <tr><td><b>V5</b></td><td><b>Icon labels.</b> Report #62: 4 of 6 icon-only buttons missing/generic <code>aria-label</code>. Report #56: all six are labelled.</td><td>Run axe DevTools on the dashboard, or inspect the four buttons (theme, Botanique, Nuancier, Copilot) directly.</td><td>#62 is more specific and names the four. Trust it. 25 minutes either way. → <b>P1-02</b>.</td></tr>
+      <tr><td><b>V6</b></td><td><b>Recently-viewed cap.</b> Report #2: array capped at 1 entry. Report #44: 10-item cap, correct dedup.</td><td>View five different medications, then read <code>localStorage["dzpharm-store"]</code>.</td><td>#2 probably hit a dedup-order bug (cap applied before dedup). A 1-item "recently viewed" is worse than none. → <b>P2-09</b>.</td></tr>
+      <tr><td><b>V7</b></td><td><b>Auth security model.</b> Report #8: client-side-only validation, 3-second devtools bypass. Report #7: <code>POST /api/auth</code> is server-side, returns 401/200 correctly.</td><td>In a fresh tab set <code>sessionStorage.dzpharm_session = "active"</code> by hand and reload. If the dashboard opens, the bypass is real.</td><td>#7 is right on validation — but sessionStorage-as-session still means the <em>client decides</em>. The bypass shapes P0-02's sizing. → <b>P0-02</b>.</td></tr>
+      <tr><td><b>V8</b></td><td><b>Lock button.</b> #8: does not work. #9: it does — the earlier test ran inside a modal whose overlay ate the click.</td><td>Click it from the dashboard, then from inside the Copilot modal.</td><td>#9 is right — but "modal overlays eat header clicks" is itself a real bug. → <b>P1-22</b>.</td></tr>
+      <tr><td><b>V9</b></td><td><b>Performance numbers.</b> Main report: TTFB 80 ms, FCP 204 ms, 88.8 KB, 15.6 MB heap. Report #3: TTFB 6 ms, FCP 836 ms cold / 248 ms warm, 695 KB, 10 MB heap.</td><td>Lighthouse in real Chrome, mobile preset, 4G throttling, cold cache — the only numbers that describe an Algerian user on a phone.</td><td>Both are edge-warm European measurements; neither describes your actual users. Re-measure before repeating "top decile" anywhere. → Section 08 baselines.</td></tr>
+      <tr><td><b>V10</b></td><td><b>Copilot latency.</b> Quoted as 4–6 s, 3–8 s and 11 s in three reports.</td><td>Time ten queries of varying length in each of the three modes; record p50 and p95.</td><td>All three are probably true at different times. You need the distribution, not an anecdote. → P1-06 baseline.</td></tr>
+      <tr><td><b>V11</b></td><td><b>Model version.</b> Cmd-K palette says Gemini 3.8 Flash; Copilot header says 3.6.</td><td>Read the model string in the API route.</td><td>Five-minute fix, but on a clinical tool a pharmacist is entitled to know which model answered. → <b>P1-15</b>.</td></tr>
+      <tr><td><b>V12</b></td><td><b>Features #20 and #21 have no report.</b> The review menu has 68 items; standalone reports cover most, group reports the rest — nothing covers #20/#21. Three bonus tools + one paste-prescription tool exist outside the menu entirely.</td><td>Open the review menu, read what #20/#21 are, and reconcile the menu against the shipped product.</td><td>The menu is behind the product. Unbuilt or shipped-and-unaudited — either way it is governance debt. → <b>P2-41</b>.</td></tr>
+      <tr><td><b>V13</b></td><td><b>Do the 20 Nuancier palettes repaint clinical state colours?</b> No report asks this. Report #53 places the 7-level clinical state system inside the same ~400-token architecture the Nuancier switches.</td><td>Switch to the Menthe palette → open an interaction result containing a contre-indication. Is the danger indicator still unmistakably red?</td><td>If a palette can recolour « contre-indication absolue », that is a dispensing hazard and an instant P0. <b>Answer this one first — everything else waits an hour for it.</b> → <b>P0-07</b>.</td></tr>
+      <tr><td><b>V14</b> <span class="chip newv2">NEW IN V2</span></td><td><b>Search scope.</b> The UX Review documents five filter scopes (Tous / DCI·Molécule / Marque / Laboratoire / N° AMM) and tested them. Ultimate Blueprint P3-15 states search "currently matches brand name only" and that searching <code>paracetamol</code> should find DOLIPRANE.</td><td>In the Répertoire search, leave scope on « Tous » and type <code>paracetamol</code>. Then type an AMM fragment. Note exactly which fields the default scope matches.</td><td>Likely both half-right: the scoped filter works, but the <em>default</em> « Tous » scope under-matches DCI/Arabic/typo variants. The synonym + fuzzy layer (P1-23) must be built on the measured behaviour, not on either report's claim. → <b>P1-23</b>.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>The habit to build (carried forward, because it is the root cause of all fourteen):</b> a finding without a date, a build SHA and a reproduction path decays into folklore within a week. Half the contradictions above exist only because the platform shipped faster than the audit could write. From Phase 0 onward, every bug gets logged against the commit it was observed on, and every fix ships with the acceptance test written in this register.</div>
+</section>

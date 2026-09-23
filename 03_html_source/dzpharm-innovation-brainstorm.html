@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DzPharm — Innovation &amp; Feature Brainstorm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Literata:wght@400;500;600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBF6EC; --paper-2:#F3EAD6; --paper-3:#EADFC4;
+  --ink:#241C15; --ink-2:#5B4F3E; --ink-3:#8C8066;
+  --rule:#E1D3B4; --rule-2:#CBB98F;
+  --teal:#0F6B5F; --teal-soft:#DEEEE9; --on-teal:#FBF6EC;
+  --clay:#BD5E2A; --clay-soft:#F5E3D4;
+  --now:#0F6B5F; --now-soft:#DEEEE9;
+  --next:#9A6B14; --next-soft:#F4E9CE;
+  --bet:#7A4A8C; --bet-soft:#EFE3F3;
+  --serif:'Literata',Georgia,serif; --display:'Fraunces','Literata',Georgia,serif;
+  --sans:'Instrument Sans','Helvetica Neue',Arial,sans-serif;
+  --arab:'Noto Sans Arabic','Segoe UI',sans-serif;
+  --rail:268px;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#181310; --paper-2:#1F1913; --paper-3:#292018;
+    --ink:#F1E7D6; --ink-2:#BDAE94; --ink-3:#8A7C64;
+    --rule:#332A20; --rule-2:#493C2A;
+    --teal:#48C7B4; --teal-soft:#12312C; --on-teal:#0B211D;
+    --clay:#E28A50; --clay-soft:#2E2013;
+    --now:#48C7B4; --now-soft:#12312C;
+    --next:#E0B84E; --next-soft:#2E2612;
+    --bet:#C79AE0; --bet-soft:#271C2E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#181310; --paper-2:#1F1913; --paper-3:#292018;
+  --ink:#F1E7D6; --ink-2:#BDAE94; --ink-3:#8A7C64;
+  --rule:#332A20; --rule-2:#493C2A;
+  --teal:#48C7B4; --teal-soft:#12312C; --on-teal:#0B211D;
+  --clay:#E28A50; --clay-soft:#2E2013;
+  --now:#48C7B4; --now-soft:#12312C;
+  --next:#E0B84E; --next-soft:#2E2612;
+  --bet:#C79AE0; --bet-soft:#271C2E;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62}
+h1,h2,h3,h4{font-family:var(--display);font-weight:600;line-height:1.15;margin:0}
+.ui{font-family:var(--sans)}
+a{color:var(--teal);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:2px}
+::selection{background:var(--teal);color:var(--on-teal)}
+
+.wrap{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);max-width:1440px;margin:0 auto}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;border-right:1px solid var(--rule);padding:26px 20px 40px;font-family:var(--sans);font-size:13.5px;line-height:1.45}
+.rail .mark{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 2px}
+.rail .sub{color:var(--ink-3);font-size:11.5px;margin:0 0 22px}
+.rail nav a{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:baseline;padding:6px 8px;margin:0 -8px;border-radius:4px;color:var(--ink-2);text-decoration:none}
+.rail nav a:hover{background:var(--paper-2);color:var(--ink)}
+.rail nav a .n{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:11.5px}
+.rail hr{border:0;border-top:1px solid var(--rule);margin:18px 0}
+main{padding:0 clamp(18px,4vw,64px) 120px;min-width:0}
+section{padding-top:64px;scroll-margin-top:24px}
+
+.hero{padding:54px 0 30px;border-bottom:1px solid var(--rule)}
+.hero .kicker{font-family:var(--sans);font-size:12.5px;color:var(--ink-3);margin:0 0 14px}
+.hero h1{font-size:clamp(32px,5.2vw,54px);letter-spacing:-.02em;max-width:19ch}
+.hero h1 em{font-style:italic;color:var(--teal)}
+.hero .lede{font-size:clamp(17px,2vw,19px);color:var(--ink-2);max-width:66ch;margin:20px 0 0}
+.hero .caveat{margin-top:22px;font-family:var(--sans);font-size:13px;color:var(--ink-3);max-width:66ch;border-left:2px solid var(--rule-2);padding-left:12px}
+
+.swing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:36px 0 4px}
+.swing{background:var(--paper-2);border:1px solid var(--rule);border-radius:8px;padding:20px 20px 22px;position:relative;overflow:hidden}
+.swing .num{font-family:var(--sans);font-size:11px;color:var(--teal);font-weight:700;letter-spacing:.04em}
+.swing h3{font-size:22px;margin:8px 0 9px;letter-spacing:-.01em}
+.swing p{margin:0;color:var(--ink-2);font-size:15px}
+
+.sec-head{border-top:2px solid var(--ink);padding-top:16px;margin-bottom:24px}
+.sec-head .idx{font-family:var(--sans);font-size:12px;color:var(--teal);display:block;margin-bottom:8px;font-weight:600}
+.sec-head h2{font-size:clamp(24px,3.2vw,34px);letter-spacing:-.015em}
+.sec-head p{color:var(--ink-2);max-width:68ch;margin:12px 0 0;font-size:16.5px}
+h3{font-size:20px;margin:34px 0 6px;letter-spacing:-.005em}
+h4{font-size:16.5px;margin:22px 0 4px}
+p{max-width:70ch;margin:0 0 15px}
+
+.toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);padding:11px 0;margin:8px 0 22px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--sans)}
+.fbtn{font:inherit;font-size:13px;font-weight:500;cursor:pointer;padding:7px 12px;border:1px solid var(--rule-2);border-radius:20px;background:var(--paper-2);color:var(--ink-2)}
+.fbtn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#count{font-size:12.5px;color:var(--ink-3);margin-left:auto}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin:0 0 8px}
+.card{background:var(--paper-2);border:1px solid var(--rule);border-radius:7px;padding:16px 17px 17px;display:flex;flex-direction:column}
+.card .tag{align-self:flex-start;font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:2px 8px;border-radius:20px;margin-bottom:9px}
+.tag-now{background:var(--now-soft);color:var(--now)}
+.tag-next{background:var(--next-soft);color:var(--next)}
+.tag-bet{background:var(--bet-soft);color:var(--bet)}
+.card h4{margin:0 0 6px;font-size:16px}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2);max-width:none}
+
+.bigidea{background:linear-gradient(155deg,var(--teal-soft),var(--paper-2) 60%);border:1px solid var(--rule);border-radius:9px;padding:24px 26px;margin:24px 0}
+.bigidea .lbl{font-family:var(--sans);font-size:11.5px;font-weight:700;color:var(--teal);letter-spacing:.03em;display:block;margin-bottom:8px}
+.bigidea h3{margin:0 0 10px;font-size:23px}
+.bigidea p{max-width:76ch;color:var(--ink-2)}
+.bigidea p:last-child{margin-bottom:0}
+
+.swatchrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:22px 0 30px}
+.palette{border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--paper-2)}
+.palette .chips{display:flex;height:56px}
+.palette .chips i{flex:1}
+.palette .info{padding:11px 13px}
+.palette .info b{font-family:var(--sans);font-size:14px;display:block;margin-bottom:3px}
+.palette .info span{font-family:var(--sans);font-size:12px;color:var(--ink-3);line-height:1.4;display:block}
+
+.icongrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin:22px 0 8px}
+.iconcard{border:1px solid var(--rule);border-radius:7px;background:var(--paper-2);padding:16px 10px;text-align:center}
+.iconcard svg{width:38px;height:38px;color:var(--teal);stroke-width:1.6}
+.iconcard .lbl{font-family:var(--sans);font-size:12px;color:var(--ink-2);margin-top:8px;line-height:1.3}
+
+.matrix{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden;margin:24px 0}
+.mcell{background:var(--paper-2);padding:16px 18px;min-height:118px}
+.mcell h5{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--ink-3);letter-spacing:.03em;margin:0 0 8px;text-transform:none}
+.mcell ul{margin:0;padding-left:1.1em;font-size:14.5px}
+.mcell li{margin-bottom:5px;color:var(--ink-2)}
+.mcell.q1{background:var(--now-soft)}
+.mcell.q1 h5{color:var(--now)}
+.mcell.q2{background:var(--next-soft)}
+.mcell.q2 h5{color:var(--next)}
+.mcell.q3{background:var(--paper-2)}
+.mcell.q4{background:var(--bet-soft)}
+.mcell.q4 h5{color:var(--bet)}
+.mlabels{font-family:var(--sans);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;margin:6px 2px 0}
+
+.note{border-left:3px solid var(--clay);background:var(--clay-soft);padding:15px 18px;border-radius:0 6px 6px 0;margin:22px 0;max-width:74ch}
+.note .lbl{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--clay);display:block;margin-bottom:5px}
+.note p:last-child{margin-bottom:0}
+
+ul,ol{max-width:70ch;padding-left:1.15em}
+li{margin-bottom:7px}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86em;background:var(--paper-3);padding:1px 5px;border-radius:3px}
+.themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:40;font-family:var(--sans);font-size:12px;padding:8px 11px;border:1px solid var(--rule-2);background:var(--paper-2);color:var(--ink-2);border-radius:20px;cursor:pointer}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:8px;top:8px;z-index:60;background:var(--teal);color:var(--on-teal);padding:9px 13px;border-radius:4px;font-family:var(--sans)}
+footer{border-top:2px solid var(--ink);margin-top:80px;padding:26px 0 0;font-family:var(--sans);font-size:13px;color:var(--ink-3)}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:20px clamp(18px,4vw,64px)}
+  .rail nav{columns:2;column-gap:26px}
+  html{scroll-padding-top:16px}
+  .matrix{grid-template-columns:1fr}
+}
+@media (max-width:620px){body{font-size:16px}.rail nav{columns:1}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media print{.rail,.toolbar,.themebtn{display:none}.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<button class="themebtn ui" id="themebtn" aria-label="Switch colour theme">Theme</button>
+
+<div class="wrap">
+<aside class="rail">
+  <p class="mark">DzPharm — Part II</p>
+  <p class="sub">Innovation &amp; feature brainstorm · no ceiling</p>
+  <nav aria-label="Document sections">
+    <a href="#swings"><span class="n">00</span><span>Three big swings</span></a>
+    <a href="#visual"><span class="n">01</span><span>Visual identity, further</span></a>
+    <a href="#ai"><span class="n">02</span><span>The intelligence layer</span></a>
+    <a href="#clinical"><span class="n">03</span><span>New clinical tools</span></a>
+    <a href="#search"><span class="n">04</span><span>Search, reimagined</span></a>
+    <a href="#community"><span class="n">05</span><span>Community &amp; supply</span></a>
+    <a href="#data"><span class="n">06</span><span>Data &amp; business models</span></a>
+    <a href="#inclusive"><span class="n">07</span><span>Inclusive by design</span></a>
+    <a href="#distribution"><span class="n">08</span><span>Beyond the browser tab</span></a>
+    <a href="#delight"><span class="n">09</span><span>The small moments</span></a>
+    <a href="#sequence"><span class="n">10</span><span>Where this fits the plan</span></a>
+  </nav>
+  <hr>
+  <p class="sub" style="margin:0">Part one — the audit and 106-item remediation register — is a separate document.</p>
+</aside>
+
+<main id="main">
+
+<header class="hero">
+  <p class="kicker ui">Speculative · unconstrained · sequenced at the end</p>
+  <h1>If the audit fixed what DzPharm <em>is</em>, this is what it could <em>become</em>.</h1>
+  <p class="lede">Roughly seventy ideas across design, intelligence, clinical depth, community and distribution — grounded in what the platform already does well, and in what nobody else building for the Algerian market has tried. Every idea is tagged Now, Next or Long bet so nothing here is a mystery about when to act on it.</p>
+  <p class="caveat ui">A caveat worth stating plainly: not everything below should be built, and several ideas below actively compete with each other for the same slice of a pharmacist's attention. Treat this as a menu assembled by someone who knows the kitchen, not a mandate. Part I still tells you what to do this month.</p>
+
+  <div class="swing-grid">
+    <div class="swing"><span class="num ui">BIG SWING 01</span><h3>The compatibility layer</h3><p>A halal/haram, alcohol-content and Ramadan-fasting compatibility flag on every one of the 9,555 records — the one clinical dimension no European, American or Gulf platform will ever build correctly for this market, because it is not a translation problem, it is a jurisprudence problem.</p></div>
+    <div class="swing"><span class="num ui">BIG SWING 02</span><h3>A Copilot that speaks first</h3><p>Today the AI only answers. It could notice — an expiring EpiPen in a Family Cabinet, a watched shortage coming back into stock, a Ramadan schedule that needs re-timing next week — and say so before it is asked.</p></div>
+    <div class="swing"><span class="num ui">BIG SWING 03</span><h3>The counter, not the tab</h3><p>Barcode scan → Chifa card read → interaction check → printed handout, as one motion at the point of dispensing. DzPharm stops being the reference a pharmacist checks and becomes the software the counter runs on.</p></div>
+  </div>
+</header>
+
+<!-- ══ 01 VISUAL ══════════════════════════════════════ -->
+<section id="visual">
+  <div class="sec-head">
+    <span class="idx ui">Section 01</span>
+    <h2>Visual identity, taken further</h2>
+    <p>The existing system — 400 tokens, 20 palettes, 118 icons, AAA contrast — is already the platform's second moat. These ideas extend it rather than replace it: new palette directions grounded in specific places and materials rather than generic hues, a first pass at the pharmacy-specific icons Lucide simply does not have, and the case for sound and print as design surfaces nobody has touched yet.</p>
+  </div>
+
+  <h3>Four new Nuancier directions</h3>
+  <p>The current twenty palettes already carry named cultural identities. These four extend the idea toward specific materials and places rather than moods — each is one degree more literal than "Sky Blue" or "Sahara Warm," which makes them easier to explain to a pharmacist choosing between them.</p>
+  <div class="swatchrow">
+    <div class="palette">
+      <div class="chips"><i style="background:#0B2A3D"></i><i style="background:#1D6F8C"></i><i style="background:#C97A3D"></i><i style="background:#EFE4D3"></i></div>
+      <div class="info"><b class="ui">Zellige Nuit</b><span>Cobalt tilework against ochre grout, the way Algiers courtyards read after dark. A cooler, more architectural alternative to the default Sky palette for users who find blue too soft for a clinical tool.</span></div>
+    </div>
+    <div class="palette">
+      <div class="chips"><i style="background:#EFE2D0"></i><i style="background:#C2876A"></i><i style="background:#7A8C6E"></i><i style="background:#3D3128"></i></div>
+      <div class="info"><b class="ui">Hammam</b><span>Warm plaster, terracotta, sage soap. Deliberately softer and less clinical than every other palette — proposed as the default for Mode famille, where a patient should feel spoken to, not diagnosed.</span></div>
+    </div>
+    <div class="palette">
+      <div class="chips"><i style="background:#1A2E22"></i><i style="background:#3D6B4A"></i><i style="background:#9AB98A"></i><i style="background:#E8EDDF"></i></div>
+      <div class="info"><b class="ui">Tell Vert</b><span>The Kabyle highlands rather than the Sahara — every existing palette leans desert or coastal-blue. A forest green gives the botanical mode a home that is not borrowed from the clinical palette next door.</span></div>
+    </div>
+    <div class="palette">
+      <div class="chips"><i style="background:#241A14"></i><i style="background:#8C5A2E"></i><i style="background:#D9A441"></i><i style="background:#F5EBD8"></i></div>
+      <div class="info"><b class="ui">Souk Cuivre</b><span>Hammered copper and brass against dark leather. A high-warmth option for the professional mode that reads as premium rather than sterile — copper is the Maghreb's own metal in a way that gold or silver are not.</span></div>
+    </div>
+  </div>
+  <div class="note">
+    <span class="lbl ui">One rule that must survive every future palette</span>
+    <p>Whatever gets added, the seven clinical severity colours stay locked outside the Nuancier's reach — that is <span class="ui">P0-12</span> in the audit, and it applies retroactively to anything proposed here.</p>
+  </div>
+
+  <h3>The icons Lucide doesn't have</h3>
+  <p>General-purpose icon sets have no symbol for a Chifa card, an AMM seal, a suppository or a wilaya. These nine are direction sketches only — a designer should redraw them properly — but they show the grid, stroke weight and level of abstraction the existing 118 icons already establish, so anything added feels native rather than bolted on.</p>
+  <div class="icongrid">
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><rect x="4.5" y="8" width="4" height="3" rx="0.6"/><path d="M2 14h20"/></svg><div class="lbl ui">Chifa card</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="7"/><path d="M9 10l2 2 4-4"/><path d="M8.5 16.5L7 22l5-2 5 2-1.5-5.5"/></svg><div class="lbl ui">AMM seal</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v9.5c0 4.4-3 8.5-3 8.5s-3-4.1-3-8.5V3z"/></svg><div class="lbl ui">Suppository</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.15"/><circle cx="12" cy="9" r="1.15"/><circle cx="16" cy="9" r="1.15"/><circle cx="8" cy="14.5" r="1.15"/><circle cx="12" cy="14.5" r="1.15"/><circle cx="16" cy="14.5" r="1.15"/></svg><div class="lbl ui">Blister pack</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a7 5 0 0 0 14 0"/><path d="M4.2 13h15.6"/><path d="M15.2 3.8l3.3 9"/><circle cx="15.2" cy="3.8" r="1.15"/></svg><div class="lbl ui">Mortar &amp; pestle</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-7.8 7-13.2A7 7 0 0 0 5 8.8C5 14.2 12 22 12 22z"/><path d="M13.4 5.9a3.1 3.1 0 1 0 2.8 5 3.7 3.7 0 1 1-2.8-5z"/></svg><div class="lbl ui">Wilaya · garde</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M12 3v18"/><circle cx="9.3" cy="12" r="0.9" fill="currentColor" stroke="none"/><circle cx="14.7" cy="12" r="0.9" fill="currentColor" stroke="none"/></svg><div class="lbl ui">Family cabinet</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7.6 4.4v8.7L12 19.6l-7.6-4.5V6.4L12 2z"/><path d="M8.3 12l2.6 2.6 4.6-5.1"/></svg><div class="lbl ui">Compatibility badge</div></div>
+    <div class="iconcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 8L7.6 4h8.8L17.8 8"/><path d="M6.2 8h11.6l-1.1 11.2a2 2 0 0 1-2 1.8H9.3a2 2 0 0 1-2-1.8L6.2 8z"/></svg><div class="lbl ui">Sachet</div></div>
+  </div>
+
+  <h3>Motion as a safety channel, not decoration</h3>
+  <ul>
+    <li><b>One signature loader, everywhere.</b> Replace every generic spinner with a single two-tone capsule motif that splits and rejoins — one motion, recognisable at a glance, used consistently instead of invented per screen.</li>
+    <li><b>Protect the beacon-ping.</b> The pulsing emergency-banner dot already exists and works. The rule going forward: that pulse is reserved for genuine urgency and is never reused for a promotional badge or a notification dot — the moment it means two things, it stops meaning either.</li>
+    <li><b>One orchestrated moment, not scattered ones.</b> A single well-built animation when a shortage a user is watching comes back into stock — a quiet checkmark resolve, nothing more — does more than ten small hover flourishes across the interface, and respects <span class="ui">P1-14</span>'s reduced-motion rule by design.</li>
+  </ul>
+
+  <h3>Sound, used once, deliberately</h3>
+  <p>A pharmacy counter is visually busy — a screen half-glanced-at while hands are elsewhere. This is one of the few clinical contexts where a sound cue genuinely earns its place, provided it stays optional and rare.</p>
+  <ul>
+    <li>A soft two-tone chime on a successful barcode scan, distinct from any error tone.</li>
+    <li>A single low, unmistakable tone — the only sound the platform makes without being asked — reserved solely for a contre-indication absolue result in the interaction checker. Off by default, one toggle, and never used for anything else.</li>
+  </ul>
+
+  <h3>Print as its own designed surface</h3>
+  <ul>
+    <li>A patient handout re-cut to the width of a folded pharmacy bag receipt, not a shrunk A4 page — this is genuinely how it will be carried home.</li>
+    <li>A pictogram-only variant — sun and moon for morning and evening, a plate for with food, a crossed plate for without — for the significant share of patients for whom French or Arabic text is not the fastest read.</li>
+  </ul>
+</section>
+
+<!-- ══ 02 AI ══════════════════════════════════════════ -->
+<section id="ai">
+  <div class="sec-head">
+    <span class="idx ui">Section 02</span>
+    <h2>The intelligence layer, extended</h2>
+    <p>The Copilot is already the platform's most differentiated feature — trilingual, Algeria-grounded, structured. These ideas move it from answering questions to anticipating them, and from asserting answers to showing its work.</p>
+  </div>
+
+  <div class="bigidea">
+    <span class="lbl ui">Big swing 02, in full</span>
+    <h3>A Copilot that notices before it is asked</h3>
+    <p>Every one of the platform's data sources already knows things worth surfacing: the Family Cabinet knows an EpiPen expires in nine days, the shortage centre knows a watched drug just came back into stock, the Ramadan adapter knows a patient's schedule needs re-timing before next Friday, the interaction checker knows a saved list contains a drug that was just placed on a national recall. None of this reaches the user unless they go looking. A proactive layer — a quiet "Pour vous" panel on the dashboard, populated from existing data with no new clinical judgement required — turns four already-built features into one continuously useful assistant instead of four tools a pharmacist has to remember to check.</p>
+  </div>
+
+  <div class="toolbar ui" role="group" aria-label="Filter ideas by horizon">
+    <button class="fbtn" data-f="all" aria-pressed="true">All</button>
+    <button class="fbtn" data-f="now" aria-pressed="false">Now</button>
+    <button class="fbtn" data-f="next" aria-pressed="false">Next</button>
+    <button class="fbtn" data-f="bet" aria-pressed="false">Long bet</button>
+    <span id="count"></span>
+  </div>
+
+  <div class="grid" data-group="ai">
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Show its work</h4><p>Every Copilot answer carries a citation chip back to the specific RCP or monograph passage it drew from. Turns "trust me" into "verify me" — the single highest-leverage trust feature available, because the underlying content already exists.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Say when it isn't sure</h4><p>Out-of-dataset or genuinely ambiguous dosing questions get an explicit "hors du référentiel — vérifiez auprès d'un spécialiste" rather than a confidently formatted wrong answer. Confidence should be a signal the model gives, not a tone it defaults to.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Deuxième avis</h4><p>A button beside any answer that reruns the query with a different framing and flags disagreement between the two runs. Cheap to build once streaming exists, and valuable exactly on the highest-stakes questions.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Multi-turn case solver</h4><p>A persistent patient-case object — age, comorbidities, current regimen — that the Copilot reasons against across an entire shift, not just one exchange. "Now add clarithromycin" should not require restating the rest of the case.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Prescription OCR</h4><p>Photograph a paper prescription; extract drug names, doses and frequencies; cross-check automatically against interactions and the posology database. The paste-a-prescription tool already discovered mid-audit is the natural stepping stone — ship that properly first.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Pill and packaging recognition</h4><p>Photograph an unidentified tablet or box; match colour, shape, imprint and packaging against the 9,555-record image set. The single most valuable feature for a poison-centre call about an unlabelled medication.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Formulary-aware substitution</h4><p>A pharmacy uploads its stock list; when the interaction checker or the generics simulator suggests an alternative, it is silently ranked by what that specific pharmacy already has on the shelf.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Instant-answer cache</h4><p>Pre-compute and edge-cache the top few hundred recurring questions — common paediatric doses, Liste I vs Liste II, standard interaction pairs — so the most-asked questions return in under 200ms with no model call at all, and keep answering during a Gemini outage.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Register-matching, fully</h4><p>A Darija question gets a Darija answer, not Modern Standard Arabic — the one-line system-prompt fix from the audit, extended: French formal vs familiar, and patient-mode simplicity, should all mirror how the question was actually asked.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>WhatsApp Copilot</h4><p>The same grounded assistant, reachable where Algerian pharmacists already live professionally. A quick "posologie amoxicilline enfant 16kg" answered inside a chat they never leave.</p></div>
+  </div>
+</section>
+
+<!-- ══ 03 CLINICAL ════════════════════════════════════ -->
+<section id="clinical">
+  <div class="sec-head">
+    <span class="idx ui">Section 03</span>
+    <h2>New clinical &amp; professional tools</h2>
+    <p>The existing thirteen-tool suite is unusually deep for a market of this size. These extend the same rigour into gaps the current menu leaves open — including one idea, the compatibility layer, that no competitor anywhere can replicate without genuine local expertise.</p>
+  </div>
+
+  <div class="bigidea">
+    <span class="lbl ui">Big swing 01, in full</span>
+    <h3>The compatibility layer</h3>
+    <p>Add three quiet fields to every one of the 9,555 records: whether the capsule shell is gelatin-based and of what origin, whether the formulation contains alcohol, and whether the dosing regimen can be adapted to fast safely during Ramadan. Surface all three as a single badge on the medication card, reviewed by a qualified religious-affairs advisor working alongside the clinical team — this is a jurisprudence question as much as a pharmacology one, and it deserves the same rigour as a dosing calculation. Every existing Ramadan chronopharmacology feature already proves the team understands this territory; this generalises it from one tool into a property of the entire dataset. No European, American or Gulf platform will build this correctly for the Algerian market, because it is not a translation exercise — it requires exactly the local expertise this team already has.</p>
+  </div>
+
+  <div class="grid" data-group="clinical">
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Hepatic dose adjustment</h4><p>Child-Pugh score in, dose adjustment out — for hepatotoxic drugs, the mirror image of the existing renal calculator and built on the same pattern.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Anticoagulation dosing helper</h4><p>INR-based Warfarin dose adjustment with a titration schedule — a genuinely dangerous class to get wrong and currently absent from the toolset.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Antibiogram by wilaya</h4><p>Crowdsourced local resistance patterns — "E. coli resistance to amoxicillin in Alger: 47%" — invaluable for empiric therapy and impossible for any dataset-only competitor to replicate.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>IV compatibility matrix</h4><p>Y-site compatibility for hospital-pharmacy IV combinations. Not needed by every user, essential to the ones who need it, and currently offered by nobody in the market.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Growth-chart plotter</h4><p>WHO paediatric growth curves wired directly into the existing posology calculator, so a weight percentile and a dose calculation happen in the same screen instead of two separate tools.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Vaccine schedule tracker</h4><p>The Algerian PEV calendar, tied to Family Cabinet member profiles, with due-date reminders — turns a static reference into something a parent returns to every few months.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Pharmacovigilance channel</h4><p>Adverse-reaction reporting routed directly to the Algerian pharmacovigilance centre. Turns DzPharm from a reference tool into actual regulatory infrastructure — a materially larger claim, and one worth making carefully.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Adherence tracking</h4><p>Simple trend lines for chronic conditions — diabetes, hypertension — inside the Family Cabinet, built from data the household is already entering.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Travel health advisor</h4><p>Required vaccinations and malaria prophylaxis by destination, relevant for Hajj, Umrah and labour migration — a genuinely underserved need in this market.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Recall &amp; withdrawal alerts</h4><p>The dataset already flags withdrawn products; turn that flag into a push notification for anyone who has favourited or recently viewed the affected drug, rather than a fact only visible on demand.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Storage &amp; cold-chain badges</h4><p>A small icon set — refrigerate, protect from light, keep below 25°C — surfaced on every record, feeding directly from the Family Cabinet's existing seasonal-heat advice into something visible everywhere, not just there.</p></div>
+  </div>
+</section>
+
+<!-- ══ 04 SEARCH ══════════════════════════════════════ -->
+<section id="search">
+  <div class="sec-head">
+    <span class="idx ui">Section 04</span>
+    <h2>Search, reimagined</h2>
+    <p>The audit already fixes fuzzy matching and history. These push discovery further — toward how a pharmacist actually thinks under time pressure, rather than how a keyword index thinks.</p>
+  </div>
+  <div class="grid" data-group="search">
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Ask the search bar a question</h4><p>"Que puis-je donner à une femme enceinte contre les maux de tête ?" typed directly into the header search, not just inside the Copilot — the same grounded reasoning, reached from where people are already looking.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Photo search</h4><p>The pill-recognition idea from Section 02, surfaced as a camera icon inside the search bar itself rather than buried in a separate flow.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Hover-to-simplify jargon</h4><p>Hovering or tapping a clinical term inside an RCP — "myélosuppression," "clairance" — surfaces a plain-language gloss inline, without leaving the page.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Cross-mapped synonyms</h4><p>A DCI-to-local-name-to-common-misspelling table so "amoxicilline," "amoxiciline" and <span lang="ar" dir="rtl" style="font-family:var(--arab)">أموكسيسيلين</span> all resolve to the same record — cheaper than full fuzzy matching and catches the errors people actually make.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Zero-result logging as a data-gap map</h4><p>Every search that returns nothing is logged and reviewed — it is simultaneously a bug list and a live map of exactly where the dataset or the synonym table needs expanding.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Voice from the header</h4><p>The dictation work already scoped for the Copilot, exposed as a header-level entry point so voice becomes how someone starts a session, not only how they continue one.</p></div>
+  </div>
+</section>
+
+<!-- ══ 05 COMMUNITY ═══════════════════════════════════ -->
+<section id="community">
+  <div class="sec-head">
+    <span class="idx ui">Section 05</span>
+    <h2>Community, supply &amp; network effects</h2>
+    <p>Three features already brainstormed in the source material — shortage reports, a heatmap, an inventory marketplace — belong to one coherent story: DzPharm as the layer that lets pharmacies see each other, not just the dataset.</p>
+  </div>
+  <div class="grid" data-group="community">
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>National shortage heatmap</h4><p>The nine live community reports, mapped by wilaya and filterable by drug class, so a pharmacist sees which medications are tight in their region this week — not just that a report exists somewhere.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Inter-pharmacy surplus marketplace</h4><p>Verified pharmacies list surplus stock for transfer to a neighbour facing a stockout. Reduces waste on one side and closes a gap on the other, and it only works once accounts and verification exist.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Verified-pharmacist Q&amp;A</h4><p>Edge cases the Copilot cannot confidently answer get posted to a moderated peer network — and every good answer becomes training material for the next version of the Copilot itself.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Anonymous peer benchmarking</h4><p>"Your top-10 dispensed medications versus your wilaya's average" — professional insight without turning clinical work into a leaderboard. Kept deliberately quiet and private, never public or competitive.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>CME credit tracking</h4><p>Time spent in clinical tools and Copilot consultations logged as continuing-education credit, subject to medical council approval — turns daily use into a professional-development record.</p></div>
+  </div>
+</section>
+
+<!-- ══ 06 DATA ════════════════════════════════════════ -->
+<section id="data">
+  <div class="sec-head">
+    <span class="idx ui">Section 06</span>
+    <h2>Data products &amp; business models</h2>
+    <p>The dataset and the AI are the moat; these are ways to extend the reach of both without diluting either. All three explicitly wait for accounts and governance — data ethics come before data revenue.</p>
+  </div>
+  <div class="grid" data-group="data">
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Public read API</h4><p>Free for academic researchers, paid for commercial integrations. Converts the dataset into both a revenue line and a defensive moat — every integration built on it makes the platform harder to displace.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Open data exports</h4><p>A monthly CSV or JSON export of the AMM registry under a permissive licence, credited back to DzPharm — builds goodwill and an ecosystem at low cost.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>National statistics dashboard</h4><p>Anonymised search and consultation trends by wilaya and season — genuinely valuable public-health signal, and the item most dependent on the account system and a clear governance policy existing first.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Embeddable search widget</h4><p>A "search powered by DzPharm" box that other Algerian health sites or hospital intranets can drop in — extends reach without extending headcount.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>B2B inventory layer</h4><p>The same dataset repurposed as an actual stock-management add-on for pharmacies — monetises the operational side of the business, not only the reference side.</p></div>
+  </div>
+</section>
+
+<!-- ══ 07 INCLUSIVE ═══════════════════════════════════ -->
+<section id="inclusive">
+  <div class="sec-head">
+    <span class="idx ui">Section 07</span>
+    <h2>Inclusive by design</h2>
+    <p>The audit's accessibility fixes make the current French UI compliant. These go further — toward audiences the interface does not reach at all today.</p>
+  </div>
+  <div class="grid" data-group="inclusive">
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Full Arabic UI</h4><p>Not just readable Arabic content — a complete right-to-left interface built on CSS logical properties from the start, so it is a real experience rather than a mirrored afterthought.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Tamazight support</h4><p>Genuinely novel — no pharmaceutical platform anywhere has done this. A meaningful signal for Kabylie and the broader Amazigh-speaking population, and a first worth being first at.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Low-literacy patient mode</h4><p>Icon-first dosing instructions — sun and moon for morning and evening, a plate for with food — for the real share of patients who read pictures faster than paragraphs, in any language.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>Voice-only flow</h4><p>Beyond screen-reader compliance: a genuinely voice-driven path through search and the Copilot for visually impaired users, not just a keyboard-navigable version of the visual one.</p></div>
+  </div>
+</section>
+
+<!-- ══ 08 DISTRIBUTION ════════════════════════════════ -->
+<section id="distribution">
+  <div class="sec-head">
+    <span class="idx ui">Section 08</span>
+    <h2>Beyond the browser tab</h2>
+    <p>Where DzPharm shows up matters as much as what it contains — and in this market, a meaningful share of the audience is not reachable by a native app at all.</p>
+  </div>
+
+  <div class="bigidea">
+    <span class="lbl ui">Big swing 03, in full</span>
+    <h3>The counter, not the tab</h3>
+    <p>Every piece already exists in isolation: a working barcode scanner, a Chifa simulator, an interactions checker, a print system. Chained into a single guided flow at the point of dispensing — scan the box, read the card, check interactions automatically against whatever else is already on the counter, print the handout — DzPharm stops being a reference a pharmacist opens in a spare moment and becomes the software the counter actually runs on. That is a materially different product, and it is built entirely from features that already work.</p>
+  </div>
+
+  <div class="grid" data-group="distribution">
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>WhatsApp Business bot</h4><p>Quick drug queries answered inside the channel Algerian pharmacists already use all day, every day — meeting the workflow rather than asking it to change.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>SMS / USSD fallback</h4><p>A basic query-and-answer path for feature phones. Not every pharmacist or patient carries a smartphone, and this is the one channel that reaches all of them.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>True offline mode</h4><p>The full 9,555-record dataset and the core calculators usable with zero connectivity — valuable everywhere, essential for rural pharmacies on unreliable connections, and a prerequisite the audit already flags before any native app is wrapped.</p></div>
+    <div class="card" data-tag="bet"><span class="tag tag-bet ui">Long bet</span><h4>Native iOS / Android</h4><p>Worth doing once routing, accounts and offline mode are solid — in that order, and not before, so the app store review meets a finished product rather than a work in progress.</p></div>
+  </div>
+</section>
+
+<!-- ══ 09 DELIGHT ═════════════════════════════════════ -->
+<section id="delight">
+  <div class="sec-head">
+    <span class="idx ui">Section 09</span>
+    <h2>The small moments</h2>
+    <p>None of these move a grade on their own. Together they are the difference between a tool that works and a tool people are quietly fond of.</p>
+  </div>
+  <div class="grid" data-group="delight">
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>Teaching empty states, everywhere</h4><p>The Interactions module's empty state — explain the value, then offer the action — is already excellent. Extend that exact pattern to every empty screen on the platform instead of inventing a new one each time.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>A quiet, automatic Ramadan mode</h4><p>A subtle, reversible visual shift each Ramadan, and the chronopharmacology tool nudged forward in the navigation for the month — present without becoming a decoration that outstays its welcome.</p></div>
+    <div class="card" data-tag="next"><span class="tag tag-next ui">Next</span><h4>A September nudge</h4><p>The vaccine tracker surfaces itself briefly at back-to-school time, when it is genuinely most relevant — one well-timed prompt instead of a permanent banner.</p></div>
+    <div class="card" data-tag="now"><span class="tag tag-now ui">Now</span><h4>A counter-night mode</h4><p>A compact, low-glare density setting for a dim pharmacy after dark — the density system already exists in the store and simply needs a switch, which the audit already scopes.</p></div>
+  </div>
+</section>
+
+<!-- ══ 10 SEQUENCE ════════════════════════════════════ -->
+<section id="sequence">
+  <div class="sec-head">
+    <span class="idx ui">Section 10</span>
+    <h2>Where this fits the plan</h2>
+    <p>Impact against effort, the same discipline the audit itself uses — so this document ends as a set of choices rather than a wish list.</p>
+  </div>
+
+  <div class="matrix">
+    <div class="mcell q1"><h5>HIGH IMPACT · LOW EFFORT — do alongside Part I</h5><ul><li>Instant-answer cache for common questions</li><li>Zero-result search logging</li><li>Cross-mapped synonyms</li><li>Storage &amp; cold-chain badges</li><li>Teaching empty states everywhere</li><li>Counter-night density mode</li></ul></div>
+    <div class="mcell q2"><h5>HIGH IMPACT · HIGH EFFORT — plan for the next two quarters</h5><ul><li>The compatibility layer (halal/haram, alcohol, fasting)</li><li>A Copilot that notices first</li><li>Full Arabic UI, RTL-native</li><li>Growth-chart plotter · hepatic dosing · anticoagulation helper</li><li>Ask-the-search-bar natural language</li><li>Citation chips on Copilot answers</li></ul></div>
+    <div class="mcell q3"><h5>LOWER IMPACT · LOW EFFORT — fill sprint capacity</h5><ul><li>New Nuancier palettes</li><li>The nine new icons, properly drawn</li><li>Seasonal Ramadan and back-to-school nudges</li><li>Embeddable search widget</li></ul></div>
+    <div class="mcell q4"><h5>HIGH EFFORT · LONGER HORIZON — real bets, sequence deliberately</h5><ul><li>The counter, not the tab</li><li>Prescription OCR &amp; pill recognition</li><li>WhatsApp bot · SMS/USSD fallback</li><li>Inter-pharmacy marketplace · verified Q&amp;A network</li><li>Public API · open data · Tamazight support</li></ul></div>
+  </div>
+  <div class="mlabels ui"><span>← lower effort</span><span>higher effort →</span></div>
+
+  <div class="note">
+    <span class="lbl ui">The one thing to protect</span>
+    <p>Everything in this document assumes the audit's foundation lands first — routing, accounts, a trustworthy Copilot. Building the compatibility layer or the proactive assistant on top of a platform that still 404s on direct URLs would be building a second storey on a foundation that hasn't cured. Sequence discipline is the actual innovation here; the ideas are the easy part.</p>
+  </div>
+</section>
+
+<footer>
+  <p>DzPharm innovation and feature brainstorm · companion to the master audit and remediation plan · roughly seventy ideas, tagged and sequenced, none of them mandatory.</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.fbtn[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.fbtn[data-f]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    const f=b.dataset.f;
+    let shown=0,total=0;
+    document.querySelectorAll('.card').forEach(c=>{
+      total++;
+      const ok=f==='all'||c.dataset.tag===f;
+      c.style.display=ok?'':'none';
+      if(ok)shown++;
+    });
+    const cnt=document.getElementById('count');
+    if(cnt)cnt.textContent=shown+' of '+total+' shown';
+  });
+});
+(function(){const cnt=document.getElementById('count');if(cnt){const total=document.querySelectorAll('.card').length;cnt.textContent=total+' of '+total+' shown';}})();
+
+(function(){
+  const b=document.getElementById('themebtn');
+  b.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const isDark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
+    try{localStorage.setItem('dzp-theme2',isDark?'light':'dark')}catch(e){}
+  });
+  try{const t=localStorage.getItem('dzp-theme2');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
+})();
+</script>
+</body>
+</html>

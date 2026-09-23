@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DzPharm — Master Audit &amp; Remediation Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F7F4; --paper-2:#EDEFEA; --paper-3:#E4E8E1;
+  --ink:#17231D; --ink-2:#4A5A50; --ink-3:#77887D;
+  --rule:#D3DBD2; --rule-2:#BFC9BE;
+  --accent:#0E7A57; --accent-soft:#E2F0E9; --on-accent:#FFFFFF;
+  --p0:#A8201A; --p0-soft:#F7E4E2;
+  --p1:#B4490C; --p1-soft:#FAE9DE;
+  --p2:#96650E; --p2-soft:#F7EEDC;
+  --p3:#4A6070; --p3-soft:#E6EDF1;
+  --gA:#0E7A57; --gB:#6F7F35; --gC:#B0731A; --gD:#A8201A; --gX:#AEB8AD;
+  --serif:'Literata',Georgia,'Times New Roman',serif;
+  --sans:'Instrument Sans','Helvetica Neue',Arial,sans-serif;
+  --arab:'Noto Sans Arabic','Segoe UI',sans-serif;
+  --rail:268px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111714; --paper-2:#171F1A; --paper-3:#1E2822;
+    --ink:#E4EAE3; --ink-2:#A5B2A8; --ink-3:#74847A;
+    --rule:#293429; --rule-2:#3A473C;
+    --accent:#35C692; --accent-soft:#12301F; --on-accent:#08170F;
+    --p0:#EF7A70; --p0-soft:#2C1614;
+    --p1:#EE9553; --p1-soft:#2B1B10;
+    --p2:#D6B45C; --p2-soft:#272014;
+    --p3:#9DB2C0; --p3-soft:#171F25;
+    --gA:#35C692; --gB:#A8B95A; --gC:#DCA23F; --gD:#EF7A70; --gX:#4C5A50;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111714; --paper-2:#171F1A; --paper-3:#1E2822;
+  --ink:#E4EAE3; --ink-2:#A5B2A8; --ink-3:#74847A;
+  --rule:#293429; --rule-2:#3A473C;
+  --accent:#35C692; --accent-soft:#12301F; --on-accent:#08170F;
+  --p0:#EF7A70; --p0-soft:#2C1614;
+  --p1:#EE9553; --p1-soft:#2B1B10;
+  --p2:#D6B45C; --p2-soft:#272014;
+  --p3:#9DB2C0; --p3-soft:#171F25;
+  --gA:#35C692; --gB:#A8B95A; --gC:#DCA23F; --gD:#EF7A70; --gX:#4C5A50;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 76px);-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--serif);font-size:17px;line-height:1.62;
+  font-optical-sizing:auto;
+}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.2;margin:0}
+.ui{font-family:var(--sans)}
+a{color:var(--accent);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+::selection{background:var(--accent);color:var(--on-accent)}
+
+/* ── shell ───────────────────────────────────────────── */
+.wrap{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);max-width:1420px;margin:0 auto}
+.rail{
+  position:sticky;top:env(safe-area-inset-top,0px);align-self:start;
+  height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;
+  border-right:1px solid var(--rule);padding:26px 20px 40px;
+  font-family:var(--sans);font-size:13.5px;line-height:1.45;
+}
+.rail .mark{font-family:var(--serif);font-size:19px;font-weight:700;letter-spacing:-.015em;margin:0 0 2px}
+.rail .sub{color:var(--ink-3);font-size:11.5px;margin:0 0 22px}
+.rail nav a{
+  display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:baseline;
+  padding:6px 8px;margin:0 -8px;border-radius:4px;
+  color:var(--ink-2);text-decoration:none;
+}
+.rail nav a:hover{background:var(--paper-2);color:var(--ink)}
+.rail nav a .n{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:11.5px}
+.rail nav a .c{color:var(--ink-3);font-size:11px;font-variant-numeric:tabular-nums}
+.rail hr{border:0;border-top:1px solid var(--rule);margin:18px 0}
+main{padding:0 clamp(18px,4vw,64px) 120px;min-width:0}
+section{padding-top:64px;scroll-margin-top:24px}
+
+/* ── hero ────────────────────────────────────────────── */
+.hero{padding:54px 0 34px;border-bottom:1px solid var(--rule)}
+.hero .kicker{font-family:var(--sans);font-size:12.5px;color:var(--ink-3);margin:0 0 14px}
+.hero h1{font-size:clamp(34px,5.4vw,58px);letter-spacing:-.025em;max-width:16ch;font-weight:700}
+.hero .lede{font-size:clamp(17px,2vw,20px);color:var(--ink-2);max-width:62ch;margin:20px 0 0}
+
+.barcode-block{margin:38px 0 0;border:1px solid var(--rule);border-radius:5px;background:var(--paper-2);padding:20px 20px 14px}
+.barcode-head{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:baseline;font-family:var(--sans);font-size:12.5px;color:var(--ink-2);margin-bottom:14px}
+.barcode{display:flex;align-items:flex-end;gap:2px;height:96px;padding-bottom:2px;border-bottom:1px solid var(--rule-2)}
+.tick{flex:1 1 0;min-width:3px;border-radius:1px 1px 0 0;cursor:default;transition:opacity .12s}
+.tick:hover,.tick:focus-visible{opacity:.55}
+.bc-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-family:var(--sans);font-size:12px;color:var(--ink-2)}
+.bc-legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+#bc-read{font-family:var(--sans);font-size:12.5px;color:var(--ink-2);min-height:1.5em;margin-top:10px}
+#bc-read b{color:var(--ink);font-weight:600}
+
+.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:5px;overflow:hidden;margin:26px 0 0}
+.tally div{background:var(--paper);padding:14px 15px}
+.tally .v{font-family:var(--sans);font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.tally .k{font-family:var(--sans);font-size:11.5px;color:var(--ink-3);margin-top:3px}
+
+/* ── typography blocks ───────────────────────────────── */
+.sec-head{border-top:2px solid var(--ink);padding-top:16px;margin-bottom:26px}
+.sec-head .idx{font-family:var(--sans);font-size:12px;color:var(--ink-3);display:block;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.sec-head h2{font-size:clamp(25px,3.4vw,36px);letter-spacing:-.02em}
+.sec-head p{color:var(--ink-2);max-width:66ch;margin:12px 0 0;font-size:16.5px}
+h3{font-size:21px;margin:40px 0 10px;letter-spacing:-.01em}
+h4{font-size:17px;margin:26px 0 6px;font-weight:600}
+p{max-width:70ch;margin:0 0 15px}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:15px 18px;border-radius:0 4px 4px 0;margin:22px 0;max-width:74ch}
+.note p:last-child{margin-bottom:0}
+.note .lbl{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--accent);display:block;margin-bottom:5px}
+.warn{border-left-color:var(--p0);background:var(--p0-soft)}
+.warn .lbl{color:var(--p0)}
+ul,ol{max-width:70ch;padding-left:1.15em;margin:0 0 16px}
+li{margin-bottom:7px}
+code{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:.88em;background:var(--paper-3);padding:1px 5px;border-radius:3px}
+
+/* ── tables ──────────────────────────────────────────── */
+.tblwrap{overflow-x:auto;margin:20px 0 28px;border:1px solid var(--rule);border-radius:5px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:14px;min-width:560px}
+th{text-align:left;font-weight:600;color:var(--ink-2);padding:11px 14px;border-bottom:1px solid var(--rule-2);background:var(--paper-2);white-space:nowrap;font-size:12.5px}
+td{padding:11px 14px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:0}
+td.num,th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── chips ───────────────────────────────────────────── */
+.chip{display:inline-block;font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.02em;padding:2px 7px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+.c-p0{background:var(--p0-soft);color:var(--p0);box-shadow:inset 0 0 0 1px currentColor}
+.c-p1{background:var(--p1-soft);color:var(--p1);box-shadow:inset 0 0 0 1px currentColor}
+.c-p2{background:var(--p2-soft);color:var(--p2);box-shadow:inset 0 0 0 1px currentColor}
+.c-p3{background:var(--p3-soft);color:var(--p3);box-shadow:inset 0 0 0 1px currentColor}
+.c-ok{background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px currentColor}
+
+/* ── issue register ──────────────────────────────────── */
+.toolbar{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+  padding:12px 0;margin-bottom:6px;
+  display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+  font-family:var(--sans);
+}
+.toolbar input[type=search]{
+  flex:1 1 210px;min-width:150px;font:inherit;font-size:14px;
+  padding:8px 11px;border:1px solid var(--rule-2);border-radius:4px;
+  background:var(--paper-2);color:var(--ink);
+}
+.toolbar input[type=search]::placeholder{color:var(--ink-3)}
+.fbtn{
+  font:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  padding:7px 11px;border:1px solid var(--rule-2);border-radius:4px;
+  background:var(--paper-2);color:var(--ink-2);
+}
+.fbtn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.fbtn.sm{padding:6px 9px;font-size:12px}
+#count{font-size:12.5px;color:var(--ink-3);margin-left:auto;font-variant-numeric:tabular-nums}
+
+.issue{border-bottom:1px solid var(--rule);padding:15px 0}
+.issue.done .ihead h4,.issue.done .sym{opacity:.42;text-decoration:line-through;text-decoration-thickness:1px}
+.ihead{display:grid;grid-template-columns:22px 1fr;gap:12px;align-items:start}
+.ihead input[type=checkbox]{margin:5px 0 0;width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.imeta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:5px;font-family:var(--sans);font-size:11.5px;color:var(--ink-3)}
+.imeta .id{font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.ihead h4{font-size:17.5px;margin:0;font-weight:600;letter-spacing:-.005em}
+.ibody{margin-left:34px}
+.sym{color:var(--ink-2);margin:7px 0 0;font-size:15.5px;max-width:78ch}
+.detail{margin-top:11px;font-family:var(--sans);font-size:14px;max-width:80ch}
+.detail dl{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:0}
+.detail dt{color:var(--ink-3);font-size:12px;font-weight:600;padding-top:2px;white-space:nowrap}
+.detail dd{margin:0;color:var(--ink-2);line-height:1.55}
+.detail dd code{font-size:12.5px}
+.moretog{
+  font:inherit;font-family:var(--sans);font-size:12.5px;font-weight:500;
+  background:none;border:0;color:var(--accent);cursor:pointer;padding:6px 0 0;
+}
+.hidden{display:none}
+
+/* ── phase cards ─────────────────────────────────────── */
+.phase{border:1px solid var(--rule);border-radius:5px;margin:0 0 16px;overflow:hidden}
+.phase>header{background:var(--paper-2);padding:14px 18px;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:baseline}
+.phase>header h3{margin:0;font-size:19px}
+.phase>header .when{font-family:var(--sans);font-size:12.5px;color:var(--ink-3)}
+.phase .inner{padding:16px 18px}
+.phase ul{margin-bottom:0}
+.goal{font-family:var(--sans);font-size:13.5px;color:var(--ink-2);background:var(--paper-3);display:inline-block;padding:4px 10px;border-radius:3px;margin-bottom:12px}
+
+/* ── misc ────────────────────────────────────────────── */
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:5px;overflow:hidden;margin:18px 0 26px}
+.kv>div{background:var(--paper);padding:13px 15px;font-family:var(--sans)}
+.kv .k{font-size:11.5px;color:var(--ink-3);margin-bottom:3px}
+.kv .v{font-size:15px;color:var(--ink);line-height:1.4}
+.crumb{font-family:var(--sans);font-size:12.5px;color:var(--ink-3)}
+footer{border-top:2px solid var(--ink);margin-top:80px;padding:26px 0 0;font-family:var(--sans);font-size:13px;color:var(--ink-3)}
+.themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:40;font-family:var(--sans);font-size:12px;padding:8px 11px;border:1px solid var(--rule-2);background:var(--paper-2);color:var(--ink-2);border-radius:20px;cursor:pointer}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:8px;top:8px;z-index:60;background:var(--accent);color:var(--on-accent);padding:9px 13px;border-radius:4px;font-family:var(--sans)}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:20px clamp(18px,4vw,64px)}
+  .rail nav{columns:2;column-gap:26px}
+  .rail nav a{break-inside:avoid}
+  html{scroll-padding-top:20px}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .rail nav{columns:1}
+  .ibody{margin-left:0}
+  .detail dl{grid-template-columns:1fr;gap:2px}
+  .detail dt{padding-top:8px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+@media print{
+  .rail,.toolbar,.themebtn,.moretog{display:none}
+  .wrap{grid-template-columns:1fr}
+  .detail .hidden{display:block}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<button class="themebtn ui" id="themebtn" aria-label="Switch colour theme">Theme</button>
+
+<div class="wrap">
+<aside class="rail">
+  <p class="mark">DzPharm Audit</p>
+  <p class="sub">Master remediation plan · from 62 source reports · 68 features</p>
+  <nav aria-label="Document sections">
+    <a href="#verify"><span class="n">00</span><span>Verify first</span><span class="c">13</span></a>
+    <a href="#inventory"><span class="n">01</span><span>What the platform is</span><span class="c">—</span></a>
+    <a href="#triage"><span class="n">02</span><span>How I re-triaged</span><span class="c">—</span></a>
+    <a href="#register"><span class="n">03</span><span>Issue register</span><span class="c" id="railcount">106</span></a>
+    <a href="#deps"><span class="n">04</span><span>Dependencies</span><span class="c">—</span></a>
+    <a href="#plan"><span class="n">05</span><span>Execution plan</span><span class="c">7</span></a>
+    <a href="#dod"><span class="n">06</span><span>Definition of done</span><span class="c">—</span></a>
+    <a href="#risk"><span class="n">07</span><span>Risk register</span><span class="c">12</span></a>
+    <a href="#metrics"><span class="n">08</span><span>What to measure</span><span class="c">—</span></a>
+  </nav>
+  <hr>
+  <p class="sub" style="margin:0">Part two of this work — the feature and design brainstorm — is a separate document.</p>
+</aside>
+
+<main id="main">
+
+<header class="hero">
+  <p class="kicker ui">Independent read of 62 audit documents · dz-pharm.vercel.app</p>
+  <h1>DzPharm has a world-class dataset wearing a prototype's skeleton.</h1>
+  <p class="lede">Every grade in the source reports, reconciled, re-triaged, de-duplicated and turned into 106 numbered work items with a fix instruction and an acceptance test on each. Read section 00 before you plan anything: eleven of the findings contradict each other, and two menu items were never reviewed at all.</p>
+
+  <div class="barcode-block">
+    <div class="barcode-head ui">
+      <span>All 68 review-menu features by grade. Bar height encodes severity, so it survives greyscale and colour blindness.</span>
+    </div>
+    <div class="barcode" id="barcode" role="img" aria-label="Grade distribution across 68 features: 18 at A level, 22 at B level, 8 at C level, 3 at D level, 17 not separately graded."></div>
+    <p id="bc-read">Hover or tap a bar to read the feature.</p>
+    <div class="bc-legend ui">
+      <span><i class="sw" style="background:var(--gA)"></i>A — production grade</span>
+      <span><i class="sw" style="background:var(--gB)"></i>B — good, minor gaps</span>
+      <span><i class="sw" style="background:var(--gC)"></i>C — real bugs</span>
+      <span><i class="sw" style="background:var(--gD)"></i>D — critical gaps</span>
+      <span><i class="sw" style="background:var(--gX)"></i>Not separately graded</span>
+    </div>
+  </div>
+
+  <div class="tally">
+    <div><div class="v" style="color:var(--p0)">12</div><div class="k ui">P0 — ship this fortnight</div></div>
+    <div><div class="v" style="color:var(--p1)">38</div><div class="k ui">P1 — next sprint</div></div>
+    <div><div class="v" style="color:var(--p2)">43</div><div class="k ui">P2 — this quarter</div></div>
+    <div><div class="v" style="color:var(--p3)">13</div><div class="k ui">P3 — backlog</div></div>
+    <div><div class="v" style="color:var(--accent)">27h</div><div class="k ui">buys back 9 grades</div></div>
+  </div>
+</header>
+
+<!-- ══ 00 VERIFY ══════════════════════════════════════ -->
+<section id="verify">
+  <div class="sec-head">
+    <span class="idx ui">Section 00</span>
+    <h2>Verify these thirteen things before you plan a single sprint</h2>
+    <p>The 62 reports were written over three days and the later ones corrected the earlier ones without the earlier ones being withdrawn. Eleven findings now contradict each other, and two features were never reviewed. Planning on contradictory evidence burns engineering time on bugs that were already fixed and leaves real ones untouched. This is half a day of work and it is the highest-value half day in the plan.</p>
+  </div>
+
+  <p>Run each check on the live build, write the answer next to it, and only then open the register. Where the two reports disagree, I have marked which one I would bet on and why — but bet with a browser, not with me.</p>
+
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>#</th><th>The contradiction</th><th>How to settle it in under 5 minutes</th><th>My prior</th></tr></thead>
+    <tbody>
+      <tr><td class="num">V1</td><td><b>PWA manifest.</b> Reports #1 and #8 say <code>/manifest.json</code> returns 404 and the PWA is broken. Report #5 says a v8 service worker is live, offline mode was tested working, and the manifest is served at <code>/manifest.webmanifest</code> — grade A.</td><td>Fetch both paths. Then open DevTools → Application → Manifest and check whether the <code>&lt;link rel="manifest"&gt;</code> tag is actually in <code>&lt;head&gt;</code>.</td><td>#5 is right about the file; the <code>&lt;link&gt;</code> tag is the real gap. Keep <span class="chip c-p1">P1-38</span>, drop the rest.</td></tr>
+
+      <tr><td class="num">V2</td><td><b>Interactions matrix.</b> Report #22 says the Matrice tab renders empty — a conditional-rendering bug. Report #23 tested a 3×3 matrix with five interaction levels and found zero bugs, grade A.</td><td>Add DOLIPRANE + BRUFEN + LOPRIL in Vérificateur, then click Matrice. Then try clicking Matrice with <i>fewer than two</i> drugs in the basket.</td><td>Both are right. The tab is empty below the two-drug threshold and #22 tested it empty. That is an empty-state bug, not a render bug — and a much cheaper fix.</td></tr>
+
+      <tr><td class="num">V3</td><td><b>Sharing.</b> Report #49 says there is no copyable URL, no share dialog and <code>navigator.share</code> is undefined. Report #18 describes a share dialog that opens with a full medication summary and a 7/7 completeness score. The master index claims WhatsApp, Telegram, email and copy buttons.</td><td>Open a medication, click Partager, screenshot what appears. Then run <code>typeof navigator.share</code> in the console on mobile Safari and Chrome Android.</td><td>The dialog exists; what is missing is a <i>link</i> inside it — because there is no link to put there until routing lands. Reframe as a routing dependency, not a missing feature.</td></tr>
+
+      <tr><td class="num">V4</td><td><b>Toasts.</b> The main report and reports #11, #22 and #36 all say no toast system exists. The UX Feedback report found a working Sonner toaster and verified three toast types live.</td><td>Favourite a medication. If a toast appears, the toaster exists.</td><td>Sonner is there. Delete "build a toast system" from the backlog — it is already built. What remains is ARIA on it and an undo action.</td></tr>
+
+      <tr><td class="num">V5</td><td><b>Icon labels.</b> Report #62 says four of six icon-only buttons have missing or generic <code>aria-label</code>. Report #56 says all six icon-only buttons have aria-labels.</td><td>Run axe DevTools on the dashboard, or inspect the four buttons directly (theme, Botanique, Nuancier, Copilote).</td><td>#62 is more specific and names the four. Trust it. 25 minutes either way.</td></tr>
+
+      <tr><td class="num">V6</td><td><b>Recently viewed cap.</b> Report #2 found the array capped at 1 entry. Report #44 describes a 10-item cap with correct dedup.</td><td>View five different medications, then read <code>localStorage["dzpharm-store"]</code>.</td><td>#2 probably hit a dedup bug where the cap is applied before dedup. Worth 10 minutes because a 1-item "recently viewed" is worse than none.</td></tr>
+
+      <tr><td class="num">V7</td><td><b>Auth security model.</b> Report #8 originally claimed client-side-only validation and a three-second bypass. Report #7 confirmed <code>POST /api/auth</code> is server-side and returns 401/200.</td><td>Set <code>sessionStorage.dzpharm_session = "active"</code> by hand in a fresh tab and reload. If you reach the dashboard, the bypass is real.</td><td>#7 is right on validation, but sessionStorage-as-session means the client still decides. Test the bypass yourself — it changes the P0 sizing.</td></tr>
+
+      <tr><td class="num">V8</td><td><b>Lock button.</b> #8 said it does not work. #9 proved it does, and that the earlier test was run inside a modal whose overlay ate the click.</td><td>Click it from the dashboard, then from inside the Copilot modal.</td><td>#9 is right. But the modal-eats-header-clicks behaviour is itself a real bug worth logging.</td></tr>
+
+      <tr><td class="num">V9</td><td><b>Performance numbers.</b> The main report measured TTFB 80 ms, FCP 204 ms, 88.8 KB, 15.6 MB heap. Report #3 measured TTFB 6 ms, FCP 836 ms cold / 248 ms warm, 695 KB, 10 MB heap.</td><td>Run Lighthouse in a real Chrome window, mobile preset, 4G throttling, cold cache — the only numbers that describe an Algerian user on a phone.</td><td>Both are edge-warm European measurements. Neither describes your actual users. Re-measure on throttled mobile before claiming "top decile".</td></tr>
+
+      <tr><td class="num">V10</td><td><b>Copilot latency.</b> Quoted as 4–6 s, 3–8 s and 11 s in three reports.</td><td>Time ten queries of varying length in each of the three modes. Record p50 and p95.</td><td>All three are probably true at different times. You need the distribution, not an anecdote.</td></tr>
+
+      <tr><td class="num">V11</td><td><b>Model version.</b> The Cmd-K palette says Gemini 3.8 Flash. The Copilot header says Gemini 3.6 Flash.</td><td>Read the model string in the API route.</td><td>Five-minute fix, but it is a trust defect on a clinical tool. A pharmacist is entitled to know which model answered.</td></tr>
+
+      <tr><td class="num">V12</td><td><b>Features #20 and #21 have no report.</b> The menu has 68 items. Standalone reports cover #1–11, #22–28, #35–51, #53–68. Group reports cover #12–19, #29–34, #52, #56–59. Nothing covers #20 or #21.</td><td>Open the review menu and read what #20 and #21 are. They may be unbuilt, or they may be shipped and unaudited.</td><td>Three bonus tools were already discovered mid-audit that were not on the menu. The menu is behind the product. Reconcile it.</td></tr>
+
+      <tr><td class="num">V13</td><td><b>Do the 20 Nuancier palettes repaint clinical state colours?</b> No report asks this. Report #53 puts the 7-level clinical state system inside the same ~400-token colour architecture the Nuancier switches.</td><td>Switch to the Menthe palette, then open an interaction result containing a contre-indication. Is the danger indicator still unmistakably red?</td><td><b>If a palette can recolour "contre-indication absolue", that is a clinical safety defect and an instant P0.</b> See <span class="chip c-p0">P0-12</span>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <span class="lbl ui">The habit to build</span>
+    <p>A finding without a date, a build SHA and a reproduction path decays into folklore within a week. From now on, every bug gets logged with the commit it was observed on. Half the contradictions above exist only because the platform shipped faster than the audit could write.</p>
+  </div>
+</section>
+
+<!-- ══ 01 INVENTORY ══════════════════════════════════ -->
+<section id="inventory">
+  <div class="sec-head">
+    <span class="idx ui">Section 01</span>
+    <h2>What DzPharm actually is</h2>
+    <p>You asked me to establish everything the site offers. Here it is, assembled from every report — including three tools and one feature the review menu itself does not list. This inventory is the baseline: anything not on it is either unbuilt or undiscovered.</p>
+  </div>
+
+  <h3>The data assets — the moat</h3>
+  <div class="kv">
+    <div><div class="k ui">Medication registry</div><div class="v ui">9,555 AMM records</div></div>
+    <div><div class="k ui">DCI monographs</div><div class="v ui">932, across 30 therapeutic domains</div></div>
+    <div><div class="k ui">ANSM-format RCPs</div><div class="v ui">911 full summaries</div></div>
+    <div><div class="k ui">Parapharmacy catalogue</div><div class="v ui">1,791 products with PPA</div></div>
+    <div><div class="k ui">Source literature</div><div class="v ui">24 pharmacology reference books</div></div>
+    <div><div class="k ui">Pharmaceutical glossary</div><div class="v ui">92 terms</div></div>
+    <div><div class="k ui">Patient education guides</div><div class="v ui">10</div></div>
+    <div><div class="k ui">On-call pharmacies</div><div class="v ui">52 across 17 of 58 wilayas</div></div>
+    <div><div class="k ui">Community shortage reports</div><div class="v ui">9 live, 58-wilaya selector</div></div>
+    <div><div class="k ui">Pricing currency</div><div class="v ui">PPA in DA, verified Aug 2026</div></div>
+    <div><div class="k ui">Reimbursement model</div><div class="v ui">CNAS 80% / ALD 100% / CASNOS 80% / 0%</div></div>
+    <div><div class="k ui">Equivalence depth</div><div class="v ui">60 same-DCI alternatives on DOLIPRANE alone</div></div>
+  </div>
+
+  <h3>The clinical tool suite — 13 surfaces</h3>
+  <p>Nine live in a tabbed hub at <i>Outils cliniques</i>; four are reached from the dashboard. Three of them were discovered during the audit and are not on the review menu.</p>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Tool</th><th>What it does</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><b>Pediatric posology calculator</b></td><td>15 molecules across 11 classes, mg/kg → mL, local Algerian brands per form, molecule-specific vigilance points, hard guardrail below 3 kg. Maths verified on 7 of 7 spot-checks.</td><td><span class="chip c-ok">A−</span></td></tr>
+      <tr><td><b>Chifa simulator</b></td><td>Four card types modelling CNAS/CASNOS with ticket modérateur. Regulatorily accurate.</td><td><span class="chip c-p1">Core action broken</span></td></tr>
+      <tr><td><b>Ramadan chronopharmacology adapter</b></td><td>Iftar/Suhoor-aligned dosing across 12 wilayas, 4 rhythm patterns, 9 drug-class guidance sections. No competitor anywhere offers this.</td><td><span class="chip c-ok">A</span></td></tr>
+      <tr><td><b>Medication comparator</b></td><td>2–3 drugs side by side across 15 regulatory characteristics, generic suggestions, withdrawn-product warning, substitution advisory.</td><td><span class="chip c-ok">A−</span></td></tr>
+      <tr><td><b>Renal function calculator</b></td><td>Cockcroft-Gault <i>and</i> MDRD simultaneously, CKD staging, 10 drug classes with dose guidance — including the triple-whammy warning for NSAID + ACE inhibitor + diuretic.</td><td><span class="chip c-ok">Working</span></td></tr>
+      <tr><td><b>Pregnancy &amp; lactation checker</b></td><td>CRAT/ANSM classification, trimester breakdowns, milk/plasma ratios, infant dose percentages, literature citations, explicit alternatives.</td><td><span class="chip c-ok">A−</span></td></tr>
+      <tr><td><b>Family cabinet</b> (<span lang="ar" dir="rtl" style="font-family:var(--arab)">خزانة الأدوية العائلية</span>)</td><td>The only bilingual UI on the platform. Five tabs, PIN lock, PDF export, expiry and duplicate-DCI conformity checks, seasonal heat advice, 100% local data with a consent gate.</td><td><span class="chip c-p2">Untested with data</span></td></tr>
+      <tr><td><b>Barcode scanner</b></td><td>Camera, USB scanner and counter keypad. EAN-13, CIP, DataMatrix.</td><td><span class="chip c-ok">Working</span></td></tr>
+      <tr><td><b>RCP library</b></td><td>911 ANSM-format monographs surfaced per medication.</td><td><span class="chip c-ok">Working</span></td></tr>
+      <tr><td><b>Clinical library</b></td><td>932 monographs, 92-term glossary, 10 patient guides, 30 domains. Grew by 21 entries mid-audit.</td><td><span class="chip c-ok">Working</span></td></tr>
+      <tr><td><b>Generics savings simulator</b></td><td>Not on the menu. Takes 1–4 branded drugs, finds the cheapest same-DCI equivalent at matching dosage, totals the PPA saving.</td><td><span class="chip c-p2">Undocumented</span></td></tr>
+      <tr><td><b>Shortage reporting centre</b></td><td>Not on the menu until mid-audit. Crowdsourced pénurie reports with clinical notes, 58-wilaya selector, watch subscriptions, top-5 ranking.</td><td><span class="chip c-p1">Submit returns 500</span></td></tr>
+      <tr><td><b>Pharmacies de garde</b></td><td>Not on the menu until mid-audit. 52 pharmacies, tel: links, SAMU banner, verify-by-phone disclaimer. The only public-facing tool on the platform.</td><td><span class="chip c-p2">Sparse data</span></td></tr>
+      <tr><td><b>Prescription verification</b></td><td>Sits above the tool tabs and is in no report. Paste a whole prescription, one drug per line, and it identifies and cross-checks in one pass. Genuinely novel — no competitor has it.</td><td><span class="chip c-p2">Unaudited</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The AI layer</h3>
+  <p>A Gemini Flash Copilot grounded in the DzPharm dataset rather than generic pharmacology — it answers Algerian regulatory questions (Liste I versus Liste II) that a general model cannot. It is trilingual with genuine Darija support, not just Modern Standard Arabic: <span lang="ar" dir="rtl" style="font-family:var(--arab)">دوا تاع السكر؟</span> is understood. Three audience modes exist; one of them does nothing (see <span class="chip c-p1">P1-19</span>). Output is structured into four clinical sections with LaTeX dose maths and Algerian brand names. Around it sit voice dictation, four suggested prompts, feedback buttons and text-to-speech.</p>
+
+  <h3>The design system — the second moat</h3>
+  <p>This is the part the main report under-rated and the later reports corrected. Roughly 400 CSS custom properties across 12 semantic categories with dark and light values swapped atomically. A 7-level clinical state system that encodes severity as colour <i>and</i> text <i>and</i> icon. A 20-palette Nuancier with named cultural identities — Craie &amp; Cobalt, Dune &amp; Cèdre de l'Atlas, Perle &amp; Azur d'Alger. An 8-step type scale with <code>calc()</code>-derived line-heights that correctly gives small text proportionally more leading than large text, six weights, five tracking levels. A 4px grid with ten container widths, four radius tokens, ten z-index layers, a Radix-pattern focus ring. 118 Lucide icons across 52 names and not a single raster image. Eleven of twelve contrast pairs pass AAA.</p>
+  <div class="note">
+    <span class="lbl ui">Worth saying plainly</span>
+    <p>A team that ships schema-versioned Zustand persistence, <code>calc()</code> line-heights and a correct ARIA combobox did not build this carelessly. The defects in this document are the debts of speed, not of skill — which is exactly why they are all cheap to clear.</p>
+  </div>
+
+  <h3>Navigation, discovery and infrastructure</h3>
+  <ul>
+    <li><b>Répertoire</b> — 7-column sortable table over 9,555 records, five faceted filters with reference counts, table/card toggle, one-click CSV export with UTF-8 BOM and French semicolons.</li>
+    <li><b>Prix &amp; Chifa</b> — unified medication and parapharmacy catalogue with PPA, class, registry status and CSV export.</li>
+    <li><b>Interactions</b> — sequential checker plus an N×N matrix using the official ANSM/MIPH 4-level classification, with five pre-loaded example pairs covering the five outpatient interactions that kill people.</li>
+    <li><b>Command palette</b> — 23 commands, eight single-key hotkeys, dual-source search across both the drug database and the command list, emergency numbers ordered first.</li>
+    <li><b>Emergency banner</b> — SAMU 14, Protection Civile 102, Police 17, Anti-Poison, as real <code>tel:</code> links, collapsible, persistent.</li>
+    <li><b>Audience modes</b> — Pro / Famille / Botanique, the last tied to a Pharmacopée Royale of traditional and herbal knowledge. Nobody else in the market has this and no report examines it.</li>
+    <li><b>Infrastructure</b> — Next.js App Router on Turbopack, Tailwind v4, Vercel Edge, next-themes, Zustand with schema-versioned persistence, Sonner, Lucide, a v8 service worker with tested offline mode.</li>
+  </ul>
+</section>
+
+<!-- ══ 02 TRIAGE ══════════════════════════════════════ -->
+<section id="triage">
+  <div class="sec-head">
+    <span class="idx ui">Section 02</span>
+    <h2>Where I disagree with the source reports' priorities</h2>
+    <p>The reports graded each feature in isolation. Severity is not a property of a feature — it is a property of what happens to a person when the feature fails. Four items move up, three move down.</p>
+  </div>
+
+  <h4>Moved up to P0</h4>
+  <ul>
+    <li><b>The command palette selection desync</b> was filed P2 polish. Arrow down to <i>Centre Anti-Poison</i>, press Enter, and the platform dials SAMU instead. A pharmacist reaching for the palette is by definition in a hurry. Dialling the wrong emergency service is not polish. <span class="chip c-p0">P0-11</span></li>
+    <li><b>Hard-coded <code>fr-FR</code> speech recognition</b> was filed P1. An Arabic speaker dictates a dose, the engine maps Arabic phonemes onto French, and the resulting nonsense is sent to a clinical model with no review step. A confident, well-formatted answer to a question nobody asked is more dangerous than an error message. <span class="chip c-p0">P0-10</span></li>
+    <li><b>No mandatory review after dictation.</b> "22 kilos" heard as "20 kilos" is a 10% dosing error delivered with full model confidence. <span class="chip c-p0">P0-10</span></li>
+    <li><b>Palette-mutable clinical colours</b>, if V13 confirms it. A contre-indication that is not red in one of twenty palettes is a dispensing hazard. <span class="chip c-p0">P0-12</span></li>
+  </ul>
+
+  <h4>Moved down</h4>
+  <ul>
+    <li><b>"Add a toast system" and "add an error region on login"</b> — both already built and working. Deleted from the backlog entirely.</li>
+    <li><b>Native mobile apps.</b> The reports place this in the high-impact quarterly roadmap. Wrapping a PWA whose routing is broken in Capacitor ships the breakage to an app store review. Deferred until routing and accounts land.</li>
+  </ul>
+
+  <h4>One thing the reports got exactly right, and it bears repeating</h4>
+  <p>Two changes — routing and accounts — unblock roughly twenty other items between them. Routing alone resolves state management, SEO, PWA installability, sharing, the medication detail URL, and the browser history contract. Accounts alone unblock Copilot history, recently-viewed, favourites, notification targeting, cross-device sync and the audit trail. Nothing else on this list has that leverage. Do them first and half the register collapses.</p>
+</section>
+
+<!-- ══ 03 REGISTER ═══════════════════════════════════ -->
+<section id="register">
+  <div class="sec-head">
+    <span class="idx ui">Section 03</span>
+    <h2>The issue register</h2>
+    <p>106 items. Filter by priority, search by keyword or feature number, and tick items off — your progress is stored in this browser only. Open any item for the root cause, the fix instruction and the test that proves it is done.</p>
+  </div>
+
+  <div class="toolbar ui" role="search">
+    <input type="search" id="q" placeholder="Search — try “Arabic”, “#54”, “aria”, “wilaya”" aria-label="Search the issue register">
+    <button class="fbtn" data-f="all" aria-pressed="true">All</button>
+    <button class="fbtn" data-f="P0" aria-pressed="false">P0</button>
+    <button class="fbtn" data-f="P1" aria-pressed="false">P1</button>
+    <button class="fbtn" data-f="P2" aria-pressed="false">P2</button>
+    <button class="fbtn" data-f="P3" aria-pressed="false">P3</button>
+    <button class="fbtn sm" id="expandall" aria-pressed="false">Expand all</button>
+    <button class="fbtn sm" id="reset">Clear ticks</button>
+    <span id="count"></span>
+  </div>
+
+  <div id="list"></div>
+</section>
+
+<!-- ══ 04 DEPS ═══════════════════════════════════════ -->
+<section id="deps">
+  <div class="sec-head">
+    <span class="idx ui">Section 04</span>
+    <h2>What blocks what</h2>
+    <p>Doing these in the wrong order means doing several of them twice. This is the whole dependency structure of the register.</p>
+  </div>
+
+  <h3>The two root nodes</h3>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Root change</th><th>Unblocks</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Real App Router routing</b><br><span class="crumb ui">P0-01 … P0-07</span></td>
+        <td>URL state for the active view · medication detail as a route · intercepting-route modals · shareable links · the Copier-le-lien button · Web Share targets · 9,555 indexable pages · a real sitemap · canonical and hreflang tags · per-medication OG images · PWA start_url and scope · the browser back button · deep links from WhatsApp · Cmd-K navigation that changes the URL · breadcrumbs · protected routes for the account system</td>
+        <td class="num">~2 weeks, 1 senior engineer</td>
+      </tr>
+      <tr>
+        <td><b>NextAuth with per-user identity</b><br><span class="crumb ui">P0-08 … P0-10</span></td>
+        <td>Audit trail · per-user Copilot history · cross-device favourites · cross-device recently-viewed · notification targeting · httpOnly cookie sessions · cross-tab session sync · lock that is not logout · role-based tool access · professional verification · organisation workspaces · paid tiers · the public API · CME tracking</td>
+        <td class="num">1 day for phase 1, 1 week for identity</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>The independent set — no dependencies, ship today</h3>
+  <p>These 23 items touch nothing else and nothing else touches them. Together they are about one working day and they move nine features up a grade band.</p>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Item</th><th>Fix</th><th class="num">Time</th><th>Grade move</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip c-p1">P1-14</span> Reduced motion</td><td>One <code>@media (prefers-reduced-motion: reduce)</code> block</td><td class="num">5 min</td><td>#67 C+ → A</td></tr>
+      <tr><td><span class="chip c-p1">P1-18</span> Model version</td><td>One string, two places</td><td class="num">5 min</td><td>trust</td></tr>
+      <tr><td><span class="chip c-p2">P2-19</span> Login indexable</td><td><code>robots: noindex, nofollow</code></td><td class="num">5 min</td><td>security</td></tr>
+      <tr><td><span class="chip c-p2">P2-20</span> Mobile Enter key</td><td><code>enterkeyhint="go"</code></td><td class="num">5 min</td><td>#7 B+ → A−</td></tr>
+      <tr><td><span class="chip c-p1">P1-08</span> Arabic direction</td><td><code>dir="rtl" lang="ar"</code> on ~5 elements</td><td class="num">25 min</td><td>#6 C+ → B</td></tr>
+      <tr><td><span class="chip c-p1">P1-12</span> Icon labels</td><td>Four <code>aria-label</code> attributes</td><td class="num">25 min</td><td>#62 C → A</td></tr>
+      <tr><td><span class="chip c-p1">P1-07</span> Webfonts</td><td><code>next/font/google</code> wiring</td><td class="num">30 min</td><td>#54 B → A−</td></tr>
+      <tr><td><span class="chip c-p2">P2-32</span> Dashboard H1</td><td>Tagline becomes a subtitle</td><td class="num">30 min</td><td>#64 A− → A</td></tr>
+      <tr><td><span class="chip c-p2">P2-30</span> Focus return</td><td><code>trigger.focus()</code> in two outside-click handlers</td><td class="num">30 min</td><td>#65 B+ → A−</td></tr>
+      <tr><td><span class="chip c-p2">P2-34</span> Wide layout</td><td><code>max-width:80rem;margin:0 auto</code></td><td class="num">30 min</td><td>#55 A− → A</td></tr>
+      <tr><td><span class="chip c-p2">P2-10</span> Wilaya search</td><td>One clause in the filter predicate</td><td class="num">1 h</td><td>#35 B → B+</td></tr>
+      <tr><td><span class="chip c-p1">P1-15</span> Dead prompts</td><td><code>onClick</code> → setInput + send</td><td class="num">1 h</td><td>#39 B− → B+</td></tr>
+      <tr><td><span class="chip c-p1">P1-16</span> Dead examples</td><td><code>onClick</code> → setDrugs</td><td class="num">1 h</td><td>#22 C+ → B</td></tr>
+      <tr><td><span class="chip c-p1">P1-31</span> Firefox mic</td><td>Feature-detect, disable with tooltip</td><td class="num">1 h</td><td>#38 C+ → B−</td></tr>
+      <tr><td><span class="chip c-p1">P1-34</span> Social previews</td><td>One 1200×630 image + two meta tags</td><td class="num">1 h</td><td>#4 B+ → A−</td></tr>
+      <tr><td colspan="4" style="color:var(--ink-3)">…and eight more under 30 minutes each. See the register.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Second-order chains</h3>
+  <ul>
+    <li><b>Streaming before history.</b> Ship the Vercel AI SDK first, then persist. Persisting a batch-render message shape means rewriting the persistence layer when streaming lands.</li>
+    <li><b>Coverage before maps.</b> Do not build a proximity map for Pharmacies de garde while 41 of 58 wilayas are empty. A map of nothing is worse than a list of something.</li>
+    <li><b>Interaction list state before the Chifa and comparator fixes.</b> All three share the drug-selection component; the Chifa bug that routes clicks to the Comparator is almost certainly the same shared component. Fix it once.</li>
+    <li><b>Contrast audit before new palettes.</b> Do not add the twenty-first Nuancier palette until the first twenty pass AA in both themes.</li>
+    <li><b>Accounts before anything that syncs, bills, or claims regulatory compliance.</b></li>
+  </ul>
+</section>
+
+<!-- ══ 05 PLAN ═══════════════════════════════════════ -->
+<section id="plan">
+  <div class="sec-head">
+    <span class="idx ui">Section 05</span>
+    <h2>The execution plan</h2>
+    <p>Seven phases. Phase 0 is half a day. Phase 1 is one day and buys back nine grades. Everything after that is real engineering. Sized for two engineers plus a part-time designer; a solo builder should read the sequence and stretch the calendar, not reorder it.</p>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 0 — Settle the record</h3><span class="when ui">Half a day</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: stop planning on contradictory evidence</span>
+      <ul>
+        <li>Run all thirteen checks in Section 00 against the current build. Record the commit SHA.</li>
+        <li>Close as already-fixed: the toast system, the login error region, the lock button, server-side auth validation, and whichever of manifest/matrix/share/cap V1, V2, V3 and V6 disprove.</li>
+        <li>Answer V13 first. If palettes can recolour clinical severity, everything else waits.</li>
+        <li>Find out what features #20 and #21 are. Add the three bonus tools and the prescription-paste tool to the menu.</li>
+        <li>Re-measure performance on throttled mobile, not warm European edge.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 1 — The one-day sweep</h3><span class="when ui">One day</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: every fix under one hour, all in one pull request</span>
+      <p>Twenty-three items, roughly seven working hours, no dependencies, no architecture. It clears two WCAG failures outright, gives the platform a stable brand identity for the first time, makes Arabic readable, and turns three sets of dead buttons into working ones. Ship it before you plan anything larger — it changes how the product feels, and it will change how you feel about the rest of this list.</p>
+      <p>Order within the day: reduced motion (5 min, benefits ~35% of users) → aria-labels → <code>dir="rtl"</code> → webfonts → the three dead-click wirings → the metadata and robots fixes → the focus and layout polish.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 2 — Routing</h3><span class="when ui">Two weeks</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: 9,555 pages that exist at a URL</span>
+      <ul>
+        <li><b>Days 1–3.</b> Add <code>app/repertoire</code>, <code>app/interactions</code>, <code>app/prix-chifa</code>, <code>app/copilote</code> alongside the existing setState navigation. Both paths work. Nothing breaks.</li>
+        <li><b>Days 4–5.</b> Feature-flag the header behind <code>NEXT_PUBLIC_USE_ROUTER</code>. Ten percent of sessions get <code>&lt;Link&gt;</code>. Watch for back-button errors and lost state.</li>
+        <li><b>Week 2, days 1–3.</b> Ramp to 50 then 100. Delete the setState path. Move the twelve clinical tools to <code>/outils/[tool]</code>.</li>
+        <li><b>Week 2, days 4–7.</b> <code>/medicament/[slug]</code> with <code>generateStaticParams</code> over all 9,555 records, plus the intercepting-route pattern so the modal behaviour survives while the URL changes. Then the branded 404, the dynamic sitemap on the correct domain, canonical tags, per-medication OG images, and the manifest link.</li>
+        <li><b>The day it ships.</b> Submit the sitemap to Search Console. Indexing takes two to four weeks; start the clock.</li>
+      </ul>
+      <p>Carry the state-management fixes in the same fortnight — the interaction drug list into the URL, Copilot history into Zustand v3, and a <code>storage</code> event listener for cross-tab sync. Roughly 150 lines, and they close the three most expensive data-loss paths on the platform.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 3 — Identity</h3><span class="when ui">Two to three weeks</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: the platform knows who is using it</span>
+      <ul>
+        <li><b>Day 1.</b> NextAuth with the existing shared code as a Credentials provider. The code moves to an environment variable, the session becomes an httpOnly cookie. Cross-tab sync and the client-side bypass both close for free.</li>
+        <li><b>Week 1.</b> Rate limiting on the auth route. Idle timer with a fifteen-minute lock. Lock that preserves the Zustand store so a pharmacist called away does not lose a six-drug interaction check.</li>
+        <li><b>Weeks 2–3.</b> Per-user accounts. Email plus passkey — prefer WebAuthn over TOTP; it is better security and far better ergonomics on the phone a pharmacist already holds. Roles: titulaire, assistant, médecin, étudiant, patient.</li>
+        <li><b>Then.</b> Migrate favourites, recently-viewed and Copilot history server-side. Audit log writing every lookup, every Copilot query and every tool use against a user ID.</li>
+      </ul>
+      <p>Announce seven days ahead. Keep the shared code alive for thirty days as a fallback. Send magic links to known power users before the cutover.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 4 — Make the Copilot trustworthy</h3><span class="when ui">Two weeks</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: the signature feature stops feeling like a demo</span>
+      <ul>
+        <li>Vercel AI SDK — <code>streamText</code> and <code>useChat</code>. Eleven seconds of frozen UI becomes half a second to first token, plus a working cancel button. This is the single largest perceived-performance change available anywhere on the platform.</li>
+        <li>Persist conversations. Thread list, titles, export to Markdown and PDF through the existing print pipeline.</li>
+        <li>Fix Mode patient — it currently emits the same DCI-and-LaTeX output as Mode pro. Write a real system prompt with a reading-level target and no jargon, then verify with the same query in all three modes.</li>
+        <li>Persist the mode to Zustand so it stops resetting to "pro" on every load.</li>
+        <li>Voice: FR/AR toggle, permission pre-prompt, state-aware stop button, and a mandatory review beat before a dictated clinical query is sent.</li>
+        <li>Chunked TTS so long clinical answers can be listened to while examining a patient.</li>
+        <li>The four missing live regions, so screen-reader users learn that an answer has arrived.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 5 — Repair what is already built</h3><span class="when ui">Two weeks, parallel</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: nothing on the platform is a dead end</span>
+      <ul>
+        <li>Shortage submit 500 — the community pipeline is the platform's only two-way public-health channel and it is currently closed. Check Vercel logs, fix, add a success toast, add rate limiting, add a Résolu state.</li>
+        <li>Chifa drug-addition routing to the Comparator. Almost certainly a shared search component with the wrong handler bound. Fix once, verify in all three consumers.</li>
+        <li>Parapharmacie filter returning zero rows — 675 products currently unreachable. Likely a category field mismatch.</li>
+        <li>100-per-page rendering only 40 rows. Ramadan "Copier le plan" failing. Répertoire sort direction not toggling. Card view rows not keyboard reachable. The empty Paramètres placeholder — remove it or build it.</li>
+        <li>Search: fuzzy matching, recent queries on empty focus, match highlighting. "dolipran" returning nothing is the most common failure a real user will hit.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <header><h3>Phase 6 — Accessibility and internationalisation, properly</h3><span class="when ui">Three to four weeks</span></header>
+    <div class="inner">
+      <span class="goal ui">Goal: WCAG 2.2 AA certified, and readable in Arabic</span>
+      <ul>
+        <li>Full <code>next-intl</code> adoption. Arabic UI translations. RTL as a first-class layout using CSS logical properties, not mirrored margins. A language switcher in the header.</li>
+        <li>All twenty Nuancier palettes tested in both themes against AA contrast and against deuteranopia, protanopia and tritanopia. Fix the failures. Menthe at 2.1:1 on light is already known to fail.</li>
+        <li>Lock clinical state colours out of the palette system permanently.</li>
+        <li>Répertoire table reflow to cards at 320px. Remaining px values to rem. Fixed heights to min-heights.</li>
+        <li>Screen-reader passes with NVDA, VoiceOver and TalkBack — in French <i>and</i> Arabic.</li>
+        <li>axe-core in CI at zero violations. Lighthouse CI budgets. Playwright end-to-end on login, search and medication detail.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 06 DOD ════════════════════════════════════════ -->
+<section id="dod">
+  <div class="sec-head">
+    <span class="idx ui">Section 06</span>
+    <h2>Definition of done</h2>
+    <p>An item is closed when someone other than its author can reproduce the acceptance test in the register. Not when the pull request merges.</p>
+  </div>
+
+  <h3>Every pull request</h3>
+  <ul>
+    <li>TypeScript strict. ESLint and Prettier clean.</li>
+    <li>axe-core scan: zero violations on every page the change touches.</li>
+    <li>Lighthouse CI: performance ≥ 95, accessibility ≥ 95, best practices ≥ 95, SEO ≥ 90.</li>
+    <li>Initial JS budget 120 KB. Current baseline is around 85 KB — protect it.</li>
+    <li>Keyboard-only pass on the changed surface. Unplug the mouse.</li>
+    <li>Both themes. Both languages once i18n lands. 320px and 200% zoom.</li>
+  </ul>
+
+  <h3>Any pull request touching clinical output</h3>
+  <ul>
+    <li>A pharmacist reviews the content. Not the engineer who wrote it.</li>
+    <li>Every dose calculation is verified by hand against an independent source.</li>
+    <li>The change is dated and attributed in a clinical changelog.</li>
+    <li>Prompt or model changes run against the evaluation set before merge. If you do not have one yet, building it is Phase 4's real deliverable — two hundred Algerian clinical questions with expert answers, run on every change. Without it you cannot know whether a prompt edit made the Copilot better or worse.</li>
+  </ul>
+
+  <h3>Release gates by phase</h3>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Phase</th><th>Cannot ship until</th></tr></thead>
+    <tbody>
+      <tr><td>Routing</td><td>All fifteen checks in the routing report's verification list pass — direct access, back, forward, refresh, Cmd-K, sitemap count, manifest, OG debugger, zero console errors.</td></tr>
+      <tr><td>Auth</td><td>The sessionStorage bypass fails. Rate limiting demonstrably throttles. The audit log writes a row for every lookup. Thirty-day fallback confirmed working.</td></tr>
+      <tr><td>Copilot</td><td>First token under one second at p95. Cancel works mid-stream. A refresh mid-conversation loses nothing. All three modes produce measurably different output on the same query.</td></tr>
+      <tr><td>i18n</td><td>A native Arabic reader completes the three core flows without switching to French.</td></tr>
+      <tr><td>Accessibility</td><td>An NVDA user completes login, search and a medication lookup unaided.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══ 07 RISK ═══════════════════════════════════════ -->
+<section id="risk">
+  <div class="sec-head">
+    <span class="idx ui">Section 07</span>
+    <h2>Risk register</h2>
+    <p>Twelve risks. The last three are the ones that actually keep me up.</p>
+  </div>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Risk</th><th class="num">Likelihood</th><th class="num">Impact</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Routing migration breaks in-session navigation</td><td class="num">Medium</td><td class="num">High</td><td>Feature flag, 10% → 50% → 100% over a week, both paths live throughout.</td></tr>
+      <tr><td>Auth migration logs everyone out</td><td class="num">High</td><td class="num">Medium</td><td>Seven-day notice, magic links to power users, shared code alive for thirty days.</td></tr>
+      <tr><td>generateStaticParams over 9,555 pages blows the build</td><td class="num">Medium</td><td class="num">Medium</td><td>Test the build time early. Fall back to ISR with on-demand revalidation if it exceeds the Vercel limit.</td></tr>
+      <tr><td>Webfonts regress LCP</td><td class="num">Low</td><td class="num">Low</td><td><code>next/font</code> self-hosts and preloads. <code>font-display:swap</code>. Measure before and after.</td></tr>
+      <tr><td>Streaming breaks LaTeX and table rendering mid-token</td><td class="num">Medium</td><td class="num">Low</td><td>Buffer incomplete delimiters before rendering. The AI SDK handles most of this.</td></tr>
+      <tr><td>Darija speech recognition stays below usable accuracy</td><td class="num">High</td><td class="num">High</td><td>Ship the FR/AR toggle now. Treat Darija STT as research, not roadmap. Set an 85% floor before public release.</td></tr>
+      <tr><td>Gemini rate limits or outages during pharmacy hours</td><td class="num">Medium</td><td class="num">High</td><td>The graceful fallback already observed is good. Add a semantic cache, a secondary model, and a published status page.</td></tr>
+      <tr><td>Indexing 9,555 pages triggers thin-content penalties</td><td class="num">Medium</td><td class="num">Medium</td><td>Only index records with a completeness score above a threshold. You already compute 7/7 — use it as the gate.</td></tr>
+      <tr><td>Crowdsourced shortage reports get spammed or weaponised</td><td class="num">Medium</td><td class="num">Medium</td><td>Rate limiting, verified-pharmacist weighting, a moderation queue, and an expiry on unconfirmed reports.</td></tr>
+      <tr><td><b>A pharmacist acts on a hallucinated dose</b></td><td class="num">Medium</td><td class="num">Severe</td><td>Stop letting the model do arithmetic. Have it extract parameters and let deterministic code compute. Cross-check every numeric dose in a response against the posology database and flag mismatches. This is the single most important engineering decision on the platform.</td></tr>
+      <tr><td><b>Stale data causes a real-world harm</b> — a pharmacy listed as open at 02:00 that is closed, a price that moved, an AMM withdrawn</td><td class="num">Medium</td><td class="num">High</td><td>Per-record <code>lastVerifiedAt</code>, visible freshness badges everywhere, and a published data-refresh cadence. The disclaimer is currently doing all the trust work alone, and that is fragile.</td></tr>
+      <tr><td><b>Regulatory exposure before accounts exist</b></td><td class="num">Medium</td><td class="num">Severe</td><td>A clinical decision-support tool that cannot attribute an action to a practitioner cannot be defended if something goes wrong. Until Phase 3 lands, be explicit in the interface about what the platform is and is not. Do not market it to institutions yet.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══ 08 METRICS ════════════════════════════════════ -->
+<section id="metrics">
+  <div class="sec-head">
+    <span class="idx ui">Section 08</span>
+    <h2>What to measure</h2>
+    <p>Grades are a snapshot. These are the numbers that tell you whether the work landed.</p>
+  </div>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Metric</th><th>Baseline today</th><th>Target</th><th>Tells you</th></tr></thead>
+    <tbody>
+      <tr><td>Indexed pages in Search Console</td><td class="num">~1</td><td class="num">8,000+</td><td>Whether routing actually opened the growth channel</td></tr>
+      <tr><td>Organic sessions per month</td><td class="num">near zero</td><td class="num">first 10k, then 50k</td><td>Whether the medication pages capture intent</td></tr>
+      <tr><td>Copilot time-to-first-token, p95</td><td class="num">3–11 s</td><td class="num">&lt; 1 s</td><td>Whether streaming landed</td></tr>
+      <tr><td>Copilot repeat-question rate</td><td class="num">unmeasured</td><td class="num">falling</td><td>Whether conversation history is working — it is also a direct cost saving</td></tr>
+      <tr><td>Interaction checks completed vs started</td><td class="num">unmeasured</td><td class="num">&gt; 90%</td><td>Whether state loss is still destroying work</td></tr>
+      <tr><td>Zero-result search rate</td><td class="num">unmeasured</td><td class="num">&lt; 3%</td><td>Whether fuzzy matching and synonyms work. Log every zero-result query — it is also your data-gap backlog.</td></tr>
+      <tr><td>axe violations in CI</td><td class="num">several</td><td class="num">0</td><td>Whether accessibility is held or just achieved once</td></tr>
+      <tr><td>Lighthouse mobile, throttled 4G</td><td class="num">unknown</td><td class="num">&gt; 90 all four</td><td>What an actual Algerian phone user experiences</td></tr>
+      <tr><td>Shortage reports submitted per week</td><td class="num">0 — endpoint down</td><td class="num">&gt; 20</td><td>Whether the community pipeline is alive</td></tr>
+      <tr><td>Wilaya coverage: garde and prayer times</td><td class="num">17/58 and 12/58</td><td class="num">58/58</td><td>Whether the product serves the interior and the south, not just the coast</td></tr>
+      <tr><td>Arabic-locale sessions</td><td class="num">0 — no Arabic UI</td><td class="num">&gt; 20%</td><td>Whether the patient-facing audience is reachable at all</td></tr>
+      <tr><td>Clinical eval set pass rate</td><td class="num">no eval set</td><td class="num">&gt; 95%, never regressing</td><td>Whether the Copilot is getting better or just different</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="lbl ui">The one-line version</span>
+    <p>Half a day of verification, one day of one-hour fixes, two weeks of routing, three weeks of identity. That sequence closes every P0, clears two WCAG failures, opens 9,555 pages to search, and turns the strongest pharmaceutical dataset in the Maghreb into something a pharmacist can link to, trust and be accountable for.</p>
+  </div>
+</section>
+
+<footer>
+  <p>DzPharm master audit and remediation plan · synthesised from 62 source documents covering 68 features · 106 tracked items · tick state is stored in this browser only.</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+/* ════════ GRADE BARCODE ════════ */
+const FEATURES=[
+["#1","Routing architecture","D"],["#2","State management","C"],["#3","Performance architecture","A"],["#4","SEO & metadata","B"],
+["#5","PWA capabilities","A"],["#6","Internationalisation","C"],["#7","Login flow","B"],["#8","Authentication model","D"],
+["#9","Session management","B"],["#10","Pregnancy & lactation","A"],["#11","Command palette","B"],["#12","Universal search","A"],
+["#13","Faceted filters","A"],["#14","Emergency banner","A"],["#15","Notifications panel","C"],["#16","Mobile nav (see #47)","B"],
+["#17","Répertoire","B"],["#18","Medication detail","B"],["#19","Prix & Chifa","B"],["#20","No report exists","X"],
+["#21","No report exists","X"],["#22","Interactions checker","C"],["#23","Interactions matrix","B"],["#24","Pediatric posology","A"],
+["#25","Chifa simulator","A"],["#26","Ramadan adapter","A"],["#27","Medication comparator","A"],["#28","Catalogue & prix","A"],
+["#29","Family cabinet","X"],["#30","Renal calculator","X"],["#31","RCP library","X"],["#32","Clinical library","X"],
+["#33","Pregnancy checker","X"],["#34","Barcode scanner","X"],["#35","Pharmacies de garde","B"],["#36","AI Copilot core","B"],
+["#37","Copilot mode system","B"],["#38","Voice dictation","C"],["#39","Suggested prompts","B"],["#40","Conversation history","D"],
+["#41","Streaming responses","C"],["#42","Theme system","A"],["#43","Notifications centre","B"],["#44","Recently viewed","B"],
+["#45","Plus menu","B"],["#46","Search autocomplete","B"],["#47","Mobile navigation","A"],["#48","Favorites system","A"],
+["#49","Sharing system","B"],["#50","Shortage reporting","B"],["#51","Print system","A"],["#52","Data export","A"],
+["#53","Colour system","A"],["#54","Typography","B"],["#55","Spacing & layout","A"],["#56","Iconography","A"],
+["#57","Radius & shadows","A"],["#58","Nuancier","A"],["#59","Visual hierarchy","A"],["#60","Motion & transitions","A"],
+["#61","Live regions","C"],["#62","Icon-only labels","C"],["#63","Skip link & landmarks","A"],["#64","Heading hierarchy","A"],
+["#65","Focus management","B"],["#66","Colour blindness","B"],["#67","Reduced motion","C"],["#68","Zoom & reflow","B"]
+];
+const GH={A:30,B:52,C:74,D:94,X:18},GC={A:'var(--gA)',B:'var(--gB)',C:'var(--gC)',D:'var(--gD)',X:'var(--gX)'};
+const GL={A:'A — production grade',B:'B — good, minor gaps',C:'C — real bugs',D:'D — critical gaps',X:'not separately graded'};
+(function(){
+  const bc=document.getElementById('barcode'),rd=document.getElementById('bc-read');
+  FEATURES.forEach(f=>{
+    const t=document.createElement('button');
+    t.className='tick';t.style.height=GH[f[2]]+'%';t.style.background=GC[f[2]];
+    t.style.border='0';t.style.padding='0';
+    t.setAttribute('aria-label',f[0]+' '+f[1]+', '+GL[f[2]]);
+    const show=()=>{rd.innerHTML='<b>'+f[0]+' '+f[1]+'</b> — '+GL[f[2]];};
+    t.addEventListener('mouseenter',show);t.addEventListener('focus',show);
+    t.addEventListener('click',show);
+    bc.appendChild(t);
+  });
+})();
+
+/* ════════ ISSUE REGISTER ════════ */
+/* p=priority f=feature ref t=title s=symptom r=root cause x=fix a=acceptance e=effort d=deps */
+const I=[
+/* ─────────── P0 ─────────── */
+{id:"P0-01",p:"P0",f:"#1",t:"No URL routing — 22 of 22 direct paths return the stock Next.js 404",
+s:"/repertoire, /interactions, /copilote, /medicament/doliprane and eighteen more all render the generic create-next-app error page. No DzPharm header, no nav, no search box. A pharmacist who mistypes is stranded.",
+r:"The whole application is one registered route at /. window.history.state shows a single __PAGE__ child and no siblings. Navigation is setView() on React state, never router.push().",
+x:"Create app/repertoire/page.tsx, app/interactions/page.tsx, app/prix-chifa/page.tsx and app/copilote/page.tsx alongside the existing setState navigation so both paths work. Then feature-flag the header buttons behind NEXT_PUBLIC_USE_ROUTER, roll 10% → 50% → 100% over a week, and delete the setState path. Read filters from searchParams in each page so deep links carry filter state.",
+a:"Paste each of the 22 tested paths into a fresh tab. Each renders its view, not a 404. Refresh on each — same result.",e:"2 weeks",d:"root node"},
+
+{id:"P0-02",p:"P0",f:"#1",t:"In-app navigation never touches browser history",
+s:"Click Répertoire in the header and the view changes but the URL stays at /. Press Back and the browser jumps to whatever real URL came before — usually a 404 from an earlier direct-access attempt.",
+r:"Same root cause as P0-01. history.pushState is never called.",
+x:"Resolved by P0-01. next/link handles history, prefetch and URL updates automatically. Set history.scrollRestoration = 'auto' explicitly in the root layout to document the intent rather than relying on the browser default.",
+a:"Dashboard → Répertoire → Interactions → Back → Back returns through the same views in reverse. Forward re-advances.",e:"included",d:"P0-01"},
+
+{id:"P0-03",p:"P0",f:"#1",t:"Zero internal anchors in the DOM",
+s:"The authenticated dashboard contains five <a> tags: the skip link and four tel: emergency numbers. Every other navigation element is a <button onClick>.",
+r:"Architectural: buttons were faster to build than a route hierarchy at MVP, and the cost compounds with every new feature.",
+x:"Resolved by P0-01. Every navigation target becomes a next/link <Link>, which is a real anchor with a real href — crawlable, middle-clickable, right-click-copyable.",
+a:"document.querySelectorAll('a[href^=\"/\"]').length is greater than 20 on the dashboard.",e:"included",d:"P0-01"},
+
+{id:"P0-04",p:"P0",f:"#1 #18",t:"Medication detail is a modal with no URL — 9,555 records are unshareable",
+s:"Clicking a row opens a rich detail modal with RCP, Chifa rates and 60 same-DCI equivalents. The URL stays at /?q=DOLIPRANE. Refresh closes it. A pharmacist who finds a critical interaction cannot send a colleague a link.",
+r:"Modal state lives in useState. This is the single most valuable content on the platform and it has no address.",
+x:"Use the Next.js intercepting-route pattern: app/medicament/[slug]/page.tsx for direct access, and app/@modal/(.)medicament/[slug]/page.tsx for the overlay. Clicking a row calls router.push — the modal appears and the URL changes. Refresh loads the full page. Back closes the modal. All four state-loss paths close with one pattern. Add generateStaticParams over all 9,555 slugs and generateMetadata for per-page title, description, canonical and OG image.",
+a:"Open a medication, copy the URL, paste in a private window: the same medication renders full-page. Press Back from the modal: it closes without leaving the list.",e:"3 days",d:"P0-01"},
+
+{id:"P0-05",p:"P0",f:"#1 #4",t:"sitemap.xml lists one URL, on a domain that does not resolve",
+s:"The sitemap served from dz-pharm.vercel.app contains a single entry pointing at https://dzpharm.dz/. DNS returns ERR_NAME_NOT_RESOLVED. Google discards it as a dead link.",
+r:"The sitemap was written for a planned production domain that was never brought up.",
+x:"Replace with a dynamic app/sitemap.ts that emits the four primary routes, the twelve tool routes and all 9,555 medication routes on the domain actually being served. Gate medication entries on the existing 7/7 completeness score so thin records stay out of the index. Decide the domain question now — either point dzpharm.dz at Vercel or commit to the vercel.app hostname; a half-migrated domain is worse than either.",
+a:"Fetch /sitemap.xml and count <loc> entries: more than 8,000. Every hostname matches the serving domain. Search Console accepts it with zero errors.",e:"4 h",d:"P0-01"},
+
+{id:"P0-06",p:"P0",f:"#1 #4",t:"robots.txt points crawlers at the same dead domain",
+s:"The file correctly allows Googlebot, Bingbot, Twitterbot and facebookexternalhit — then its Sitemap: directive sends them to the non-resolving host.",
+r:"Same as P0-05.",x:"One line. Change the Sitemap: URL to the serving domain.",
+a:"curl /robots.txt and follow the sitemap URL — it resolves and returns XML.",e:"5 min",d:"—"},
+
+{id:"P0-07",p:"P0",f:"#1",t:"No branded 404 — the error page is outside the app shell",
+s:"The 404 has the next-error-h1 class, browser-default fonts and no DzPharm chrome at all. No header, no nav, no search, no way back except editing the URL.",
+r:"app/not-found.tsx was never created, so Next.js serves its stock page outside the layout.",
+x:"Create app/not-found.tsx with the brand shell, an autofocused search box, and links to Accueil and Répertoire. Add app/error.tsx with a retry button for 500s. When routing lands, add a did-you-mean suggestion for near-miss medication slugs — most 404s will be mistyped drug names.",
+a:"Visit /nonexistent: you get the DzPharm layout, a search box that works, and two working links.",e:"3 h",d:"—"},
+
+{id:"P0-08",p:"P0",f:"#8",t:"One shared access code for everyone — no identity, no audit trail",
+s:"4815162342 grants full access to every pharmacist, doctor, student and anyone else who has been told the number. The platform cannot know who is using it. If a dosing recommendation contributes to harm, there is no way to establish who asked.",
+r:"A deliberate MVP shortcut that has outlived its context. It is now a regulatory blocker for professional deployment, and it blocks six other features.",
+x:"Phase 1, one day: NextAuth with a Credentials provider wrapping the existing code, moved to process.env.DZPHARM_ACCESS_CODE, session as an httpOnly JWT cookie. Phase 2, one week: per-user accounts with email plus a passkey — prefer WebAuthn to TOTP, it is stronger and works on the phone the pharmacist already has. Roles: titulaire, assistant, médecin, étudiant, patient, each unlocking different tools. Phase 3: an audit log writing user ID, action, resource and timestamp for every medication lookup, Copilot query and clinical tool use.",
+a:"Two users log in with different credentials and see different favourites. The audit table contains a row for each of their lookups. An admin can revoke one without affecting the other.",e:"1d + 1w",d:"root node"},
+
+{id:"P0-09",p:"P0",f:"#7 #8",t:"No rate limiting on the auth endpoint",
+s:"Six sequential wrong codes returned identical errors with identical latency. No backoff, no lockout, no CAPTCHA.",
+r:"Not implemented. The ten-digit code is not practically brute-forceable at one attempt per second, but the absence of throttling means no signal reaches you when someone tries.",
+x:"Upstash Redis rate limiter on POST /api/auth: five attempts per IP per fifteen minutes, exponential backoff after three, alert at twenty. Log every failure with IP and timestamp — you want to know if this is ever attempted, not just to prevent it.",
+a:"Six rapid wrong submissions produce a throttle response with a Retry-After header. An alert fires in your monitoring.",e:"4 h",d:"—"},
+
+{id:"P0-10",p:"P0",f:"#38",t:"Speech recognition is hard-coded to fr-FR and there is no review step",
+s:"recognition.lang = 'fr-FR'. An Arabic or Darija speaker gets French phonemes mapped onto Arabic sounds — unusable transcripts. There is no language switch, no auto-detect, and no mode-aware default. Separately, the send button is enabled the instant dictation stops, so a misheard dose goes straight to the model.",
+r:"Browser-native Web Speech API with a single hard-coded locale. And a UX gap: dictation is treated as typing, when it is a lossy channel.",
+x:"Ship an FR/AR toggle beside the mic in two hours — this alone unblocks Arabic speakers. Then add a mandatory review beat: a short 'Relisez votre message' state with the send button disabled for roughly 500 ms after recognition ends. Later, surface the per-result confidence scores the Web Speech API already exposes and underline low-confidence words — those are precisely the numbers a pharmacist needs to check. Treat Darija speech recognition as research, not roadmap; no engine has training data for it.",
+a:"Set the toggle to AR, dictate an Arabic phrase, and the transcript is Arabic. Dictate a number and the send button is briefly unavailable while the review prompt shows.",e:"6 h",d:"—"},
+
+{id:"P0-11",p:"P0",f:"#11",t:"Command palette can dial the wrong emergency number",
+s:"Open the palette, press ArrowDown once to highlight Centre Anti-Poison, press Enter — the platform dials SAMU 14. The visual highlight moved; the Enter handler did not.",
+r:"selectedIndex is tracked for rendering but the Enter handler references a stale or hardcoded index 0.",
+x:"Single source of truth for selectedIndex. Pass it into the Enter handler, never a captured value. Add a test that arrows down N times and asserts the activated command equals the highlighted one. The reports filed this as P2 polish; on a screen whose first two entries are emergency numbers, it is a safety defect.",
+a:"Arrow down to each of the first five entries in turn and press Enter. The activated command matches the highlight every time.",e:"1 h",d:"—"},
+
+{id:"P0-12",p:"P0",f:"#53 #66",t:"Verify that Nuancier palettes cannot recolour clinical severity",
+s:"Twenty palettes swap the colour tokens. The 7-level clinical state system lives in the same token architecture. If switching to Menthe can make a contre-indication less than unmistakably red, that is a dispensing hazard.",
+r:"Unknown — no report asks this question. See V13 in Section 00.",
+x:"If confirmed: move the seven clinical state colours into a separate immutable token layer that the Nuancier cannot reach. Severity is not decoration and must not be themeable. Keep the redundant encoding — colour and text and icon — and add shape as a fourth channel so severity survives greyscale printing and monochrome displays.",
+a:"Cycle all twenty palettes in both themes with a contre-indication on screen. The danger indicator is unmistakable in all forty combinations, and still readable with colour removed entirely.",e:"4 h",d:"V13"},
+/* ─────────── P1 ─────────── */
+{id:"P1-01",p:"P1",f:"#2 #22",t:"Interaction drug list and patient context vanish on refresh",
+s:"A doctor builds a six-drug list and fills the patient context — three to ten minutes of work. Refresh, crash, or session timeout and all of it is gone. Neither the URL nor the Zustand store holds any of it.",
+r:"The list lives in component useState inside the Interactions view.",
+x:"A useInteractionListState hook reading and writing the URL: /interactions?drugs=9775,8421,1523&ctx=65+ans%2C+diabetique. Use router.replace with scroll:false so each keystroke does not add a history entry. Roughly fifty lines. Refresh, back/forward and sharing all start working at once — a colleague can be sent the exact analysis.",
+a:"Build a six-drug list with context, refresh: everything is still there. Copy the URL into another browser: same list.",e:"1 day",d:"—"},
+
+{id:"P1-02",p:"P1",f:"#40 #2",t:"The Copilot is stateless — every refresh wipes the conversation",
+s:"Zero of the five conversation-history patterns are implemented. Refresh, tab close, modal close or navigating away all erase the thread. A pharmacist following up the next day must re-establish the child's weight, age and current medications from memory — which is exactly where errors enter.",
+r:"No copilotHistory slice exists. The infrastructure is already there for favourites; it was simply never applied here.",
+x:"Add a copilotHistory slice to the existing Zustand store with a v2→v3 migration, storing id, role, content, mode and timestamp per message. Prune to the last fifty threads and thirty messages each to stay clear of the 5 MB localStorage ceiling. Then the thread list, then export to Markdown and PDF through the existing print pipeline. Once accounts land, move it server-side so it follows the user across devices. Note this is also a cost fix — without history, users re-ask, and every re-ask is a paid API call.",
+a:"Ask a question, get an answer, refresh. The conversation is intact and the follow-up still has context.",e:"1 day",d:"—"},
+
+{id:"P1-03",p:"P1",f:"#2",t:"No cross-tab synchronisation",
+s:"Favourite a medication in one tab and the other tab does not know until it reloads. Worse, a reload in tab B can overwrite state written by tab A.",
+r:"No storage event listener, no BroadcastChannel. The Zustand store is read once at hydration.",
+x:"Ten lines in onRehydrateStorage: listen for the storage event, and when the key is dzpharm-store, re-hydrate with useStore.setState(parsed.state, true). Wrap in try/catch — a corrupt payload must not take down the app.",
+a:"Two tabs open. Favourite in A. Within a second the count updates in B without a reload.",e:"1 day",d:"—"},
+
+{id:"P1-04",p:"P1",f:"#2",t:"The active view is not in the URL",
+s:"Refresh on /?q=DOLIPRANE&status=ACTIF and you land on the dashboard, not the filtered Répertoire the URL describes. The URL knows the query but not which screen it belongs to.",
+r:"Same root as P0-01.",x:"Resolved by the routing migration — each view gets its own path and the filters become that page's searchParams.",
+a:"Refresh on /repertoire?q=DOLIPRANE&status=ACTIF and land on the filtered Répertoire.",e:"included",d:"P0-01"},
+
+{id:"P1-05",p:"P1",f:"#2 #44",t:"Recently-viewed cap contradiction: one entry or ten",
+s:"One report found the array holding a single entry after several views. Another describes a working ten-item cap with dedup.",
+r:"Most likely the cap is applied before dedup, so an existing entry moved to the top pushes everything else out.",
+x:"Settle it with V6 first. If the cap is genuinely 1, enforce it after dedup: filter out the existing id, unshift the new one, then slice(0,10). Add a clear-history control and a 30-day expiry — a browsing history of medications is sensitive on a shared pharmacy machine.",
+a:"View five different medications. All five appear, newest first, no duplicates.",e:"2 h",d:"V6"},
+
+{id:"P1-06",p:"P1",f:"#2",t:"Legacy localStorage keys duplicate store state",
+s:"dzpharm_palette and dzpharm_design_mode exist alongside the Zustand store's own palette and designMode. Two sources of truth for the same value.",
+r:"An incomplete migration into the store.",
+x:"Add a v3 migration that reads the legacy keys, writes them into the store if the store value is absent, then deletes them. Give it a thirty-day grace period before removing the read path.",
+a:"After one load on a browser holding legacy keys, the keys are gone and the palette is unchanged.",e:"1 h",d:"—"},
+
+{id:"P1-07",p:"P1",f:"#54",t:"Zero webfonts — the brand changes shape with the operating system",
+s:"document.fonts.size returns 0. Every character renders in the OS fallback: San Francisco on macOS, Segoe UI on Windows, Roboto on Android, something generic on older Linux. Arabic is worst affected — the Darija content renders in whatever Arabic face the OS happens to ship.",
+r:"--default-font-family is defined but set to an empty string. The eight-step scale, six weights and five tracking levels are all correct — there is simply no typeface attached to them.",
+x:"next/font/google rather than a <link> tag: it self-hosts, preloads at build time, applies font-display:swap and removes the third-party request entirely. Thirty minutes. On the family choice I would go further than the source reports: Inter plus Noto Sans Arabic are two unrelated designs bolted together. For a genuinely bilingual clinical product, use a Latin/Arabic superfamily designed as one system — IBM Plex Sans with IBM Plex Sans Arabic, or Readex Pro — so the two scripts share vertical metrics, weight and voice. Arabic also wants more leading than Latin: set roughly 1.7 against the Latin 1.5.",
+a:"document.fonts.size is greater than 0. An Arabic string and a French string sit on the same baseline grid at the same optical weight.",e:"30 min",d:"—"},
+
+{id:"P1-08",p:"P1",f:"#6",t:"Arabic renders without dir=\"rtl\" and is unreadable",
+s:"The <html> element has no dir attribute and the Copilot's Arabic elements have no inline direction. Arabic text flows left to right: the question mark lands on the wrong side and punctuation is misplaced. To a native reader this is broken text.",
+r:"The platform was built French-first and Arabic content was added without direction handling.",
+x:"Add dir=\"rtl\" lang=\"ar\" to every Arabic-bearing element — roughly five today. Wrap Arabic response spans in <span lang=\"ar\" dir=\"rtl\">. Twenty-five minutes for the highest-severity i18n defect on the platform. When the full Arabic UI lands, switch the layout to CSS logical properties (margin-inline-start, padding-inline-end, inset-inline) rather than mirroring every rule by hand.",
+a:"A native Arabic reader confirms the Darija suggestion renders correctly, question mark included.",e:"25 min",d:"—"},
+
+{id:"P1-09",p:"P1",f:"#6",t:"html lang is hard-coded to fr — screen readers speak Arabic in French",
+s:"When Arabic content renders, the lang attribute does not change. A screen reader applies French pronunciation rules to Arabic text and produces noise.",
+r:"Static lang on the root element, no per-span language marking.",
+x:"Per-span lang attributes now; a dynamic root lang when the language switcher lands.",
+a:"NVDA or VoiceOver reads an Arabic string in an Arabic voice.",e:"1 h",d:"—"},
+
+{id:"P1-10",p:"P1",f:"#6",t:"No language switcher — the interface is French only",
+s:"The Copilot accepts any language but every label, button, toast and error is French. A pharmacist counselling an Arabic-speaking patient cannot turn the screen around.",
+r:"No i18n framework. All strings are inline.",
+x:"next-intl with extracted message catalogues. French first, then Arabic, then Darija as a distinct register — Darija is not a dialect of the UI language, it is how people actually speak, and offering it would be a market first. Add a switcher in the header and persist the choice per user. Also consider Tamazight: culturally significant, and nobody in this market has done it.",
+a:"Switch to Arabic and complete login, search and a medication lookup without a single French string appearing.",e:"1 week",d:"P1-08"},
+
+{id:"P1-11",p:"P1",f:"#6 #36",t:"Darija in, Modern Standard Arabic out",
+s:"The Copilot understands دوا تاع السكر؟ — genuinely impressive — and answers in formal MSA. Readable, but the register does not match. A pharmacist who asks in Darija expects Darija back.",
+r:"The system prompt does not instruct the model to mirror the input register.",
+x:"One clause in the system prompt: respond in the same register and dialect as the question. Supply two or three Darija few-shot examples. Verify with five Darija queries.",
+a:"Five Darija questions return Darija answers, judged by a native speaker.",e:"1 h",d:"—"},
+
+{id:"P1-12",p:"P1",f:"#62",t:"Four icon-only buttons have no accessible name",
+s:"Botanique, Nuancier and the Copilote shortcut have empty aria-labels; the theme toggle has a generic one that does not say which way it goes. A screen-reader user hears 'bouton' four times with no way to tell them apart.",
+r:"Search and bell were labelled; these four were missed. WCAG 2.2 SC 4.1.2 fails.",
+x:"aria-label=\"Mode botanique\", \"Nuancier — changer de palette\", \"Ouvrir le Copilote IA\", and for the theme toggle a state-aware label plus aria-pressed: 'Passer en mode clair' when dark, 'Passer en mode sombre' when light. Describe the action, never the icon.",
+a:"NVDA announces four distinct, meaningful names. The theme toggle announces differently in each mode.",e:"25 min",d:"—"},
+
+{id:"P1-13",p:"P1",f:"#61",t:"Four async events are silent to screen readers",
+s:"The Copilot answer arriving, a toast appearing, the notification badge incrementing and the search result count changing all happen with no announcement. A screen-reader user submits a query and hears nothing.",
+r:"Only the login form has a live region. WCAG 2.2 SC 4.1.3 fails.",
+x:"A visually-hidden <LiveRegion> component using the existing sr-only class, rendered four times: role=status polite for the Copilot ('Réponse du Copilote disponible'), aria-live polite on the Sonner container, polite for new notifications ('Nouvelle notification : …'), polite for result counts ('16 résultats trouvés'). Thirty minutes each.",
+a:"With a screen reader running, each of the four events is announced without moving focus.",e:"2 h",d:"—"},
+
+{id:"P1-14",p:"P1",f:"#67 #60",t:"Thirteen keyframes, 103 transitions, zero reduced-motion queries",
+s:"A user with vestibular disorder who has set Reduce motion at OS level gets the full 0.5 s modal slide anyway. Motion sensitivity affects roughly a third of people at some level.",
+r:"The media query was never written.",
+x:"One @media (prefers-reduced-motion: reduce) block setting animation-duration and transition-duration to 0.01ms with !important on all elements plus scroll-behavior:auto. Use 0.01ms not 0ms — some browsers treat 0 as 'use the default'. Then add window.matchMedia checks to the two or three JavaScript-driven animations the CSS cannot reach. Five minutes for the largest accessibility return on the platform.",
+a:"Enable Reduce motion at OS level. Modal, toast, nav hover and palette all appear instantly. Nothing is hidden — only the movement is gone.",e:"5 min",d:"—"},
+
+{id:"P1-15",p:"P1",f:"#39 #36",t:"The four suggested prompts are dead clicks",
+s:"They hover, they focus, they have a pointer cursor — and clicking one does nothing. The user must retype the prompt by hand. These are the first thing a new user sees.",
+r:"No onClick handler is bound. The same pattern recurs in three other places on the platform.",
+x:"onClick calls setInput(prompt.text) then sendMessage(prompt.text). Five lines. While you are in the file: make the prompts mode-specific — four for pro, four for patient, four for enfant. The patient set should not contain DCI jargon.",
+a:"Clicking each of the four prompts submits it and returns an answer. Switching mode changes the four prompts shown.",e:"1 h",d:"—"},
+
+{id:"P1-16",p:"P1",f:"#22",t:"The five quick-example interaction pairs are dead clicks",
+s:"AINS + AVK, Méthotrexate + AINS, Doublon Paracétamol, Statine + Macrolide, IEC + Spironolactone — the five outpatient interactions most likely to kill a patient, presented as buttons that do nothing.",
+r:"Same missing-handler pattern.",
+x:"Bind each example to setDrugs(example.drugIds). Once P1-01 lands, this writes straight to the URL and the example becomes shareable teaching material.",
+a:"Clicking AINS + AVK populates the list with two drugs and enables the Analyser button.",e:"1 h",d:"—"},
+
+{id:"P1-17",p:"P1",f:"#11",t:"The palette's single-key hotkeys are decorative",
+s:"Each command shows a hotkey badge — H, R, P, I, C, S, B, T. Pressing the key filters the list by that letter instead of navigating. The hotkeys are the entire power-user value proposition.",
+r:"No keydown handler; every keystroke goes to the search input.",
+x:"A useEffect that listens for keydown while the palette is open and returns early when the event target is an INPUT. Map each key to its route. Ship alongside P0-11 — same file, same test.",
+a:"Open the palette, press R without typing: the Répertoire opens and the URL changes.",e:"2 h",d:"P0-01"},
+
+{id:"P1-18",p:"P1",f:"#36",t:"The model version contradicts itself",
+s:"The command palette says Gemini 3.8 Flash. The Copilot header says Gemini 3.6 Flash. A pharmacist relying on clinical output is entitled to know which model answered.",
+r:"One of the two strings was never updated.",x:"Read the model string from the API route and render it from a single constant in both places. Five minutes.",
+a:"Both surfaces show the same version and it matches the deployed model.",e:"5 min",d:"—"},
+
+{id:"P1-19",p:"P1",f:"#37",t:"Mode patient produces the same output as Mode professionnel",
+s:"Asked 'Mon enfant de 4 ans (16 kg) a besoin d'amoxicilline. Comment lui donner?' in patient mode, the Copilot returned DCI, pharmacological class, Liste I status and LaTeX mg/kg maths — the professional answer verbatim. Mode enfant, by contrast, works beautifully.",
+r:"The patient branch of the system prompt is identical to the professional one, or differs too subtly to change the output.",
+x:"Write a real patient prompt with a concrete target: B1 reading level, no DCI, no drug class, no regulatory status, no LaTeX. Practical instructions only — how much, how often, with or without food, for how long, what to watch for, when to call a doctor. Use Mode enfant as the proof that the mechanism works. Verify by running one identical query through all three modes and diffing the output.",
+a:"The same query in three modes yields three measurably different answers. Patient mode contains zero occurrences of DCI, Liste or mg/kg.",e:"1 day",d:"—"},
+
+{id:"P1-20",p:"P1",f:"#37",t:"Copilot mode is not persisted",
+s:"The toggle updates React state but never writes to the Zustand store, so it resets to pro on every load. A pharmacist who works in patient mode re-selects it every session.",
+r:"The store has an audience slice; the mode toggle does not write to it.",x:"Write through to the store on change, read from it on mount.",
+a:"Select Mode enfant, refresh: still Mode enfant.",e:"1 h",d:"—"},
+
+{id:"P1-21",p:"P1",f:"#41 #36",t:"No streaming — three to eleven seconds of frozen interface",
+s:"The user submits, sees a spinner, and eventually the whole answer appears at once. There is no progressive rendering and no way to cancel a query that has clearly gone the wrong way.",
+r:"The API route uses a batch generateContent call and the component uses fetch.",
+x:"Adopt the Vercel AI SDK: streamText server-side, useChat client-side. The SDK handles progressive markdown, incomplete-delimiter buffering and cancellation. Replace the send button with Stop during streaming. Add react-katex with stream-aware buffering so LaTeX does not render half-formed. Auto-scroll to keep the newest token visible. One day for the biggest perceived-speed change available anywhere on the platform: eleven seconds of nothing becomes half a second to first word.",
+a:"First token under one second at p95. Stop halts mid-answer and keeps the partial text. LaTeX never renders broken mid-stream.",e:"1 day",d:"—"},
+
+{id:"P1-22",p:"P1",f:"#40",t:"No thread list, export, search or branching",
+s:"Even with persistence, there is no way to find a conversation from three weeks ago, no way to attach one to a patient record, and no way to explore a what-if without losing the main thread.",
+r:"None of the four patterns exist.",
+x:"Thread list first — a sidebar of past conversations showing the first message truncated, the mode, and a timestamp. Then export to Markdown and PDF through the existing print pipeline. Then client-side keyword search across message content. Branching last; pharmacists rarely need it. Note the clinical argument for export: if a patient returns with an adverse event, the pharmacist needs to retrieve what was discussed.",
+a:"Open a conversation from last week from the sidebar. Export it as a PDF that a pharmacist would accept into a patient file.",e:"4 days",d:"P1-02"},
+
+{id:"P1-23",p:"P1",f:"#36",t:"Text-to-speech is blocked on long answers",
+s:"'Lecture audio indisponible — message trop long'. Clinical answers are long by nature, so the feature is disabled precisely when it is most useful — a pharmacist listening while examining a patient.",
+r:"A length cap on the TTS provider call.",
+x:"Chunk the response into segments under 300 characters at sentence boundaries and play sequentially through a Web Audio queue with a short crossfade. Or move to a streaming TTS provider. Either way, remove the cap.",
+a:"A 2,000-character answer plays end to end with no audible seams.",e:"1 day",d:"—"},
+
+{id:"P1-24",p:"P1",f:"#9",t:"No idle timeout on a tool used on shared computers",
+s:"After thirty seconds of inactivity the session was still live, and nothing suggests any timer exists. A pharmacist who steps away leaves the platform open to whoever walks past the counter.",
+r:"No idle timer implemented.",
+x:"A useIdleTimer hook on mousemove, keydown and click with a fifteen-minute default. Warn at thirteen minutes with a Rester connecté button, then lock. Make the interval configurable per role — a counter terminal should lock in five.",
+a:"Leave the app idle fifteen minutes: it locks and requires re-authentication.",e:"2 h",d:"—"},
+
+{id:"P1-25",p:"P1",f:"#9",t:"Lock behaves as logout and destroys in-progress work",
+s:"The button says Verrouiller. It clears everything and sends the user to /login. A pharmacist called away mid-consultation loses the six-drug interaction list they were building.",
+r:"The lock handler clears both the auth session and the client state.",
+x:"Separate the two. On lock, clear only the auth session; leave the Zustand store intact. On resume, require authentication — a PIN or a passkey, not a full re-login — and the work is still there. This is what 'lock' means on every other device a pharmacist owns.",
+a:"Build a drug list, lock, unlock: the list is still there.",e:"4 h",d:"P0-08"},
+
+{id:"P1-26",p:"P1",f:"#50",t:"Shortage report submission returns a 500",
+s:"The Centre de signalement holds nine real community reports — DOLIPRANE paediatric syrup, AUGMENTIN 1 g, VENTOLINE, INSULATARD. Submitting a new one fails with 'Erreur interne du serveur'. The platform's only two-way public-health channel is closed.",
+r:"Server-side. Check the Vercel function logs for the actual exception.",
+x:"Fix the endpoint. Then: a success toast, rate limiting against spam, a Résolu state so pharmacists can close a shortage, and an expiry on unconfirmed reports. Weight reports from verified pharmacists more heavily once accounts exist. This feature has no competitor anywhere and it is currently inert.",
+a:"Submit a report: it appears in the list with a confirmation toast. Submitting twenty in a minute is throttled.",e:"1 day",d:"—"},
+
+{id:"P1-27",p:"P1",f:"#25",t:"Chifa simulator: clicking a search result opens the Comparator",
+s:"The core action of the tool — adding a drug to a simulated prescription — navigates to a different tab instead. Reproduced on three separate attempts. The regulatory content is accurate and the calculation is well designed, and neither can be reached.",
+r:"A shared search component whose result handler is bound to addToComparator rather than a context-aware callback.",
+x:"Make the handler a prop rather than a hardcoded call, then pass the right one from each consumer. Verify in all three: Chifa, Comparator, Interactions. This is almost certainly the same component behind other odd navigation behaviour — fix once, test everywhere.",
+a:"In the Chifa tab, clicking a result adds it to the prescription and the tab does not change.",e:"1 day",d:"—"},
+
+{id:"P1-28",p:"P1",f:"#19 #28",t:"The Parapharmacie filter returns zero rows",
+s:"Selecting Parapharmacie empties the table with no query active. Tout le catalogue and Médicaments both work, and parapharmacy items are visible in the combined view — so the data is there.",
+r:"A category field mismatch in the filter predicate. The rows the combined view shows as parapharmacy are not matching the filter's expected value.",
+x:"Log the actual category values present in the dataset and compare against what the predicate tests. Likely a case, accent or naming difference. Around 675 products are currently unreachable.",
+a:"Selecting Parapharmacie returns a non-empty, correctly filtered table.",e:"2 h",d:"—"},
+
+{id:"P1-29",p:"P1",f:"#22 #23",t:"The Matrice tab appears empty",
+s:"One report found the tab switching but no grid rendering. Another tested the same grid successfully with three drugs and found no bugs at all.",
+r:"Probably an empty-state gap rather than a render bug — the matrix needs at least two drugs and the first test had none.",
+x:"Settle with V2. If it is the empty state, the fix is not a conditional but a message: the excellent empty-state copy that already exists elsewhere in the module, telling the user to add two or more medications, with a button that takes them there.",
+a:"Opening Matrice with zero, one and three drugs each produces a sensible screen.",e:"2 h",d:"V2"},
+
+{id:"P1-30",p:"P1",f:"#26",t:"Copier le plan fails in the Ramadan adapter",
+s:"The button returns 'Copie impossible'. The generated schedule is the whole output of the tool and it cannot leave the screen.",
+r:"navigator.clipboard.writeText failing — typically an insecure context, a missing permission, or a call outside a user-gesture handler.",
+x:"Call it directly inside the click handler, wrap in try/catch, and fall back to a hidden textarea with document.execCommand('copy'). Confirm with a toast. While here: add Imprimer and Partager — a Ramadan schedule is something a patient takes home, so it should be printable with pictograms, not just copyable.",
+a:"Copier le plan puts the schedule on the clipboard in Chrome, Safari and Firefox and shows a confirmation.",e:"1 h",d:"—"},
+
+{id:"P1-31",p:"P1",f:"#38",t:"The dictation button is dead on Firefox with no explanation",
+s:"Firefox does not ship SpeechRecognition. The button renders, focuses, accepts clicks and silently does nothing. No console error, no toast, no state change. The user concludes the platform is broken.",
+r:"No feature detection on mount.",
+x:"Check for window.SpeechRecognition || window.webkitSpeechRecognition on mount. If absent, render the button disabled with a tooltip: 'Dictée non supportée sur ce navigateur — utilisez Chrome ou Safari'. A visible explanation beats a silent failure every time.",
+a:"On Firefox the button is visibly unavailable and says why.",e:"1 h",d:"—"},
+
+{id:"P1-32",p:"P1",f:"#38",t:"No microphone permission pre-prompt",
+s:"The browser's native permission dialog appears with no context. Privacy-conscious users deny reflexively — and once denied, the button is permanently broken until they find the setting in browser preferences, which most never will.",
+r:"recognition.start() triggers the prompt immediately on first click.",
+x:"A small dialog on first click: DzPharm uses the microphone only to transcribe your message, the audio is never sent or stored, only the transcribed text is kept. Autoriser / Plus tard. That sentence converts denials into grants because it is true and specific.",
+a:"First click shows the explanation before the browser prompt. Denying shows a recoverable state, not a dead button.",e:"2 h",d:"—"},
+
+{id:"P1-33",p:"P1",f:"#38",t:"The stop button's accessible name does not change while recording",
+s:"It stays 'Dicter un message' even when it has become 'stop'. A screen-reader user has no audible signal that recording is live.",
+r:"Static aria-label.",x:"Conditional label plus aria-pressed={isRecording}. One line.",
+a:"NVDA announces 'Arrêter la dictée, pressé' during recording.",e:"10 min",d:"—"},
+
+{id:"P1-34",p:"P1",f:"#4",t:"No og:image or twitter:image — every share is a text blob",
+s:"Links shared to WhatsApp, Facebook, LinkedIn or Twitter show no visual branding. In a market where WhatsApp is the primary professional channel, this is the most-seen surface of the product.",
+r:"The tags were never added.",
+x:"Design one 1200×630 default card and add og:image, twitter:image, og:url, og:site_name, twitter:site. Change twitter:card from summary to summary_large_image. Once routing lands, generate per-medication cards at the edge with @vercel/og showing brand, DCI, dosage, PPA and the Chifa rate — a pharmacist forwarding a drug on WhatsApp then sends a readable summary, not a bare link.",
+a:"Paste a URL into WhatsApp and the Facebook debugger. Both render a branded card.",e:"1 h",d:"—"},
+
+{id:"P1-35",p:"P1",f:"#4",t:"No canonical URL on any page",
+s:"Google may index /?ref=share and / as separate pages, splitting the ranking signal. With filter parameters in the URL this multiplies fast.",
+r:"Not implemented.",x:"alternates.canonical in the layout metadata, and per-page in generateMetadata for medication routes.",
+a:"View source on three pages including a filtered Répertoire: each has one correct canonical.",e:"30 min",d:"P0-01"},
+
+{id:"P1-36",p:"P1",f:"#4 #6",t:"No hreflang alternates",
+s:"Even single-language, declaring hreflang=\"fr\" and x-default helps. Once Arabic exists it becomes essential — without it Google cannot tell which version to serve.",
+r:"Not implemented.",x:"Add now for French and x-default; extend to ar-DZ when i18n lands.",
+a:"View source: both hreflang links present and correct.",e:"30 min",d:"—"},
+
+{id:"P1-37",p:"P1",f:"#4",t:"Twitter card type and three Open Graph tags missing",
+s:"twitter:card is summary rather than summary_large_image; og:url, og:site_name and twitter:site are absent.",
+r:"Partial metadata implementation. The parts that exist are good — og:locale is fr_DZ, which is a thoughtful detail most platforms miss.",
+x:"Complete the set in the layout metadata object.",a:"The Twitter card validator shows a large image card with correct attribution.",e:"20 min",d:"P1-34"},
+
+{id:"P1-38",p:"P1",f:"#5",t:"The manifest link tag may be missing from head",
+s:"The manifest is served at /manifest.webmanifest with four icons including a maskable one, correct display and theme colour. But if <link rel=\"manifest\"> is absent from head, the browser never finds it and the install prompt never fires.",
+r:"Route exists, discovery tag missing.",
+x:"Add <link rel=\"manifest\" href=\"/manifest.webmanifest\"> and <meta name=\"theme-color\"> to the root layout. Five minutes on an otherwise A-grade feature.",
+a:"DevTools → Application → Manifest shows it parsed. The Chrome install prompt fires on a fresh profile.",e:"10 min",d:"V1"},
+/* ─────────── P2 ─────────── */
+{id:"P2-01",p:"P2",f:"#19",t:"Selecting 100 per page renders 40 rows",
+s:"The 20-per-page option renders 20 correctly. 100 renders 40.",r:"An off-by-something or a hard cap in the render path, probably a performance guardrail nobody documented.",
+x:"Find the cap. If it is deliberate, remove the 100 option or label it. Better: virtualise the table with react-window and drop pagination entirely for the 9,555-row Répertoire.",
+a:"Choosing 100 renders 100 rows.",e:"2 h",d:"—"},
+{id:"P2-02",p:"P2",f:"#17",t:"Sort direction does not visibly toggle",
+s:"Clicking Trier par Marque twice leaves the same first row and shows no direction indicator.",r:"Either the toggle is not wired or the caret is missing. The test was ambiguous because ABAVIR is alphabetically first either way.",
+x:"Re-test with a middle-of-alphabet sort. Add an explicit ascending/descending caret and put the sort state in the URL so a sorted view is shareable.",
+a:"Two clicks reverse the order and the caret flips.",e:"2 h",d:"—"},
+{id:"P2-03",p:"P2",f:"#17",t:"Card view rows are not keyboard reachable",
+s:"In card view the accessibility tree surfaced no Ouvrir la fiche controls. Table view exposes them correctly.",r:"The cards are probably plain divs with an onClick, with no role, no tabindex and no keyboard handler.",
+x:"Make each card a real link to the medication route once routing lands. Until then, role=\"button\", tabIndex=0 and an Enter/Space handler.",
+a:"Tab through card view and open a card with Enter.",e:"2 h",d:"—"},
+{id:"P2-04",p:"P2",f:"#17 #12",t:"No result count and no active-filter chips",
+s:"After filtering, the user cannot see how many results they have or which filters are applied without re-opening each combobox.",r:"Not implemented.",
+x:"A count line above the table ('16 résultats pour «DOLIPRANE»') wired to the live region from P1-13, plus removable chips for each active filter and a Tout effacer control.",
+a:"Apply three filters: three chips appear, each removes one, the count updates and is announced.",e:"1 day",d:"—"},
+{id:"P2-05",p:"P2",f:"#12",t:"Search scope is not in the URL",
+s:"Selecting DCI / Molécule does not add a parameter, so a scoped search cannot be shared or restored.",r:"Scope is component state while the query is URL state — an inconsistency inside one control.",
+x:"Add ?scope=dci alongside ?q=.",a:"A scoped search survives refresh and transfers between browsers.",e:"1 h",d:"—"},
+{id:"P2-06",p:"P2",f:"#13",t:"Statut filter has no counts; three filters have unverified URL state",
+s:"Domaine shows reference counts — Cardiologie 845, Antalgiques 388 — which is excellent. Statut shows none. Forme, liste and pays were never tested for URL state.",r:"Inconsistent implementation.",
+x:"Add counts to statut. Verify and, if needed, wire forme, liste and pays to URL parameters.",a:"All five filters show counts and all five round-trip through the URL.",e:"3 h",d:"—"},
+{id:"P2-07",p:"P2",f:"#46",t:"No fuzzy matching — one typo returns nothing",
+s:"Typing 'dolipran' without the final e returns zero results for the most-searched medication in Algeria. Pure substring matching.",r:"med.name.includes(query).",
+x:"Fuse.js with a tuned threshold, or a trigram index. Then go further than the source report suggests: add phonetic matching for French and Arabic transliteration, because Algerian drug names get written many ways — amoxiciline, amoxisilin, أموكسيسيلين should all reach AMOXICILLINE. Build a synonym table for DCI aliases and local names. Log every zero-result query; that log is simultaneously your bug list and your data-gap list.",
+a:"Five common misspellings each return the right drug in the top three.",e:"1 day",d:"—"},
+{id:"P2-08",p:"P2",f:"#46",t:"No recent searches on empty focus",
+s:"Focusing the search box shows an empty listbox. A pharmacist who looked up AUGMENTIN yesterday retypes it.",r:"Not implemented.",
+x:"Persist the last ten queries in Zustand and show them on empty focus, with frequent searches alongside recent ones. Add a clear control — search history is sensitive on a shared machine.",
+a:"Focus the empty box: the last ten queries appear and are clickable.",e:"1 h",d:"—"},
+{id:"P2-09",p:"P2",f:"#46",t:"Matched text is not highlighted in results",
+s:"Typing 'dol' and seeing DOLIPRANE, DOLIBON, DOLYMEX gives no visual cue as to why each matched.",r:"Not implemented.",
+x:"Wrap the matched substring in <mark> with a subtle background. With fuzzy matching, highlight the matched characters rather than a contiguous run.",
+a:"Matched characters are visibly marked in every result.",e:"1 h",d:"P2-07"},
+{id:"P2-10",p:"P2",f:"#35",t:"Searching a wilaya name in Pharmacies de garde returns nothing",
+s:"Typing 'alger' returns zero results even though fourteen Alger pharmacies are listed — the predicate only matches pharmacy names. The wilaya dropdown works, but the two controls teach contradictory mental models.",r:"Single-field filter predicate.",
+x:"Add `|| p.wilaya.toLowerCase().includes(q)`. One clause. Highest UX-per-minute fix in the register.",
+a:"Typing a wilaya name returns that wilaya's pharmacies.",e:"1 h",d:"—"},
+{id:"P2-11",p:"P2",f:"#35",t:"Only 17 of 58 wilayas have on-call pharmacy data",
+s:"Coverage is coastal. Béjaïa, Tlemcen, Mostaganem, Skikda, Batna, Biskra, Tamanrasset and Ouargla are all absent — and the south is exactly where this data is hardest to find elsewhere and therefore most valuable.",r:"Data sourcing, not engineering. The same team already enumerates all 58 wilayas in the shortage centre.",
+x:"Three parallel routes: crowdsourced submissions reusing the shortage centre's form and moderation pattern; scraping the weekly rotations that each wilaya's ordre des pharmaciens publishes; and a partnership with the Directions de la Santé et de la Population, which hold the official rotations. Start with crowdsourcing — it ships fastest and builds the community habit.",
+a:"All 58 wilayas return at least one pharmacy.",e:"1–2 weeks",d:"—"},
+{id:"P2-12",p:"P2",f:"#35",t:"No on-call hours, no coordinates, no freshness stamp",
+s:"'De garde' has a specific legal meaning — nights 20:00–08:00, weekends, public holidays. The directory does not say which window applies. There are no coordinates, so no map and no proximity sort. And there is no last-verified date, so the disclaimer is doing all the trust work alone.",r:"A minimal three-field schema.",
+x:"Add onCallHours, lat, lng and lastVerifiedAt. Show a Vérifié badge when the record is under thirty days old, and a directory-level 'Mis à jour le' banner — reuse the freshness pattern that already exists on Prix & Chifa. Hold the map until coverage passes about forty wilayas; a map of seventeen is a map of absence.",
+a:"Each card shows its on-call window and a verification date. Records older than thirty days are visibly flagged.",e:"2 days",d:"P2-11"},
+{id:"P2-13",p:"P2",f:"#26",t:"Prayer times cover 12 of 58 wilayas",
+s:"A pharmacist in Adrar, Biskra or Tébessa cannot select their wilaya. The latitude spread matters — Tamanrasset's Iftar is 25 minutes off Alger's.",r:"A hand-curated twelve-city table.",
+x:"Compute rather than curate: derive Iftar and Suhoor from latitude, longitude and date using a standard prayer-time algorithm with the calculation method Algeria uses. That covers all 58 wilayas and stays correct as dates move, instead of needing a manual refresh every year. Keep a manual override for users who follow a local mosque's timing.",
+a:"All 58 wilayas selectable; three spot-checks match published local times.",e:"2 days",d:"—"},
+{id:"P2-14",p:"P2",f:"#43",t:"Notifications: no push, no filter, no bulk action",
+s:"Notifications only appear on reload. All three types are mixed together with no filter. Marking twenty as read means twenty clicks.",r:"Polling-free client-side store.",
+x:"Bulk 'Tout marquer comme lu' first — thirty minutes. Then category filter tabs. Then real-time: Server-Sent Events are simpler than WebSockets here and enough for this traffic. Web Push is the bigger prize — a pharmacist who watches a shortage wants to know without opening the tab.",
+a:"A shortage report fires a notification in an open tab within seconds and, with permission, a push when closed.",e:"3 days",d:"P0-08"},
+{id:"P2-15",p:"P2",f:"#15 #43",t:"The F8 notifications shortcut does not open the panel",
+s:"The region is labelled 'Notifications (F8)' — an IDE-style touch — but pressing F8 does nothing observable.",r:"No global keydown listener, or one that is not mounted at the right level.",
+x:"Bind it at the layout level, skip when focus is in a text input, and avoid browser-reserved keys. Then surface every shortcut in a cheat sheet so they are discoverable at all (see P2-50).",
+a:"F8 opens and closes the panel from anywhere except a text field.",e:"2 h",d:"—"},
+{id:"P2-16",p:"P2",f:"#44",t:"Recently viewed has no clear control and no expiry",
+s:"A pharmacist's medication browsing history persists indefinitely on a shared machine with no way to clear it from the interface.",r:"clearAll exists in the store but is not exposed.",
+x:"Surface a clear control on the panel. Add a 30-day expiry. On a shared terminal, make the whole panel opt-out.",
+a:"The clear control empties the panel. Entries older than thirty days disappear.",e:"3 h",d:"—"},
+{id:"P2-17",p:"P2",f:"#49",t:"The share dialog exposes no copyable link",
+s:"The dialog itself is good — brand, DCI, dosage, status, Chifa rate, AMM number, a 7/7 completeness score. What it cannot do is give the user a link, because until routing lands there is no link to give.",r:"Blocked by P0-04.",
+x:"Once the medication route exists, add Copier le lien with a confirmation toast. Include a short human-readable slug rather than a numeric id — /medicament/doliprane-500mg-comprime travels better in WhatsApp than an opaque number.",
+a:"Copier le lien yields a URL that opens the same medication in a fresh browser.",e:"1 h",d:"P0-04"},
+{id:"P2-18",p:"P2",f:"#49",t:"No Web Share API integration",
+s:"navigator.share is undefined. On mobile — where almost all sharing happens, and in a market that runs on WhatsApp — the native share sheet is unavailable.",r:"Not implemented.",
+x:"navigator.share({title, text, url}) with a clipboard fallback where unsupported. Include a compact text summary, not just a URL, so the message is useful even before the recipient taps through. This can ship before routing using the current URL, then improve automatically once real URLs exist.",
+a:"On Android Chrome and iOS Safari, Partager opens the native sheet and WhatsApp receives a readable message.",e:"2 h",d:"—"},
+{id:"P2-19",p:"P2",f:"#7",t:"The login page is indexable",
+s:"robots meta is index, follow. The login page has no value to searchers and indexing it advertises the authentication pattern.",r:"Default metadata inherited.",x:"noindex, nofollow on /login.",
+a:"View source on /login: noindex present.",e:"5 min",d:"—"},
+{id:"P2-20",p:"P2",f:"#7",t:"Missing enterkeyhint on the password field",
+s:"On mobile the Enter key shows Return or a checkmark rather than Go, so it is not obvious that it submits.",r:"Attribute absent.",x:"enterkeyhint=\"go\". Also set name=\"password\" — it is currently an empty string, which makes form serialisation and password-manager behaviour less reliable.",
+a:"On iOS and Android the key reads Go.",e:"5 min",d:"—"},
+{id:"P2-21",p:"P2",f:"#7",t:"An authenticated user visiting /login sees the form again",
+s:"No redirect, no 'already signed in' message. A user may believe they have logged out when they have not.",r:"No server-side session check on the login route.",x:"Redirect to / when a valid session exists.",
+a:"Navigating to /login while authenticated lands on the dashboard.",e:"30 min",d:"—"},
+{id:"P2-22",p:"P2",f:"#7",t:"Show/hide password toggle has no pressed state",
+s:"The toggle works and has a label, but without aria-pressed a screen-reader user cannot tell whether the password is currently visible.",r:"Attribute absent.",x:"aria-pressed bound to the visibility state.",
+a:"NVDA announces the pressed state and it changes on click.",e:"10 min",d:"—"},
+{id:"P2-23",p:"P2",f:"#53",t:"Some Nuancier palettes fail contrast on the light theme",
+s:"Menthe's #34D399 accent on the light background yields 2.1:1 — a clear AA failure. Each palette defines one accent pair used across both themes.",r:"Palettes carry a single accent rather than per-theme values.",
+x:"Give every palette explicit dark-theme and light-theme values. Test all twenty in both themes — forty combinations — and fix the failures. Then add a contrast assertion to CI so a new palette cannot ship below AA.",
+a:"All forty combinations pass AA on text and UI components. CI blocks a failing palette.",e:"4 h",d:"—"},
+{id:"P2-24",p:"P2",f:"#66",t:"The twenty palettes have never been checked for colour blindness",
+s:"The platform does the important thing right — colour plus text plus icon on every status. But red/green state pairs are the weakest channel for the 8% of men with deuteranopia, and no palette has been simulated.",r:"Never tested.",
+x:"Screenshot all twenty palettes in both themes, run all forty through deuteranopia, protanopia and tritanopia simulation, and document the results. Then add shape as a fourth redundant channel on severity — hexagon for contre-indication, triangle for déconseillé, circle for précaution — so severity survives greyscale printing too. Consider shipping a simulator inside the Nuancier itself so users can preview their own palette.",
+a:"A documented pass/fail matrix for forty combinations, with fixes applied.",e:"4 h",d:"P2-23"},
+{id:"P2-25",p:"P2",f:"#68",t:"The Répertoire table does not reflow at 320px",
+s:"rem units mean text scales correctly and 200% zoom passes. At 400% the dashboard reflows to a single column, but the seven-column table still forces horizontal scrolling — a WCAG 1.4.10 gap.",r:"Table layout with no responsive card fallback.",
+x:"Below a breakpoint, render each row as a card with labelled fields. The card view already exists — reuse it as the automatic layout at narrow widths rather than a manual toggle.",
+a:"At 320px and at 400% zoom the Répertoire is fully usable with no horizontal scroll.",e:"4 h",d:"—"},
+{id:"P2-26",p:"P2",f:"#68",t:"Residual px values and fixed-height clipping",
+s:"Most spacing is rem but some px values remain, and fixed-height containers clip their contents at 400%.",r:"Incomplete migration.",x:"Audit the CSS for px, convert to rem, and replace height with min-height throughout.",
+a:"At 400% zoom no content is clipped anywhere.",e:"2 h",d:"—"},
+{id:"P2-27",p:"P2",f:"#42",t:"No prefers-color-scheme detection on first visit",
+s:"A first-time visitor whose OS is set to dark may get light, or vice versa. The theme system is otherwise excellent — it applies before first paint and avoids the flash entirely.",r:"Detection never added.",
+x:"In the existing pre-paint inline script, fall back to matchMedia('(prefers-color-scheme: dark)') when no stored preference exists. Make the toggle tri-state — dark, light, system — so a user can return to following the OS after an explicit choice.",
+a:"A fresh profile with OS dark mode loads dark. The toggle offers a system option.",e:"30 min",d:"—"},
+{id:"P2-28",p:"P2",f:"#42 #62",t:"Theme toggle label is not state-aware",
+s:"'Changer de thème' says nothing about the current state or which way the toggle goes.",r:"Static label.",x:"Covered by P1-12.",a:"The announced name differs between modes.",e:"included",d:"P1-12"},
+{id:"P2-29",p:"P2",f:"#45",t:"Paramètres opens an empty placeholder",
+s:"The Plus menu's Paramètres item leads to 'Bientôt disponible'. Every menu item should lead somewhere.",r:"Shipped ahead of the page.",
+x:"Either remove the item, or — better — build the page, because the settings already exist and are scattered. A real settings page would collect theme, palette, density (the store already has standard/compact/accessibility and it is not exposed anywhere), language, notification preferences, idle-lock interval, and data controls for clearing history and favourites.",
+a:"Paramètres opens a page where every listed preference actually changes something.",e:"1 day",d:"—"},
+{id:"P2-30",p:"P2",f:"#45 #65",t:"Outside-click does not return focus to the trigger",
+s:"Closing the Plus dropdown or the Nuancier dialog with Escape returns focus correctly. Closing by clicking outside drops focus to document.body, so a keyboard user restarts from the top of the page.",r:"The outside-click handler closes without restoring focus.",
+x:"Call trigger.focus() in the outside-click path so it matches the Escape path. Fifteen minutes each.",
+a:"Open, click outside, press Tab: focus resumes from the trigger.",e:"30 min",d:"—"},
+{id:"P2-31",p:"P2",f:"#63",t:"Modal landmark labels are inconsistent",
+s:"The three modals use role=\"dialog\" correctly but do not all carry aria-label or aria-labelledby, so a screen reader may announce an unnamed dialog.",r:"Inconsistent implementation across three components.",
+x:"aria-labelledby pointing at each modal's visible heading. The page-level landmark work is otherwise the platform's strongest accessibility asset — this is the one gap in it.",
+a:"Each modal announces its own name on open.",e:"1 h",d:"—"},
+{id:"P2-32",p:"P2",f:"#64 #59",t:"The dashboard H1 is a marketing tagline",
+s:"'L'intelligence pharmaceutique algérienne' is the H1. A screen-reader user navigating by heading hears a slogan where they expect a page name.",r:"An information-architecture choice made for visual impact.",
+x:"H1 becomes 'Tableau de bord'; the tagline moves to a paragraph below it. The visual design need not change at all — style the H1 to look like the tagline did if that matters. Also formalise the two-size H2 pattern: 24px stays H2, 18px becomes H3.",
+a:"Every page's H1 names the page. Heading levels have no size collisions.",e:"30 min",d:"—"},
+{id:"P2-33",p:"P2",f:"#64",t:"Two visual sizes share the H2 level",
+s:"24px section headers and 18px subsection headers are both H2, so the visual hierarchy is finer than the semantic one.",r:"Styling decisions outran the markup.",x:"Covered by P2-32.",a:"Heading level always matches visual rank.",e:"included",d:"P2-32"},
+{id:"P2-34",p:"P2",f:"#55",t:"No max-width on main and header at wide viewports",
+s:"At 1440px the content stretches edge to edge, so line lengths on prose pages exceed comfortable reading width.",r:"max-width:none on main.",
+x:"max-width:80rem with auto margins on main and header. Keep data-dense tables full width — they benefit from the space — but cap prose and forms.",
+a:"At 1920px the content is centred and no line of prose exceeds about 80 characters.",e:"30 min",d:"—"},
+{id:"P2-35",p:"P2",f:"#55",t:"Three radius values sit outside the four-token scale",
+s:"The scale is 2, 12, 16 and 24px and is used consistently — except for three outliers at 10px and 4px.",r:"Ad-hoc values in individual components.",x:"Migrate to the nearest token or promote the outlier to a documented fifth token. Add a lint rule.",
+a:"Every border-radius on the platform resolves to a named token.",e:"30 min",d:"—"},
+{id:"P2-36",p:"P2",f:"#5",t:"Input borders use the primary colour at rest",
+s:"A 1px solid #38BDF8 border is the same colour as the primary button background, so every input looks permanently focused and the real focus state has nothing left to say.",r:"A single border token doing two jobs.",
+x:"Introduce input-border-rest at roughly rgba(148,163,184,0.25) and reserve the accent for focus. This is the highest-impact visual fix on the platform per minute spent — it is the difference between a form that looks confused and one that looks calm.",
+a:"An unfocused input has a neutral border. Tabbing to it is unmistakable.",e:"30 min",d:"—"},
+{id:"P2-37",p:"P2",f:"—",t:"The light theme is flatter than the dark one",
+s:"#EBEDF2 is slightly too saturated for a background, and cards lose their separation because they rely on background opacity and a border that reads weakly on light.",r:"The dark theme was designed first and the light one derived from it.",
+x:"Shift the background toward #F4F6FA and give cards a light-mode elevation strategy of their own — a very soft shadow or a firmer border — rather than reusing the dark-mode opacity approach. Then check every one of the twenty palettes against the new background.",
+a:"Side-by-side screenshots show comparable card separation in both themes.",e:"4 h",d:"P2-23"},
+{id:"P2-38",p:"P2",f:"#3",t:"Two API routes are uncached and take around two seconds",
+s:"/api/drugs/top-views and /api/stats are on the dashboard's critical path and dominate its load despite otherwise excellent numbers.",r:"Computed per request with no cache layer.",
+x:"Upstash Redis with a five-minute TTL, or precompute at build time as static JSON — the top-eight medications do not change by the minute and the call can disappear entirely.",
+a:"Both routes return under 100ms at p95.",e:"1 day",d:"—"},
+{id:"P2-39",p:"P2",f:"#3",t:"The 453 KB dataset chunk is re-fetched instead of stored",
+s:"It loads lazily after login, which is correct, but it is not persisted. On a throttled mobile connection — which is what most Algerian users have — that is a real cost every session.",r:"Held in the JS heap only.",
+x:"Store it in IndexedDB keyed by a dataset version, and revalidate the version rather than the payload. That also makes offline search genuinely work, which the service worker cannot deliver on its own. If the index can be compressed or split by first letter, better still.",
+a:"A second visit makes no request for the dataset and search still works offline.",e:"2 days",d:"—"},
+{id:"P2-40",p:"P2",f:"#31 #32",t:"RCP count and monograph count disagree",
+s:"The RCP library shows 911; the clinical library shows 932. The difference is unexplained in the interface.",r:"Two libraries with different scopes or refresh cycles.",
+x:"Reconcile, then explain the difference in the UI rather than hiding it. A visible, accurate number is a trust signal; two numbers that do not add up is the opposite.",
+a:"Both counts are correct and any difference is stated.",e:"1 h",d:"—"},
+{id:"P2-41",p:"P2",f:"#24",t:"Weight slider: no label, mismatched range, silent clamping",
+s:"The slider has no aria-label; its range is 2–80 kg while the number input accepts 0.5–150; and entering 200 clamps silently to 150 with no feedback.",r:"Two controls built independently against one value.",
+x:"aria-label=\"Poids en kilogrammes\", aria-valuetext with the unit, a single shared range, and a toast when clamping fires. On a paediatric dosing tool, a silently altered weight is a silently altered dose.",
+a:"Screen reader announces the weight with units. Entering 200 shows an explicit clamp message.",e:"1 h",d:"—"},
+{id:"P2-42",p:"P2",f:"#27",t:"Comparator capped at three drugs, with no export or print",
+s:"Three is the practical floor for a substitution decision, not the ceiling — a pharmacist facing a stockout often has five candidates.",r:"Table layout assumes three columns.",
+x:"Extend to four or five with horizontal scroll, add CSV export reusing the working exporter, and add print reusing the working print pipeline. Both mechanisms already exist elsewhere.",
+a:"Five drugs compare cleanly, export to CSV and print to A4.",e:"1 day",d:"—"},
+{id:"P2-43",p:"P2",f:"#48",t:"Favourites has no page, no cards, and no undo",
+s:"The system works perfectly — add, remove, toast, persist, survive refresh — but the dashboard shows only a count and a 'remove the last one' action, and removal is irreversible.",r:"Shipped minimally.",
+x:"A real /favoris page with cards, search within favourites, and folders or tags ('Pédiatrie', 'Chroniques'). Show the actual favourite cards on the dashboard, not just a number. Add an undo action to the removal toast — Sonner supports it natively and it costs two hours.",
+a:"A dedicated page lists every favourite with search. Removing one offers undo.",e:"1 day",d:"—"},
+{id:"P2-44",p:"P2",f:"#51 #52",t:"Print has no preview and export has no options",
+s:"Both work flawlessly — two print formats, UTF-8 BOM, French semicolons, dated filenames — but printing is blind and the CSV is fixed at eight columns and the current page only.",r:"Deliberately minimal, and reasonably so.",
+x:"A print preview. Column selection and an export-everything option on CSV. A JSON format for anyone integrating. Batch print for multiple medications — a pharmacist preparing a week of patient handouts should not print them one at a time.",
+a:"Preview matches output. Export offers column choice and full-dataset scope.",e:"1 day",d:"—"},
+{id:"P2-45",p:"P2",f:"#23",t:"Matrix cell detail, hover preview, export and N×N scaling all unverified",
+s:"The interface promises per-cell mechanism and management guidance on click. It was never tested. The grid was tested at 3×3 only.",r:"Incomplete test coverage, not a known defect.",
+x:"Verify the cell click. Add a hover preview so scanning does not require clicking. Add export to PDF or image — a matrix is exactly the artefact a pharmacist wants to attach to a file. Test at 6×6 and 10×10 and decide the scaling strategy before a user finds it.",
+a:"A cell click reveals mechanism and conduite à tenir. A 10-drug matrix renders usably.",e:"1 day",d:"V2"},
+{id:"P2-46",p:"P2",f:"#47",t:"No bottom navigation and no swipe gestures on mobile",
+s:"Mobile adaptation is otherwise strong — the header collapses sensibly, the emergency banner condenses to numbers, the grid reflows. But every navigation action requires reaching the top of the screen.",r:"A desktop-header-first responsive strategy.",
+x:"A fixed bottom bar with the four highest-frequency destinations plus a Copilot action in the thumb zone. Respect the safe-area inset. Swipe between primary views is a later nicety. Do this after routing, so the bar drives real navigation.",
+a:"One-handed operation reaches every primary destination without stretching.",e:"3 days",d:"P0-01"},
+{id:"P2-47",p:"P2",f:"#50",t:"Shortage reports have no confirmation, no throttle and no resolution",
+s:"Beyond the 500 error, there is no success feedback, nothing stops a hundred submissions in a minute, and a resolved shortage stays listed forever.",r:"An early-stage submission flow.",
+x:"Success toast. Rate limit. A Résolu action with confirmations from other pharmacists. An automatic expiry on unconfirmed reports. Once accounts exist, weight verified pharmacists more heavily and show who reported what.",
+a:"Submission confirms; spam is throttled; a resolved shortage leaves the active list.",e:"2 days",d:"P1-26"},
+{id:"P2-48",p:"P2",f:"#29",t:"The Family Cabinet has never been tested with data",
+s:"Four of five tabs were empty during the audit because no members or medications were added. The overview tab is excellent — a three-step onboarding, a 100/100 organisation score, expiry and duplicate-DCI conformity checks, seasonal heat advice, a consent gate and local-only storage.",r:"Test coverage gap.",
+x:"Populate three family members with a realistic mix including an expired product, a withdrawn one and a duplicate DCI, then walk Inventaire, Analyse, Urgence and Réglages. The analysis tab crossing a whole family's medications against interactions is a genuinely novel consumer feature and nobody has confirmed it works.",
+a:"All five tabs produce correct output with realistic data. The conformity checks catch all three planted problems.",e:"1 day",d:"—"},
+{id:"P2-49",p:"P2",f:"—",t:"No breadcrumbs in nested views",
+s:"Inside a medication detail or a tool, there is no indication of where you are or how to step back up.",r:"No route hierarchy to draw them from.",
+x:"Once routing lands, derive breadcrumbs from the path: Répertoire › Antalgiques › DOLIPRANE. Add BreadcrumbList structured data — it improves how the page renders in search results as well.",
+a:"Every nested page shows an accurate, clickable trail.",e:"4 h",d:"P0-01"},
+{id:"P2-50",p:"P2",f:"—",t:"Keyboard shortcuts are undiscoverable",
+s:"Cmd-K, F8 and eight single-key hotkeys exist and nothing in the interface reveals them.",r:"No cheat sheet.",
+x:"A modal on ? listing every shortcut by group, plus a hint in the Plus menu. Show the platform-correct modifier — ⌘ on macOS, Ctrl elsewhere — detected rather than assumed.",
+a:"Pressing ? shows every shortcut, and each one listed actually works.",e:"4 h",d:"P1-17"},
+{id:"P2-51",p:"P2",f:"—",t:"The emergency banner only carries the Alger poison centre",
+s:"SAMU 14, Protection Civile 102 and Police 17 are national. The Anti-Poison number is Algiers-specific, so a pharmacist in Oran gets a number that is not theirs.",r:"Hard-coded.",
+x:"Make the poison centre and any regional numbers wilaya-aware, defaulting to Alger with a selector and remembering the choice. Extend the set: CHU emergency, regional pharmacovigilance centre, blood transfusion centre.",
+a:"Selecting a wilaya shows that region's numbers and the choice persists.",e:"1 day",d:"—"},
+{id:"P2-52",p:"P2",f:"#28",t:"The prescription-paste tool is in no report and no menu",
+s:"Above the clinical tool tabs sits a Vérification d'ordonnance box: paste a whole prescription, one drug per line, and the platform identifies each and cross-checks in a single pass. No competitor has this. It is undocumented, unaudited and unmarketed.",r:"Shipped faster than the review could track.",
+x:"Audit it properly, give it its own route and its own dashboard card, and treat it as a headline feature. It is the natural front door to OCR later — paste today, photograph tomorrow.",
+a:"The tool has a route, a card, a test suite and a place in the navigation.",e:"2 days",d:"P0-01"},
+{id:"P2-53",p:"P2",f:"—",t:"Three shipped tools are missing from the review menu",
+s:"The generics savings simulator, the shortage centre and the on-call directory were all discovered during testing rather than listed. Anything not on the menu is probably also missing from navigation, the sitemap and any marketing.",r:"The product ships faster than its own inventory.",
+x:"Reconcile the menu against the live build, then keep them in sync — a release checklist item that adds a feature to the menu, the sitemap and the nav at the same time it ships.",
+a:"Every shipped surface appears in the menu, the navigation and the sitemap.",e:"4 h",d:"—"},
+/* ─────────── P3 ─────────── */
+{id:"P3-01",p:"P3",f:"—",t:"Dashboard padding is tight on wide screens",s:"px-4 leaves the content feeling constrained at 1440px and above.",r:"A single padding value across all breakpoints.",x:"Scale padding with the breakpoint. Pairs naturally with P2-34.",a:"Comfortable gutters at 1920px.",e:"30 min",d:"P2-34"},
+{id:"P3-02",p:"P3",f:"#2",t:"Density mode exists in the store but not in the interface",s:"designMode holds standard, compact and accessibility. Nothing in the UI sets it.",r:"Built ahead of its control.",x:"Expose it in the settings page from P2-29. Compact suits a busy counter; accessibility suits older users. The work is already done — it just needs a switch.",a:"All three modes selectable and visibly different.",e:"2 h",d:"P2-29"},
+{id:"P3-03",p:"P3",f:"#53",t:"Document the token system",s:"~400 tokens across 12 categories with no reference documentation.",r:"Never written down.",x:"A Storybook or a single token page. It is onboarding material and it prevents the ad-hoc values that produced P2-35.",a:"A new contributor can find the right token without reading the CSS.",e:"2 days",d:"—"},
+{id:"P3-04",p:"P3",f:"#3",t:"Lighthouse has never been run in a real browser",s:"All performance figures come from the Performance API in a headless session on a warm European edge cache.",r:"Methodology.",x:"Run Lighthouse mobile with 4G throttling and a cold cache. Add Lighthouse CI so the numbers stop being anecdotes.",a:"A published baseline that reflects an Algerian phone.",e:"1 h",d:"V9"},
+{id:"P3-05",p:"P3",f:"#36",t:"No semantic cache on Copilot queries",s:"Identical or near-identical questions each cost a full API call and a full wait.",r:"No caching layer.",x:"Embed incoming questions, match against recent answers above a similarity threshold, and serve the cached answer with a visible 'réponse déjà donnée' marker and a regenerate option. Cuts cost and latency together. Pairs with conversation history.",a:"A repeated question returns instantly and is clearly marked as cached.",e:"3 days",d:"P1-02"},
+{id:"P3-06",p:"P3",f:"—",t:"No public status or data-freshness page",s:"Users cannot tell whether a problem is theirs or yours, or how current the data is.",r:"Not built.",x:"A page showing API health, Copilot availability, dataset version and last refresh dates per data source. On a clinical reference, freshness is a feature.",a:"The page reflects real system state.",e:"2 days",d:"—"},
+{id:"P3-07",p:"P3",f:"—",t:"No changelog",s:"Nothing tells a returning pharmacist that 21 monographs were added or that prices were re-verified.",r:"Not built.",x:"A Quoi de neuf page and an optional notification. Visible maintenance is how a reference tool earns repeat trust.",a:"Every release adds an entry.",e:"1 day",d:"—"},
+{id:"P3-08",p:"P3",f:"#56",t:"Icon coverage has clinical gaps",s:"118 Lucide icons across 52 names, used well — but Lucide has no icon for a Chifa card, an AMM, a wilaya, a suppository or a sachet.",r:"A general-purpose icon set on a specialist domain.",x:"Draw about forty domain icons on the Lucide grid — 24×24, 2px stroke, round caps — so they are indistinguishable in style. See the innovation document for the full list.",a:"Every domain concept has an icon and the set looks like one family.",e:"1 week",d:"—"},
+{id:"P3-09",p:"P3",f:"—",t:"The Botanique mode has never been audited",s:"Pharmacopée Royale is one of three audience modes and one of the platform's genuine differentiators. No report examines it.",r:"Out of the review menu's scope.",x:"Audit it. Then treat herb–drug interactions as a real clinical surface: traditional remedy use is widespread and largely invisible to prescribers, which makes it both a safety opportunity and something no competitor can copy.",a:"Botanique has a report, a route and a clinical review.",e:"1 week",d:"—"},
+{id:"P3-10",p:"P3",f:"—",t:"No error monitoring or real-user metrics",s:"Zero console errors were observed in testing, which is excellent — but you would not know about errors that only occur for real users on real networks.",r:"Not instrumented.",x:"Sentry for exceptions, Vercel Web Vitals for real-user metrics, and a product analytics funnel on the three core flows. Everything in Section 08 depends on this existing.",a:"An error in production reaches you before a user reports it.",e:"1 day",d:"—"},
+{id:"P3-11",p:"P3",f:"—",t:"No end-to-end test suite",s:"Every finding in 62 reports was produced by manual testing, which is why several of them contradict each other.",r:"Not built.",x:"Playwright on login, search, medication detail, interaction check and a Copilot query, with axe assertions at each step. Run on every pull request. This is what prevents the next audit from finding the same bugs again.",a:"The suite runs green in CI and catches a deliberately introduced regression.",e:"1 week",d:"—"},
+{id:"P3-12",p:"P3",f:"#36",t:"No clinical evaluation set for the Copilot",s:"There is no way to know whether a prompt change improved the model's answers or quietly degraded them.",r:"Not built.",x:"Two hundred Algerian clinical questions with pharmacist-written reference answers, scored automatically on factual accuracy, dose correctness, Algerian specificity and register match. Run on every prompt or model change, and block merges on regression. For a clinical AI this is not optional infrastructure — it is the difference between engineering and guessing.",a:"A prompt change produces a measurable score, and a regression blocks the merge.",e:"2 weeks",d:"—"},
+{id:"P3-13",p:"P3",f:"—",t:"No documented data-refresh cadence",s:"Prices are marked as verified August 2026 and registration data as June 2026. Nothing states how often either is refreshed.",r:"Informal process.",x:"Publish a cadence per data source and hold to it. Show per-record freshness. An out-of-date price on a reimbursement calculator is a real-world error, not a stale cache.",a:"Every dataset has a stated refresh interval and a visible last-updated date.",e:"1 day",d:"—"}
+];
+
+/* ════════ RENDER ════════ */
+const PL={P0:'c-p0',P1:'c-p1',P2:'c-p2',P3:'c-p3'};
+const list=document.getElementById('list');
+let done={};
+try{done=JSON.parse(localStorage.getItem('dzp-audit-done')||'{}')}catch(e){done={}}
+function save(){try{localStorage.setItem('dzp-audit-done',JSON.stringify(done))}catch(e){}}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+I.forEach((it,i)=>{
+  const el=document.createElement('article');
+  el.className='issue'+(done[it.id]?' done':'');
+  el.dataset.p=it.p;
+  el.dataset.s=(it.id+' '+it.f+' '+it.t+' '+it.s+' '+it.r+' '+it.x).toLowerCase();
+  el.innerHTML=
+    '<div class="ihead">'+
+      '<input type="checkbox" id="ck'+i+'" '+(done[it.id]?'checked':'')+' aria-label="Mark '+esc(it.id)+' done">'+
+      '<div>'+
+        '<div class="imeta ui"><span class="chip '+PL[it.p]+'">'+it.p+'</span><span class="id">'+esc(it.id)+'</span>'+
+        '<span>'+esc(it.f)+'</span><span>·</span><span>'+esc(it.e)+'</span>'+
+        (it.d&&it.d!=='—'?'<span>·</span><span>blocked by '+esc(it.d)+'</span>':'')+'</div>'+
+        '<h4>'+esc(it.t)+'</h4>'+
+      '</div>'+
+    '</div>'+
+    '<div class="ibody">'+
+      '<p class="sym">'+esc(it.s)+'</p>'+
+      '<button class="moretog ui" aria-expanded="false">Root cause, fix and acceptance test</button>'+
+      '<div class="detail hidden"><dl>'+
+        '<dt>Root cause</dt><dd>'+esc(it.r)+'</dd>'+
+        '<dt>Fix</dt><dd>'+esc(it.x)+'</dd>'+
+        '<dt>Done when</dt><dd>'+esc(it.a)+'</dd>'+
+      '</dl></div>'+
+    '</div>';
+  const cb=el.querySelector('input');
+  cb.addEventListener('change',()=>{done[it.id]=cb.checked;if(!cb.checked)delete done[it.id];el.classList.toggle('done',cb.checked);save();tally()});
+  const tg=el.querySelector('.moretog'),dt=el.querySelector('.detail');
+  tg.addEventListener('click',()=>{const open=dt.classList.toggle('hidden')===false;tg.setAttribute('aria-expanded',open);tg.textContent=open?'Hide detail':'Root cause, fix and acceptance test'});
+  list.appendChild(el);
+});
+
+let filter='all',query='';
+function apply(){
+  let shown=0;
+  list.querySelectorAll('.issue').forEach(el=>{
+    const okP=filter==='all'||el.dataset.p===filter;
+    const okQ=!query||el.dataset.s.includes(query);
+    const ok=okP&&okQ;
+    el.style.display=ok?'':'none';
+    if(ok)shown++;
+  });
+  document.getElementById('count').textContent=shown+' of '+I.length+' shown';
+}
+function tally(){
+  const n=Object.keys(done).length;
+  document.getElementById('railcount').textContent=n?(I.length-n)+' left':I.length;
+}
+document.querySelectorAll('.fbtn[data-f]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    filter=b.dataset.f;
+    document.querySelectorAll('.fbtn[data-f]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    apply();
+  });
+});
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();apply()});
+document.getElementById('expandall').addEventListener('click',function(){
+  const open=this.getAttribute('aria-pressed')!=='true';
+  this.setAttribute('aria-pressed',open);this.textContent=open?'Collapse all':'Expand all';
+  list.querySelectorAll('.issue').forEach(el=>{
+    const d=el.querySelector('.detail'),t=el.querySelector('.moretog');
+    d.classList.toggle('hidden',!open);t.setAttribute('aria-expanded',open);
+    t.textContent=open?'Hide detail':'Root cause, fix and acceptance test';
+  });
+});
+document.getElementById('reset').addEventListener('click',()=>{
+  done={};save();
+  list.querySelectorAll('.issue').forEach(el=>{el.classList.remove('done');el.querySelector('input').checked=false});
+  tally();
+});
+apply();tally();
+
+/* ════════ THEME ════════ */
+(function(){
+  const b=document.getElementById('themebtn');
+  b.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const isDark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
+    try{localStorage.setItem('dzp-theme',isDark?'light':'dark')}catch(e){}
+  });
+  try{const t=localStorage.getItem('dzp-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
+})();
+</script>
+</body>
+</html>
