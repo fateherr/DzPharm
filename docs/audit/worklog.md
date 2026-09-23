@@ -297,3 +297,33 @@ Notes:
   - palettes.ts confirmed (Phase 0 grep) to NOT override --state-* — the defensive !important block is belt-and-suspenders against future regressions.
   - switchPalette() (palette-sync.tsx) only sets the data-palette attribute — it never touches --state-*. Confirmed safe.
   - Feature flag NEXT_PUBLIC_FEATURE_SEVERITY_LOCK exists only for rollback if a regression appears; default ON (this is a non-negotiable invariant).
+
+---
+Card: P0-08 — Login error announcement (role=alert)
+Date: 2025-01-15 (session)
+Status: ✅ PASSED (already implemented — verify & close)
+Changes: none (verification only — login/page.tsx already correct)
+Test result:
+  - source verify: src/app/login/page.tsx line 134 aria-invalid={Boolean(error)}, line 135 aria-describedby={error ? "pw-error" : undefined}, line 153 role="alert", line 155 aria-live="assertive"
+  - runtime (agent-browser): wrong password submit → role=alert element ALERT_PRESENT, password input aria-invalid="true", aria-describedby="pw-error" (input linked to error). WCAG 3.3.1 (Error Identification) passes at AAA.
+Commit: n/a (no changes — already implemented in a prior session)
+Notes:
+  - The Tool07 deep dive grades the login form B+ with 4 gaps: (1) no rate limiting (P5 of P0-02, needs human), (2) missing enterkeyhint="go" on the password input, (3) robots meta should be noindex for /login (currently index:true in layout.tsx — but that's global; a per-route override is a P2 follow-up), (4) no already-authed redirect (if you visit /login while authed, you stay on /login). These 4 gaps are out of scope for Card 25 (which is ONLY the role=alert verification) but flagged for the human.
+  - Card 25 closes the P0 safety cluster. Summary of the cluster: 7 of 8 cards PASSED (P0-01/02/04/05/06/07/08), 1 BLOCKED (P0-03, depends on the full P0-01 routing migration). The two multi-week cards (P0-01 routing, P0-02 auth) shipped feature-flagged foundations with the remainder flagged NEEDS HUMAN REVIEW.
+
+---
+Card: P1-15 — Reconcile Copilot model version label (V11)
+Date: 2025-01-15 (session)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/command-palette.tsx (label "Gemini 3.8 Flash" → "Gemini 3.6 Flash")
+  - src/components/dzpharm/mobile-bottom-nav.tsx (desc "Gemini 3.8 Flash" → "Gemini 3.6 Flash")
+  - src/app/api/drugs/[id]/rcp/route.ts (comment "Gemini 3.8 Flash" → "Gemini 3.6 Flash")
+  - src/lib/gemini.ts (NEW GEMINI_MODEL_LABEL = "Gemini 3.6 Flash" canonical constant — single source of truth for future UI labels)
+Test result:
+  - lint: 0 NEW errors
+  - source: all 4 model labels now say "Gemini 3.6 Flash", matching GEMINI_MODEL = "gemini-3.6-flash" (lib/gemini.ts:11)
+Commit: pending (this entry)
+Notes:
+  - Closes the V11 Phase-0 finding (Cmd-K palette + mobile nav said "3.8", Copilot header said "3.6", real model "3.6"). Now one canonical value everywhere.
+  - The GEMINI_MODEL_LABEL constant is the single source of truth — future UI labels should import it instead of hardcoding the string.

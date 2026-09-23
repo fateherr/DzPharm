@@ -40,7 +40,7 @@ const SECONDARY_MOBILE_TABS: NavTab[] = [
 const MORE_MENU_ITEMS: Array<{ id: ViewId; label: string; icon: typeof Home; desc: string }> = [
   { id: 'catalogue', label: 'Prix & Chifa', icon: Store, desc: '1 791 produits d’officine avec PPA et remboursement CNAS' },
   { id: 'bibliotheque', label: 'Bibliothèque RCP', icon: Library, desc: 'Monographies cliniques et RCP officiels ANSM' },
-  { id: 'copilote', label: 'Copilote IA', icon: Sparkles, desc: 'Assistant clinique intelligent (Gemini 3.8 Flash)' },
+  { id: 'copilote', label: 'Copilote IA', icon: Sparkles, desc: 'Assistant clinique intelligent (Gemini 3.6 Flash)' },
   { id: 'armoire', label: 'Armoire Familiale', icon: Users, desc: 'Gestion de la pharmacie de maison et péremptions' },
   { id: 'outils', label: 'Outils Médicaux', icon: Wrench, desc: 'Calculateurs pédiatriques, clairance, Ramadan' },
   { id: 'stats', label: 'Statistiques', icon: BarChart3, desc: 'Observatoire du marché pharmaceutique algérien' },

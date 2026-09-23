@@ -13,6 +13,12 @@ export const GEMINI_MODEL = "gemini-3.6-flash";
 /** Pro model — same model for this API tier */
 export const GEMINI_MODEL_PRO = "gemini-3.6-flash";
 
+/** P1-15 — Canonical UI label for the deployed model. Single source of truth so
+ * the Cmd-K palette, Copilot header, mobile nav, and RCP route never diverge
+ * (the V11 audit found "3.8" vs "3.6" mismatch). On a clinical tool the
+ * pharmacist is entitled to know which model answered (Law 85-05 traceability). */
+export const GEMINI_MODEL_LABEL = "Gemini 3.6 Flash";
+
 export interface GeminiMessage {
   role: "user" | "model";
   parts: { text: string }[];

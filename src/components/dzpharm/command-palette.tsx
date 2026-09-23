@@ -438,7 +438,7 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('copilote')} className="cursor-pointer">
             <Sparkles className="size-4 text-primary" />
-            <span>Copilote IA (Gemini 3.8 Flash)</span>
+            <span>Copilote IA (Gemini 3.6 Flash)</span>
             <CommandShortcut>C</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('outils')} className="cursor-pointer">
