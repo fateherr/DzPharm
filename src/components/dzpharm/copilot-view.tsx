@@ -798,8 +798,18 @@ export function CopilotView() {
                   <div className="rounded-2xl rounded-bl-md border border-border bg-background px-4">
                     <TypingDots />
                   </div>
+                  {/* P1-08 — aria-live region announcing the Copilot is thinking. */}
+                  <span className="sr-only" role="status" aria-live="polite">
+                    Le Copilote rédige une réponse…
+                  </span>
                 </div>
-              ) : null}
+              ) : (
+                messages.length > 0 ? (
+                  <span className="sr-only" role="status" aria-live="polite">
+                    Réponse reçue.
+                  </span>
+                ) : null
+              )}
             </div>
           )}
         </div>

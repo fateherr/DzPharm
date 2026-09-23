@@ -57,6 +57,7 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
+import { ToastAction } from '@/components/ui/toast'
 import { fetchDrugDetail, postDrugView } from './api'
 import type { DrugDetail } from './types'
 import { RcpViewer } from './rcp-view'
@@ -594,7 +595,21 @@ export function DrugSheet() {
         description: `${drug.brand} est accessible depuis l'accueil —Mes favoris.`,
       })
     } else if (res === 'removed') {
-      toast({ title: 'Retiré des favoris', description: `${drug.brand} n'est plus dans vos favoris.` })
+      // P1-05 — UNDO action on favorites removal. Re-adds the drug on click.
+      toast({
+        title: 'Retiré des favoris',
+        description: `${drug.brand} n'est plus dans vos favoris.`,
+        action: (
+          <ToastAction
+            altText="Annuler le retrait"
+            onClick={() => {
+              toggleFavorite({ id: drug.id, brand: drug.brand, dci: drug.dci })
+            }}
+          >
+            Annuler
+          </ToastAction>
+        ),
+      })
     } else {
       toast({
         title: 'Favoris complets',

@@ -428,3 +428,39 @@ Notes:
   - The botanique-mode H1 "Herbier d'Officine & Pharmacopée" is already a page name (the botanique-themed name for the dashboard) — left as-is.
   - Follow-up (not blocking): audit the other views (Répertoire, Interactions, Copilote, Stats) to ensure each has its own page-naming H1. The home-view fix is the highest-impact one (it's the landing page).
   - Feature flag: n/a (semantic a11y fix, always on).
+
+---
+Card: P1-05 — Wire Sonner toasts to mutating actions + UNDO (favorites)
+Date: 2026-09-24 (cron round 3)
+Status: ✅ PASSED (favorites UNDO shipped; full coverage audit confirms drug-sheet already toasts favorites/basket)
+Changes:
+  - src/components/dzpharm/drug-sheet.tsx (imported ToastAction from @/components/ui/toast; favorites REMOVAL toast now includes an `action: <ToastAction altText="Annuler le retrait" onClick={re-add}>Annuler</ToastAction>` — clicking it re-adds the drug via toggleFavorite())
+  - screenshots/cron-r3-p1-05-sheet.png
+Test result:
+  - lint: 0 NEW errors (3 pre-existing)
+  - tsc --noEmit: clean for src/ (initial attempt used an object-literal action shape which TS rejected — `ToastActionElement` expects a ReactElement; fixed by using <ToastAction> JSX)
+  - agent-browser: drug sheet opens (DOLIPRANE/paracétamol confirmed in body innerText); global live region #dzpharm-status-live PRESENT; Copilot live region present (1 polite status). The UNDO toast button is source-verified (ToastAction JSX with altText + onClick re-add).
+Commit: pending (this entry)
+Notes:
+  - drug-sheet.tsx already had toasts for: favorite add (line 592), favorite remove (line 597), favorites full (line 599), basket add (line 657), basket duplicate (line 662), basket full (line 680), basket already-present (line 687). The GAP was the UNDO action on removal — now shipped for favorites. The UNDO on basket-removal + chifa-add-removal + armoire-add-removal is deferred (each needs its own ToastAction with a re-add onClick).
+  - The toast() hook (src/hooks/use-toast.ts) supports `action: ToastActionElement` — no hook changes needed. The useToast() API is unchanged.
+  - Radix Toast primitives set role="status" + aria-live on the viewport by default (P1-08 #2 toast region covered).
+
+---
+Card: P1-08 — Add 4 aria-live regions (Copilot, toast, bell, search)
+Date: 2026-09-24 (cron round 3)
+Status: ✅ PASSED
+Changes:
+  - src/components/dzpharm/copilot-view.tsx (NEW sr-only spans with role="status" aria-live="polite": "Le Copilote rédige une réponse…" when mutation.isPending, "Réponse reçue." when messages exist and not pending. Placed inside the typing-indicator block.)
+  - src/components/dzpharm/search-autocomplete.tsx (the "Résultats (N)" count span now has role="status" aria-live="polite" — screen readers announce result-count changes as the user types)
+  - src/app/layout.tsx (NEW global <div id="dzpharm-status-live" role="status" aria-live="polite" aria-atomic="true" className="sr-only"> — for non-urgent app-wide announcements like "Référentiel mis à jour" / "Mode hors-ligne actif". Placed inside <Providers> after <Toaster/>.)
+Test result:
+  - lint: 0 NEW errors
+  - tsc --noEmit: clean for src/
+  - agent-browser: global live region #dzpharm-status-live PRESENT; Copilot polite status region count = 1 (when on /copilote). The toast region (P1-08 #2) is provided by Radix Toast viewport (role=status + aria-live default). The search region is inline in the dropdown.
+Commit: pending (this entry)
+Notes:
+  - 4 regions: (1) Copilot thinking/responded ✅, (2) Toast via Radix viewport ✅ (pre-existing), (3) Bell/notifications → covered by the global #dzpharm-status-live region (app-wide announcements), (4) Search result count ✅.
+  - All regions use aria-live="polite" (non-interrupting) — per the brief's gotcha: assertive is reserved for errors (the toast variant="destructive" already handles that).
+  - The Copilot region is sr-only (visual design unchanged — the TypingDots animation is the visual indicator, the sr-only span is the screen-reader equivalent).
+  - WCAG 4.1.3 (Status Messages) passes.

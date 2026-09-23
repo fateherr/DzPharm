@@ -669,7 +669,9 @@ export function SearchAutocomplete({
           {/* Header row in dropdown */}
           <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
             <div className="flex items-center gap-1.5">
-              <span>Résultats ({results.length})</span>
+              <span aria-live="polite" role="status">
+                Résultats ({results.length})
+              </span>
               {detectedDosage && (
                 <span className="rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold lowercase tracking-normal">
                   dosage : {detectedDosage}

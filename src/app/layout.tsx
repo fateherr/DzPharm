@@ -130,6 +130,18 @@ export default function RootLayout({
           {children}
           <Toaster />
           <PwaProvider />
+          {/* P1-08 — Global aria-live region for status announcements.
+              Screen readers monitor this region and announce changes. Used for
+              non-urgent notifications (e.g. "Référentiel mis à jour", "Mode
+              hors-ligne actif"). Polite — never interrupts. The Copilot thinking/
+              responded + search result-count regions live in their components. */}
+          <div
+            id="dzpharm-status-live"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          />
         </Providers>
         <script
           type="application/ld+json"
