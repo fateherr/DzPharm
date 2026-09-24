@@ -1,11 +1,22 @@
-'use client'
+import type { Metadata } from 'next'
+import { AppShell } from '@/components/dzpharm/app-shell'
+import { CopilotView } from '@/components/dzpharm/copilot-view'
 
-import { DzPharmShell } from '@/components/dzpharm/dzpharm-shell'
+export const metadata: Metadata = {
+  title: 'Copilote IA Pharmacie Clinique · DzPharm',
+  description:
+    'Assistant clinique intelligent pour pharmaciens et médecins : requêtes en français, arabe et darija, vérification de posologies, équivalences et protocoles.',
+  openGraph: {
+    title: 'Copilote IA Pharmacie Clinique · DzPharm',
+    description: 'Intelligence artificielle clinique spécialisée dans la pharmacopée algérienne.',
+    url: 'https://dzpharm.dz/copilote',
+  },
+}
 
-/**
- * P0-01 — /copilote deep-link route (foundation). View = 'copilote'.
- * @see src/app/repertoire/page.tsx for the migration notes.
- */
 export default function CopilotePage() {
-  return <DzPharmShell initialView="copilote" />
+  return (
+    <AppShell>
+      <CopilotView />
+    </AppShell>
+  )
 }

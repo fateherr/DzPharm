@@ -58,6 +58,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchStats } from './api'
 import { computeCabinetAlerts, daysUntil } from './armoire/utils'
+import { TOTAL_DRUGS, TOTAL_MONOGRAPHS, PHARMACY_PRODUCTS } from '@/lib/constants/stats'
 import type { TopViewedDrug } from './types'
 import { formatNumber } from './status-badge'
 import { SearchAutocomplete } from './search-autocomplete'
@@ -631,8 +632,8 @@ export function HomeView() {
                 </h1>
                 <BotanicalFiligree />
                 <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                  L&apos;alliance de la botanique médicinale, des roses damascena et de la pharmacologie moderne :
-                  9&nbsp;555 spécialités, extraits titrés et monographies thérapeutiques.
+                  L&apos;alliance de la botanique médicinale, des roses damascena et de la pharmacologie moderne :{' '}
+                  {formatNumber(stats?.total ?? TOTAL_DRUGS)} spécialités, extraits titrés et monographies thérapeutiques.
                 </p>
               </>
             ) : (
@@ -647,12 +648,9 @@ export function HomeView() {
                     bord
                   </span>
                 </h1>
-                <p className="mx-auto mt-2 max-w-2xl text-lg font-medium text-foreground/80 sm:text-xl">
-                  L&apos;intelligence pharmaceutique algérienne
-                </p>
                 <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                  Le référentiel national des médicaments enrichi par l&apos;IA : recherche
-                  sur 9&nbsp;555 AMM, contrôle d&apos;interactions et assistant clinique.
+                  L&apos;intelligence pharmaceutique algérienne : le référentiel national des médicaments enrichi par l&apos;IA — recherche
+                  sur {formatNumber(stats?.total ?? TOTAL_DRUGS)} AMM, contrôle d&apos;interactions et assistant clinique.
                 </p>
               </>
             )}
@@ -666,11 +664,11 @@ export function HomeView() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
                     <FileText className="size-3.5 text-primary" aria-hidden />
-                    <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies DCI
+                    <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : formatNumber(TOTAL_MONOGRAPHS)}</span> monographies DCI
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-sm backdrop-blur-lg">
                     <Store className="size-3.5" aria-hidden />
-                    <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
+                    <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : formatNumber(PHARMACY_PRODUCTS)}</span> prix PPA
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-[#be185d]/30 bg-[#be185d]/10 px-3.5 py-1.5 text-[#be185d] dark:text-[#fb7185] shadow-sm backdrop-blur-lg">
                     <Flower2 className="size-3.5" aria-hidden />
@@ -685,11 +683,11 @@ export function HomeView() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
                     <FileText className="size-3.5 text-primary" aria-hidden />
-                    <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : '911'}</span> monographies
+                    <span className="font-semibold text-foreground">{stats?.monographs ? formatNumber(stats.monographs) : formatNumber(TOTAL_MONOGRAPHS)}</span> monographies
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-chifa/30 bg-chifa/8 px-3.5 py-1.5 text-chifa shadow-sm backdrop-blur-lg">
                     <Store className="size-3.5" aria-hidden />
-                    <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : '1 791'}</span> prix PPA
+                    <span className="font-semibold">{stats?.prices?.productsTotal ? formatNumber(stats.prices.productsTotal) : formatNumber(PHARMACY_PRODUCTS)}</span> prix PPA
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3.5 py-1.5 shadow-sm backdrop-blur-lg">
                     <FileCheck className="size-3.5 text-primary" aria-hidden />
@@ -844,11 +842,11 @@ export function HomeView() {
               <History className="size-4.5 text-primary" aria-hidden />
               Consultés récemment
             </h2>
-            {/* P3-19 (early) — Clear recently-viewed history. */}
+            {/* P3-19 — Effacer l'historique des médicaments récemment consultés */}
             <button
               type="button"
               onClick={() => clearRecent()}
-              className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Effacer l'historique des médicaments consultés récemment"
             >
               <X className="size-3.5" aria-hidden />

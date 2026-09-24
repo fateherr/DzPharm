@@ -76,6 +76,8 @@ import {
 } from './status-badge'
 import { MAX_FAVORITES, useDzPharm } from './store'
 import { SafetyNote } from './safety-note'
+import { FreshnessBadge } from './freshness-badge'
+import { LasaAlertBadge } from './lasa-alert-badge'
 import { WILAYAS } from '@/lib/wilayas'
 
 /* ------------------------------------------------------------------ */
@@ -626,6 +628,7 @@ export function DrugSheet() {
   async function handleShare() {
     if (!drug) return
     const pharmacy = drug.pharmacy?.[0]
+    const drugUrl = `${window.location.origin}/medicament/${drug.id}`
     const text = [
       `${drug.brand} — ${drug.dci}`,
       `Statut : ${drug.status === 'ACTIF' ? 'Actif' : drug.status === 'RETRIE' ? 'Retiré du marché' : 'Non renouvelé'}`,
@@ -634,7 +637,7 @@ export function DrugSheet() {
       drug.lab ? `Laboratoire : ${drug.lab}` : '',
       drug.regNumber ? `AMM : ${drug.regNumber}` : '',
       pharmacy?.ppa != null ? `Prix public : ${formatPrice(pharmacy.ppa)}` : '',
-      `Voir la fiche complète sur DzPharm.`,
+      `Fiche complète → ${drugUrl}`,
     ]
       .filter(Boolean)
       .join('\n')
@@ -642,7 +645,7 @@ export function DrugSheet() {
     let shared = false
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${drug.brand} — DzPharm`, text })
+        await navigator.share({ title: `${drug.brand} — DzPharm`, text, url: drugUrl })
         shared = true
       }
     } catch {
@@ -840,6 +843,7 @@ export function DrugSheet() {
                 {drug.pharmacy?.[0]?.refundable && (
                   <ChifaBadge refundable={true} cnasId={drug.pharmacy[0].cnasId} />
                 )}
+                <FreshnessBadge variant="compact" />
                 {drug.barcode && (
                   <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-mono font-semibold text-emerald-800 dark:text-emerald-300">
                     <Barcode className="size-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -939,6 +943,9 @@ export function DrugSheet() {
               </TabsList>
               <TabsContent value="fiche" className="mt-0 flex-1 overflow-y-auto scroll-thin">
                 <div className="space-y-6 p-5 sm:p-6">
+                  {/* Filet de sécurité LASA & High-Alert (BS-05) */}
+                  <LasaAlertBadge brand={drug.brand} dci={drug.dci} liste={drug.liste} />
+
                   {/* Quatuor Clinique Express (30-second glance) */}
                   <ClinicalMatrix
                     drug={drug}

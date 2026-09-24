@@ -26,6 +26,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { SafetyNote } from './safety-note'
+import { FreshnessBadge } from './freshness-badge'
+import { PLATFORM_STATS, formatAmmCount } from '@/lib/constants/stats'
 
 /* ------------------------------------------------------------------ */
 /* Petits blocs réutilisables                                          */
@@ -127,9 +129,12 @@ export function AboutView() {
             <ScrollText className="size-6" aria-hidden />
           </span>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              À propos de DzPharm — Sources &amp; méthodologie
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                À propos de DzPharm — Sources &amp; méthodologie
+              </h1>
+              <FreshnessBadge />
+            </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
               Transparence sur nos données, nos traitements et les limites de
               l’outil — pour un usage professionnel éclairé.
@@ -164,10 +169,10 @@ export function AboutView() {
           <CardContent className="p-5 pt-0">
             <p className="text-[13px] leading-relaxed text-muted-foreground">
               Référentiel officiel des produits pharmaceutiques enregistrés :
-              <span className="font-semibold text-foreground"> 9 555 produits</span>,
-              dont 5 381 actifs, 1 495 non renouvelés et 2 679 retirés. La
+              <span className="font-semibold text-foreground"> {formatAmmCount(PLATFORM_STATS.TOTAL_DRUGS)} produits</span>,
+              dont {formatAmmCount(PLATFORM_STATS.ACTIVE_DRUGS)} actifs, {formatAmmCount(PLATFORM_STATS.NON_RENEWED_DRUGS)} non renouvelés et {formatAmmCount(PLATFORM_STATS.WITHDRAWN_DRUGS)} retirés. La
               réconciliation exacte
-              (5 381 + 1 495 + 2 679 = 9 555) est affichée telle quelle dans nos
+              ({formatAmmCount(PLATFORM_STATS.ACTIVE_DRUGS)} + {formatAmmCount(PLATFORM_STATS.NON_RENEWED_DRUGS)} + {formatAmmCount(PLATFORM_STATS.WITHDRAWN_DRUGS)} = {formatAmmCount(PLATFORM_STATS.TOTAL_DRUGS)}) est affichée telle quelle dans nos
               statistiques.
             </p>
           </CardContent>
@@ -310,15 +315,15 @@ export function AboutView() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           {
-            value: '9 555',
-            label: 'total de la nomenclature, toutes statuts confondus (5 381 actifs + 1 495 non renouvelés + 2 679 retirés)',
+            value: formatAmmCount(PLATFORM_STATS.TOTAL_DRUGS),
+            label: `total de la nomenclature, tous statuts confondus (${formatAmmCount(PLATFORM_STATS.ACTIVE_DRUGS)} actifs + ${formatAmmCount(PLATFORM_STATS.NON_RENEWED_DRUGS)} non renouvelés + ${formatAmmCount(PLATFORM_STATS.WITHDRAWN_DRUGS)} retirés)`,
           },
           {
-            value: '911',
+            value: formatAmmCount(PLATFORM_STATS.TOTAL_MONOGRAPHS),
             label: 'monographies DCI complètes extraites de la collection de pharmacologie clinique',
           },
           {
-            value: '1 791',
+            value: formatAmmCount(PLATFORM_STATS.PHARMACY_PRODUCTS),
             label: 'prix PPA officine référencés (liste Août 2026, avec identifiant CNAS)',
           },
           {

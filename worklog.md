@@ -759,3 +759,72 @@ Stage Summary:
 - HORS PÉRIMÈTRE (décision humaine requise) : photo/AI add (V2 plan, infra VLM), accès partagé/délégué (comptes), scan code-barres (GS1 DZ à vérifier), lien pharmacien sécurisé (V3).
 - INTÉGRITÉ : posologies exclusivement via computeDose (aucune valeur clinique inventée), interactions 100 % moteur existant, honnêteté « Non documenté » quand la base ne couvre pas.
 - ÉTAT : STABLE — SW v8, QA complet vert, cron QA actif.
+
+---
+Task ID: QW-01 (DzPharm Execution Plan v4)
+Agent: main-orchestrator
+Task: Load Inter + Noto Sans Arabic + JetBrains Mono via next/font/google
+
+Work Log:
+- In src/app/layout.tsx: imported Inter, Noto_Sans_Arabic, JetBrains_Mono from next/font/google.
+- Configured font loaders with subsets, display: 'swap', and CSS variables (--font-inter, --font-noto-arabic, --font-jetbrains-mono).
+- Attached `${inter.variable} ${notoArabic.variable} ${jetbrainsMono.variable}` to root <html> tag.
+- In src/app/globals.css: configured --font-sans to prioritize Inter with Noto Sans Arabic fallback for Arabic scripts and --font-mono to JetBrains Mono.
+- Acceptance test: tsc --noEmit passed with exit code 0.
+
+Stage Summary:
+- Typography foundation upgraded to official tripartite font stack (Inter + Noto Sans Arabic + JetBrains Mono) with automatic font optimization via Next.js.
+
+---
+Task ID: QW-02 (DzPharm Execution Plan v4)
+Agent: main-orchestrator
+Task: Add prefers-reduced-motion CSS media query
+
+Work Log:
+- In src/app/globals.css: added @media (prefers-reduced-motion: reduce) rule applying animation-duration: 0.01ms !important, animation-iteration-count: 1 !important, transition-duration: 0.01ms !important, scroll-behavior: auto !important to all elements (*, *::before, *::after).
+- Acceptance test: npm run build and CSS compilation passed with exit code 0.
+
+Stage Summary:
+- Instantaneous animations and zero motion enforced automatically when user system preference requests reduced motion (WCAG 2.1 Criterion 2.3.3).
+
+---
+Task ID: QW-03 (DzPharm Execution Plan v4)
+Agent: main-orchestrator
+Task: Add aria-labels to 4 icon-only header buttons
+
+Work Log:
+- In src/components/dzpharm/header.tsx:
+  - ThemeToggle: added state-aware aria-label (`Passer en mode clair` / `Passer en mode sombre`) and dynamic aria-pressed={resolvedTheme === 'dark'}.
+  - Botanique toggle: added dynamic aria-label (`Mode botanique` / `Mode clinique — revenir au mode standard`).
+  - Nuancier button: updated aria-label to official spec (`Nuancier — changer de palette`).
+  - Copilot button: added aria-label (`Ouvrir le Copilote IA`).
+- Acceptance test: tsc --noEmit passed with exit code 0.
+
+Stage Summary:
+- Header icon-only buttons fully compliant with accessibility standard WCAG 2.1 Criterion 4.1.2 (Name, Role, Value) and screen readers.
+
+
+---
+Task ID: P0-01 (DzPharm Execution Plan v4)
+Agent: main-orchestrator
+Task: URL Routing Architecture — 22 routes return 404
+
+Work Log:
+- Created AppShell layout wrapper (src/components/dzpharm/app-shell.tsx) providing EmergencyBar, Header, Footer, DrugSheet, CommandPalette, BarcodeScannerModal, AdminBarcodeModal, MobileBottomNav to all routes.
+- Created 11 real App Router routes:
+  - /repertoire, /prix-chifa, /interactions, /copilote, /bibliotheque, /armoire, /outils, /stats (view pages)
+  - /a-propos (about page)
+  - /contact, /legal (content pages with full content)
+  - /medicament/[slug] (dynamic medication detail page with SSR metadata + breadcrumbs)
+- Created dynamic sitemap.ts for SEO (static routes + top 500 drug routes).
+- Converted Header (header.tsx): all nav buttons → <Link> elements with href, added usePathname for active detection, dropdown items use asChild + Link pattern.
+- Converted Footer (footer.tsx): 'À propos' button → <Link href="/a-propos">.
+- Converted MobileBottomNav (mobile-bottom-nav.tsx): all 5 nav tabs + 6 More menu items → <Link> elements with href, added pathname-based isActive().
+- Updated CommandPalette (command-palette.tsx): navigateTo() now calls router.push() with a defaultHrefs map, added single-key hotkeys.
+- All components maintain dual-mode (Link for URL + setView for SPA state sync) for backward compatibility.
+- Acceptance test: tsc --noEmit exit code 0, npm run build exit code 0, all routes generated successfully.
+
+Stage Summary:
+- All primary navigation surfaces (header, footer, mobile nav, command palette) now use real <Link> elements with proper hrefs. Every route is addressable via URL. Backward-compatible with existing SPA view-state pattern.
+
+

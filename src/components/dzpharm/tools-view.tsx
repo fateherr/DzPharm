@@ -6,8 +6,10 @@ import {
   Baby,
   CreditCard,
   Droplets,
+  FileSpreadsheet,
   GitCompareArrows,
   HeartPulse,
+  Languages,
   MapPin,
   Moon,
   PiggyBank,
@@ -24,6 +26,8 @@ import { PregnancyChecker } from './pregnancy-checker'
 import { ShortageCenter } from './shortage-center'
 import { PharmacyLocator } from './pharmacy-locator'
 import { GenericSimulator } from './generic-simulator'
+import { PrescriptionTranslator } from './prescription-translator'
+import { FormularySubstitutor } from './formulary-substitutor'
 import { useDzPharm } from './store'
 
 export function ToolsView() {
@@ -128,6 +132,20 @@ export function ToolsView() {
             <MapPin className="size-4" aria-hidden />
             Pharmacies de garde
           </TabsTrigger>
+          <TabsTrigger
+            value="traduction"
+            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm font-semibold text-primary"
+          >
+            <Languages className="size-4 text-primary" aria-hidden />
+            Traduction FR→AR (F-05)
+          </TabsTrigger>
+          <TabsTrigger
+            value="livret"
+            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm font-semibold text-primary"
+          >
+            <FileSpreadsheet className="size-4 text-primary" aria-hidden />
+            Livret &amp; Substitutions (F-04)
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pediatrie" className="mt-0">
@@ -217,6 +235,26 @@ export function ToolsView() {
             transition={{ duration: 0.25 }}
           >
             <PharmacyLocator />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="traduction" className="mt-0">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <PrescriptionTranslator />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="livret" className="mt-0">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <FormularySubstitutor />
           </motion.div>
         </TabsContent>
       </Tabs>

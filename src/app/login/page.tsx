@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, Pill, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,27 @@ function LoginForm() {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // P2-21 — Redirection immédiate si déjà authentifié
+  useEffect(() => {
+    async function checkExistingSession() {
+      try {
+        const res = await fetch("/api/auth/verify");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("dzpharm_session", "active");
+            }
+            router.replace(redirectTo);
+          }
+        }
+      } catch {
+        // En cas d'erreur réseau, rester sur la page de connexion
+      }
+    }
+    void checkExistingSession();
+  }, [router, redirectTo]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

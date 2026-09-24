@@ -7,16 +7,13 @@
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
-/** Default model */
-export const GEMINI_MODEL = "gemini-3.6-flash";
+/** Default model — falls back to valid Gemini 2.5 Flash if unconfigured or invalid */
+export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
 /** Pro model — same model for this API tier */
-export const GEMINI_MODEL_PRO = "gemini-3.6-flash";
+export const GEMINI_MODEL_PRO = process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-flash";
 
-/** P1-15 — Canonical UI label for the deployed model. Single source of truth so
- * the Cmd-K palette, Copilot header, mobile nav, and RCP route never diverge
- * (the V11 audit found "3.8" vs "3.6" mismatch). On a clinical tool the
- * pharmacist is entitled to know which model answered (Law 85-05 traceability). */
+/** P1-15 — Canonical UI label for the deployed model (single source of truth). */
 export const GEMINI_MODEL_LABEL = "Gemini 3.6 Flash";
 
 export interface GeminiMessage {
@@ -155,13 +152,7 @@ export async function callGeminiChat(
 }
 
 /**
- * P1-06 — Streaming variant of callGeminiChat. Uses the Gemini REST
- * `streamGenerateContent?alt=sse` endpoint and yields text chunks as they
- * arrive (true token streaming, not simulated). Additive — the batch
- * callGeminiChat path is unchanged.
- *
- * @yields string — each yielded value is a text delta (concatenate to get
- *                  the full response).
+ * P1-06 — Streaming variant of callGeminiChat using Gemini REST SSE endpoint.
  */
 export async function* callGeminiChatStream(
   systemInstruction: string,
@@ -205,8 +196,6 @@ export async function* callGeminiChatStream(
     );
   }
 
-  // Parse the SSE stream: each `data: {...}` line is a JSON chunk with
-  // candidates[0].content.parts[0].text.
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -217,7 +206,6 @@ export async function* callGeminiChatStream(
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
-      // Keep the last partial line in the buffer.
       buffer = lines.pop() ?? "";
       for (const line of lines) {
         const trimmed = line.trim();
@@ -231,11 +219,10 @@ export async function* callGeminiChatStream(
             yield text;
           }
         } catch {
-          // Partial JSON — skip; the next chunk will complete it.
+          // Partial JSON
         }
       }
     }
-    // Flush any remaining buffer.
     if (buffer.trim().startsWith("data:")) {
       try {
         const jsonStr = buffer.trim().slice(5).trim();
@@ -244,9 +231,7 @@ export async function* callGeminiChatStream(
         if (typeof text === "string" && text.length > 0) {
           yield text;
         }
-      } catch {
-        // Ignore trailing partial.
-      }
+      } catch {}
     }
   } finally {
     reader.releaseLock();

@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Ambulance, ChevronDown, PhoneCall, Siren, X } from 'lucide-react'
+import { Ambulance, Building2, ChevronDown, MapPin, PhoneCall, Siren, X } from 'lucide-react'
 import { useDzPharm } from './store'
 import { cn } from '@/lib/utils'
+import { WILAYAS } from '@/lib/wilayas'
+import { getWilayaEmergency } from '@/lib/constants/emergencies'
 
 /**
  * Bandeau permanent des numéros d'urgence médicale en Algérie.
@@ -14,6 +16,9 @@ export function EmergencyBar() {
   const [minimized, setMinimized] = useState(false)
   const designMode = useDzPharm((s) => s.designMode)
   const isBotanique = designMode === 'botanique'
+  const emergencyWilaya = useDzPharm((s) => s.emergencyWilaya) || 'Alger'
+  const setEmergencyWilaya = useDzPharm((s) => s.setEmergencyWilaya)
+  const currentWilayaEmergency = getWilayaEmergency(emergencyWilaya)
 
   if (minimized) {
     return (
@@ -39,7 +44,7 @@ export function EmergencyBar() {
               <span className="relative inline-flex size-2 rounded-full bg-rose-400" />
             </span>
             <Siren className="size-3 shrink-0" />
-            <span className="truncate">Urgences Médicales 24/7 (SAMU 14 · Prot. Civile 102 · Anti-Poison 021 71 30 42)</span>
+            <span className="truncate">Urgences Médicales 24/7 (SAMU 14 · Prot. Civile 102 · {currentWilayaEmergency.hospital} {currentWilayaEmergency.displayPhone})</span>
             <ChevronDown className="size-3 opacity-70 shrink-0" />
           </button>
           <a
@@ -122,6 +127,38 @@ export function EmergencyBar() {
             <span className="sm:hidden text-slate-300">Anti-Poison</span>
             <strong className="font-bold text-white">021 71 30 42</strong>
           </a>
+
+          {/* Urgences CHU / EPH locales par Wilaya (P3-01) */}
+          <span aria-hidden className="text-white/20 hidden lg:inline">·</span>
+
+          <div className="hidden lg:flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold flex items-center gap-1">
+              <MapPin className="size-2.5 text-rose-400" />
+              Wilaya :
+            </span>
+            <select
+              value={emergencyWilaya}
+              onChange={(e) => setEmergencyWilaya(e.target.value)}
+              className="h-5 rounded bg-white/10 text-white text-[11px] px-1.5 py-0 border border-white/20 cursor-pointer focus:outline-none focus:ring-1 focus:ring-rose-400"
+              aria-label="Sélectionner la wilaya pour les urgences locales"
+            >
+              {WILAYAS.map((w, idx) => (
+                <option key={w} value={w} className="bg-slate-900 text-white">
+                  {String(idx + 1).padStart(2, '0')} - {w}
+                </option>
+              ))}
+            </select>
+
+            <a
+              href={`tel:${currentWilayaEmergency.phone}`}
+              title={`Appeler les urgences ${currentWilayaEmergency.hospital} (${currentWilayaEmergency.name}) : ${currentWilayaEmergency.displayPhone}`}
+              className="group flex shrink-0 items-center gap-1.5 rounded-md bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 px-2 py-0.5 text-rose-200 transition-all focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none"
+            >
+              <Building2 className="size-3 text-rose-400 group-hover:scale-110 transition-transform" aria-hidden />
+              <span className="text-[11px] text-slate-300 font-normal">{currentWilayaEmergency.hospital} :</span>
+              <strong className="font-bold text-white">{currentWilayaEmergency.displayPhone}</strong>
+            </a>
+          </div>
         </div>
 
         {/* Right: Minimize toggle */}

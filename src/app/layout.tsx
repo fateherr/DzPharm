@@ -4,43 +4,35 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/dzpharm/providers";
 import { PwaProvider } from "@/components/dzpharm/pwa-provider";
+import { AnalyticsProvider } from "@/components/dzpharm/analytics-provider";
+import { ErrorBoundary } from "@/components/dzpharm/error-boundary";
+import { PLATFORM_STATS, formatAmmCount } from "@/lib/constants/stats";
 
-/**
- * QW-01 — Webfonts via next/font/google (audit §04 P1-01).
- * Inter (latin UI), Noto Sans Arabic (Arabic brand/DCI names, Darija),
- * JetBrains Mono (dosages, AMM codes, reg numbers).
- * `display: 'swap'` prevents FOIT; variable fonts keep payload to 1 file each.
- * Feature flag NEXT_PUBLIC_FEATURE_WEBFONTS defaults ON (rollback if LCP regresses).
- */
 const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
 });
-const notoSansArabic = Noto_Sans_Arabic({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
+
+const notoArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
   display: "swap",
   variable: "--font-noto-arabic",
 });
+
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
   display: "swap",
   variable: "--font-jetbrains-mono",
 });
 
-const webfontsOn = process.env.NEXT_PUBLIC_FEATURE_WEBFONTS !== "false";
-const webfontClassName = webfontsOn
-  ? `${inter.variable} ${notoSansArabic.variable} ${jetbrainsMono.variable}`
-  : "";
+const defaultDescription =
+  `Plateforme d'intelligence pharmaceutique algérienne : répertoire officiel de ${formatAmmCount(PLATFORM_STATS.TOTAL_DRUGS)} médicaments, contrôle d'interactions médicamenteuses, copilote IA et statistiques du marché national.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dzpharm.dz/"),
   title: "DzPharm — Référentiel Pharmaceutique Algérien",
-  description:
-    "Plateforme d'intelligence pharmaceutique algérienne : répertoire officiel de 9 555 médicaments, contrôle d'interactions médicamenteuses, copilote IA et statistiques du marché national.",
+  description: defaultDescription,
   keywords: [
     "DzPharm",
     "médicaments Algérie",
@@ -54,10 +46,16 @@ export const metadata: Metadata = {
   applicationName: "DzPharm",
   openGraph: {
     title: "DzPharm — Référentiel Pharmaceutique Algérien",
-    description:
-      "Plateforme d'intelligence pharmaceutique algérienne : répertoire officiel de 9 555 médicaments, contrôle d'interactions médicamenteuses, copilote IA et statistiques du marché national.",
+    description: defaultDescription,
     locale: "fr_DZ",
     type: "website",
+    url: "https://dzpharm.dz/",
+    siteName: "DzPharm",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DzPharm — Référentiel Pharmaceutique Algérien",
+    description: defaultDescription,
   },
   robots: {
     index: true,
@@ -90,8 +88,7 @@ const structuredData = {
       "@id": "https://dzpharm.dz/#website",
       url: "https://dzpharm.dz/",
       name: "DzPharm",
-      description:
-        "Plateforme d'intelligence pharmaceutique algérienne : répertoire officiel de 9 555 médicaments, contrôle d'interactions médicamenteuses, copilote IA et statistiques du marché national.",
+      description: defaultDescription,
       inLanguage: "fr",
     },
     {
@@ -115,7 +112,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning className={webfontClassName}>
+    <html
+      lang="fr"
+      className={`${inter.variable} ${notoArabic.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -127,14 +128,13 @@ export default function RootLayout({
         className="font-sans antialiased bg-background text-foreground"
       >
         <Providers>
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+          <AnalyticsProvider />
           <Toaster />
           <PwaProvider />
-          {/* P1-08 — Global aria-live region for status announcements.
-              Screen readers monitor this region and announce changes. Used for
-              non-urgent notifications (e.g. "Référentiel mis à jour", "Mode
-              hors-ligne actif"). Polite — never interrupts. The Copilot thinking/
-              responded + search result-count regions live in their components. */}
+          {/* P1-08 — Global aria-live region for non-urgent status announcements */}
           <div
             id="dzpharm-status-live"
             role="status"

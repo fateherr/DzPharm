@@ -1,11 +1,22 @@
-'use client'
+import type { Metadata } from 'next'
+import { AppShell } from '@/components/dzpharm/app-shell'
+import { CatalogView } from '@/components/dzpharm/catalog-view'
 
-import { DzPharmShell } from '@/components/dzpharm/dzpharm-shell'
+export const metadata: Metadata = {
+  title: 'Catalogue des Prix PPA & Remboursement Chifa · DzPharm',
+  description:
+    'Catalogue des prix publics en officine (PPA), tarifs de référence Chifa et médicaments remboursables CNAS / CASNOS en Algérie.',
+  openGraph: {
+    title: 'Catalogue des Prix PPA & Chifa · DzPharm',
+    description: 'Tarifs officiels, comparateur de génériques et simulation de remboursement Chifa.',
+    url: 'https://dzpharm.dz/prix-chifa',
+  },
+}
 
-/**
- * P0-01 — /prix-chifa deep-link route (foundation). View = 'catalogue'.
- * @see src/app/repertoire/page.tsx for the migration notes.
- */
 export default function PrixChifaPage() {
-  return <DzPharmShell initialView="catalogue" />
+  return (
+    <AppShell>
+      <CatalogView />
+    </AppShell>
+  )
 }

@@ -37,6 +37,7 @@ import { useToast } from '@/hooks/use-toast'
 import { fetchDrugs, fetchStats } from './api'
 import type { Drug, DrugQueryParams } from './types'
 import { StatusBadge, countryCode, formatNumber, formatPrice, isLocal } from './status-badge'
+import { FreshnessBadge } from './freshness-badge'
 import { useDzPharm } from './store'
 
 type SortField = NonNullable<DrugQueryParams['sort']>
@@ -186,6 +187,12 @@ export function DirectoryView() {
       if (p > 1) setPage(p)
     }
 
+    // P2-05: Restore scope from URL
+    const scopeParam = params.get('scope')
+    if (scopeParam && (['dci', 'brand', 'lab', 'regNumber'] as const).includes(scopeParam as any)) {
+      setDirScope(scopeParam as typeof dirScope)
+    }
+
     if (Object.keys(patch).length > 0) {
       setFilters(patch)
       if (patch.q) setSearchInput(patch.q)
@@ -220,10 +227,14 @@ export function DirectoryView() {
     if (page > 1) params.set('page', String(page))
     else params.delete('page')
 
+    // P2-05: Sync scope to URL
+    if (dirScope && dirScope !== 'all') params.set('scope', dirScope)
+    else params.delete('scope')
+
     const qStr = params.toString()
     const targetUrl = qStr ? `${window.location.pathname}?${qStr}` : window.location.pathname
     window.history.replaceState(null, '', targetUrl)
-  }, [filters, page])
+  }, [filters, page, dirScope])
 
   // Réinitialise la page quand les filtres changent
   useEffect(() => {
@@ -359,7 +370,10 @@ export function DirectoryView() {
       {/* --------------------------- Titre & Actions --------------------------- */}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Répertoire Officiel</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Répertoire Officiel</h1>
+            <FreshnessBadge variant="compact" />
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {isLoading ? (
               'Recherche en cours…'
@@ -489,16 +503,20 @@ export function DirectoryView() {
               value={filters.status || 'all'}
               onValueChange={(v) => setFilters({ status: v === 'all' ? '' : v })}
             >
-              <SelectTrigger className="h-10 w-full lg:w-[140px]" aria-label="Filtrer par statut">
+              <SelectTrigger className="h-10 w-full lg:w-[170px]" aria-label="Filtrer par statut">
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
-                {STATUS_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Tous statuts{stats ? ` (${stats.total.toLocaleString('fr-DZ')})` : ''}</SelectItem>
+                <SelectItem value="ACTIF">
+                  Actifs{stats ? ` (${stats.actifs.toLocaleString('fr-DZ')})` : ''}
+                </SelectItem>
+                <SelectItem value="NON_RENOUVELE">
+                  Non renouvelés{stats ? ` (${stats.nonRenew.toLocaleString('fr-DZ')})` : ''}
+                </SelectItem>
+                <SelectItem value="RETRIE">
+                  Retirés{stats ? ` (${stats.retires.toLocaleString('fr-DZ')})` : ''}
+                </SelectItem>
               </SelectContent>
             </Select>
 

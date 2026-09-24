@@ -85,7 +85,7 @@ export async function GET(
       }
     }
 
-    // 3) génération IA via Gemini 3.6 Flash (à la demande, mise en cache)
+    // 3) génération IA via Gemini 3.8 Flash (à la demande, mise en cache)
     try {
       const sys = `Tu es un pharmacologue clinicien expert et rédacteur de RCP (format ANSM / Ministère de la Santé Algérien) pour DzPharm.
 Génère le RCP officiel et la synthèse clinique de la molécule ci-dessous. Réponds STRICTEMENT en JSON valide (aucun texte hors JSON).

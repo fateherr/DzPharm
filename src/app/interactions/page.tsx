@@ -1,11 +1,22 @@
-'use client'
+import type { Metadata } from 'next'
+import { AppShell } from '@/components/dzpharm/app-shell'
+import { InteractionsView } from '@/components/dzpharm/interactions-view'
 
-import { DzPharmShell } from '@/components/dzpharm/dzpharm-shell'
+export const metadata: Metadata = {
+  title: 'Vérificateur d’Interactions Médicamenteuses & Matrice Heatmap · DzPharm',
+  description:
+    'Contrôle clinique automatisé des interactions médicamenteuses : détection par DCI, matrice heatmap N×N, niveaux de sévérité (CI, Majeure, Modérée, Mineure) et recommandations ANSM.',
+  openGraph: {
+    title: 'Vérificateur d’Interactions Médicamenteuses · DzPharm',
+    description: 'Analyse instantanée des associations à risque et matrice d’interactions.',
+    url: 'https://dzpharm.dz/interactions',
+  },
+}
 
-/**
- * P0-01 — /interactions deep-link route (foundation). View = 'interactions'.
- * @see src/app/repertoire/page.tsx for the migration notes.
- */
 export default function InteractionsPage() {
-  return <DzPharmShell initialView="interactions" />
+  return (
+    <AppShell>
+      <InteractionsView />
+    </AppShell>
+  )
 }

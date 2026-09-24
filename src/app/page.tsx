@@ -1,13 +1,44 @@
 'use client'
 
-import { DzPharmShell } from '@/components/dzpharm/dzpharm-shell'
+import { AnimatePresence, motion } from 'framer-motion'
+import { AppShell } from '@/components/dzpharm/app-shell'
+import { HomeView } from '@/components/dzpharm/home-view'
+import { DirectoryView } from '@/components/dzpharm/directory-view'
+import { CatalogView } from '@/components/dzpharm/catalog-view'
+import { LibraryView } from '@/components/dzpharm/library-view'
+import { InteractionsView } from '@/components/dzpharm/interactions-view'
+import { ArmoireView } from '@/components/dzpharm/armoire/armoire-view'
+import { CopilotView } from '@/components/dzpharm/copilot-view'
+import { ToolsView } from '@/components/dzpharm/tools-view'
+import { StatsView } from '@/components/dzpharm/stats-view'
+import { AboutView } from '@/components/dzpharm/about-view'
+import { useDzPharm } from '@/components/dzpharm/store'
 
-/**
- * P0-01 — Root route renders the shared DzPharm shell.
- * The shell was extracted from this file (additive, no behaviour change).
- * The 4 deep-link stub routes (/repertoire, /prix-chifa, /interactions, /copilote)
- * reuse the same shell with an `initialView` prop.
- */
 export default function Page() {
-  return <DzPharmShell />
+  const view = useDzPharm((s) => s.view)
+
+  return (
+    <AppShell>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+        >
+          {view === 'accueil' ? <HomeView /> : null}
+          {view === 'repertoire' ? <DirectoryView /> : null}
+          {view === 'catalogue' ? <CatalogView /> : null}
+          {view === 'bibliotheque' ? <LibraryView /> : null}
+          {view === 'interactions' ? <InteractionsView /> : null}
+          {view === 'armoire' ? <ArmoireView /> : null}
+          {view === 'outils' ? <ToolsView /> : null}
+          {view === 'copilote' ? <CopilotView /> : null}
+          {view === 'stats' ? <StatsView /> : null}
+          {view === 'apropos' ? <AboutView /> : null}
+        </motion.div>
+      </AnimatePresence>
+    </AppShell>
+  )
 }

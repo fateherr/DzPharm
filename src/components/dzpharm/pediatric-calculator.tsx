@@ -36,6 +36,7 @@ import { fetchDrugs } from './api'
 import { formatNumber } from './status-badge'
 import { useDzPharm } from './store'
 import { SafetyNote } from './safety-note'
+import { PediatricWeightBands } from './pediatric-weight-bands'
 
 function fmt(n: number | null, unit = ''): string {
   if (n == null) return '—'
@@ -48,6 +49,7 @@ function fmt(n: number | null, unit = ''): string {
 
 export function PediatricCalculator() {
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+  const [tabMode, setTabMode] = useState<'calc' | 'bands'>('calc')
   const [weight, setWeight] = useState(12)
   const [ageMonths, setAgeMonths] = useState(24)
   const [drugIndex, setDrugIndex] = useState(0)
@@ -81,7 +83,41 @@ export function PediatricCalculator() {
   const isFixedUi = drug.bands != null
 
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[400px_1fr]">
+    <div className="space-y-4">
+      {/* Sélecteur de mode (Calculateur vs Grille A5) */}
+      <div className="flex items-center justify-between gap-3 print:hidden">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+          <button
+            type="button"
+            onClick={() => setTabMode('calc')}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+              tabMode === 'calc'
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Calculateur individuel
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabMode('bands')}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+              tabMode === 'bands'
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <span>Grille par tranches de poids A5 (F-11)</span>
+          </button>
+        </div>
+      </div>
+
+      {tabMode === 'bands' ? (
+        <PediatricWeightBands />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[400px_1fr]">
       {/* ------------------------- Paramètres ------------------------- */}
       <div className="space-y-4">
         <Card>
@@ -458,6 +494,8 @@ export function PediatricCalculator() {
         </p>
         <SafetyNote className="mt-4" />
       </div>
+    </div>
+      )}
     </div>
   )
 }

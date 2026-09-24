@@ -3,8 +3,8 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
-import { useRouter } from 'next/navigation'
-import { APP_ROUTER_ENABLED, urlForView } from '@/lib/route-map'
+import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   DropdownMenu,
@@ -20,9 +20,11 @@ import {
   Flower2,
   HeartHandshake,
   Home,
+  Info,
   Leaf,
   Library,
   Lock,
+  Monitor,
   Moon,
   Palette,
   Pill,
@@ -54,46 +56,80 @@ interface NavItem {
   id: ViewId
   label: string
   icon: typeof Home
+  href: string
   desc?: string
 }
 
 // Toujours visibles sur tablettes et PC (>= 768px)
 const CORE_NAV: NavItem[] = [
-  { id: 'accueil', label: 'Accueil', icon: Home },
-  { id: 'repertoire', label: 'Répertoire', icon: BookOpen },
-  { id: 'catalogue', label: 'Prix & Chifa', icon: Store },
-  { id: 'interactions', label: 'Interactions', icon: ShieldAlert },
+  { id: 'accueil', label: 'Accueil', icon: Home, href: '/' },
+  { id: 'repertoire', label: 'Répertoire', icon: BookOpen, href: '/repertoire' },
+  { id: 'catalogue', label: 'Prix & Chifa', icon: Store, href: '/prix-chifa' },
+  { id: 'interactions', label: 'Interactions', icon: ShieldAlert, href: '/interactions' },
 ]
 
 // Visibles sur grand écran (>= 1280px), intégrés dans "Plus" sur tablettes (768px-1279px)
 const EXTENDED_NAV: NavItem[] = [
-  { id: 'armoire', label: 'Armoire', icon: Users, desc: 'Armoire à pharmacie de maison' },
-  { id: 'copilote', label: 'Copilote IA', icon: Sparkles, desc: 'Assistant clinique intelligent (Gemini)' },
+  { id: 'armoire', label: 'Armoire', icon: Users, desc: 'Armoire à pharmacie de maison', href: '/armoire' },
+  { id: 'copilote', label: 'Copilote IA', icon: Sparkles, desc: 'Assistant clinique intelligent (Gemini)', href: '/copilote' },
 ]
 
 // Toujours dans le menu "Plus"
 const SECONDARY_NAV: NavItem[] = [
-  { id: 'bibliotheque', label: 'Bibliothèque', icon: Library, desc: 'Monographies RCP & DCI officielles' },
-  { id: 'outils', label: 'Outils Médicaux', icon: Wrench, desc: 'Calculateurs de clairance, posologies' },
-  { id: 'stats', label: 'Statistiques', icon: BarChart3, desc: 'Observatoire du marché algérien' },
+  { id: 'bibliotheque', label: 'Bibliothèque', icon: Library, desc: 'Monographies RCP & DCI officielles', href: '/bibliotheque' },
+  { id: 'outils', label: 'Outils Médicaux', icon: Wrench, desc: 'Calculateurs de clairance, posologies', href: '/outils' },
+  { id: 'stats', label: 'Statistiques', icon: BarChart3, desc: 'Observatoire du marché algérien', href: '/stats' },
+  { id: 'apropos', label: 'À propos', icon: Info, desc: 'Méthodologie & sources officielles', href: '/a-propos' },
 ]
 
 function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
-  const isDark = resolvedTheme === 'dark'
+  const { theme, resolvedTheme, setTheme } = useTheme()
+
+  const cycleTheme = () => {
+    if (theme === 'light') setTheme('dark')
+    else if (theme === 'dark') setTheme('system')
+    else setTheme('light')
+  }
+
+  const currentThemeLabel =
+    theme === 'system'
+      ? 'Système (auto)'
+      : theme === 'light'
+      ? 'Clair'
+      : 'Sombre'
+
+  const nextActionLabel =
+    theme === 'light'
+      ? 'Passer au mode sombre'
+      : theme === 'dark'
+      ? 'Passer au mode système'
+      : 'Passer au mode clair'
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
-      aria-pressed={isDark}
-      className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 hover:rotate-12 active:rotate-45"
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-    >
-      <Sun className="hidden size-4 dark:block" aria-hidden />
-      <Moon className="block size-4 dark:hidden" aria-hidden />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`${nextActionLabel} (actuellement ${currentThemeLabel})`}
+          aria-pressed={theme === 'dark'}
+          className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-300 hover:rotate-12 active:rotate-45"
+          onClick={cycleTheme}
+        >
+          {theme === 'system' ? (
+            <Monitor className="size-4" aria-hidden />
+          ) : resolvedTheme === 'dark' ? (
+            <Sun className="size-4" aria-hidden />
+          ) : (
+            <Moon className="size-4" aria-hidden />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        <span className="font-semibold">Thème : {currentThemeLabel}</span>
+        <span className="block text-[10px] text-muted-foreground">{nextActionLabel}</span>
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -146,6 +182,7 @@ function AudienceToggle() {
 
 export function Header() {
   const router = useRouter()
+  const pathname = usePathname()
   const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
@@ -175,8 +212,7 @@ export function Header() {
   }
 
   // P1-22 — Global Ctrl+L / Cmd+L keyboard shortcut for session lock.
-  // Works from ANY context (inside modals, dialogs, sheets) where the header
-  // lock button may be behind the z-50 backdrop and unclickable.
+  // Works from ANY context (inside modals, dialogs, sheets).
   useEffect(() => {
     function handleLockShortcut(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'l') {
@@ -188,10 +224,17 @@ export function Header() {
     return () => window.removeEventListener('keydown', handleLockShortcut)
   }, [router])
 
+  function isItemActive(item: NavItem) {
+    if (item.href === '/') {
+      return (pathname === '/' && view === 'accueil') || (!pathname && view === 'accueil')
+    }
+    return pathname === item.href || (pathname?.startsWith(item.href) && item.href !== '/') || view === item.id
+  }
+
   // Vérifier si un élément du menu déroulant est actif
   const isSecondaryActive =
-    SECONDARY_NAV.some((item) => item.id === view) ||
-    EXTENDED_NAV.some((item) => item.id === view)
+    SECONDARY_NAV.some(isItemActive) ||
+    EXTENDED_NAV.some(isItemActive)
 
   const isBotanique = designMode === 'botanique'
 
@@ -200,8 +243,8 @@ export function Header() {
       <header className="relative z-0 w-full border-b border-border/70 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 print:hidden transition-all">
         <div className="mx-auto flex h-14 max-w-[1720px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8 w-full min-w-0">
           {/* Logo & Nom de la Plateforme */}
-          <button
-            type="button"
+          <Link
+            href="/"
             onClick={() => setView('accueil')}
             className="group flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label="DzPharm — retour à l'accueil"
@@ -235,27 +278,21 @@ export function Header() {
                 )}
               </span>
               <span className="hidden truncate text-[10px] font-medium tracking-wide text-muted-foreground xl:block">
-                Référentiel Officiel · 2026
+                Référentiel Officiel · {stats ? formatNumber(stats.total) : '9 555'} AMM
               </span>
             </span>
-          </button>
+          </Link>
 
           {/* Navigation Adaptative Desktop & Tablette */}
           <nav aria-label="Navigation principale" className="hidden items-center gap-0.5 rounded-xl border border-border/60 bg-muted/60 p-1 shadow-inner md:flex">
             {/* 4 modules fondamentaux */}
             {CORE_NAV.map((item) => {
-              const active = view === item.id
+              const active = isItemActive(item)
               return (
-                <button
+                <Link
                   key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setView(item.id)
-                    // P0-01: when the App Router flag is on, also push the real URL
-                    // so the address bar reflects the route (deep-link + shareable).
-                    // Pure <Link> semantics are deferred to the full 2-week migration.
-                    if (APP_ROUTER_ENABLED) router.push(urlForView(item.id))
-                  }}
+                  href={item.href}
+                  onClick={() => setView(item.id)}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'relative flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:px-3 lg:text-sm',
@@ -279,20 +316,21 @@ export function Header() {
                     aria-hidden
                   />
                   <span className="relative z-10">{item.label}</span>
-                </button>
+                </Link>
               )
             })}
 
             {/* Modules étendus visibles uniquement sur très grand écran (>= 1536px) pour éviter le tassement */}
             {EXTENDED_NAV.map((item) => {
-              const active = view === item.id
+              const active = isItemActive(item)
               const isAi = item.id === 'copilote'
               return (
-                <button
+                <Link
                   key={item.id}
-                  type="button"
+                  href={item.href}
                   onClick={() => setView(item.id)}
                   aria-current={active ? 'page' : undefined}
+                  aria-label={item.id === 'copilote' ? 'Ouvrir le Copilote IA' : undefined}
                   className={cn(
                     'relative hidden items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none 2xl:flex lg:text-sm',
                     active
@@ -315,7 +353,7 @@ export function Header() {
                     aria-hidden
                   />
                   <span className="relative z-10">{item.label}</span>
-                </button>
+                </Link>
               )
             })}
 
@@ -346,10 +384,41 @@ export function Header() {
                 {/* Affiche Armoire et Copilote sur écran standard s'ils sont masqués de la barre principale */}
                 <div className="2xl:hidden">
                   {EXTENDED_NAV.map((sub) => {
-                    const subActive = view === sub.id
+                    const subActive = isItemActive(sub)
                     return (
                       <DropdownMenuItem
                         key={sub.id}
+                        asChild
+                      >
+                        <Link
+                          href={sub.href}
+                          onClick={() => setView(sub.id)}
+                          className={cn(
+                            'flex items-start gap-2.5 rounded-lg px-3 py-2 cursor-pointer',
+                            subActive && 'bg-primary/10 text-primary font-semibold'
+                          )}
+                        >
+                          <sub.icon className={cn('size-4 mt-0.5 shrink-0', subActive ? 'text-primary' : 'text-muted-foreground')} />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium">{sub.label}</span>
+                            {sub.desc && <span className="text-[10px] text-muted-foreground">{sub.desc}</span>}
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    )
+                  })}
+                  <div className="my-1 border-t border-border/60" />
+                </div>
+
+                {SECONDARY_NAV.map((sub) => {
+                  const subActive = isItemActive(sub)
+                  return (
+                    <DropdownMenuItem
+                      key={sub.id}
+                      asChild
+                    >
+                      <Link
+                        href={sub.href}
                         onClick={() => setView(sub.id)}
                         className={cn(
                           'flex items-start gap-2.5 rounded-lg px-3 py-2 cursor-pointer',
@@ -361,28 +430,7 @@ export function Header() {
                           <span className="text-xs font-medium">{sub.label}</span>
                           {sub.desc && <span className="text-[10px] text-muted-foreground">{sub.desc}</span>}
                         </div>
-                      </DropdownMenuItem>
-                    )
-                  })}
-                  <div className="my-1 border-t border-border/60" />
-                </div>
-
-                {SECONDARY_NAV.map((sub) => {
-                  const subActive = view === sub.id
-                  return (
-                    <DropdownMenuItem
-                      key={sub.id}
-                      onClick={() => setView(sub.id)}
-                      className={cn(
-                        'flex items-start gap-2.5 rounded-lg px-3 py-2 cursor-pointer',
-                        subActive && 'bg-primary/10 text-primary font-semibold'
-                      )}
-                    >
-                      <sub.icon className={cn('size-4 mt-0.5 shrink-0', subActive ? 'text-primary' : 'text-muted-foreground')} />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium">{sub.label}</span>
-                        {sub.desc && <span className="text-[10px] text-muted-foreground">{sub.desc}</span>}
-                      </div>
+                      </Link>
                     </DropdownMenuItem>
                   )
                 })}
@@ -467,12 +515,11 @@ export function Header() {
                   <Button
                     variant="outline"
                     size="sm"
-                    aria-pressed={isBotanique}
-                    aria-label="Désactiver le mode botanique — revenir au design Clinique Standard"
                     onClick={() => setDesignMode('standard')}
+                    aria-label="Mode clinique — revenir au mode standard"
                     className="h-8 gap-1.5 rounded-lg border-sky-500/40 bg-sky-500/10 text-sky-800 dark:text-sky-300 hover:bg-sky-500/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
-                    <Pill className="size-3.5 text-sky-600 dark:text-sky-400" />
+                    <Pill className="size-3.5 text-sky-600 dark:text-sky-400" aria-hidden />
                     <span className="hidden 2xl:inline">Mode Clinique</span>
                     <span className="hidden sm:inline 2xl:hidden">Clinique</span>
                   </Button>
@@ -480,12 +527,11 @@ export function Header() {
                   <Button
                     variant="outline"
                     size="sm"
-                    aria-pressed={isBotanique}
-                    aria-label="Activer le mode botanique — design Pharmacopée Royale & Botanique"
                     onClick={() => setDesignMode('botanique')}
+                    aria-label="Mode botanique"
                     className="h-8 gap-1.5 rounded-lg border-[#2d6a4f]/40 bg-[#1b4332]/10 text-[#1b4332] dark:text-[#34d399] dark:border-[#34d399]/40 hover:bg-[#1b4332]/20 font-semibold text-xs px-2 sm:px-2.5 shadow-2xs transition-all duration-300 cursor-pointer shrink-0"
                   >
-                    <Leaf className="size-3.5 text-[#1b4332] dark:text-[#34d399]" />
+                    <Leaf className="size-3.5 text-[#1b4332] dark:text-[#34d399]" aria-hidden />
                     <span className="hidden 2xl:inline">Mode Botanique</span>
                     <span className="hidden sm:inline 2xl:hidden">Botanique</span>
                   </Button>
@@ -506,7 +552,7 @@ export function Header() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setPaletteOpen(true)}
-                    aria-label="Nuancier & Palettes de couleurs"
+                    aria-label="Nuancier — changer de palette"
                     className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-primary transition-all duration-200"
                   >
                     <Palette className="size-4" aria-hidden />

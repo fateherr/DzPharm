@@ -43,6 +43,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useToast } from '@/hooks/use-toast'
+import { useChatStream } from '@/hooks/use-chat-stream'
 import { DoseVerificationBadge } from '@/components/dzpharm/dose-verification-badge'
 import { rtlProps } from '@/lib/detect-rtl'
 import { useDzPharm } from './store'
@@ -156,13 +157,15 @@ function TypingDots() {
 }
 
 export function CopilotView() {
-  // P1-10 — Hydrate the local messages state from the persisted Zustand slice
-  // on mount, then sync every change back to the slice (30-msg FIFO cap is
-  // enforced in the store). Additive: the local useState stays the rendering
-  // source so the existing setMessages call sites work unchanged.
   const persistedMessages = useDzPharm((s) => s.copilotMessages)
   const setCopilotMessages = useDzPharm((s) => s.setCopilotMessages)
   const clearCopilotMessages = useDzPharm((s) => s.clearCopilotMessages)
+
+  const stream = useChatStream()
+  const streamingEnabled =
+    typeof process !== 'undefined' &&
+    process.env.NEXT_PUBLIC_FEATURE_COPILOT_STREAM === 'true'
+
   const [messages, setMessages] = useState<ChatMessage[]>(persistedMessages)
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<ChatMode>('pro')
@@ -170,8 +173,7 @@ export function CopilotView() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { toast } = useToast()
 
-  // P1-10 — Sync local messages → persisted slice (debounced via microtask to
-  // avoid write amplification on rapid setMessages calls).
+  // P1-10 — Synchroniser local messages avec le slice Zustand persisté
   useEffect(() => {
     setCopilotMessages(messages)
   }, [messages, setCopilotMessages])
@@ -180,6 +182,12 @@ export function CopilotView() {
   const [recording, setRecording] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
+  const [showMicConsent, setShowMicConsent] = useState(false)
+  const [dictationPending, setDictationPending] = useState(false)
+  const micConsentKey = 'dzpharm_mic_consent_v1'
+  const micConsented =
+    typeof window !== 'undefined' && sessionStorage.getItem(micConsentKey) === '1'
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
@@ -187,14 +195,6 @@ export function CopilotView() {
     typeof window !== 'undefined' &&
     typeof window.MediaRecorder !== 'undefined' &&
     Boolean(navigator.mediaDevices?.getUserMedia)
-  // P0-04 — Dictation safety: permission pre-prompt + mandatory review step.
-  const [showMicConsent, setShowMicConsent] = useState(false)
-  // 500 ms cooldown after a transcript lands, before the Send button re-enables,
-  // forcing the pharmacist to re-read the auto-transcribed dose text.
-  const [dictationPending, setDictationPending] = useState(false)
-  const micConsentKey = 'dzpharm_mic_consent_v1'
-  const micConsented =
-    typeof window !== 'undefined' && sessionStorage.getItem(micConsentKey) === '1'
 
   /* 24-c b) Lecture à voix haute — /api/ai/tts, audio mis en cache par message */
   const [playingId, setPlayingId] = useState<number | null>(null)
@@ -237,11 +237,13 @@ export function CopilotView() {
     },
   })
 
+  const isGenerating = mutation.isPending || stream.isStreaming
+
   // Défilement automatique vers le bas
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [messages, mutation.isPending])
+  }, [messages, isGenerating])
 
   // Arrêt de la lecture audio en cours au démontage
   useEffect(
@@ -268,7 +270,7 @@ export function CopilotView() {
 
   function send(text: string) {
     const content = text.trim()
-    if (!content || mutation.isPending) return
+    if (!content || isGenerating) return
 
     // Phase 3.3/3.4: Barrière de sécurité clinique — interception des requêtes hors périmètre
     const isBlocked = BLOCKED_PATTERNS.some((pat) => pat.test(content))
@@ -290,6 +292,35 @@ export function CopilotView() {
     const next: ChatMessage[] = [...messages, { role: 'user', content }]
     setMessages(next)
     setInput('')
+
+    // P1-06 — Streaming client wiring (si activé par le feature flag)
+    if (streamingEnabled) {
+      setMessages([...next, { role: 'assistant', content: '' }])
+      void stream.send(
+        next.slice(-16),
+        mode,
+        (delta) => {
+          setMessages((cur) => {
+            const copy = [...cur]
+            const last = copy[copy.length - 1]
+            if (last && last.role === 'assistant') {
+              copy[copy.length - 1] = { ...last, content: last.content + delta }
+            }
+            return copy
+          })
+        },
+        undefined,
+        (err) => {
+          toast({
+            title: 'Le copilote est indisponible',
+            description: err,
+            variant: 'destructive',
+          })
+        }
+      )
+      return
+    }
+
     mutation.mutate(next.slice(-16))
   }
 
@@ -305,9 +336,6 @@ export function CopilotView() {
   /* ---------------------------------------------------------------- */
 
   async function startVoiceRecording() {
-    // P0-04 — Permission pre-prompt: show the consent modal the first time
-    // per tab session. After consent, the flag is persisted in sessionStorage
-    // so subsequent clicks go straight to recording.
     if (!micConsented) {
       setShowMicConsent(true)
       return
@@ -315,7 +343,7 @@ export function CopilotView() {
     await proceedWithRecording()
   }
 
-  /** P0-04 — actual recording logic, called after consent (or directly if already consented). */
+  /** P0-04 — actual recording logic, called after consent */
   async function proceedWithRecording() {
     setVoiceError(null)
     if (!speechSupported) {
@@ -402,9 +430,8 @@ export function CopilotView() {
       // Ajout en fin de saisie (append, sans écraser le texte en cours)
       setInput((prev) => (prev.trim() ? `${prev.trimEnd()} ${text}` : text))
       textareaRef.current?.focus()
-      // P0-04 — Mandatory review step: force the pharmacist to re-read the
-      // auto-transcribed dose text before Send is enabled. 500 ms cooldown
-      // blocks a reflex Enter press on a wrong-transcribed dose (clinical safety).
+
+      // P0-04 — Étape de révision obligatoire : 500 ms de cooldown + notification
       setDictationPending(true)
       toast({
         title: 'Relisez votre message avant d’envoyer',
@@ -604,7 +631,7 @@ export function CopilotView() {
           </div>
         </TooltipProvider>
 
-        {/* P1-10 — Clear conversation history (persisted). */}
+        {/* P1-10 — Effacer l'historique de conversation (persisté) */}
         {messages.length > 0 ? (
           <Button
             type="button"
@@ -615,14 +642,14 @@ export function CopilotView() {
               clearCopilotMessages()
               toast({
                 title: 'Conversation effacée',
-                description: 'L\'historique du Copilote a été réinitialisé.',
+                description: "L'historique du Copilote a été réinitialisé.",
               })
             }}
-            className="h-8 shrink-0 gap-1.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
             aria-label="Effacer la conversation"
           >
             <X className="size-3.5" aria-hidden />
-            <span className="hidden sm:inline">Effacer</span>
+            <span>Effacer</span>
           </Button>
         ) : null}
       </div>
@@ -720,7 +747,7 @@ export function CopilotView() {
                           </Markdown>
                         </div>
 
-                        {/* P0-05 — Dose verification badge (deterministic engine cross-checks the Copilot). */}
+                        {/* P0-05 — Badge de vérification posologique (moteur déterministe) */}
                         <DoseVerificationBadge
                           question={messages[i - 1]?.content ?? ''}
                           response={message.content}
@@ -824,7 +851,7 @@ export function CopilotView() {
                 </div>
                 )
               })}
-              {mutation.isPending ? (
+              {mutation.isPending || (stream.isStreaming && messages[messages.length - 1]?.content === '') ? (
                 <div className="flex gap-3">
                   <span
                     className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/50"
@@ -834,19 +861,12 @@ export function CopilotView() {
                   </span>
                   <div className="rounded-2xl rounded-bl-md border border-border bg-background px-4">
                     <TypingDots />
+                    <span className="sr-only" role="status" aria-live="polite">
+                      Le copilote rédige une réponse…
+                    </span>
                   </div>
-                  {/* P1-08 — aria-live region announcing the Copilot is thinking. */}
-                  <span className="sr-only" role="status" aria-live="polite">
-                    Le Copilote rédige une réponse…
-                  </span>
                 </div>
-              ) : (
-                messages.length > 0 ? (
-                  <span className="sr-only" role="status" aria-live="polite">
-                    Réponse reçue.
-                  </span>
-                ) : null
-              )}
+              ) : null}
             </div>
           )}
         </div>
@@ -917,9 +937,21 @@ export function CopilotView() {
                 ) : null}
               </Tooltip>
             )}
+            {stream.isStreaming ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={stream.stop}
+                className="h-11 shrink-0 gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+                aria-label="Arrêter la génération de la réponse"
+              >
+                <Square className="size-4 fill-current" aria-hidden />
+                <span className="hidden sm:inline">Arrêter</span>
+              </Button>
+            ) : null}
             <Button
               onClick={() => send(input)}
-              disabled={!input.trim() || mutation.isPending || dictationPending}
+              disabled={!input.trim() || isGenerating || dictationPending}
               className="h-11 shrink-0 gap-1.5 font-semibold"
               aria-label="Envoyer le message"
               aria-describedby={dictationPending ? 'send-review-pending' : undefined}
@@ -941,13 +973,12 @@ export function CopilotView() {
         </div>
       </div>
 
-      {/* P0-04 — Dictation permission pre-prompt (shown once per tab session). */}
+      {/* P0-04 — Pré-demande d'autorisation de dictée vocale (une fois par session) */}
       <AlertDialog
         open={showMicConsent}
         onOpenChange={(o) => {
           setShowMicConsent(o)
           if (!o) {
-            // User dismissed without consenting — don't record.
             setVoiceError('Autorisation du microphone refusée.')
           }
         }}
@@ -971,7 +1002,7 @@ export function CopilotView() {
                 try {
                   sessionStorage.setItem(micConsentKey, '1')
                 } catch {
-                  // sessionStorage may be unavailable — proceed for this tab.
+                  // sessionStorage non disponible
                 }
                 setShowMicConsent(false)
                 setVoiceError(null)

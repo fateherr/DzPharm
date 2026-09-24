@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   BarChart3,
   BookOpen,
@@ -26,27 +28,29 @@ interface NavTab {
   id: ViewId
   label: string
   icon: typeof Home
+  href: string
 }
 
 const PRIMARY_MOBILE_TABS: NavTab[] = [
-  { id: 'accueil', label: 'Accueil', icon: Home },
-  { id: 'repertoire', label: 'Répertoire', icon: BookOpen },
+  { id: 'accueil', label: 'Accueil', icon: Home, href: '/' },
+  { id: 'repertoire', label: 'Répertoire', icon: BookOpen, href: '/repertoire' },
 ]
 
 const SECONDARY_MOBILE_TABS: NavTab[] = [
-  { id: 'interactions', label: 'Interactions', icon: ShieldAlert },
+  { id: 'interactions', label: 'Interactions', icon: ShieldAlert, href: '/interactions' },
 ]
 
-const MORE_MENU_ITEMS: Array<{ id: ViewId; label: string; icon: typeof Home; desc: string }> = [
-  { id: 'catalogue', label: 'Prix & Chifa', icon: Store, desc: '1 791 produits d’officine avec PPA et remboursement CNAS' },
-  { id: 'bibliotheque', label: 'Bibliothèque RCP', icon: Library, desc: 'Monographies cliniques et RCP officiels ANSM' },
-  { id: 'copilote', label: 'Copilote IA', icon: Sparkles, desc: 'Assistant clinique intelligent (Gemini 3.6 Flash)' },
-  { id: 'armoire', label: 'Armoire Familiale', icon: Users, desc: 'Gestion de la pharmacie de maison et péremptions' },
-  { id: 'outils', label: 'Outils Médicaux', icon: Wrench, desc: 'Calculateurs pédiatriques, clairance, Ramadan' },
-  { id: 'stats', label: 'Statistiques', icon: BarChart3, desc: 'Observatoire du marché pharmaceutique algérien' },
+const MORE_MENU_ITEMS: Array<{ id: ViewId; label: string; icon: typeof Home; desc: string; href: string }> = [
+  { id: 'catalogue', label: 'Prix & Chifa', icon: Store, desc: "1 791 produits d'officine avec PPA et remboursement CNAS", href: '/prix-chifa' },
+  { id: 'bibliotheque', label: 'Bibliothèque RCP', icon: Library, desc: 'Monographies cliniques et RCP officiels ANSM', href: '/bibliotheque' },
+  { id: 'copilote', label: 'Copilote IA', icon: Sparkles, desc: 'Assistant clinique intelligent (Gemini 3.8 Flash)', href: '/copilote' },
+  { id: 'armoire', label: 'Armoire Familiale', icon: Users, desc: 'Gestion de la pharmacie de maison et péremptions', href: '/armoire' },
+  { id: 'outils', label: 'Outils Médicaux', icon: Wrench, desc: 'Calculateurs pédiatriques, clairance, Ramadan', href: '/outils' },
+  { id: 'stats', label: 'Statistiques', icon: BarChart3, desc: "Observatoire du marché pharmaceutique algérien", href: '/stats' },
 ]
 
 export function MobileBottomNav() {
+  const pathname = usePathname()
   const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
@@ -55,7 +59,12 @@ export function MobileBottomNav() {
   const basket = useDzPharm((s) => s.basket)
   const [moreOpen, setMoreOpen] = useState(false)
 
-  const isMoreActive = MORE_MENU_ITEMS.some((m) => m.id === view)
+  function isActive(id: string, href: string): boolean {
+    if (href === '/') return pathname === '/'
+    return pathname === href || view === id
+  }
+
+  const isMoreActive = MORE_MENU_ITEMS.some((m) => isActive(m.id, m.href))
 
   function handleSelect(id: ViewId) {
     setView(id)
@@ -132,11 +141,11 @@ export function MobileBottomNav() {
 
               <div className="grid grid-cols-2 gap-2.5 pb-8">
                 {MORE_MENU_ITEMS.map((item) => {
-                  const active = view === item.id
+                  const active = isActive(item.id, item.href)
                   return (
-                    <button
+                    <Link
                       key={item.id}
-                      type="button"
+                      href={item.href}
                       onClick={() => handleSelect(item.id)}
                       className={cn(
                         'flex flex-col items-start gap-1 rounded-2xl border p-3 text-left transition-all',
@@ -150,7 +159,7 @@ export function MobileBottomNav() {
                       </span>
                       <span className="mt-1 text-xs font-semibold text-foreground">{item.label}</span>
                       <span className="line-clamp-2 text-[10px] text-muted-foreground leading-tight">{item.desc}</span>
-                    </button>
+                    </Link>
                   )
                 })}
               </div>
@@ -167,36 +176,36 @@ export function MobileBottomNav() {
       >
         <div className="flex items-center justify-around">
           {/* 1. Accueil */}
-          <button
-            type="button"
-            onClick={() => handleSelect('accueil')}
+          <Link
+            href="/"
+            onClick={() => setView('accueil')}
             className={cn(
               'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
-              view === 'accueil' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
+              isActive('accueil', '/') ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Home className="size-5" />
             <span>Accueil</span>
-            {view === 'accueil' && (
+            {isActive('accueil', '/') && (
               <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
             )}
-          </button>
+          </Link>
 
           {/* 2. Répertoire */}
-          <button
-            type="button"
-            onClick={() => handleSelect('repertoire')}
+          <Link
+            href="/repertoire"
+            onClick={() => setView('repertoire')}
             className={cn(
               'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
-              view === 'repertoire' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
+              isActive('repertoire', '/repertoire') ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <BookOpen className="size-5" />
             <span>Répertoire</span>
-            {view === 'repertoire' && (
+            {isActive('repertoire', '/repertoire') && (
               <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
             )}
-          </button>
+          </Link>
 
           {/* 3. Bouton central Flash Search (Surélevé) */}
           <button
@@ -209,12 +218,12 @@ export function MobileBottomNav() {
           </button>
 
           {/* 4. Interactions */}
-          <button
-            type="button"
-            onClick={() => handleSelect('interactions')}
+          <Link
+            href="/interactions"
+            onClick={() => setView('interactions')}
             className={cn(
               'relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-medium transition-colors',
-              view === 'interactions' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
+              isActive('interactions', '/interactions') ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <div className="relative">
@@ -226,10 +235,10 @@ export function MobileBottomNav() {
               )}
             </div>
             <span>Interactions</span>
-            {view === 'interactions' && (
+            {isActive('interactions', '/interactions') && (
               <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" aria-hidden />
             )}
-          </button>
+          </Link>
 
           {/* 5. Menu / Plus */}
           <button

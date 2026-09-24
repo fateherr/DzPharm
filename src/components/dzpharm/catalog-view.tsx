@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast'
 import { fetchCatalog, fetchCatalogFacets } from './api'
 import type { CatalogCategory, CatalogProduct, CatalogQueryParams, CatalogSort } from './types'
 import { StatusBadge, formatNumber, formatPrice } from './status-badge'
+import { PriceGuardian } from './price-guardian'
 import { useDzPharm } from './store'
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -82,6 +83,7 @@ export function CatalogView() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [exporting, setExporting] = useState(false)
+  const [showGuardian, setShowGuardian] = useState(false)
 
   useEffect(() => {
     setPage(1)
@@ -214,21 +216,46 @@ export function CatalogView() {
             )}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportCsv}
-          disabled={exporting || total === 0}
-          className="gap-1.5"
-        >
-          {exporting ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <Download className="size-4" aria-hidden />
-          )}
-          Exporter CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showGuardian ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowGuardian(!showGuardian)}
+            className={cn(
+              'gap-1.5 font-semibold transition-all cursor-pointer',
+              showGuardian
+                ? 'bg-chifa hover:bg-chifa/90 text-white'
+                : 'border-chifa/30 text-chifa hover:bg-chifa/10'
+            )}
+            title="Ouvrir la vigie des prix réglementés et le simulateur Chifa"
+          >
+            <ShieldCheck className="size-4" />
+            <span>Vigie des Prix (BS-04)</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={exporting || total === 0}
+            className="gap-1.5"
+          >
+            {exporting ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Download className="size-4" aria-hidden />
+            )}
+            Exporter CSV
+          </Button>
+        </div>
       </div>
+
+      {/* BS-04 — Vigie des Prix Réglementés */}
+      {showGuardian && (
+        <div className="mb-6 animate-in fade-in-50 duration-200">
+          <PriceGuardian />
+        </div>
+      )}
 
       {/* Bandeau stats prix */}
       {priceStats?.avg ? (

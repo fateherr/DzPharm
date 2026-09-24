@@ -74,16 +74,21 @@ export interface RecentItem {
 }
 
 export type AddResult = 'added' | 'duplicate' | 'full'
+export type DensityMode = 'compact' | 'standard' | 'spacious'
 
 export const MAX_BASKET = 10
 export const MAX_FAVORITES = 30
 export const MAX_RECENT = 8
-/** P1-10 — Copilot conversation history FIFO cap (last 30 messages). */
 export const MAX_COPILOT_MESSAGES = 30
 
 interface DzPharmStore {
   view: ViewId
   setView: (view: ViewId) => void
+
+  /** P1-10 — Copilot conversation history (persisted, 30-msg FIFO). */
+  copilotMessages: ChatMessage[]
+  setCopilotMessages: (messages: ChatMessage[]) => void
+  clearCopilotMessages: () => void
   /**
    * Ouvre la vue Outils en pré-sélectionnant un onglet spécifique.
    * Utilisé par les raccourcis Hub (Armoire → Calculateurs).
@@ -96,6 +101,18 @@ interface DzPharmStore {
   /** Mode d'usage (professionnel vs famille) — persisté. */
   audience: Audience
   setAudience: (audience: Audience) => void
+
+  /** P2-39 — Mode de densité d'affichage (compact / standard / spacious). */
+  density: DensityMode
+  setDensity: (density: DensityMode) => void
+
+  /** P2-08 — Modal d'aide / cheat-sheet des raccourcis clavier. */
+  shortcutsOpen: boolean
+  setShortcutsOpen: (open: boolean) => void
+
+  /** P3-01 — Wilaya d'urgence médicale sélectionnée (par défaut 'Alger'). */
+  emergencyWilaya: string
+  setEmergencyWilaya: (wilaya: string) => void
 
   filters: DirectoryFilters
   setFilters: (patch: Partial<DirectoryFilters>) => void
@@ -151,15 +168,6 @@ interface DzPharmStore {
   pushRecent: (item: Omit<RecentItem, 'viewedAt'>) => void
   clearRecent: () => void
 
-  /**
-   * P1-10 — Copilot conversation history (persisted, 30-msg FIFO).
-   * Survives refresh. The copilot-view consumes this slice instead of local
-   * useState so the conversation is restored on reload.
-   */
-  copilotMessages: ChatMessage[]
-  setCopilotMessages: (messages: ChatMessage[]) => void
-  clearCopilotMessages: () => void
-
   /* ------------------ Armoire v2 (plan « Armoire à Pharmacie
      Familiale » — membres + entrées assignables/partagées) ----------- */
 
@@ -203,12 +211,27 @@ export const useDzPharm = create<DzPharmStore>()(
       view: 'accueil',
       setView: (view) => set({ view }),
 
+      // P1-10 — Copilot conversation history (30-msg FIFO cap)
+      copilotMessages: [],
+      setCopilotMessages: (messages) =>
+        set({ copilotMessages: messages.slice(-MAX_COPILOT_MESSAGES) }),
+      clearCopilotMessages: () => set({ copilotMessages: [] }),
+
       toolsTab: null,
       openTool: (tab) => set({ view: 'outils', toolsTab: tab }),
       clearToolsTab: () => set({ toolsTab: null }),
 
       audience: 'pro',
       setAudience: (audience) => set({ audience }),
+
+      density: 'standard',
+      setDensity: (density) => set({ density }),
+
+      shortcutsOpen: false,
+      setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
+
+      emergencyWilaya: 'Alger',
+      setEmergencyWilaya: (emergencyWilaya) => set({ emergencyWilaya }),
 
       filters: { ...EMPTY_FILTERS },
       setFilters: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })),
@@ -289,12 +312,6 @@ export const useDzPharm = create<DzPharmStore>()(
           ].slice(0, MAX_RECENT),
         })),
       clearRecent: () => set({ recentlyViewed: [] }),
-
-      // P1-10 — Copilot conversation history. 30-msg FIFO cap.
-      copilotMessages: [],
-      setCopilotMessages: (messages) =>
-        set({ copilotMessages: messages.slice(-MAX_COPILOT_MESSAGES) }),
-      clearCopilotMessages: () => set({ copilotMessages: [] }),
 
       armoireMembers: [],
       armoireEntries: [],
@@ -409,13 +426,13 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      version: 4,
+      version: 5,
       /**
-       * Migration v0 → v1 : ancien modèle (profils × items imbriqués) vers
-       * le modèle du plan (membres + entrées assignables/partagées).
-       * Migration v1 → v2 : nouveaux champs ArmoireMember (sexe, taille_cm,
-       * maladies, memberNotes) et ArmoireEntry (duree_pao_jours) — defaults
-       * backward-compatibles, aucune donnée perdue.
+       * Migration v0 → v1 : ancien modèle vers membres + entrées
+       * Migration v1 → v2 : nouveaux champs ArmoireMember / ArmoireEntry
+       * Migration v2 → v3 : P1-12 — persistance du panier d'interactions (basket)
+       * Migration v3 → v4 : P1-10 — persistance de l'historique Copilote (copilotMessages)
+       * Migration v4 → v5 : P2-39 — persistance du mode de densité (compact/standard/spacious)
        */
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown> & {
@@ -544,48 +561,47 @@ export const useDzPharm = create<DzPharmStore>()(
           }
         }
 
-        // v2 → v3: P1-12 — add `basket` to the persisted slice (was missing).
-        // Existing users with v2 state won't have `basket` in their persisted
-        // object — default it to an empty array so the store hydrates cleanly.
+        // v2 → v3: P1-12 — add basket to persisted slice
         if (version <= 2) {
           if (!Array.isArray((next as { basket?: unknown }).basket)) {
             ;(next as { basket?: unknown }).basket = []
           }
         }
 
-        // v3 → v4: P1-10 — add `copilotMessages` to the persisted slice.
-        // Existing users with v3 state won't have `copilotMessages` — default
-        // to an empty array so the store hydrates cleanly.
+        // v3 → v4: P1-10 — add copilotMessages to persisted slice
         if (version <= 3) {
           if (!Array.isArray((next as { copilotMessages?: unknown }).copilotMessages)) {
             ;(next as { copilotMessages?: unknown }).copilotMessages = []
           }
         }
 
+        // v4 → v5: P2-39 — add density to persisted slice
+        if (version <= 4) {
+          const d = (next as { density?: string }).density
+          if (!d || !['compact', 'standard', 'spacious'].includes(d)) {
+            ;(next as { density?: string }).density = 'standard'
+          }
+        }
+
         return next as unknown as DzPharmStore
       },
       // Persiste mode d'usage + favoris + historique récent + armoire v2
-      // + journal + panier Chifa — l'état de navigation reste éphémère
+      // + journal + panier Chifa + panier interactions + historique Copilote + densité
       partialize: (state) => ({
         designMode: state.designMode,
         palette: state.palette,
+        density: state.density,
         audience: state.audience,
         favorites: state.favorites,
         recentlyViewed: state.recentlyViewed,
-        // P1-12 — Persist the interactions basket so it survives refresh.
-        // (was missing from partialize — refresh wiped the list). The URL
-        // param sync (useInteractionListState hook) is the secondary shareable
-        // layer; this localStorage persist is the always-on baseline.
         basket: state.basket,
-        // P1-10 — Persist the Copilot conversation history (30-msg FIFO).
-        // Survives refresh. The copilot-view consumes this slice instead of
-        // local useState.
         copilotMessages: state.copilotMessages,
         armoireMembers: state.armoireMembers,
         armoireEntries: state.armoireEntries,
         armoireJournal: state.armoireJournal,
         chifaCardType: state.chifaCardType,
         chifaLines: state.chifaLines,
+        emergencyWilaya: state.emergencyWilaya,
       }),
     }
   )

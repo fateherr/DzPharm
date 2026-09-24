@@ -1,13 +1,22 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { BOX_VARIANTS, type BoxVariant } from "@/components/dzpharm/box-variants"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+export interface CardProps extends React.ComponentProps<"div"> {
+  variant?: BoxVariant
+}
+
+function Card({ className, variant, ...props }: CardProps) {
+  const variantClass = variant
+    ? BOX_VARIANTS[variant]
+    : "bg-card text-card-foreground rounded-xl border shadow-sm"
   return (
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "flex flex-col gap-6 py-6",
+        variantClass,
         className
       )}
       {...props}

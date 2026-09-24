@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
-import { APP_ROUTER_ENABLED, urlForView } from '@/lib/route-map'
 import {
   Baby,
   Barcode,
@@ -17,9 +16,12 @@ import {
   HeartHandshake,
   HeartPulse,
   Home,
+  Keyboard,
+  Layers,
   Leaf,
   Library,
   Lock,
+  Monitor,
   Moon,
   Palette,
   PhoneCall,
@@ -49,6 +51,7 @@ import { StatusBadge, formatPrice, isLocal } from './status-badge'
 import { useDzPharm, type ViewId } from './store'
 import { terminateSession } from './session-guard'
 import { cn } from '@/lib/utils'
+import { PLATFORM_STATS, formatAmmCount } from '@/lib/constants/stats'
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -60,20 +63,24 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function CommandPalette() {
+  const router = useRouter()
   const commandOpen = useDzPharm((s) => s.commandOpen)
   const setCommandOpen = useDzPharm((s) => s.setCommandOpen)
   const setScannerOpen = useDzPharm((s) => s.setScannerOpen)
   const setPaletteOpen = useDzPharm((s) => s.setPaletteOpen)
   const designMode = useDzPharm((s) => s.designMode)
   const setDesignMode = useDzPharm((s) => s.setDesignMode)
+  const view = useDzPharm((s) => s.view)
   const setView = useDzPharm((s) => s.setView)
   const openDrug = useDzPharm((s) => s.openDrug)
   const openTool = useDzPharm((s) => s.openTool)
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
   const audience = useDzPharm((s) => s.audience)
   const setAudience = useDzPharm((s) => s.setAudience)
+  const setShortcutsOpen = useDzPharm((s) => s.setShortcutsOpen)
+  const density = useDzPharm((s) => s.density)
+  const setDensity = useDzPharm((s) => s.setDensity)
   const { theme, setTheme } = useTheme()
-  const router = useRouter()
 
   const [query, setQuery] = useState('')
   const debounced = useDebounce(query.trim(), 200)
@@ -90,30 +97,31 @@ export function CommandPalette() {
     return { cleanQuery: raw, scopePrefix: undefined }
   }, [debounced])
 
-  // P0-06 — Navigation helper is defined below (line ~171) and extended to
-  // push the real URL when the App Router flag is on.
-
-  // Écouteur global pour Cmd+K / Ctrl+K (recherche) et Ctrl+I (interactions)
+  // Écouteur global pour raccourcis clavier & touches d'accès rapide
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setCommandOpen(!commandOpen)
-      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
         e.preventDefault()
         setView('interactions')
+        router.push('/interactions')
         setCommandOpen(false)
+        return
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [commandOpen, setCommandOpen, setView])
+  }, [commandOpen, setCommandOpen, setView, router])
 
   // P0-06 (Bug #1) — Single-key hotkeys when the palette is open and focus is
   // NOT in the search input. Matches the CommandShortcut badges shown in the UI.
   // H=Accueil, R=Répertoire, P=Prix & Chifa, I=Interactions, C=Copilote,
-  // S=Scanner, B=Botanique toggle, T=Nuancier. Bug #2 (Enter dials wrong service)
-  // is already handled by cmdk's internal selectedIndex.
+  // S=Scanner, B=Botanique toggle, T=Nuancier.
   useEffect(() => {
     if (!commandOpen) return
     function handleHotkey(e: KeyboardEvent) {
@@ -124,42 +132,39 @@ export function CommandPalette() {
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const key = e.key.toLowerCase()
-      // P0-06 — inline navigation (navigateTo is declared later in the component;
-      // inlining avoids the no-use-before-define error and the dep-array churn).
-      const go = (view: ViewId) => {
-        setView(view)
-        if (APP_ROUTER_ENABLED) router.push(urlForView(view))
+      const go = (targetView: ViewId, href: string) => {
+        setView(targetView)
+        router.push(href)
         setCommandOpen(false)
         setQuery('')
       }
       const HOTKEYS: Record<string, () => void> = {
-        h: () => go('accueil'),
-        r: () => go('repertoire'),
-        p: () => go('catalogue'),
-        i: () => go('interactions'),
-        c: () => go('copilote'),
+        h: () => go('accueil', '/'),
+        r: () => go('repertoire', '/repertoire'),
+        p: () => go('catalogue', '/prix-chifa'),
+        i: () => go('interactions', '/interactions'),
+        c: () => go('copilote', '/copilote'),
         s: () => {
-          setScannerOpen(true)
           setCommandOpen(false)
+          setScannerOpen(true)
         },
         b: () => {
           setDesignMode(designMode === 'botanique' ? 'standard' : 'botanique')
           setCommandOpen(false)
         },
         t: () => {
-          setPaletteOpen(true)
           setCommandOpen(false)
+          setPaletteOpen(true)
         },
       }
-      const action = HOTKEYS[key]
-      if (action) {
+      if (HOTKEYS[key]) {
         e.preventDefault()
-        action()
+        HOTKEYS[key]()
       }
     }
     window.addEventListener('keydown', handleHotkey)
     return () => window.removeEventListener('keydown', handleHotkey)
-  }, [commandOpen, designMode, setView, setScannerOpen, setPaletteOpen, setDesignMode, setCommandOpen, router])
+  }, [commandOpen, setCommandOpen, setView, router, setScannerOpen, designMode, setDesignMode, setPaletteOpen])
 
   // Recherche en direct des médicaments
   const { data: drugResults, isLoading: drugsLoading } = useQuery({
@@ -170,12 +175,26 @@ export function CommandPalette() {
     staleTime: 30 * 1000,
   })
 
-  function navigateTo(view: ViewId) {
-    setView(view)
-    // P0-06: push the real URL when the App Router flag is on (deep-link + shareable).
-    if (APP_ROUTER_ENABLED) router.push(urlForView(view))
+  function navigateTo(targetView: ViewId, href?: string) {
+    setView(targetView)
     setCommandOpen(false)
     setQuery('')
+    const defaultHrefs: Record<ViewId, string> = {
+      accueil: '/',
+      repertoire: '/repertoire',
+      catalogue: '/prix-chifa',
+      interactions: '/interactions',
+      copilote: '/copilote',
+      bibliotheque: '/bibliotheque',
+      armoire: '/armoire',
+      outils: '/outils',
+      stats: '/stats',
+      apropos: '/a-propos',
+    }
+    const targetHref = href ?? defaultHrefs[targetView]
+    if (targetHref) {
+      router.push(targetHref)
+    }
   }
 
   function handleOpenTool(tab: string) {
@@ -332,7 +351,7 @@ export function CommandPalette() {
         <CommandSeparator className="my-1" />
 
         {/* Urgences Médicales Nationales */}
-        <CommandGroup heading="Urgences Médicales Algérie">
+        <CommandGroup heading="Urgences Médicales & Secours Algérie">
           <CommandItem
             onSelect={() => {
               window.location.href = 'tel:14'
@@ -341,8 +360,19 @@ export function CommandPalette() {
             className="cursor-pointer text-red-600 dark:text-red-400 font-medium"
           >
             <Siren className="size-4 text-red-500 animate-pulse" />
-            <span>Appeler le SAMU (14) — Urgence vitale</span>
+            <span>SAMU (14) — Urgence vitale</span>
             <CommandShortcut>14</CommandShortcut>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              window.location.href = 'tel:1021'
+              setCommandOpen(false)
+            }}
+            className="cursor-pointer text-amber-600 dark:text-amber-400 font-medium"
+          >
+            <PhoneCall className="size-4 text-amber-500" />
+            <span>Protection Civile (1021 / 14) — Pompiers &amp; Secours</span>
+            <CommandShortcut>1021</CommandShortcut>
           </CommandItem>
           <CommandItem
             onSelect={() => {
@@ -351,8 +381,30 @@ export function CommandPalette() {
             }}
             className="cursor-pointer"
           >
-            <PhoneCall className="size-4 text-amber-500" />
-            <span>Centre Antipoison d&apos;Alger (021 71 30 42 / 021 71 30 43)</span>
+            <PhoneCall className="size-4 text-sky-500" />
+            <span>Centre Antipoison National d&apos;Alger (021 71 30 42)</span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              window.location.href = 'tel:1548'
+              setCommandOpen(false)
+            }}
+            className="cursor-pointer text-blue-600 dark:text-blue-400"
+          >
+            <PhoneCall className="size-4 text-blue-500" />
+            <span>Police Secours — Sûreté Nationale (1548 / 17)</span>
+            <CommandShortcut>1548</CommandShortcut>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              window.location.href = 'tel:1055'
+              setCommandOpen(false)
+            }}
+            className="cursor-pointer text-emerald-600 dark:text-emerald-400"
+          >
+            <PhoneCall className="size-4 text-emerald-500" />
+            <span>Gendarmerie Nationale (1055) — Secours routier</span>
+            <CommandShortcut>1055</CommandShortcut>
           </CommandItem>
         </CommandGroup>
 
@@ -415,7 +467,7 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('repertoire')} className="cursor-pointer">
             <BookOpen className="size-4 text-primary" />
-            <span>Répertoire officiel des 9 555 AMM</span>
+            <span>Répertoire officiel des {formatAmmCount(PLATFORM_STATS.TOTAL_DRUGS)} AMM</span>
             <CommandShortcut>R</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('catalogue')} className="cursor-pointer">
@@ -438,7 +490,7 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('copilote')} className="cursor-pointer">
             <Sparkles className="size-4 text-primary" />
-            <span>Copilote IA (Gemini 3.6 Flash)</span>
+            <span>Copilote IA (Gemini 3.8 Flash)</span>
             <CommandShortcut>C</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => navigateTo('outils')} className="cursor-pointer">
@@ -506,20 +558,50 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem
             onSelect={() => {
-              setTheme(theme === 'dark' ? 'light' : 'dark')
+              setCommandOpen(false)
+              setShortcutsOpen(true)
+            }}
+            className="cursor-pointer"
+          >
+            <Keyboard className="size-4 text-primary" />
+            <span>Guide des raccourcis clavier</span>
+            <CommandShortcut>?</CommandShortcut>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              const nextDensity = density === 'compact' ? 'standard' : density === 'standard' ? 'spacious' : 'compact'
+              setDensity(nextDensity)
               setCommandOpen(false)
             }}
             className="cursor-pointer"
           >
-            {theme === 'dark' ? (
+            <Layers className="size-4 text-emerald-500" />
+            <span>
+              Densité d’affichage : <strong className="capitalize">{density === 'compact' ? 'Compact' : density === 'standard' ? 'Standard' : 'Aéré'}</strong> (cliquer pour changer)
+            </span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
+              setTheme(next)
+              setCommandOpen(false)
+            }}
+            className="cursor-pointer"
+          >
+            {theme === 'system' ? (
+              <>
+                <Monitor className="size-4 text-sky-400" />
+                <span>Thème : <strong>Système (auto)</strong> — cliquer pour Clair</span>
+              </>
+            ) : theme === 'dark' ? (
               <>
                 <Sun className="size-4 text-amber-400" />
-                <span>Activer le Thème Clair</span>
+                <span>Thème : <strong>Sombre</strong> — cliquer pour Système</span>
               </>
             ) : (
               <>
                 <Moon className="size-4 text-sky-400" />
-                <span>Activer le Thème Sombre</span>
+                <span>Thème : <strong>Clair</strong> — cliquer pour Sombre</span>
               </>
             )}
           </CommandItem>
@@ -532,7 +614,7 @@ export function CommandPalette() {
           >
             <Lock className="size-4" />
             <span>Verrouiller la session immédiatement</span>
-            <CommandShortcut>Ctrl L</CommandShortcut>
+            <CommandShortcut>⌘ L</CommandShortcut>
           </CommandItem>
         </CommandGroup>
       </CommandList>
