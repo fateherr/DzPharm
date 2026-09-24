@@ -827,4 +827,28 @@ Work Log:
 Stage Summary:
 - All primary navigation surfaces (header, footer, mobile nav, command palette) now use real <Link> elements with proper hrefs. Every route is addressable via URL. Backward-compatible with existing SPA view-state pattern.
 
+---
+Task ID: D-03 & D-05 (DzPharm Execution Plan v4)
+Agent: main-orchestrator
+Task: Design Universe Palette Collections Expansion & Dark Hero Homepage Visual Refinements
+
+Work Log:
+- D-03 (Design Universe §2):
+  - Expanded `PaletteCategory` in `src/components/dzpharm/types.ts` with 4 new collections: `cultural`, `seasonal`, `clinical`, `experimental`.
+  - Added 24 new curated palettes to `src/components/dzpharm/palettes.ts` from Design Universe §2.1-§2.4 (Sahara Nuit, Casbah Terracotta, Kabylie Émeraude, Hoggar Violet, Méditerranée Azur, Constantine Or, Ramadan Nuit, Aïd Or, Printemps Tlemcen, Été Béjaïa, Automne Sétif, Hiver Ghardaïa, Chirurgie Pure, Urgence Rouge, Nuit Pharmacie, Pédiatrie Douceur, Gériatrie Haute Visibilité, Téléconsultation Sérénité, Cyber Sahara, Vaporwave Alger, Mono Noir Typographique, Aurore Safran, Menthe Glacée, Ciel Terracotta).
+  - Enhanced `PaletteDialog` (`palette-dialog.tsx`) to support 6 responsive category tabs with dedicated icons and live counts (44 palettes total).
+  - Enhanced `PaletteSync` (`palette-sync.tsx`) to dynamically inject and synchronize extended palette CSS variables (`--primary`, `--chifa`, `--border`, `--card`, `--background`, `--foreground`) into `:root` without latency.
+- D-05 (Homepage Vision §9 & §10):
+  - Added official bilingual tagline to `HomeView` hero: « Le médicament, expliqué. · الدواء، مشروح » with proper RTL rendering.
+  - Implemented glowing search bar container (`shadow-[0_0_30px_rgba(56,189,248,0.22)]` with hover elevation).
+  - Added Copilot prompt chip CTA with Darija example (« دوا تاع السكر؟ ») and direct navigation.
+  - Implemented The Three Doors (Concept 7): 3 prominent primary entry cards (Répertoire National 9 555 AMM, Copilote Clinique IA Trilingue, Contrôle d'Interactions Instantané).
+  - Added Real-Time Anonymized Clinical Activity Ticker (Concept 8 — Social Proof) with live status pulse.
+- Acceptance tests: `npx tsc --noEmit` passed with 0 errors, `npm run build` compiled 45/45 static pages in 2.4s.
+
+Stage Summary:
+- DzPharm now features 44 full-featured design palettes across 6 collections with real-time DOM injection.
+- Homepage hero transformed into the recommended dark minimal aesthetic with glowing focal point, Three Doors navigation, and trilingual Darija authenticity.
+
+
 

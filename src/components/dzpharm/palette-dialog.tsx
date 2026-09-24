@@ -3,12 +3,16 @@
 import { useState } from 'react'
 import { useTheme } from 'next-themes'
 import {
+  Calendar,
   Check,
+  Compass,
+  FlaskConical,
   Layers,
   Leaf,
   Moon,
   Palette,
   Sparkles,
+  Stethoscope,
   Sun,
   Wind,
 } from 'lucide-react'
@@ -46,9 +50,22 @@ export function PaletteDialog() {
     }
   }
 
-  const filtered      = PALETTES.filter((p) => p.category === activeCategory)
-  const minCount      = PALETTES.filter((p) => p.category === 'minimalist').length
-  const sysCount      = PALETTES.filter((p) => p.category === 'system').length
+  const filtered  = PALETTES.filter((p) => p.category === activeCategory)
+  const minCount  = PALETTES.filter((p) => p.category === 'minimalist').length
+  const sysCount  = PALETTES.filter((p) => p.category === 'system').length
+  const cultCount = PALETTES.filter((p) => p.category === 'cultural').length
+  const seasCount = PALETTES.filter((p) => p.category === 'seasonal').length
+  const clinCount = PALETTES.filter((p) => p.category === 'clinical').length
+  const expCount  = PALETTES.filter((p) => p.category === 'experimental').length
+
+  const categories: { id: PaletteCategory; label: string; count: number; icon: typeof Wind; color: string }[] = [
+    { id: 'minimalist', label: 'Minimalistes', count: minCount, icon: Wind, color: 'text-primary' },
+    { id: 'system', label: 'Systèmes', count: sysCount, icon: Layers, color: 'text-violet-500' },
+    { id: 'cultural', label: 'Culturel DZ', count: cultCount, icon: Compass, color: 'text-amber-500' },
+    { id: 'seasonal', label: 'Saisonnier', count: seasCount, icon: Calendar, color: 'text-emerald-500' },
+    { id: 'clinical', label: 'Clinique', count: clinCount, icon: Stethoscope, color: 'text-red-500' },
+    { id: 'experimental', label: 'Expérimental', count: expCount, icon: FlaskConical, color: 'text-sky-500' },
+  ]
 
   return (
     <Dialog open={paletteOpen} onOpenChange={setPaletteOpen}>
@@ -69,7 +86,7 @@ export function PaletteDialog() {
                     Nuancier &amp; Styles de Design
                   </DialogTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    20 thèmes · changement instantané sans rechargement
+                    {PALETTES.length} palettes · 6 collections de design · changement instantané
                   </p>
                 </div>
               </div>
@@ -117,53 +134,31 @@ export function PaletteDialog() {
               </Button>
             </div>
 
-            {/* Category tabs */}
-            <div className="mt-2 flex items-stretch gap-1.5 p-1 rounded-xl bg-muted/80 border border-border/70">
-              {/* Tab 1 – Nuances Minimalistes */}
-              <button
-                type="button"
-                onClick={() => setActiveCategory('minimalist')}
-                className={cn(
-                  'flex-1 flex flex-col items-center gap-0.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer',
-                  activeCategory === 'minimalist'
-                    ? 'bg-card text-foreground shadow-sm border border-border/80'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <div className="flex items-center gap-1.5">
-                  <Wind className="size-3.5 text-primary" />
-                  <span>Nuances Minimalistes</span>
-                  <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-bold text-primary">
-                    {minCount}
-                  </span>
-                </div>
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  Anti-fatigue · tons neutres · zéro éblouissement
-                </span>
-              </button>
-
-              {/* Tab 2 – Architectures de Design */}
-              <button
-                type="button"
-                onClick={() => setActiveCategory('system')}
-                className={cn(
-                  'flex-1 flex flex-col items-center gap-0.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer',
-                  activeCategory === 'system'
-                    ? 'bg-card text-foreground shadow-sm border border-border/80'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <div className="flex items-center gap-1.5">
-                  <Layers className="size-3.5 text-violet-500" />
-                  <span>Architectures de Design</span>
-                  <span className="rounded-full bg-violet-500/15 px-1.5 text-[10px] font-bold text-violet-600 dark:text-violet-400">
-                    {sysCount}
-                  </span>
-                </div>
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  Géométrie · ombres · densité · angles · verre
-                </span>
-              </button>
+            {/* Category tabs (6 collections) */}
+            <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 p-1 rounded-xl bg-muted/80 border border-border/70">
+              {categories.map((cat) => {
+                const Icon = cat.icon
+                const isSelected = activeCategory === cat.id
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center',
+                      isSelected
+                        ? 'bg-card text-foreground shadow-sm border border-border/80'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+                    )}
+                  >
+                    <Icon className={cn('size-3.5 shrink-0', cat.color)} />
+                    <span className="truncate">{cat.label}</span>
+                    <span className="rounded-full bg-muted-foreground/15 px-1.5 py-0.5 text-[9px] font-bold">
+                      {cat.count}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </DialogHeader>
         </div>

@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { useDzPharm } from './store'
 import type { DesignMode, PaletteId } from './types'
 
+import { PALETTES } from './palettes'
+
 export function PaletteSync() {
   const palette = useDzPharm((s) => s.palette)
   const setPalette = useDzPharm((s) => s.setPalette)
@@ -19,6 +21,26 @@ export function PaletteSync() {
         localStorage.setItem('dzpharm_palette', palette)
       } catch {
         // Ignorer si private browsing bloque localStorage
+      }
+
+      // Appliquer dynamiquement les couleurs pour les collections étendues (culturelles, saisonnières, cliniques, expérimentales)
+      const p = PALETTES.find((item) => item.id === palette)
+      if (p && ['cultural', 'seasonal', 'clinical', 'experimental'].includes(p.category)) {
+        document.documentElement.style.setProperty('--primary', p.colors.primary)
+        document.documentElement.style.setProperty('--chifa', p.colors.chifa)
+        document.documentElement.style.setProperty('--border', p.colors.border)
+        document.documentElement.style.setProperty('--card', p.colors.card)
+        document.documentElement.style.setProperty('--background', p.colors.bg)
+        document.documentElement.style.setProperty('--foreground', p.colors.text)
+        document.documentElement.style.setProperty('--ring', p.colors.primary)
+      } else {
+        document.documentElement.style.removeProperty('--primary')
+        document.documentElement.style.removeProperty('--chifa')
+        document.documentElement.style.removeProperty('--border')
+        document.documentElement.style.removeProperty('--card')
+        document.documentElement.style.removeProperty('--background')
+        document.documentElement.style.removeProperty('--foreground')
+        document.documentElement.style.removeProperty('--ring')
       }
     }
   }, [palette])

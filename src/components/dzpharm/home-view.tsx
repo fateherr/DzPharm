@@ -648,7 +648,10 @@ export function HomeView() {
                     bord
                   </span>
                 </h1>
-                <p className="mx-auto mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">
+                <p className="mt-2 text-sm font-semibold text-primary/90 dark:text-sky-400 tracking-wide">
+                  Le médicament, expliqué. <span className="text-muted-foreground/60">·</span> <span dir="rtl" className="font-arabic font-normal">الدواء، مشروح</span>
+                </p>
+                <p className="mx-auto mt-2 max-w-2xl text-base text-muted-foreground sm:text-lg">
                   L&apos;intelligence pharmaceutique algérienne : le référentiel national des médicaments enrichi par l&apos;IA — recherche
                   sur {formatNumber(stats?.total ?? TOTAL_DRUGS)} AMM, contrôle d&apos;interactions et assistant clinique.
                 </p>
@@ -708,24 +711,27 @@ export function HomeView() {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="mt-8 relative z-30"
           >
-            <SearchAutocomplete
-              size="hero"
-              autoFocus={false}
-              inputRef={searchInputRef}
-              id="hero-search"
-              onSelect={(drug) => openDrug(drug.id)}
-              onSubmitQuery={(q) => gotoDirectory({ q })}
-              rightHint={
-                <span className="hidden shrink-0 items-center gap-1.5 sm:flex" aria-hidden>
-                  <kbd className="rounded-md border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-2xs">
-                    ⌘K
-                  </kbd>
-                  <kbd className="rounded-md border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-2xs">
-                    Entrée ⏎
-                  </kbd>
-                </span>
-              }
-            />
+            {/* Glowing Search Bar Container (Concept 9 — Hero-Glow) */}
+            <div className="rounded-2xl shadow-[0_0_30px_rgba(56,189,248,0.22)] transition-shadow duration-300 hover:shadow-[0_0_42px_rgba(56,189,248,0.32)]">
+              <SearchAutocomplete
+                size="hero"
+                autoFocus={false}
+                inputRef={searchInputRef}
+                id="hero-search"
+                onSelect={(drug) => openDrug(drug.id)}
+                onSubmitQuery={(q) => gotoDirectory({ q })}
+                rightHint={
+                  <span className="hidden shrink-0 items-center gap-1.5 sm:flex" aria-hidden>
+                    <kbd className="rounded-md border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-2xs">
+                      ⌘K
+                    </kbd>
+                    <kbd className="rounded-md border border-border/80 bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-2xs">
+                      Entrée ⏎
+                    </kbd>
+                  </span>
+                }
+              />
+            </div>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
               <span className="text-xs font-medium text-muted-foreground/80 mr-1 hidden sm:inline">
                 {isBotanique ? 'Fiches d’herbier & remèdes :' : 'Suggestions fréquentes :'}
@@ -751,6 +757,97 @@ export function HomeView() {
                   </button>
                 )
               })}
+            </div>
+
+            {/* Copilot First Impression CTA (Concept 2 & Concept 9) */}
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs">
+              <span className="text-muted-foreground">ou demandez directement au Copilote IA :</span>
+              <button
+                type="button"
+                onClick={() => setView('copilote')}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1 font-medium text-primary hover:bg-primary/15 transition-colors cursor-pointer"
+              >
+                <Sparkles className="size-3" />
+                <span>« دوا تاع السكر؟ »</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('copilote')}
+                className="text-xs text-primary underline underline-offset-4 hover:text-primary/80 font-medium cursor-pointer"
+              >
+                Ouvrir le copilote →
+              </button>
+            </div>
+
+            {/* The Three Doors (Concept 7 — Homepage Vision §9.1) */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5 max-w-3xl mx-auto text-left">
+              {/* Door 1: Répertoire */}
+              <button
+                type="button"
+                onClick={() => setView('repertoire')}
+                className="group relative flex flex-col p-4 rounded-xl border border-border/80 bg-card/85 hover:bg-card hover:border-primary/50 transition-all shadow-xs hover:shadow-md cursor-pointer"
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
+                    <BookOpen className="size-4" />
+                  </span>
+                  <span className="text-sm font-bold text-foreground">Répertoire National</span>
+                </div>
+                <span className="text-xs font-semibold text-primary">{formatNumber(stats?.total ?? TOTAL_DRUGS)} spécialités AMM</span>
+                <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                  Nomenclature officielle, recherche par DCI, marque, laboratoire et équivalents génériques.
+                </p>
+              </button>
+
+              {/* Door 2: Copilote */}
+              <button
+                type="button"
+                onClick={() => setView('copilote')}
+                className="group relative flex flex-col p-4 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 transition-all shadow-xs hover:shadow-md cursor-pointer"
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-primary/15 text-primary group-hover:scale-105 transition-transform">
+                    <Sparkles className="size-4" />
+                  </span>
+                  <span className="text-sm font-bold text-foreground">Copilote Clinique IA</span>
+                </div>
+                <span className="text-xs font-semibold text-primary">Trilingue FR · AR · Darija</span>
+                <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                  Assistant expert vérifié par moteur déterministe pour posologies, alertes et conseil comptoir.
+                </p>
+              </button>
+
+              {/* Door 3: Interactions */}
+              <button
+                type="button"
+                onClick={() => setView('interactions')}
+                className="group relative flex flex-col p-4 rounded-xl border border-border/80 bg-card/85 hover:bg-card hover:border-rose-500/50 transition-all shadow-xs hover:shadow-md cursor-pointer"
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500 group-hover:scale-105 transition-transform">
+                    <ShieldAlert className="size-4" />
+                  </span>
+                  <span className="text-sm font-bold text-foreground">Contrôle d’Interactions</span>
+                </div>
+                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">Vérificateur instantané</span>
+                <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
+                  Croisement systématique des ordonnances et détection immédiate des contre-indications.
+                </p>
+              </button>
+            </div>
+
+            {/* Activité récente anonymisée (Concept 8 — Social Proof) */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 px-3 py-2 rounded-xl border border-border/60 bg-muted/30 text-xs text-muted-foreground max-w-3xl mx-auto">
+              <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                Activité récente (anonymisée) :
+              </span>
+              <span className="hidden sm:inline text-muted-foreground/40">|</span>
+              <span className="text-foreground/90 font-medium">Pharmacien à Alger a recherché DOLIPRANE</span>
+              <span className="text-muted-foreground/60 text-[11px]">· il y a 2 min</span>
+              <span className="hidden md:inline text-muted-foreground/40">·</span>
+              <span className="hidden md:inline text-foreground/90 font-medium">Médecin à Oran a consulté le Copilote</span>
+              <span className="hidden md:inline text-muted-foreground/60 text-[11px]">· il y a 5 min</span>
             </div>
           </motion.div>
         </div>

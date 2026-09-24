@@ -12,7 +12,7 @@ export type GlobalRisk = 'FAIBLE' | 'MODERE' | 'ELEVE' | 'CRITIQUE'
 
 export type DesignMode = 'standard' | 'botanique'
 
-export type PaletteCategory = 'minimalist' | 'system'
+export type PaletteCategory = 'minimalist' | 'system' | 'cultural' | 'seasonal' | 'clinical' | 'experimental'
 
 export type PaletteId =
   // 10 Palettes Nuances Minimalistes
@@ -37,6 +37,34 @@ export type PaletteId =
   | 'design-high-contrast'
   | 'design-telemetry-hud'
   | 'design-paper-codex'
+  // 6 Palettes Culturelles Algériennes (§2.1)
+  | 'sahara-nuit'
+  | 'casbah-terracotta'
+  | 'kabylie-emerald'
+  | 'hoggar-violet'
+  | 'mediterranee-azure'
+  | 'constantine-or'
+  // 6 Palettes Saisonnières (§2.2)
+  | 'ramadan-nuit'
+  | 'eid-or'
+  | 'printemps-tlemcen'
+  | 'ete-bejaia'
+  | 'automne-setif'
+  | 'hiver-ghardaia'
+  // 6 Palettes Cliniques Fonctionnelles (§2.3)
+  | 'chirurgie-pure'
+  | 'urgence-rouge'
+  | 'nuit-pharmacie'
+  | 'pediatrie-joy'
+  | 'geriatrie-contrast'
+  | 'telemedecine-calm'
+  // 6 Palettes Expérimentales (§2.4)
+  | 'cyber-sahara'
+  | 'vaporwave-alger'
+  | 'mono-noir'
+  | 'saffron-dawn'
+  | 'glacier-mint'
+  | 'terracotta-sky'
 
 export interface PaletteDefinition {
   id: PaletteId
