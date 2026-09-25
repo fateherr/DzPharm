@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
+import { TAMAZIGHT_LEXICON, translateLineToTamazight } from '@/lib/clinical/tamazight-lexicon'
 
 interface TranslatedLine {
   original: string
@@ -247,9 +248,10 @@ export function PrescriptionTranslator() {
           <CardContent className="p-4 sm:p-5 pt-1 flex-1 flex flex-col">
             {result ? (
               <Tabs defaultValue="lines" className="flex-1 flex flex-col">
-                <TabsList className="grid grid-cols-2 h-8 text-xs mb-3">
+                <TabsList className="grid grid-cols-3 h-8 text-xs mb-3">
                   <TabsTrigger value="lines">Fiche Ligne par Ligne</TabsTrigger>
                   <TabsTrigger value="darija">Conseils Comptoir (الدارجة)</TabsTrigger>
+                  <TabsTrigger value="tamazight">ⵜⴰⵎⴰⵣⵉⵖⵜ Tamazight</TabsTrigger>
                 </TabsList>
 
                 {/* Vue Ligne par Ligne (Fiche patient) */}
@@ -303,6 +305,86 @@ export function PrescriptionTranslator() {
                     <p className="text-sm leading-relaxed text-foreground font-medium whitespace-pre-line">
                       {result.fullDarija}
                     </p>
+                  </div>
+                </TabsContent>
+
+                {/* W8-03: Vue Tamazight / Tifinagh — Clinical Terminology Pilot */}
+                <TabsContent value="tamazight" className="flex-1 space-y-3 overflow-y-auto max-h-[420px] scroll-thin pr-1">
+                  {/* Explanatory header */}
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 space-y-2">
+                    <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                      <span className="text-base">ⵣ</span>
+                      Terminologie clinique — Tamazight (Kabyle · Chaoui · Mozabite · Touareg)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Posologie traduite en termes amazighs courants avec transcription Tifinagh et phonétique latine.
+                      Destinée aux patients amazighophones de régions rurales (Kabylie, Aurès, Mzab, Hoggar).
+                    </p>
+                  </div>
+
+                  {/* Per-line Tamazight translation */}
+                  {result.lines.map((line, idx) => {
+                    const tamazightLine = translateLineToTamazight(line)
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-border/80 bg-background/90 p-3.5 space-y-2.5 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                          <span className="font-bold text-sm text-primary" dir="ltr">
+                            {line.original.split(/[:\-]/)[0]?.trim() || line.original}
+                          </span>
+                          <span className="text-[10px] font-mono text-muted-foreground">
+                            Ligne #{idx + 1}
+                          </span>
+                        </div>
+
+                        {/* Tifinagh script */}
+                        <div className="flex items-start gap-2">
+                          <span className="text-base text-emerald-600 dark:text-emerald-400 font-bold shrink-0">ⵜ</span>
+                          <p className="text-sm font-semibold text-foreground leading-relaxed">
+                            {tamazightLine.tifinagh}
+                          </p>
+                        </div>
+
+                        {/* Latin transcription */}
+                        <div className="flex items-start gap-2">
+                          <span className="text-[11px] text-primary font-bold shrink-0 uppercase tracking-wider mt-0.5">LAT</span>
+                          <p className="text-xs text-muted-foreground italic leading-relaxed">
+                            {tamazightLine.latin}
+                          </p>
+                        </div>
+
+                        {/* Phonetic guide */}
+                        <div className="flex items-start gap-2 bg-muted/50 rounded-lg p-2 border border-border/50">
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold shrink-0 mt-0.5">🔊</span>
+                          <p className="text-[11px] text-foreground font-medium leading-relaxed">
+                            {tamazightLine.phonetic}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {/* Lexicon reference table */}
+                  <div className="rounded-xl border border-border/80 bg-card p-3.5">
+                    <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                      <BookOpen className="size-3.5 text-primary" />
+                      Lexique Posologique Tamazight — Termes Essentiels
+                    </p>
+                    <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-[11px]">
+                      <span className="font-bold text-muted-foreground">Français</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">ⵜⵉⴼⵉⵏⴰⵖ</span>
+                      <span className="font-bold text-primary italic">Phonétique</span>
+
+                      {TAMAZIGHT_LEXICON.map((entry, i) => (
+                        <React.Fragment key={i}>
+                          <span className="text-foreground">{entry.fr}</span>
+                          <span className="text-emerald-700 dark:text-emerald-300 font-medium">{entry.tifinagh}</span>
+                          <span className="text-muted-foreground italic">{entry.latin}</span>
+                        </React.Fragment>
+                      ))}
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>

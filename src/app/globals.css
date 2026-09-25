@@ -215,6 +215,71 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* W7-01: Counter-Night Mode (Garde de Nuit - 2h du matin ultra-faible éblouissement) */
+/* Conçu pour les officines de garde de nuit : fond noir OLED profond (#050505), */
+/* luminescence ambrée (#f59e0b / #d97706), zéro lumière bleue, préservation rétinienne. */
+/* ------------------------------------------------------------------ */
+.counter-night,
+[data-counter-night="true"],
+html.counter-night,
+body.counter-night {
+  --background: #040507 !important;
+  --foreground: #fcd34d !important;
+  --card: #0a0c10 !important;
+  --card-foreground: #fef3c7 !important;
+  --popover: #0f1218 !important;
+  --popover-foreground: #fef3c7 !important;
+  --primary: #f59e0b !important;
+  --primary-foreground: #000000 !important;
+  --secondary: #171b24 !important;
+  --secondary-foreground: #fde68a !important;
+  --muted: #131720 !important;
+  --muted-foreground: #b45309 !important;
+  --accent: #212634 !important;
+  --accent-foreground: #fef3c7 !important;
+  --destructive: #dc2626 !important;
+  --border: #292318 !important;
+  --input: #1a1610 !important;
+  --input-border-rest: rgba(245, 158, 11, 0.35) !important;
+  --ring: #f59e0b !important;
+  --chifa: #10b981 !important;
+  --chifa-foreground: #000000 !important;
+  --chifa-gold: #f59e0b !important;
+  --surface-0: #040507 !important;
+  --surface-1: #0a0c10 !important;
+  --surface-2: #11141c !important;
+  --surface-3: #181d28 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* W7-03: Échelle typographique accessible & Polices haute lisibilité  */
+/* ------------------------------------------------------------------ */
+html[data-font-scale="90"] {
+  font-size: 14.4px;
+}
+html[data-font-scale="100"] {
+  font-size: 16px;
+}
+html[data-font-scale="115"] {
+  font-size: 18.4px;
+}
+html[data-font-scale="130"] {
+  font-size: 20.8px;
+}
+
+html[data-accessible-font="atkinson"],
+html[data-accessible-font="atkinson"] body {
+  font-family: 'Atkinson Hyperlegible', var(--font-inter), sans-serif !important;
+}
+
+html[data-accessible-font="opendyslexic"],
+html[data-accessible-font="opendyslexic"] body {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+  letter-spacing: 0.04em;
+  word-spacing: 0.08em;
+}
+
+/* ------------------------------------------------------------------ */
 /* 10 PALETTES DE DESIGN THÉMATIQUES (SÉLECTIONNABLES EN TEMPS RÉEL)   */
 /* ------------------------------------------------------------------ */
 
@@ -1538,6 +1603,51 @@ html[data-design-mode="botanique"].dark .glass-panel {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* W8-02 — NATIVE RTL ARABIC INTERFACE (CSS Logical Properties)        */
+/* Ensures full mirror layout for Arabic mode without breaking LTR.    */
+/* ------------------------------------------------------------------ */
 
+/* Global font family override for Arabic mode */
+html[dir="rtl"],
+html.rtl {
+  font-family: var(--font-noto-arabic), 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  letter-spacing: 0;
+}
+
+/* Logical property overrides for padding/margin/border in RTL mode */
+html[dir="rtl"] .gap-x-2 { column-gap: 0.5rem; }
+html[dir="rtl"] .gap-x-3 { column-gap: 0.75rem; }
+
+/* Fix text alignment for RTL */
+html[dir="rtl"] [data-align="start"] { text-align: right; }
+html[dir="rtl"] [data-align="end"] { text-align: left; }
+
+/* RTL-safe sticky header */
+html[dir="rtl"] .sticky { position: sticky; }
+
+/* Flip directional icons & chevrons */
+html[dir="rtl"] .lucide-chevron-right { transform: scaleX(-1); }
+html[dir="rtl"] .lucide-chevron-left { transform: scaleX(-1); }
+html[dir="rtl"] .lucide-arrow-right { transform: scaleX(-1); }
+html[dir="rtl"] .lucide-arrow-left { transform: scaleX(-1); }
+
+/* Dialog & Sheet positioning */
+html[dir="rtl"] [data-side="right"] { inset-inline-end: 0; inset-inline-start: auto; }
+html[dir="rtl"] [data-side="left"] { inset-inline-start: 0; inset-inline-end: auto; }
+
+/* RTL-safe scrollbar */
+html[dir="rtl"] .scroll-thin {
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Ensure Noto Arabic renders beautifully at all font scales */
+html[dir="rtl"][data-font-scale="90"] { font-size: 90%; }
+html[dir="rtl"][data-font-scale="115"] { font-size: 115%; }
+html[dir="rtl"][data-font-scale="130"] { font-size: 130%; }
+
+/* Clinical badge and severity pill — ensure stable in RTL */
+html[dir="rtl"] .inline-flex { direction: rtl; }
+html[dir="rtl"] .ltr, html[dir="rtl"] [dir="ltr"] { direction: ltr; unicode-bidi: isolate; }
 
 

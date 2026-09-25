@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { CloudOff, WifiOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { PwaStatusBanner } from './pwa-status-banner'
 
 /**
  * Enregistrement du service worker DzPharm (PWA offline)
@@ -94,17 +95,16 @@ export function PwaProvider() {
 
   return (
     <>
-      {(offline || staleHit) && (
+      <PwaStatusBanner />
+      {staleHit && (
         <div
           role="status"
           aria-live="polite"
-          className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center px-4"
+          className="pointer-events-none fixed inset-x-0 top-24 z-50 flex justify-center px-4"
         >
           <span className="pointer-events-auto flex items-center gap-2 rounded-full border border-state-warning/40 bg-state-warning/15 px-4 py-1.5 text-xs font-semibold text-state-warning shadow-lg backdrop-blur-sm">
             <WifiOff className="size-3.5" aria-hidden />
-            {offline
-              ? 'Mode hors ligne — Données mises en cache. Contrôle d\'interactions indisponible sans connexion.'
-              : 'Serveur momentanément indisponible — données servies depuis le cache (fraîcheur non garantie)'}
+            Serveur momentanément indisponible — données servies depuis le cache (fraîcheur non garantie)
           </span>
         </div>
       )}

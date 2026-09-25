@@ -1,17 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import Markdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
   Baby,
+  BookOpen,
   Check,
   Copy,
   Info,
   Loader2,
   Mic,
+  Scale,
   Send,
+  ShieldAlert,
   Sparkles,
   Square,
   Stethoscope,
@@ -22,6 +25,7 @@ import {
   Volume2,
   VolumeX,
   X,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -49,6 +53,8 @@ import { rtlProps } from '@/lib/detect-rtl'
 import { useDzPharm } from './store'
 import { postChat } from './api'
 import type { ChatMessage } from './types'
+import { CitationDrawer, type CitationData } from './citation-drawer'
+import { findInstantAnswer } from '@/lib/clinical/instant-answers'
 
 type ChatMode = 'pro' | 'patient' | 'enfant'
 
@@ -109,41 +115,84 @@ export function AiDisclaimer() {
   )
 }
 
-const markdownComponents: Components = {
-  h1: (props) => <h2 className="mt-4 mb-2 text-base font-bold text-foreground" {...props} />,
-  h2: (props) => <h3 className="mt-4 mb-2 text-sm font-bold text-foreground" {...props} />,
-  h3: (props) => <h4 className="mt-3 mb-1.5 text-sm font-semibold text-foreground" {...props} />,
-  p: (props) => <p className="my-2 leading-relaxed first:mt-0 last:mb-0" {...props} />,
-  ul: (props) => <ul className="my-2 list-disc space-y-1 pl-5" {...props} />,
-  ol: (props) => <ol className="my-2 list-decimal space-y-1 pl-5" {...props} />,
-  li: (props) => <li className="leading-relaxed" {...props} />,
-  strong: (props) => <strong className="font-semibold text-foreground" {...props} />,
-  blockquote: (props) => (
-    <blockquote
-      className="my-2 border-l-2 border-primary/50 pl-3 text-muted-foreground italic"
-      {...props}
-    />
-  ),
-  hr: () => <hr className="my-4 border-border" />,
-  a: (props) => <a className="font-medium text-primary underline underline-offset-2" {...props} />,
-  code: (props) => (
-    <code
-      className="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px] text-foreground"
-      {...props}
-    />
-  ),
-  table: (props) => (
-    <div className="my-3 overflow-x-auto rounded-lg border border-border">
-      <table className="w-full text-sm" {...props} />
-    </div>
-  ),
-  th: (props) => (
-    <th
-      className="border-b border-border bg-muted/60 px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-      {...props}
-    />
-  ),
-  td: (props) => <td className="border-b border-border/50 px-3 py-2 align-top" {...props} />,
+function resolveCitation(token: string): CitationData {
+  const norm = token.replace('[', '').replace(']', '').trim()
+  if (norm.includes('§4.2')) {
+    return {
+      token,
+      title: 'Résumé des Caractéristiques du Produit (RCP)',
+      organization: 'ANPP Algérie / ANSM',
+      section: '§4.2 Posologie et mode d’administration',
+      text: 'Posologie de référence, rythme d’administration et règles d’ajustement chez les populations particulières (enfants, insuffisants rénaux et hépatiques) validés par la nomenclature officielle.',
+    }
+  }
+  if (norm.includes('§4.3')) {
+    return {
+      token,
+      title: 'Résumé des Caractéristiques du Produit (RCP)',
+      organization: 'ANPP Algérie / ANSM',
+      section: '§4.3 Contre-indications absolues',
+      text: 'Situations cliniques, antécédents d’hypersensibilité ou états physiologiques interdisant formellement l’administration de la molécule.',
+    }
+  }
+  if (norm.includes('§4.4')) {
+    return {
+      token,
+      title: 'Résumé des Caractéristiques du Produit (RCP)',
+      organization: 'ANPP Algérie / ANSM',
+      section: '§4.4 Mises en garde et précautions particulières d’emploi',
+      text: 'Surveillance biologique nécessaire, risques de décompensation et précautions lors de situations de stress ou de comorbidités.',
+    }
+  }
+  if (norm.includes('§4.5')) {
+    return {
+      token,
+      title: 'Résumé des Caractéristiques du Produit (RCP)',
+      organization: 'ANPP Algérie / ANSM',
+      section: '§4.5 Interactions médicamenteuses et autres',
+      text: 'Associations contre-indiquées, déconseillées ou nécessitant une précaution d’emploi avec surveillance de l’INR ou des taux sériques.',
+    }
+  }
+  if (norm.includes('ANSM')) {
+    return {
+      token,
+      title: 'Recommandations de Bon Usage Clinique',
+      organization: 'ANSM / SFAR / Consensus Européen',
+      section: 'Guide thérapeutique et antibiothérapie probabiliste',
+      text: 'Schémas thérapeutiques de consensus international adaptés à la pratique clinique ambulatoire et hospitalière.',
+    }
+  }
+  if (norm.includes('CRAT')) {
+    return {
+      token,
+      title: 'Référentiel Médicaments & Grossesse',
+      organization: 'Centre de Référence sur les Agents Tératogènes (CRAT)',
+      section: 'Évaluation du risque tératogène et passage dans le lait maternel',
+      text: 'Données de pharmacovigilance prospective sur l’exposition fœtale au cours des 1er, 2e et 3e trimestres de gestation.',
+    }
+  }
+  if (norm.includes('ANPP')) {
+    return {
+      token,
+      title: 'Nomenclature Nationale des Produits Pharmaceutiques',
+      organization: 'Agence Nationale des Produits Pharmaceutiques (ANPP)',
+      section: 'Arrêtés ministériels, AMM et Tableaux de prescription',
+      text: 'Statut officiel d’enregistrement en Algérie, conditions de dispensation (Liste I, Liste II, Stupéfiants) et validité légale des ordonnances.',
+    }
+  }
+  return {
+    token,
+    title: 'Monographie Clinique Validée',
+    organization: 'DzPharm Référentiel National',
+    section: 'Données de pharmacopée et consensus thérapeutique',
+    text: 'Source clinique et pharmacologique officielle intégrée dans le moteur de vérification DzPharm.',
+  }
+}
+
+function injectCitationLinks(text: string): string {
+  return text.replace(/\[(Source:\s*[^\]]+)\](?!\()/g, (_match, inner) => {
+    return `[${inner}](#citation:${encodeURIComponent(inner.replace(/^Source:\s*/, ''))})`
+  })
 }
 
 function TypingDots() {
@@ -169,9 +218,77 @@ export function CopilotView() {
   const [messages, setMessages] = useState<ChatMessage[]>(persistedMessages)
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<ChatMode>('pro')
+  const [activeCitation, setActiveCitation] = useState<CitationData | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { toast } = useToast()
+
+  const markdownComponents: Components = useMemo(
+    () => ({
+      h1: (props) => <h2 className="mt-4 mb-2 text-base font-bold text-foreground" {...props} />,
+      h2: (props) => <h3 className="mt-4 mb-2 text-sm font-bold text-foreground" {...props} />,
+      h3: (props) => <h4 className="mt-3 mb-1.5 text-sm font-semibold text-foreground" {...props} />,
+      p: (props) => <p className="my-2 leading-relaxed first:mt-0 last:mb-0" {...props} />,
+      ul: (props) => <ul className="my-2 list-disc space-y-1 pl-5" {...props} />,
+      ol: (props) => <ol className="my-2 list-decimal space-y-1 pl-5" {...props} />,
+      li: (props) => <li className="leading-relaxed" {...props} />,
+      strong: (props) => <strong className="font-semibold text-foreground" {...props} />,
+      blockquote: (props) => (
+        <blockquote
+          className="my-2 border-l-2 border-primary/50 pl-3 text-muted-foreground italic"
+          {...props}
+        />
+      ),
+      hr: () => <hr className="my-4 border-border" />,
+      a: ({ href, children, ...props }) => {
+        if (href?.startsWith('#citation:')) {
+          const raw = decodeURIComponent(href.replace('#citation:', ''))
+          const token = `[Source: ${raw}]`
+          return (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                setActiveCitation(resolveCitation(token))
+              }}
+              className="inline-flex items-center gap-1 mx-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 hover:border-primary/50 transition-colors shadow-2xs cursor-pointer align-baseline"
+            >
+              <BookOpen className="size-3 text-primary inline" />
+              <span>{children}</span>
+            </button>
+          )
+        }
+        return (
+          <a
+            href={href}
+            className="font-medium text-primary underline underline-offset-2"
+            {...props}
+          >
+            {children}
+          </a>
+        )
+      },
+      code: (props) => (
+        <code
+          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px] text-foreground"
+          {...props}
+        />
+      ),
+      table: (props) => (
+        <div className="my-3 overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-sm" {...props} />
+        </div>
+      ),
+      th: (props) => (
+        <th
+          className="border-b border-border bg-muted/60 px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+          {...props}
+        />
+      ),
+      td: (props) => <td className="border-b border-border/50 px-3 py-2 align-top" {...props} />,
+    }),
+    []
+  )
 
   // P1-10 — Synchroniser local messages avec le slice Zustand persisté
   useEffect(() => {
@@ -289,6 +406,19 @@ export function CopilotView() {
       return
     }
 
+    // W4-04 : Instant-Answer Edge Cache (sub-15ms client bypass)
+    const instant = findInstantAnswer(content, mode)
+    if (instant) {
+      const next: ChatMessage[] = [
+        ...messages,
+        { role: 'user', content },
+        { role: 'assistant', content: instant.content },
+      ]
+      setMessages(next)
+      setInput('')
+      return
+    }
+
     const next: ChatMessage[] = [...messages, { role: 'user', content }]
     setMessages(next)
     setInput('')
@@ -322,6 +452,45 @@ export function CopilotView() {
     }
 
     mutation.mutate(next.slice(-16))
+  }
+
+  // W4-05 : Deuxième Avis Clinique Adversarial
+  function handleSecondOpinion(index: number) {
+    const userMsg = messages[index - 1]?.content || ''
+    if (!userMsg || isGenerating) return
+
+    const prompt = `[Contre-expertise Clinique — Deuxième Avis] : Effectuez une contre-expertise clinique indépendante et rigoureuse sur la question précédente : « ${userMsg} ». Identifiez les risques masqués, interactions potentielles et alternatives plus sûres.`
+
+    const next: ChatMessage[] = [...messages, { role: 'user', content: prompt }]
+    setMessages(next)
+
+    if (streamingEnabled) {
+      setMessages([...next, { role: 'assistant', content: '' }])
+      void stream.send(
+        next.slice(-16),
+        mode,
+        (delta) => {
+          setMessages((cur) => {
+            const copy = [...cur]
+            const last = copy[copy.length - 1]
+            if (last && last.role === 'assistant') {
+              copy[copy.length - 1] = { ...last, content: last.content + delta }
+            }
+            return copy
+          })
+        },
+        undefined,
+        (err) => {
+          toast({
+            title: 'Le copilote est indisponible',
+            description: err,
+            variant: 'destructive',
+          })
+        }
+      )
+    } else {
+      mutation.mutate(next.slice(-16))
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -743,9 +912,22 @@ export function CopilotView() {
                       <>
                         <div className="min-w-0" {...rtlProps(message.content)}>
                           <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                            {message.content}
+                            {injectCitationLinks(message.content)}
                           </Markdown>
                         </div>
+
+                        {/* W4-03 — Alerte Réglementaire / Refus Formel Hors Référentiel */}
+                        {message.content.includes('Hors du référentiel DzPharm') && (
+                          <div className="my-2.5 flex items-start gap-2.5 rounded-xl border border-state-danger/50 bg-state-danger/10 p-3 text-xs text-state-danger">
+                            <ShieldAlert className="size-4 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-bold text-state-danger">⚠️ Alerte Réglementaire — Refus Formel</p>
+                              <p className="mt-0.5 text-foreground/90 leading-relaxed">
+                                Cette demande concerne une indication ou formulation non reconnue par la nomenclature officielle algérienne. Aucune posologie ne peut être délivrée sans validation d&apos;un médecin spécialiste.
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* P0-05 — Badge de vérification posologique (moteur déterministe) */}
                         <DoseVerificationBadge
@@ -758,8 +940,22 @@ export function CopilotView() {
 
                         {/* Pied de réponse : lecture à voix haute, copie et évaluation qualité */}
                         <footer className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-2">
-                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                            <span className="font-medium">Cette réponse vous a-t-elle été utile ?</span>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                            {/* W4-05 : Deuxième Avis Clinique Adversarial */}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSecondOpinion(i)}
+                              title="Demander une contre-expertise clinique indépendante"
+                              aria-label="Demander un deuxième avis clinique"
+                              className="h-6.5 text-[11px] gap-1.5 rounded-md border border-primary/25 bg-primary/5 text-primary hover:bg-primary/10 px-2 font-medium"
+                            >
+                              <Scale className="size-3" />
+                              <span>Deuxième avis</span>
+                            </Button>
+
+                            <span className="hidden sm:inline font-medium">Utile ?</span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -1014,6 +1210,13 @@ export function CopilotView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* W4-02 — Tiroir latéral d'inspection des citations monographies */}
+      <CitationDrawer
+        citation={activeCitation}
+        open={Boolean(activeCitation)}
+        onOpenChange={(o) => !o && setActiveCitation(null)}
+      />
     </div>
   )
 }

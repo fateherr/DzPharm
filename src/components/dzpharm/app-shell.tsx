@@ -10,6 +10,8 @@ import { BarcodeScannerModal } from '@/components/dzpharm/barcode-scanner'
 import { AdminBarcodeModal } from '@/components/dzpharm/admin-barcode-modal'
 import { MobileBottomNav } from '@/components/dzpharm/mobile-bottom-nav'
 import { ShortcutsModal } from '@/components/dzpharm/shortcuts-modal'
+import { ShiftContextBar } from '@/components/dzpharm/shift-context-bar'
+import { AccessibilitySync } from '@/components/dzpharm/accessibility-sync'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -23,6 +25,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background w-full max-w-full overflow-x-hidden">
+      <AccessibilitySync />
       {/* Lien d'évitement accessible pour les utilisateurs clavier / lecteurs d'écran */}
       <a
         href="#contenu"
@@ -31,10 +34,11 @@ export function AppShell({ children }: AppShellProps) {
         Aller au contenu principal
       </a>
 
-      {/* En-tête supérieur unifié (Urgences + Navigation principale) */}
+      {/* En-tête supérieur unifié (Urgences + Navigation principale + Contexte Patient Épinglé) */}
       <div className="sticky top-0 z-40 w-full max-w-full print:hidden">
         <EmergencyBar />
         <Header />
+        <ShiftContextBar />
       </div>
 
       <main id="contenu" className="flex-1 pb-16 md:pb-0">

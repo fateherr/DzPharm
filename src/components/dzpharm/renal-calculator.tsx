@@ -1,7 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useDzPharm } from './store'
+import { syncToolQueryParams, readQueryParams } from '@/lib/clinical/url-sync'
 import {
   Activity,
   Droplets,
@@ -158,10 +160,53 @@ const RENAL_RULES: RenalDrugRule[] = [
 /* ------------------------------------------------------------------ */
 
 export function RenalCalculator() {
+  const pinnedPatient = useDzPharm((s) => s.pinnedPatient)
   const [age, setAge] = useState(65)
   const [weight, setWeight] = useState(70)
   const [creat, setCreat] = useState('90')
   const [female, setFemale] = useState(false)
+
+  // Initialisation via paramètres URL ou patient épinglé
+  useEffect(() => {
+    const params = readQueryParams()
+    if (!params) return
+    const pAge = params.get('age')
+    const pWeight = params.get('poids') || params.get('weight')
+    const pCreat = params.get('creat') || params.get('creatinine')
+    const pSexe = params.get('sexe') || params.get('gender')
+
+    if (pAge && !isNaN(Number(pAge))) {
+      setAge(Number(pAge))
+    } else if (pinnedPatient?.ageYears) {
+      setAge(pinnedPatient.ageYears)
+    }
+
+    if (pWeight && !isNaN(Number(pWeight))) {
+      setWeight(Number(pWeight))
+    } else if (pinnedPatient?.weightKg) {
+      setWeight(pinnedPatient.weightKg)
+    }
+
+    if (pCreat) {
+      setCreat(pCreat)
+    }
+
+    if (pSexe) {
+      setFemale(pSexe === 'f' || pSexe === 'female' || pSexe === 'femme')
+    } else if (pinnedPatient?.gender) {
+      setFemale(pinnedPatient.gender === 'F')
+    }
+  }, [pinnedPatient])
+
+  // Synchronisation continue vers l'URL
+  useEffect(() => {
+    syncToolQueryParams('renal', {
+      age,
+      poids: weight,
+      creat,
+      sexe: female ? 'f' : 'h',
+    })
+  }, [age, weight, creat, female])
 
   const creatVal = parseFloat(creat.replace(',', '.'))
 

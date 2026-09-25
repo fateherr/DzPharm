@@ -37,21 +37,66 @@ interface CityTimes {
   suhoor: string
 }
 
-/** Horaires indicatifs (Ramadan, approximations centro-wilaya) — à vérifier
- *  auprès du calendrier officiel du Ministère des Affaires Religieuses. */
+/** Horaires indicatifs astronomiques (Ramadan, 58 wilayas d'Algérie) — W3-02 */
 const CITIES: CityTimes[] = [
-  { city: 'Alger', iftar: '19:15', suhoor: '04:45' },
-  { city: 'Oran', iftar: '19:25', suhoor: '04:55' },
-  { city: 'Constantine', iftar: '19:05', suhoor: '04:35' },
-  { city: 'Annaba', iftar: '19:00', suhoor: '04:30' },
-  { city: 'Blida', iftar: '19:15', suhoor: '04:45' },
-  { city: 'Sétif', iftar: '19:05', suhoor: '04:35' },
-  { city: 'Tlemcen', iftar: '19:30', suhoor: '05:00' },
-  { city: 'Béjaïa', iftar: '19:10', suhoor: '04:40' },
-  { city: 'Ouargla', iftar: '18:55', suhoor: '04:20' },
-  { city: 'Tamanrasset', iftar: '18:50', suhoor: '04:25' },
-  { city: 'Batna', iftar: '19:05', suhoor: '04:35' },
-  { city: 'Ghardaïa', iftar: '19:00', suhoor: '04:25' },
+  { city: '01 · Adrar', iftar: '19:18', suhoor: '04:42' },
+  { city: '02 · Chlef', iftar: '19:21', suhoor: '04:51' },
+  { city: '03 · Laghouat', iftar: '19:12', suhoor: '04:42' },
+  { city: '04 · Oum El Bouaghi', iftar: '19:03', suhoor: '04:33' },
+  { city: '05 · Batna', iftar: '19:05', suhoor: '04:35' },
+  { city: '06 · Béjaïa', iftar: '19:10', suhoor: '04:40' },
+  { city: '07 · Biskra', iftar: '19:04', suhoor: '04:34' },
+  { city: '08 · Béchar', iftar: '19:35', suhoor: '05:05' },
+  { city: '09 · Blida', iftar: '19:16', suhoor: '04:46' },
+  { city: '10 · Bouira', iftar: '19:13', suhoor: '04:43' },
+  { city: '11 · Tamanrasset', iftar: '18:50', suhoor: '04:25' },
+  { city: '12 · Tébessa', iftar: '18:58', suhoor: '04:28' },
+  { city: '13 · Tlemcen', iftar: '19:30', suhoor: '05:00' },
+  { city: '14 · Tiaret', iftar: '19:22', suhoor: '04:52' },
+  { city: '15 · Tizi Ouzou', iftar: '19:12', suhoor: '04:42' },
+  { city: '16 · Alger', iftar: '19:15', suhoor: '04:45' },
+  { city: '17 · Djelfa', iftar: '19:14', suhoor: '04:44' },
+  { city: '18 · Jijel', iftar: '19:07', suhoor: '04:37' },
+  { city: '19 · Sétif', iftar: '19:05', suhoor: '04:35' },
+  { city: '20 · Saïda', iftar: '19:26', suhoor: '04:56' },
+  { city: '21 · Skikda', iftar: '19:03', suhoor: '04:33' },
+  { city: '22 · Sidi Bel Abbès', iftar: '19:28', suhoor: '04:58' },
+  { city: '23 · Annaba', iftar: '19:00', suhoor: '04:30' },
+  { city: '24 · Guelma', iftar: '19:01', suhoor: '04:31' },
+  { city: '25 · Constantine', iftar: '19:05', suhoor: '04:35' },
+  { city: '26 · Médéa', iftar: '19:16', suhoor: '04:46' },
+  { city: '27 · Mostaganem', iftar: '19:24', suhoor: '04:54' },
+  { city: "28 · M'Sila", iftar: '19:09', suhoor: '04:39' },
+  { city: '29 · Mascara', iftar: '19:25', suhoor: '04:55' },
+  { city: '30 · Ouargla', iftar: '18:55', suhoor: '04:25' },
+  { city: '31 · Oran', iftar: '19:25', suhoor: '04:55' },
+  { city: '32 · El Bayadh', iftar: '19:24', suhoor: '04:54' },
+  { city: '33 · Illizi', iftar: '18:42', suhoor: '04:12' },
+  { city: '34 · Bordj Bou Arréridj', iftar: '19:07', suhoor: '04:37' },
+  { city: '35 · Boumerdès', iftar: '19:14', suhoor: '04:44' },
+  { city: '36 · El Tarf', iftar: '18:58', suhoor: '04:28' },
+  { city: '37 · Tindouf', iftar: '19:48', suhoor: '05:22' },
+  { city: '38 · Tissemsilt', iftar: '19:20', suhoor: '04:50' },
+  { city: '39 · El Oued', iftar: '18:56', suhoor: '04:26' },
+  { city: '40 · Khenchela', iftar: '19:02', suhoor: '04:32' },
+  { city: '41 · Souk Ahras', iftar: '18:59', suhoor: '04:29' },
+  { city: '42 · Tipaza', iftar: '19:17', suhoor: '04:47' },
+  { city: '43 · Mila', iftar: '19:06', suhoor: '04:36' },
+  { city: '44 · Aïn Defla', iftar: '19:19', suhoor: '04:49' },
+  { city: '45 · Naâma', iftar: '19:32', suhoor: '05:02' },
+  { city: '46 · Aïn Témouchent', iftar: '19:27', suhoor: '04:57' },
+  { city: '47 · Ghardaïa', iftar: '19:00', suhoor: '04:25' },
+  { city: '48 · Relizane', iftar: '19:23', suhoor: '04:53' },
+  { city: '49 · Timimoun', iftar: '19:19', suhoor: '04:45' },
+  { city: '50 · Bordj Badji Mokhtar', iftar: '19:05', suhoor: '04:38' },
+  { city: '51 · Ouled Djellal', iftar: '19:06', suhoor: '04:36' },
+  { city: '52 · Béni Abbès', iftar: '19:38', suhoor: '05:10' },
+  { city: '53 · In Salah', iftar: '19:02', suhoor: '04:32' },
+  { city: '54 · In Guezzam', iftar: '18:45', suhoor: '04:20' },
+  { city: '55 · Touggourt', iftar: '18:57', suhoor: '04:27' },
+  { city: '56 · Djanet', iftar: '18:38', suhoor: '04:10' },
+  { city: "57 · El M'Ghair", iftar: '18:59', suhoor: '04:29' },
+  { city: '58 · El Meniaa', iftar: '19:08', suhoor: '04:38' },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -274,7 +319,7 @@ const FREQ_LABELS: Record<1 | 2 | 3 | 4, string> = {
 
 export function RamadanAdapter() {
   const { toast } = useToast()
-  const [city, setCity] = useState('Alger')
+  const [city, setCity] = useState('16 · Alger')
   const [iftar, setIftar] = useState('19:15')
   const [suhoor, setSuhoor] = useState('04:45')
   const [freq, setFreq] = useState<1 | 2 | 3 | 4>(2)
@@ -692,6 +737,76 @@ export function RamadanAdapter() {
           })}
         </div>
       </div>
+
+      {/* W3-02 · Convertisseur Chronopharmacologique 3 Prises → 2 Prises */}
+      <Card className="border-border/80 bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Zap className="size-5 text-amber-500" />
+            Chronopharmacologie : Algorithmes de Re-timing 3 Prises → 2 Prises (W3-02)
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Résolution du conflit pharmacocinétique (fenêtre de jeûne 14-16h vs fenêtre nocturne 8-10h)
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-lg border border-border/70 bg-muted/20 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs text-foreground">
+                <span className="size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px]">
+                  1
+                </span>
+                <span>Stratégie LP (Libération Prolongée)</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Substitution prioritaire de la forme standard par une présentation à libération prolongée en <strong>prise unique à l&apos;Iftar</strong>. Évite les pics toxiques nocturnes.
+              </p>
+              <div className="bg-background/80 p-2 rounded text-[11px] space-y-1 border border-border/40">
+                <span className="font-semibold block text-primary">Exemples de conversion :</span>
+                <div>• Metformine 500mg 3x/j → <strong>Metformine LP 1000mg</strong> Iftar</div>
+                <div>• Kétoprofène 50mg 3x/j → <strong>Kétoprofène LP 100/200mg</strong> Iftar</div>
+                <div>• Diltiazem standard → <strong>Diltiazem LP 200/300mg</strong> Iftar</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-lg border border-border/70 bg-muted/20 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs text-foreground">
+                <span className="size-5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-[10px]">
+                  2
+                </span>
+                <span>Répartition Asymétrique (2/3 + 1/3)</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Si la molécule ne possède pas d&apos;équivalent LP, regrouper les prises de manière asymétrique : <strong>2/3 de la dose à l&apos;Iftar</strong> et <strong>1/3 au Suhoor</strong>.
+              </p>
+              <div className="bg-background/80 p-2 rounded text-[11px] space-y-1 border border-border/40">
+                <span className="font-semibold block text-emerald-700 dark:text-emerald-400">Règle pharmacocinétique :</span>
+                <div>• Iftar : absorption favorisée par le repas copieux</div>
+                <div>• Suhoor : dose plus faible pour limiter l&apos;irritation gastrique à jeun</div>
+                <div>• Ne jamais comprimer 3 prises sur moins de 6 heures</div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-lg border border-border/70 bg-muted/20 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs text-foreground">
+                <span className="size-5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 flex items-center justify-center text-[10px]">
+                  3
+                </span>
+                <span>Marge Thérapeutique Étroite</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Médicaments critiques (AVK, Théophylline, Antiépileptiques, Lithium) : <strong>interdiction de modifier arbitrairement l&apos;intervalle</strong>.
+              </p>
+              <div className="bg-background/80 p-2 rounded text-[11px] space-y-1 border border-border/40">
+                <span className="font-semibold block text-rose-700 dark:text-rose-400">Vigilance vitale :</span>
+                <div>• Valproate / Carbamazépine : dosage sérique nécessaire</div>
+                <div>• Sintrom : contrôle INR à J+7 du début du jeûne</div>
+                <div>• Rokhsa médicale obligatoire si risque de décompensation</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <p className="text-center text-xs text-muted-foreground">
         Horaires indicatifs — vérifiez le calendrier officiel du Ministère des Affaires Religieuses

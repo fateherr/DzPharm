@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callGeminiChatStream, GeminiError, GEMINI_MODEL } from "@/lib/gemini";
+import { findInstantAnswer } from "@/lib/clinical/instant-answers";
 
 /**
  * P1-06 — Streaming Copilot chat route (SSE).
@@ -69,6 +70,36 @@ export async function POST(req: NextRequest) {
         content: String(m.content).slice(0, 8000),
       }));
 
+    const secondOpinion: boolean = Boolean(body?.secondOpinion);
+    const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
+
+    const encoder = new TextEncoder();
+
+    // W4-04 : Instant-Answer Edge Cache (sub-150ms instant response)
+    if (!secondOpinion && lastUser) {
+      const instant = findInstantAnswer(lastUser, mode);
+      if (instant) {
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ delta: instant.content })}\n\n`)
+            );
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ done: true, instantCached: true })}\n\n`)
+            );
+            controller.close();
+          },
+        });
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream; charset=utf-8",
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+          },
+        });
+      }
+    }
+
     const systemPrompt = `Tu es le Copilote Clinique de DzPharm, plateforme de référence pharmaceutique algérienne. Tu maîtrises la nomenclature officielle algérienne des médicaments (AMM, DCI, marques commerciales locales), les spécificités du marché (production locale El Kendi/Biopharm/Saidal/Hikma, importations, ruptures), les listes (Liste I/II, Tableau A/B/C), et le système de remboursement Chifa/CNAS/CASNOS.
 
 ${buildModePrompt(mode)}
@@ -80,9 +111,13 @@ RÈGLES:
 2. Inclus les mises en garde de sécurité essentielles (grossesse, allaitement, pédiatrie, insuffisance rénale) quand pertinent.
 3. Ne prescris jamais: oriente vers le professionnel de santé.
 4. Si une donnée est incertaine, dis-le clairement plutôt que d'inventer.
-5. JAMAIS de concentration/formulation inventée.`;
-
-    const encoder = new TextEncoder();
+5. JAMAIS de concentration/formulation inventée.
+6. RÈGLE D'INCERTITUDE ET DE REFUS STRICT (W4-03) : Si la question porte sur une indication hors consensus, un dosage toxique non conventionnel, une médecine occulte ou une molécule inexistante, refuse formellement en commençant par : « ⚠️ Hors du référentiel DzPharm — cette indication ou formulation n'est pas validée par la nomenclature officielle algérienne. Vérifiez auprès d'un spécialiste. »
+7. CITATIONS VÉRIFIABLES (W4-02) : Chaque fois que tu cites une règle de monographie ou de consensus officiel, annote-la par une balise : [Source: RCP §4.2], [Source: RCP §4.3], [Source: RCP §4.4], [Source: ANSM 2024], [Source: CRAT], ou [Source: ANPP].${
+  secondOpinion
+    ? `\n\nMODE DEUXIÈME AVIS ADVERSARIAL CLINIQUE (W4-05) :\nEffectue une contre-expertise clinique critique, rigoureuse et indépendante sur la question posée. Identifie les risques masqués, les effets indésirables insidieux, les contre-indications relatives chez les populations vulnérables (insuffisants rénaux/hépatiques, personnes âgées), et propose une alternative plus sûre ou mieux tolérée.`
+    : ''
+}`;
     const stream = new ReadableStream({
       async start(controller) {
         try {

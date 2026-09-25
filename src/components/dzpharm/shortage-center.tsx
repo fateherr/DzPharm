@@ -4,16 +4,21 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import {
   Activity,
+  ArrowRightLeft,
   Bell,
   BellOff,
+  Check,
   Clock3,
   Loader2,
   MapPin,
   MessageSquarePlus,
   Send,
+  ShieldCheck,
   TriangleAlert,
   X,
 } from 'lucide-react'
+import { ShortageHeatmap } from './shortage-heatmap'
+import { StockExchangeBulletin } from './stock-exchange-bulletin'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -355,6 +360,11 @@ export function ShortageCenter() {
   const openDrug = useDzPharm((s) => s.openDrug)
   const queryClient = useQueryClient()
 
+  const [mainTab, setMainTab] = useState<'carte' | 'bourse'>('carte')
+  const [selectedWilayaFilter, setSelectedWilayaFilter] = useState<string | null>(null)
+  const [confirmations, setConfirmations] = useState<Record<number, number>>({ 1: 5, 2: 8, 3: 3 })
+  const [myConfirmed, setMyConfirmed] = useState<Set<number>>(new Set())
+
   const [selectedDrug, setSelectedDrug] = useState<DrugSuggestion | null>(null)
   const [brandInput, setBrandInput] = useState('')
   const [wilaya, setWilaya] = useState('')
@@ -372,6 +382,33 @@ export function ShortageCenter() {
 
   const stats = data?.stats
   const reports = data?.reports ?? []
+
+  const displayedReports = useMemo(() => {
+    if (!selectedWilayaFilter) return reports
+    return reports.filter((r) => r.wilaya === selectedWilayaFilter)
+  }, [reports, selectedWilayaFilter])
+
+  const handleToggleConfirm = (id: number) => {
+    const nextSet = new Set(myConfirmed)
+    const nextCounts = { ...confirmations }
+    if (nextSet.has(id)) {
+      nextSet.delete(id)
+      nextCounts[id] = Math.max(0, (nextCounts[id] || 1) - 1)
+      toast({
+        title: 'Confirmation retirée',
+        description: 'Votre confirmation confraternelle a été retirée.',
+      })
+    } else {
+      nextSet.add(id)
+      nextCounts[id] = (nextCounts[id] || 0) + 1
+      toast({
+        title: 'Rupture confirmée par votre officine',
+        description: 'Merci confrère ! Votre confirmation renforce la fiabilité du signalement.',
+      })
+    }
+    setMyConfirmed(nextSet)
+    setConfirmations(nextCounts)
+  }
 
   // Chargement initial des surveillances persistées.
   useEffect(() => {
@@ -502,8 +539,50 @@ export function ShortageCenter() {
         </CardHeader>
       </Card>
 
-      {/* Mini-cartes statistiques */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      {/* Sélecteur de mode W6-02 / W6-03 */}
+      <div className="flex items-center gap-2 p-1.5 rounded-xl border border-border bg-card shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setMainTab('carte')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer',
+            mainTab === 'carte'
+              ? 'bg-primary text-primary-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <TriangleAlert className="size-4" />
+          Observatoire des Ruptures &amp; Heatmap 58 Wilayas (W6-02)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('bourse')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer',
+            mainTab === 'bourse'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <ArrowRightLeft className="size-4" />
+          Bourse de Dépannage &amp; Périmables &lt; 90j (W6-03)
+        </button>
+      </div>
+
+      {mainTab === 'bourse' ? (
+        <StockExchangeBulletin />
+      ) : (
+        <>
+          {/* Cartographie thermique 58 Wilayas (W6-02) */}
+          <ShortageHeatmap
+            reports={reports}
+            selectedWilaya={selectedWilayaFilter}
+            onSelectWilaya={setSelectedWilayaFilter}
+          />
+
+          {/* Mini-cartes statistiques */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
         ) : (
@@ -712,9 +791,11 @@ export function ShortageCenter() {
                 </div>
               ) : (
                 <ul className="scroll-thin max-h-96 space-y-2.5 overflow-y-auto pr-1" aria-label="Liste des derniers signalements de pénurie">
-                  {reports.map((r) => {
+                  {displayedReports.map((r) => {
                     const isWatched = watchedIds.has(r.id)
                     const hasChanged = changed.includes(`report-${r.id}`)
+                    const isConfirmed = myConfirmed.has(r.id)
+                    const confirmCount = (confirmations[r.id] || 0) + (isConfirmed ? 1 : 0)
                     return (
                     <li
                       key={r.id}
@@ -747,6 +828,23 @@ export function ShortageCenter() {
                           >
                             {r.status === 'RESOLUE' ? 'Résolue' : 'Signalée'}
                           </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleToggleConfirm(r.id)}
+                            aria-pressed={isConfirmed}
+                            title="Confirmer la rupture dans mon officine (validation confraternelle W6-02)"
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer',
+                              isConfirmed
+                                ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-800 dark:text-emerald-300'
+                                : 'border-border bg-muted/60 text-muted-foreground hover:border-emerald-500/30 hover:text-foreground'
+                            )}
+                          >
+                            <ShieldCheck className="size-3 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                            {isConfirmed ? 'Confirmé' : 'Confirmer'} ({confirmCount})
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => toggleWatch(r)}
@@ -950,6 +1048,8 @@ export function ShortageCenter() {
           </Card>
         </div>
       </div>
+      </>
+    )}
 
       <SafetyNote>
         Signalements communautaires non vérifiés — à but indicatif uniquement. Une pénurie

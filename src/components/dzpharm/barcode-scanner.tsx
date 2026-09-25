@@ -31,6 +31,47 @@ import { useDzPharm } from './store'
 import { StatusBadge, formatPrice } from './status-badge'
 import type { Drug } from './types'
 
+export interface GS1Parsed {
+  gtin?: string
+  expiry?: string
+  batch?: string
+  serial?: string
+  raw: string
+}
+
+export function parseGS1DataMatrix(raw: string): GS1Parsed {
+  const clean = raw.trim()
+  const result: GS1Parsed = { raw }
+
+  // Check for (01) GTIN or raw 01 prefix
+  const gtinMatch = clean.match(/(?:\(01\)|(?:^01))(\d{14})/)
+  if (gtinMatch) {
+    let g = gtinMatch[1]
+    if (g.startsWith('0')) g = g.slice(1)
+    result.gtin = g
+  }
+
+  const expMatch = clean.match(/(?:\(17\)|(?:17))(\d{6})/)
+  if (expMatch) {
+    const y = '20' + expMatch[1].slice(0, 2)
+    const m = expMatch[1].slice(2, 4)
+    const d = expMatch[1].slice(4, 6)
+    result.expiry = `${y}-${m}-${d}`
+  }
+
+  const batchMatch = clean.match(/(?:\(10\)|(?:10))([A-Za-z0-9_-]{3,20})/)
+  if (batchMatch) {
+    result.batch = batchMatch[1]
+  }
+
+  const serialMatch = clean.match(/(?:\(21\)|(?:21))([A-Za-z0-9_-]{3,20})/)
+  if (serialMatch) {
+    result.serial = serialMatch[1]
+  }
+
+  return result
+}
+
 function playScanBeep() {
   try {
     const AudioContextClass =
@@ -75,6 +116,47 @@ export function BarcodeScannerModal() {
   const [searchResults, setSearchResults] = useState<Drug[] | null>(null)
   const [lastScannedCode, setLastScannedCode] = useState<string | null>(null)
   const [hasBarcodeDetector, setHasBarcodeDetector] = useState(false)
+  const [parsedGs1, setParsedGs1] = useState<GS1Parsed | null>(null)
+
+  // Écouteur global pour douchette code-barres USB (HID wedge)
+  useEffect(() => {
+    let buffer = ''
+    let lastKeyTime = 0
+
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+
+      const now = Date.now()
+      if (now - lastKeyTime > 65) {
+        buffer = ''
+      }
+      lastKeyTime = now
+
+      if (e.key === 'Enter') {
+        if (buffer.length >= 6) {
+          if (!isInput) {
+            e.preventDefault()
+          }
+          const scanned = buffer
+          buffer = ''
+          if (!scannerOpen) {
+            setScannerOpen(true)
+          }
+          handleBarcodeIdentified(scanned)
+        }
+      } else if (e.key.length === 1) {
+        buffer += e.key
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [scannerOpen, setScannerOpen])
 
   // Vérification de la disponibilité de BarcodeDetector
   useEffect(() => {
@@ -229,12 +311,16 @@ export function BarcodeScannerModal() {
     playScanBeep()
     if (navigator.vibrate) navigator.vibrate([60, 40, 60])
 
+    const gs1 = parseGS1DataMatrix(clean)
+    setParsedGs1(gs1.gtin || gs1.expiry || gs1.batch ? gs1 : null)
+    const targetCode = gs1.gtin || clean
+
     setIsSearching(true)
     setSearchResults(null)
 
     try {
-      // Recherche de correspondance dans la nomenclature
-      const res = await fetch(`/api/drugs?q=${encodeURIComponent(clean)}&limit=10`)
+      // Recherche de correspondance dans la nomenclature (EAN, GTIN ou code brut)
+      const res = await fetch(`/api/drugs?q=${encodeURIComponent(targetCode)}&limit=10`)
       if (!res.ok) throw new Error('Erreur de recherche')
       const data = (await res.json()) as { drugs: Drug[] }
 
@@ -495,6 +581,42 @@ export function BarcodeScannerModal() {
                     <Delete className="size-4" />
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Métadonnées GS1 DataMatrix si détectées */}
+          {parsedGs1 && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-1.5 text-xs">
+              <div className="flex items-center gap-1.5 font-bold text-primary">
+                <Sparkles className="size-4" />
+                <span>Code GS1 DataMatrix Identifié</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-muted-foreground pt-1">
+                {parsedGs1.gtin && (
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold block text-zinc-500">GTIN / Code-barres</span>
+                    <span className="font-mono font-bold text-foreground">{parsedGs1.gtin}</span>
+                  </div>
+                )}
+                {parsedGs1.expiry && (
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold block text-zinc-500">Date de Péremption</span>
+                    <span className="font-mono font-bold text-foreground">{parsedGs1.expiry}</span>
+                  </div>
+                )}
+                {parsedGs1.batch && (
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold block text-zinc-500">Numéro de Lot</span>
+                    <span className="font-mono font-bold text-foreground">{parsedGs1.batch}</span>
+                  </div>
+                )}
+                {parsedGs1.serial && (
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold block text-zinc-500">Numéro de Série</span>
+                    <span className="font-mono font-bold text-foreground">{parsedGs1.serial}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

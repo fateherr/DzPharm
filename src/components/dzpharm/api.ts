@@ -124,9 +124,10 @@ export function fetchCatalogFacets(signal?: AbortSignal): Promise<CatalogFacets>
 
 export function postChat(
   messages: ChatMessage[],
-  mode: 'pro' | 'patient'
+  mode: 'pro' | 'patient' | 'enfant',
+  secondOpinion = false
 ): Promise<ChatResponse> {
-  return postJson<ChatResponse>('/api/ai/chat', { messages, mode })
+  return postJson<ChatResponse>('/api/ai/chat', { messages, mode, secondOpinion })
 }
 
 export function postInteractions(

@@ -4,6 +4,7 @@ import { callGeminiChat, GeminiError, GEMINI_MODEL_PRO } from "@/lib/gemini";
 import { clientIpFrom, rateLimit } from "@/lib/rate-limit";
 import { PEDIATRIC_DRUGS, computeDose } from "@/lib/pediatric-dosing";
 import type { PediatricDosing } from "@/components/dzpharm/types";
+import { findInstantAnswer } from "@/lib/clinical/instant-answers";
 
 export const maxDuration = 120;
 
@@ -193,6 +194,7 @@ export async function POST(req: NextRequest) {
         : body?.mode === "enfant"
           ? "enfant"
           : "pro";
+    const secondOpinion: boolean = Boolean(body?.secondOpinion);
 
     if (messages.length === 0) {
       return NextResponse.json({ error: "Aucun message fourni" }, { status: 400 });
@@ -200,6 +202,19 @@ export async function POST(req: NextRequest) {
 
     const history = messages.slice(-16);
     const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
+
+    // W4-04 : Instant-Answer Edge Cache (sub-150ms instant response)
+    if (!secondOpinion && lastUser) {
+      const instant = findInstantAnswer(lastUser, mode);
+      if (instant) {
+        return NextResponse.json({
+          response: instant.content,
+          mode,
+          instantCached: true,
+          citations: instant.answer.citations,
+        });
+      }
+    }
 
     /* ---------------- Ancre pédiatrique multi-tours --------------- */
     const allUserText = history
@@ -386,7 +401,13 @@ RÈGLES:
 5. Si une donnée est incertaine, dis-le clairement plutôt que d'inventer.
 6. JAMAIS de concentration/formulation inventée : n'énonce pas la concentration d'un sirop, de gouttes ou d'une forme locale sans la tenir du contexte « PRODUITS DU REGISTRE » ou de l'ANCRE PÉDIATRIQUE fournie. Sinon, demande à l'utilisateur de lire l'étiquette (mg/mL ou mg/5 mL) et montre le calcul avec une variable. Ne cite que des marques du registre algérien (pas de marques étrangères comme Dafalgan ou Doliprane France si absentes du contexte).
 7. En pédiatrie, toute dose doit être exprimée en mg/kg puis convertie seulement si la concentration est fournie par l'utilisateur ou par l'ANCRE PÉDIATRIQUE.
-8. Si une ANCRE PÉDIATRIQUE est fournie, ses valeurs priment : réutilise-les sur les questions de relance (« et en sirop ? », « combien de mL ? ») SANS redemander le poids déjà donné plus haut dans la conversation.${pediatricAnchorBlock}${registryContext}`;
+8. Si une ANCRE PÉDIATRIQUE est fournie, ses valeurs priment : réutilise-les sur les questions de relance (« et en sirop ? », « combien de mL ? ») SANS redemander le poids déjà donné plus haut dans la conversation.
+9. RÈGLE D'INCERTITUDE ET DE REFUS STRICT (W4-03) : Si la question porte sur une indication hors consensus, un dosage toxique non conventionnel, une médecine occulte ou une molécule inexistante, refuse formellement en commençant par : « ⚠️ Hors du référentiel DzPharm — cette indication ou formulation n'est pas validée par la nomenclature officielle algérienne. Vérifiez auprès d'un spécialiste. »
+10. CITATIONS VÉRIFIABLES (W4-02) : Chaque fois que tu cites une règle de monographie ou de consensus officiel, annote-la par une balise : [Source: RCP §4.2], [Source: RCP §4.3], [Source: RCP §4.4], [Source: ANSM 2024], [Source: CRAT], ou [Source: ANPP].${pediatricAnchorBlock}${registryContext}${
+  secondOpinion
+    ? `\n\nMODE DEUXIÈME AVIS ADVERSARIAL CLINIQUE (W4-05) :\nEffectue une contre-expertise clinique critique, rigoureuse et indépendante sur la question posée. Identifie les risques masqués, les effets indésirables insidieux, les contre-indications relatives chez les populations vulnérables (insuffisants rénaux/hépatiques, personnes âgées), et propose une alternative plus sûre ou mieux tolérée.`
+    : ''
+}`;
 
     // Convert history to Gemini format (user/assistant alternation)
     const geminiHistory = history.map((m) => ({

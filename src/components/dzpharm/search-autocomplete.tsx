@@ -27,6 +27,7 @@ import { StatusBadge, formatPrice } from './status-badge'
 import { useDzPharm } from './store'
 import { useToast } from '@/hooks/use-toast'
 import { getCachedSearchResults, setCachedSearchResults } from '@/lib/db/indexeddb'
+import { offlineDB } from '@/lib/offline/indexed-db'
 
 const RECENT_SEARCHES_KEY = 'dzpharm_recent_searches'
 const POPULAR_SEARCHES = [
@@ -360,6 +361,19 @@ export function SearchAutocomplete({
             fuzzy: false,
           } as DrugsResponse
         }
+
+        // Mode True Offline : recherche directe dans la base locale IndexedDB
+        const offlineResults = await offlineDB.searchDrugs(trimmed, 8).catch(() => [])
+        if (offlineResults && offlineResults.length) {
+          return {
+            drugs: offlineResults,
+            total: offlineResults.length,
+            page: 1,
+            pageSize: 8,
+            totalPages: 1,
+            fuzzy: false,
+          } as DrugsResponse
+        }
         throw err
       }
     },
@@ -561,22 +575,23 @@ export function SearchAutocomplete({
           </button>
         )}
 
-        {/* Bouton Scanner direct sur champ de recherche hero */}
-        {hero && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setScannerOpen(true)
-            }}
-            className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/60 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground shrink-0 cursor-pointer"
-            title="Scanner le code-barres d'un médicament (CBM / AMM)"
-          >
-            <Barcode className="size-3.5 text-primary" aria-hidden />
-            <span className="hidden sm:inline">Scanner</span>
-          </button>
-        )}
+        {/* Bouton Scanner direct sur champ de recherche (Hero & Compact) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setScannerOpen(true)
+          }}
+          className={cn(
+            'flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/60 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground shrink-0 cursor-pointer',
+            hero ? 'px-2.5 py-1' : 'p-1.5'
+          )}
+          title="Scanner le code-barres d'un médicament (CBM / AMM / EAN-13)"
+        >
+          <Barcode className="size-3.5 text-primary" aria-hidden />
+          {hero && <span className="hidden sm:inline">Scanner</span>}
+        </button>
 
         {isFetching && isOpen ? (
           <Loader2 className="size-4.5 shrink-0 animate-spin text-primary" aria-hidden />

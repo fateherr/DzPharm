@@ -36,6 +36,7 @@ import {
   Sun,
   Users,
   Wrench,
+  Accessibility,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -51,6 +52,8 @@ import { fetchStats } from './api'
 import { formatNumber } from './status-badge'
 import { useDzPharm, type ViewId } from './store'
 import { PaletteDialog } from './palette-dialog'
+import { PinPatientTrigger } from './shift-context-bar'
+import { AccessibilityModal } from './accessibility-modal'
 
 interface NavItem {
   id: ViewId
@@ -191,6 +194,9 @@ export function Header() {
   const setAdminBarcodeModalOpen = useDzPharm((s) => s.setAdminBarcodeModalOpen)
   const designMode = useDzPharm((s) => s.designMode)
   const setDesignMode = useDzPharm((s) => s.setDesignMode)
+  const counterNightMode = useDzPharm((s) => s.counterNightMode)
+  const language = useDzPharm((s) => s.language)
+  const toggleLanguage = useDzPharm((s) => s.toggleLanguage)
 
   const { data: stats } = useQuery({
     queryKey: ['stats'],
@@ -508,6 +514,9 @@ export function Header() {
 
             <AudienceToggle />
 
+            {/* W1-02 — Contexte patient épinglé */}
+            <PinPatientTrigger />
+
             {/* Bascule 1-Clic : Mode Botanique & Pharmacopée vs Mode Clinique */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -565,6 +574,57 @@ export function Header() {
             )}
 
             <ThemeToggle />
+
+            {/* W8-02: Language Switcher FR / AR */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={language === 'fr' ? 'التبديل إلى العربية' : 'Basculer en français'}
+                  className="size-8 shrink-0 rounded-lg bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 font-bold text-xs"
+                  onClick={toggleLanguage}
+                >
+                  <span aria-hidden>{language === 'fr' ? 'ع' : 'FR'}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {language === 'fr' ? 'التبديل إلى الواجهة العربية (RTL)' : 'Basculer vers l\'interface française (LTR)'}
+              </TooltipContent>
+            </Tooltip>
+            {/* W7-01 / W7-03 / W7-04 : Accessibilité & Ergonomie Garde de Nuit */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <AccessibilityModal
+                    trigger={
+                      <Button
+                        variant={counterNightMode ? 'default' : 'ghost'}
+                        size="icon"
+                        aria-label="Accessibilité & Garde de Nuit"
+                        className={cn(
+                          'size-8 shrink-0 rounded-lg transition-colors cursor-pointer',
+                          counterNightMode
+                            ? 'bg-amber-500 text-black hover:bg-amber-400 font-bold shadow-xs'
+                            : 'bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground'
+                        )}
+                      >
+                        {counterNightMode ? (
+                          <Moon className="size-4 animate-pulse text-black" aria-hidden />
+                        ) : (
+                          <Accessibility className="size-4" aria-hidden />
+                        )}
+                      </Button>
+                    }
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {counterNightMode
+                  ? 'Garde de Nuit Active (2h du matin) — Faible éblouissement'
+                  : 'Accessibilité & Garde de Nuit (W7)'}
+              </TooltipContent>
+            </Tooltip>
 
             {/* Bouton Verrouiller la session */}
             <Tooltip>

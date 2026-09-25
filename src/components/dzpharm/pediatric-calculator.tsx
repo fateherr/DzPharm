@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { syncToolQueryParams, readQueryParams } from '@/lib/clinical/url-sync'
 import {
   AlertTriangle,
   Baby,
@@ -49,13 +50,60 @@ function fmt(n: number | null, unit = ''): string {
 
 export function PediatricCalculator() {
   const gotoDirectory = useDzPharm((s) => s.gotoDirectory)
+  const pinnedPatient = useDzPharm((s) => s.pinnedPatient)
   const [tabMode, setTabMode] = useState<'calc' | 'bands'>('calc')
   const [weight, setWeight] = useState(12)
   const [ageMonths, setAgeMonths] = useState(24)
   const [drugIndex, setDrugIndex] = useState(0)
   const [formIndex, setFormIndex] = useState(0)
 
+  // Initialisation via paramètres URL ou patient épinglé
+  useEffect(() => {
+    const params = readQueryParams()
+    if (!params) return
+    const pWeight = params.get('poids') || params.get('weight')
+    const pAge = params.get('age') || params.get('ageMonths')
+    const pDci = params.get('dci')
+    const pMode = params.get('mode')
+
+    if (pMode === 'bands' || pMode === 'calc') {
+      setTabMode(pMode)
+    }
+
+    if (pWeight && !isNaN(Number(pWeight))) {
+      setWeight(Number(pWeight))
+    } else if (pinnedPatient?.weightKg) {
+      setWeight(pinnedPatient.weightKg)
+    }
+
+    if (pAge && !isNaN(Number(pAge))) {
+      setAgeMonths(Number(pAge))
+    } else if (pinnedPatient?.ageYears) {
+      setAgeMonths(Math.round(pinnedPatient.ageYears * 12))
+    }
+
+    if (pDci) {
+      const idx = PEDIATRIC_DRUGS.findIndex(
+        (d) =>
+          d.dciKey.toLowerCase().includes(pDci.toLowerCase()) ||
+          d.dci.toLowerCase().includes(pDci.toLowerCase())
+      )
+      if (idx !== -1) setDrugIndex(idx)
+    }
+  }, [pinnedPatient])
+
   const drug = PEDIATRIC_DRUGS[drugIndex]
+
+  // Synchronisation continue vers l'URL
+  useEffect(() => {
+    syncToolQueryParams('pediatrie', {
+      dci: drug.dciKey.split(' ')[0].toLowerCase(),
+      poids: weight,
+      age: ageMonths,
+      mode: tabMode === 'bands' ? 'bands' : undefined,
+    })
+  }, [drug, weight, ageMonths, tabMode])
+
   const result = useMemo(
     () => computeDose(drug, weight, ageMonths, formIndex),
     [drug, weight, ageMonths, formIndex]

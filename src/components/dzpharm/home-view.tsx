@@ -69,6 +69,7 @@ import {
   BotanicalFiligree,
 } from './botanical-decorations'
 import { FloatingLeaves } from './floating-leaves'
+import { PourVousPanel } from './pour-vous-panel'
 
 /* ------------------------------------------------------------------ */
 /* Tendances DCI — types locaux + fetcher (réponse /top-views étendue)  */
@@ -852,6 +853,9 @@ export function HomeView() {
           </motion.div>
         </div>
       </section>
+
+      {/* -------------------- Pour Vous : Vigie Proactive (W4-01) -------- */}
+      <PourVousPanel />
 
       {/* ---------------------- Accès rapide (P10/P14) -------------------- */}
       <section

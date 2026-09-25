@@ -81,6 +81,21 @@ export const MAX_FAVORITES = 30
 export const MAX_RECENT = 8
 export const MAX_COPILOT_MESSAGES = 30
 
+export interface PinnedPatient {
+  id?: string
+  name?: string
+  ageYears?: number
+  weightKg?: number
+  gender?: 'M' | 'F'
+  clcr?: number
+  childPughClass?: 'A' | 'B' | 'C'
+  isPregnant?: boolean
+  pregnancyTrimester?: 1 | 2 | 3
+  isBreastfeeding?: boolean
+  allergies?: string[]
+  pinnedAt: string
+}
+
 interface DzPharmStore {
   view: ViewId
   setView: (view: ViewId) => void
@@ -102,6 +117,12 @@ interface DzPharmStore {
   audience: Audience
   setAudience: (audience: Audience) => void
 
+  /** W1-02 — Shift-context pinning: patient épinglé pour préremplir tous les outils cliniques. */
+  pinnedPatient: PinnedPatient | null
+  setPinnedPatient: (patient: PinnedPatient | null) => void
+  updatePinnedPatient: (patch: Partial<PinnedPatient>) => void
+  clearPinnedPatient: () => void
+
   /** P2-39 — Mode de densité d'affichage (compact / standard / spacious). */
   density: DensityMode
   setDensity: (density: DensityMode) => void
@@ -113,6 +134,27 @@ interface DzPharmStore {
   /** P3-01 — Wilaya d'urgence médicale sélectionnée (par défaut 'Alger'). */
   emergencyWilaya: string
   setEmergencyWilaya: (wilaya: string) => void
+
+  /** W7-01 — Counter-Night Mode (Garde de Nuit - 2h du matin ultra-faible éblouissement). */
+  counterNightMode: boolean
+  setCounterNightMode: (val: boolean) => void
+  toggleCounterNightMode: () => void
+
+  /** W7-03 — Accessible Typography Suite (Police accessible & Échelle de police). */
+  accessibleFont: 'default' | 'atkinson' | 'opendyslexic'
+  setAccessibleFont: (font: 'default' | 'atkinson' | 'opendyslexic') => void
+  fontScale: 90 | 100 | 115 | 130
+  setFontScale: (scale: 90 | 100 | 115 | 130) => void
+
+  /** W7-04 — Auditory Clinical Safety Alert Cues (Harmonique). */
+  soundAlertsEnabled: boolean
+  setSoundAlertsEnabled: (enabled: boolean) => void
+  toggleSoundAlerts: () => void
+
+  /** W8-02 — Native RTL Arabic Interface (français ou arabe). */
+  language: 'fr' | 'ar'
+  setLanguage: (language: 'fr' | 'ar') => void
+  toggleLanguage: () => void
 
   filters: DirectoryFilters
   setFilters: (patch: Partial<DirectoryFilters>) => void
@@ -224,6 +266,16 @@ export const useDzPharm = create<DzPharmStore>()(
       audience: 'pro',
       setAudience: (audience) => set({ audience }),
 
+      pinnedPatient: null,
+      setPinnedPatient: (pinnedPatient) => set({ pinnedPatient }),
+      updatePinnedPatient: (patch) =>
+        set((s) => ({
+          pinnedPatient: s.pinnedPatient
+            ? { ...s.pinnedPatient, ...patch }
+            : ({ pinnedAt: new Date().toISOString(), ...patch } as PinnedPatient),
+        })),
+      clearPinnedPatient: () => set({ pinnedPatient: null }),
+
       density: 'standard',
       setDensity: (density) => set({ density }),
 
@@ -232,6 +284,23 @@ export const useDzPharm = create<DzPharmStore>()(
 
       emergencyWilaya: 'Alger',
       setEmergencyWilaya: (emergencyWilaya) => set({ emergencyWilaya }),
+
+      counterNightMode: false,
+      setCounterNightMode: (counterNightMode) => set({ counterNightMode }),
+      toggleCounterNightMode: () => set((s) => ({ counterNightMode: !s.counterNightMode })),
+
+      accessibleFont: 'default',
+      setAccessibleFont: (accessibleFont) => set({ accessibleFont }),
+      fontScale: 100,
+      setFontScale: (fontScale) => set({ fontScale }),
+
+      soundAlertsEnabled: true,
+      setSoundAlertsEnabled: (soundAlertsEnabled) => set({ soundAlertsEnabled }),
+      toggleSoundAlerts: () => set((s) => ({ soundAlertsEnabled: !s.soundAlertsEnabled })),
+
+      language: 'fr',
+      setLanguage: (language) => set({ language }),
+      toggleLanguage: () => set((s) => ({ language: s.language === 'fr' ? 'ar' : 'fr' })),
 
       filters: { ...EMPTY_FILTERS },
       setFilters: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })),
@@ -426,13 +495,14 @@ export const useDzPharm = create<DzPharmStore>()(
     }),
     {
       name: 'dzpharm-store',
-      version: 5,
+      version: 8,
       /**
        * Migration v0 → v1 : ancien modèle vers membres + entrées
        * Migration v1 → v2 : nouveaux champs ArmoireMember / ArmoireEntry
        * Migration v2 → v3 : P1-12 — persistance du panier d'interactions (basket)
        * Migration v3 → v4 : P1-10 — persistance de l'historique Copilote (copilotMessages)
        * Migration v4 → v5 : P2-39 — persistance du mode de densité (compact/standard/spacious)
+       * Migration v5 → v6 : W1-02 — persistance du patient épinglé (pinnedPatient)
        */
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown> & {
@@ -583,10 +653,33 @@ export const useDzPharm = create<DzPharmStore>()(
           }
         }
 
+        // v5 → v6: W1-02 — add pinnedPatient to persisted slice
+        if (version <= 5) {
+          if (!(next as { pinnedPatient?: unknown }).pinnedPatient) {
+            ;(next as { pinnedPatient?: unknown }).pinnedPatient = null
+          }
+        }
+
+        // v6 → v7: W7 — add counterNightMode, accessibleFont, fontScale, soundAlertsEnabled
+        if (version <= 6) {
+          const s = next as Record<string, unknown>
+          if (typeof s.counterNightMode !== 'boolean') s.counterNightMode = false
+          if (!s.accessibleFont) s.accessibleFont = 'default'
+          if (!s.fontScale) s.fontScale = 100
+          if (typeof s.soundAlertsEnabled !== 'boolean') s.soundAlertsEnabled = true
+        }
+
+        // v7 → v8: W8-02 — add language (fr/ar) to persisted slice
+        if (version <= 7) {
+          const s = next as Record<string, unknown>
+          if (s.language !== 'ar' && s.language !== 'fr') s.language = 'fr'
+        }
+
         return next as unknown as DzPharmStore
       },
       // Persiste mode d'usage + favoris + historique récent + armoire v2
       // + journal + panier Chifa + panier interactions + historique Copilote + densité
+      // + W7 ergonomie & accessibilité + W8 langue native
       partialize: (state) => ({
         designMode: state.designMode,
         palette: state.palette,
@@ -602,6 +695,12 @@ export const useDzPharm = create<DzPharmStore>()(
         chifaCardType: state.chifaCardType,
         chifaLines: state.chifaLines,
         emergencyWilaya: state.emergencyWilaya,
+        pinnedPatient: state.pinnedPatient,
+        counterNightMode: state.counterNightMode,
+        accessibleFont: state.accessibleFont,
+        fontScale: state.fontScale,
+        soundAlertsEnabled: state.soundAlertsEnabled,
+        language: state.language,
       }),
     }
   )
