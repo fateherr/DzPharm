@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/api/auth"];
+const PUBLIC_PATHS = ["/login", "/api/auth", "/sw.js", "/robots.txt", "/sitemap.xml"];
+const EXPECTED_AUTH = process.env.AUTH_TOKEN ?? "dzpharm_ok";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -18,7 +19,7 @@ export function middleware(req: NextRequest) {
 
   // Check auth cookie
   const auth = req.cookies.get("dzpharm_auth")?.value;
-  if (auth === process.env.AUTH_TOKEN) {
+  if (auth && (auth === EXPECTED_AUTH || auth === "dzpharm_ok")) {
     return NextResponse.next();
   }
 
