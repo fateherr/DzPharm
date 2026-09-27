@@ -852,3 +852,20 @@ Stage Summary:
 
 
 
+
+---
+Task ID: 26
+Agent: main-orchestrator
+Task: Intégration Coffre Psychotropes & Calendrier de Santé Publique Algérien (P3 Backlog Completion)
+
+Work Log:
+- Création de src/lib/psychotropes-data.ts : référentiel complet des substances contrôlées en Algérie (Stupéfiants, Psychotropes Tableaux I-III, Listes I et II, Précurseurs), règles de dispensation, mentions sur ordonnance, fractionnement et durées légales maximales selon la réglementation algérienne.
+- Création de src/components/dzpharm/psychotropes-coffre.tsx : interface interactive du coffre avec recherche insensible aux accents/casse, filtres par tableau réglementaire, fiches de dispensation et mentions légales de sécurité.
+- Création de src/lib/health-calendar-data.ts : 30+ journées et campagnes de santé publique nationales et mondiales (cancer, diabète, hypertension, vaccination, Ramadan, allaitement, santé mentale), avec rôle du pharmacien et DCI associées.
+- Création de src/components/dzpharm/health-calendar.tsx : calendrier interactif mensuel avec vue annuelle heatmap, fiches de campagne, rôle d'officine et liens directs vers le répertoire.
+- Intégration complète dans src/components/dzpharm/tools-view.tsx (TabsTriggers & TabsContent).
+- Vérification du build de production (
+pm run build) : 62/62 routes générées avec succès (0 erreur).
+
+Stage Summary:
+- Toutes les fonctionnalités résiduelles du backlog sont intégrées, validées et compilées avec succès.

@@ -5,12 +5,14 @@ import { motion } from 'framer-motion'
 import {
   Activity,
   Baby,
+  CalendarHeart,
   CreditCard,
   Droplets,
   FileSpreadsheet,
   GitCompareArrows,
   HeartPulse,
   Languages,
+  Lock,
   MapPin,
   Moon,
   PiggyBank,
@@ -38,6 +40,8 @@ import { ToxicologyProtocols } from './toxicology-protocols'
 import { CounterDispensingWorkflow } from './counter-dispensing'
 import { PictographicPosologyGenerator } from './pictographic-posology'
 import { CompatibilityChecker } from './compatibility-checker'
+import { PsychotropesCoffre } from './psychotropes-coffre'
+import { HealthCalendar } from './health-calendar'
 import { useDzPharm } from './store'
 
 export interface ToolsViewProps {
@@ -218,6 +222,20 @@ export function ToolsView({ initialTab }: ToolsViewProps = {}) {
             <FileSpreadsheet className="size-4 text-primary" aria-hidden />
             Livret &amp; Substitutions (F-04)
           </TabsTrigger>
+          <TabsTrigger
+            value="calendrier"
+            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm"
+          >
+            <CalendarHeart className="size-4" aria-hidden />
+            Calendrier santé
+          </TabsTrigger>
+          <TabsTrigger
+            value="psychotropes"
+            className="h-9 gap-2 px-4 text-sm data-[state=active]:shadow-sm"
+          >
+            <Lock className="size-4" aria-hidden />
+            Substances contrôlées
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="comptoir" className="mt-0">
@@ -387,6 +405,26 @@ export function ToolsView({ initialTab }: ToolsViewProps = {}) {
             transition={{ duration: 0.25 }}
           >
             <FormularySubstitutor />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="calendrier" className="mt-0">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <HealthCalendar />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="psychotropes" className="mt-0">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <PsychotropesCoffre />
           </motion.div>
         </TabsContent>
       </Tabs>
